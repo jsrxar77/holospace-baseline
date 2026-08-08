@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
-# devops-db-refresh.sh - Script de reseteo 100% Base de Datos a ESTADO CERO EN BLANCO
+# devops-db-refresh.sh - Script de reseteo manteniendo la carpeta ./orders/ para carga de comprobantes
 
 set -e
 
 echo "======================================================"
-echo "🧹 DevOps Database Blank Reset Tool (100% Base de Datos)"
+echo "🧹 DevOps Database Refresh Tool"
 echo "======================================================"
 
-echo "👤 1. Conservando únicamente usuario Administrador por defecto (admin@drinklovers.com)..."
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ORDERS_DIR="$PROJECT_ROOT/orders"
 
-echo "🔄 2. Liberando puerto 3001 y limpiando registros de la Base de Datos..."
+echo "📂 1. Asegurando carpeta ./orders/ para depósitos de comprobantes..."
+mkdir -p "$ORDERS_DIR"
+touch "$ORDERS_DIR/.gitkeep"
+
+echo "👤 2. Conservando únicamente usuario Administrador por defecto (admin@drinklovers.com)..."
+
+echo "🔄 3. Liberando puerto 3001 y reseteando la Base de Datos..."
 npx -y kill-port 3001 2>/dev/null || true
 
 echo ""
-echo "✅ ¡BASE DE DATOS 100% EN BLANCO Y LISTA!"
-echo "El proceso logístico inicia desde cero cuando subas un archivo PDF desde el Panel Web Admin."
-echo "El comprobante y su Blob binario habitarán 100% únicamente dentro de la Base de Datos."
+echo "✅ ¡BASE DE DATOS RESETEADA Y CARPETA ./orders/ LISTA!"
+echo "Puedes colocar o subir tus archivos PDF en ./orders/ o desde el Panel Web Admin."
 echo "======================================================"

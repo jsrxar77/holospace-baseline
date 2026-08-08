@@ -25,12 +25,18 @@ if (fs.existsSync(envPath)) {
 }
 
 const PORT = parseInt(processEnv.PORT, 10) || 3001;
+const ORDERS_DIR = path.join(__dirname, 'orders');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// BASE DE DATOS EN MEMORIA / SQLITE (ALMACENAMIENTO ÚNICO EN BASE DE DATOS COMO BLOB)
+// Asegurar directorio ./orders/ para colocar y cargar comprobantes PDF
+if (!fs.existsSync(ORDERS_DIR)) {
+  fs.mkdirSync(ORDERS_DIR, { recursive: true });
+}
+
+// BASE DE DATOS EN MEMORIA / SQLITE (ALMACENAMIENTO CON PDF BLOBS)
 const ordersDb = new Map();
 
-// Helper para registrar un comprobante 100% en la Base de Datos como PDF Blob
+// Helper para registrar un comprobante en la Base de Datos con su PDF Blob desde ./orders/
 const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com') => {
   let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
   let items = [
@@ -55,6 +61,13 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
     ];
   }
 
+  // Cargar Blob Base64 desde el archivo en ./orders/ si está disponible
+  const orderFilePath = path.join(ORDERS_DIR, pdfFileName);
+  if (!pdfBase64 && fs.existsSync(orderFilePath)) {
+    const pdfBuffer = fs.readFileSync(orderFilePath);
+    pdfBase64 = pdfBuffer.toString('base64');
+  }
+
   const now = new Date().toLocaleString('es-AR');
   const orderRecord = {
     id: `ord-${orderNumber}`,
@@ -62,20 +75,36 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
     clientName,
     issueDate: new Date().toLocaleDateString('es-AR'),
     pdfFileName,
-    pdfBlob: pdfBase64, // Guardado 100% como Blob en Base de Datos
+    pdfBlob: pdfBase64, // Guardado como Blob binario en la Base de Datos
     status: 'BACKLOG',
     operatorId: null,
     totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
     totalItemsScanned: 0,
     items,
     auditLogs: [
-      { timestamp: now, userEmail, action: 'CARGA_PDF_BLOB_DB', details: `Comprobante y binario PDF Blob guardados exclusivamente en la Base de Datos.` }
+      { timestamp: now, userEmail, action: 'CARGA_COMPROBANTE', details: `Comprobante PDF y Blob registrado en Base de Datos desde ./orders/${pdfFileName}.` }
     ]
   };
 
   ordersDb.set(orderNumber, orderRecord);
   return orderRecord;
 };
+
+// Sincronizar Base de Datos con los archivos PDF presentes en ./orders/
+const syncDatabaseFromOrdersFolder = () => {
+  if (fs.existsSync(ORDERS_DIR)) {
+    const pdfFiles = fs.readdirSync(ORDERS_DIR).filter((f) => f.endsWith('.pdf'));
+    pdfFiles.forEach((f) => {
+      const orderNumber = f.replace('.pdf', '');
+      if (!ordersDb.has(orderNumber)) {
+        registerOrderInDb(orderNumber, f);
+      }
+    });
+  }
+};
+
+// Inicializar sincronización
+syncDatabaseFromOrdersFolder();
 
 // Base de usuarios predeterminada (Admin por defecto)
 let users = [
@@ -214,8 +243,9 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3. KANBAN REAL-TIME DATA (BASADO 100% EN LA BASE DE DATOS Y PDF BLOBS)
+      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS Y CARPETA ./orders/)
       if (req.url === '/api/kanban' && req.method === 'GET') {
+        syncDatabaseFromOrdersFolder();
         const allOrders = Array.from(ordersDb.values());
 
         const kanbanData = {
@@ -276,15 +306,13 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DESDE LA BASE DE DATOS
+      // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DE AUDITORÍA
       if (req.url.startsWith('/api/order-detail')) {
         let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
         if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
 
         if (!ordersDb.has(orderNumber)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Pedido no encontrado en la base de datos' }));
-          return;
+          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
         }
 
         const order = ordersDb.get(orderNumber);
@@ -302,11 +330,19 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 5. DESCARGAR O VISUALIZAR PDF (DIRECTAMENTE DESDE EL PDF BLOB EN BASE DE DATOS)
+      // 5. DESCARGAR O VISUALIZAR PDF (DESDE DISCO O BLOB DE DB)
       if (req.url.startsWith('/api/download-pdf')) {
         let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
+        const targetPath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
 
-        if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
+        if (fs.existsSync(targetPath)) {
+          res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
+          });
+          res.end(fs.readFileSync(targetPath));
+          return;
+        } else if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
           const buffer = Buffer.from(ordersDb.get(orderNumber).pdfBlob, 'base64');
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -315,18 +351,13 @@ const server = http.createServer((req, res) => {
           res.end(buffer);
           return;
         } else {
-          // Generar PDF al vuelo desde los datos del pedido en DB si el blob no estuviese presente
-          const samplePdfContent = `%PDF-1.7\n1 0 obj\n<< /Order ${orderNumber} /Client (DRINK LOVERS LOGISTICS) >>\nendobj\n`;
-          res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
-          });
-          res.end(Buffer.from(samplePdfContent, 'utf8'));
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Archivo PDF no encontrado' }));
           return;
         }
       }
 
-      // 6. BORRAR COMPROBANTE DE LA BASE DE DATOS
+      // 6. BORRAR COMPROBANTE EN BACKLOG Y DISCO
       if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
         const orderNumber = data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
         if (!orderNumber) {
@@ -336,10 +367,14 @@ const server = http.createServer((req, res) => {
         }
 
         ordersDb.delete(orderNumber);
-        console.log(`[BASE DE DATOS] Comprobante ${orderNumber} eliminado exclusivamente de la DB por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
+        const orderFilePath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
+        if (fs.existsSync(orderFilePath)) {
+          fs.unlinkSync(orderFilePath);
+          console.log(`[ADMIN] Comprobante ${orderNumber}.pdf eliminado de ./orders/ y DB por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
+        }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado de la base de datos.` }));
+        res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado.` }));
         return;
       }
 
@@ -369,9 +404,7 @@ const server = http.createServer((req, res) => {
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId, userEmail } = data;
         if (!ordersDb.has(orderNumber)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Pedido no existe en la base de datos' }));
-          return;
+          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
         }
 
         const order = ordersDb.get(orderNumber);
@@ -387,7 +420,7 @@ const server = http.createServer((req, res) => {
           details: `Pedido #${orderNumber} tomado por operario ${email} (${operatorId}). Estado -> DOING`
         });
 
-        console.log(`[LOG AUDITORÍA DB] Pedido ${orderNumber} tomado por ${email}.`);
+        console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${email}.`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, targetFileName: order.pdfFileName }));
         return;
@@ -409,7 +442,7 @@ const server = http.createServer((req, res) => {
             details: `Pedido #${orderNumber} liberado por ${email}. Devuelto a backlog libre.`
           });
           order.operatorId = null;
-          console.log(`[LOG AUDITORÍA DB] Pedido ${orderNumber} liberado por ${email}.`);
+          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -436,7 +469,7 @@ const server = http.createServer((req, res) => {
             action: 'DESPACHAR_PEDIDO',
             details: `Pedido #${orderNumber} auditado y despachado por ${email}. Marca de Agua: ${watermarkText}`
           });
-          console.log(`[LOG AUDITORÍA DB] Pedido ${orderNumber} despachado por ${email}.`);
+          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} despachado por ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -444,7 +477,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (GUARDA 100% ÚNICAMENTE EN BASE DE DATOS)
+      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (PUNTO ÚNICO DE INGRESO)
       if (req.url === '/api/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64, userEmail } = data;
         if (!fileName || !pdfBase64) {
@@ -463,15 +496,17 @@ const server = http.createServer((req, res) => {
         }
 
         const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+        const targetPath = path.join(ORDERS_DIR, cleanName);
+        fs.writeFileSync(targetPath, buffer);
+
         const orderNumber = cleanName.replace('.pdf', '');
         const email = userEmail || processEnv.ADMIN_EMAIL;
 
-        // REGISTRAR 100% EN BASE DE DATOS COMO PDF BLOB SIN GUARDAR ARCHIVO EN DISCO
         registerOrderInDb(orderNumber, cleanName, pdfText, pdfBase64, email);
 
-        console.log(`[ADMIN BASE DE DATOS] Comprobante PDF #${orderNumber} y Blob binario guardados 100% ÚNICAMENTE en la Base de Datos por ${email}`);
+        console.log(`[ADMIN LOG] Comprobante PDF depositado en ./orders/${cleanName} y registrado en Base de Datos por ${email}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y registrado exclusivamente en la Base de Datos (Backlog)' }));
+        res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y publicado en backlog' }));
         return;
       }
 
@@ -504,6 +539,6 @@ server.on('error', (err) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
-  console.log(`💾 Almacenamiento 100% Único en Base de Datos (PDF Blobs sin archivos en disco)`);
+  console.log(`📂 Carpeta de entrada de comprobantes: ./orders/`);
   console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });
