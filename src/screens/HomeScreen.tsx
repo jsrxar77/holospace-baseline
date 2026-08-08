@@ -61,7 +61,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             onPress={() => handleSelectSamplePdf('34512175.pdf')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnUploadText}>+ Cargar Comprobante 34512175.pdf (Lunfa - 3 U)</Text>
+            <Text style={styles.btnUploadText}>Pedido 34512175</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -69,7 +69,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             onPress={() => handleSelectSamplePdf('34409313.pdf')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnSecondaryText}>+ Cargar Comprobante 34409313.pdf</Text>
+            <Text style={styles.btnSecondaryText}>Pedido 34409313</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -77,7 +77,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             onPress={() => handleSelectSamplePdf('34512173.pdf')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnSecondaryText}>+ Cargar Comprobante 34512173.pdf</Text>
+            <Text style={styles.btnSecondaryText}>Pedido 34512173</Text>
           </TouchableOpacity>
         </View>
 
@@ -197,7 +197,8 @@ const styles = StyleSheet.create({
     color: '#000000',
     fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   btnSecondary: {
     backgroundColor: '#21262D',
@@ -206,8 +207,10 @@ const styles = StyleSheet.create({
   },
   btnSecondaryText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800'
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   sectionTitle: {
     color: '#8B949E',
