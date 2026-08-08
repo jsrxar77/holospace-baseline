@@ -43,29 +43,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const savedOrders = await dbService.getAllOrders();
       const opId = fileWorkflowService.getOperatorId();
 
-      // Auto-detección de pedido activo asignado en ./delivery/doing/
+      // Auto-detección de pedido activo asignado
       const activeDoing = await fileWorkflowService.getActiveDoingOrder();
       let restoredActiveOrder: Order | null = null;
 
       if (activeDoing.hasActive && activeDoing.orderNumber) {
-        const targetFileName = activeDoing.pdfFileName || `${activeDoing.orderNumber}-${opId}.pdf`;
-        const existingInDb = savedOrders.find(
-          (o) => o.orderNumber === activeDoing.orderNumber && o.status !== 'CLOSED' && o.status !== 'PARTIAL_DISPATCH'
-        );
-
-        if (existingInDb) {
-          restoredActiveOrder = existingInDb;
-        } else {
-          const parsed = await parsePdfVoucher(targetFileName);
-          restoredActiveOrder = {
-            ...parsed,
-            orderNumber: activeDoing.orderNumber,
-            pdfFileName: targetFileName,
-            status: 'SCANNING'
-          };
+        const realOrder = await fileWorkflowService.getOrderDetails(activeDoing.orderNumber);
+        if (realOrder) {
+          restoredActiveOrder = realOrder;
           await dbService.saveOrder(restoredActiveOrder);
         }
-        console.log(`[STORE] Auto-recuperado pedido #${activeDoing.orderNumber} en proceso al iniciar la app.`);
+        console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} en proceso.`);
       }
 
       set({
@@ -90,28 +78,33 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     return order;
   },
 
-  // Acción: Tomar Pedido de /delivery/backlog a /delivery/doing/(numero-pedido)-(identificador).pdf
+  // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor
   claimOrder: async (orderNumber: string) => {
-    const { claimOrder: claimFile, getOperatorId } = fileWorkflowService;
+    const { claimOrder: claimFile } = fileWorkflowService;
     const { targetFileName, operatorId } = await claimFile(orderNumber);
-    const order = await parsePdfVoucher(targetFileName);
 
-    const updatedOrder: Order = {
-      ...order,
-      orderNumber,
-      pdfFileName: targetFileName,
-      status: 'SCANNING'
-    };
+    // Obtener la orden real con sus ítems reales parsed del servidor
+    let realOrder = await fileWorkflowService.getOrderDetails(orderNumber);
 
-    await dbService.saveOrder(updatedOrder);
+    if (!realOrder) {
+      const parsed = await parsePdfVoucher(targetFileName);
+      realOrder = {
+        ...parsed,
+        orderNumber,
+        pdfFileName: targetFileName,
+        status: 'SCANNING'
+      };
+    }
+
+    await dbService.saveOrder(realOrder);
 
     set((state) => ({
-      activeOrder: updatedOrder,
+      activeOrder: realOrder,
       operatorId,
-      orders: [updatedOrder, ...state.orders.filter((o) => o.id !== updatedOrder.id)]
+      orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
     }));
 
-    return updatedOrder;
+    return realOrder;
   },
 
   // Acción: Liberar Pedido de /delivery/doing a /delivery/backlog

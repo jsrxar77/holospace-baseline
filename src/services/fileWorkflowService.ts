@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { Order } from '../types';
 
 export interface WorkflowFile {
   orderNumber: string;
@@ -49,8 +50,42 @@ export const fileWorkflowService = {
     return { hasActive: false };
   },
 
+  // Obtener detalle 100% REAL de la orden desde el servidor
+  getOrderDetails: async (orderNumber: string): Promise<Order | null> => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/order-detail?orderNumber=${orderNumber}`);
+      const data = await response.json();
+      if (data && data.success && data.order) {
+        const o = data.order;
+        return {
+          id: o.id || `ord_${o.orderNumber}`,
+          orderNumber: o.orderNumber,
+          clientName: o.clientName || 'Cliente Logística',
+          issueDate: o.issueDate || new Date().toLocaleDateString('es-AR'),
+          pdfFileName: o.pdfFileName || `${o.orderNumber}.pdf`,
+          status: o.status || 'SCANNING',
+          createdAt: o.createdAt || new Date().toISOString(),
+          totalItemsRequired: o.totalItemsRequired || o.items.reduce((acc: number, i: any) => acc + i.quantityRequired, 0),
+          totalItemsScanned: o.totalItemsScanned || 0,
+          items: (o.items || []).map((i: any, idx: number) => ({
+            id: i.id || `item_${o.orderNumber}_${idx}`,
+            orderId: o.orderNumber,
+            code: i.code,
+            description: i.description,
+            quantityRequired: i.quantityRequired,
+            quantityScanned: i.quantityScanned || 0,
+            status: (i.quantityScanned || 0) >= i.quantityRequired ? 'COMPLETE' : (i.quantityScanned || 0) > 0 ? 'PARTIAL' : 'PENDING'
+          }))
+        };
+      }
+    } catch (e) {
+      console.log(`Error obteniendo orderDetails reales para ${orderNumber}:`, e);
+    }
+    return null;
+  },
+
   // Acción: Tomar Pedido (Cambio de estado a DOING en DB)
-  claimOrder: async (orderNumber: string): Promise<{ success: boolean; targetFileName: string; operatorId: string }> => {
+  claimOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean; targetFileName: string; operatorId: string }> => {
     const operatorId = getHybridOperatorId();
     const targetFileName = `${orderNumber}.pdf`;
 
@@ -58,7 +93,7 @@ export const fileWorkflowService = {
       const response = await fetch(`${SERVER_URL}/api/claim-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNumber, operatorId })
+        body: JSON.stringify({ orderNumber, operatorId, userEmail })
       });
       const data = await response.json();
       console.log('[BASE DE DATOS] claimOrder estado a DOING:', data);
@@ -69,18 +104,18 @@ export const fileWorkflowService = {
     return { success: true, targetFileName, operatorId };
   },
 
-  // Acción: Liberar Pedido (Cambio de estado a BACKLOG en DB)
-  releaseOrder: async (orderNumber: string): Promise<{ success: boolean }> => {
+  // Acción: Liberar Pedido (Cambio de estado a READY en DB)
+  releaseOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean }> => {
     const operatorId = getHybridOperatorId();
 
     try {
       const response = await fetch(`${SERVER_URL}/api/release-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNumber, operatorId })
+        body: JSON.stringify({ orderNumber, operatorId, userEmail })
       });
       const data = await response.json();
-      console.log('[BASE DE DATOS] releaseOrder estado a BACKLOG:', data);
+      console.log('[BASE DE DATOS] releaseOrder estado a READY:', data);
     } catch (e) {
       console.log('Error llamando a releaseOrder en DB:', e);
     }
@@ -98,20 +133,7 @@ export const fileWorkflowService = {
     const operatorId = getHybridOperatorId();
     const doneFileName = `${orderNumber}.pdf`;
     const nowIso = new Date().toLocaleString('es-AR');
-    const statusText = scannedCount === totalCount ? '100% OK' : `PARCIAL OK (PIN: ${supervisorPin || '9999'})`;
-    const watermarkText = `AUDITADO POR: ${operatorId} | FECHA: ${nowIso} | ESTADO: ${statusText} (${scannedCount}/${totalCount} U)`;
-
-    try {
-      const response = await fetch(`${SERVER_URL}/api/complete-order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderNumber, operatorId, watermarkText })
-      });
-      const data = await response.json();
-      console.log('[BASE DE DATOS] completeOrder estado a DONE:', data);
-    } catch (e) {
-      console.log('Error llamando a completeOrder en DB:', e);
-    }
+    const watermarkText = `AUDITADO Y EXPEDIDO POR OPERARIO ${operatorId} | FECHA: ${nowIso} | BULTOS: ${scannedCount}/${totalCount}`;
 
     return { success: true, doneFileName, watermarkText };
   }
