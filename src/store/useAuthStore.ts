@@ -20,15 +20,9 @@ interface AuthState {
 const SERVER_URL = 'http://192.168.100.247:3001';
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: {
-    id: 'u-op-1',
-    email: 'javier@drinklovers.com',
-    name: 'Javier Operario',
-    role: 'OPERATOR',
-    operatorId: 'JAVIER-DEV82'
-  },
-  token: 'token_default_javier',
-  isAuthenticated: true,
+  user: null,
+  token: null,
+  isAuthenticated: false,
 
   login: async (email: string, pass: string) => {
     try {
