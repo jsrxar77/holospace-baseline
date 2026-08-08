@@ -1,0 +1,17 @@
+[
+  {
+    "id": "u-admin-1",
+    "email": "admin@drinklovers.com",
+    "password": "drinklovers2026!",
+    "name": "Administrador Principal",
+    "role": "ADMIN"
+  },
+  {
+    "id": "u-op-1",
+    "email": "javier@drinklovers.com",
+    "password": "op123456",
+    "name": "Javier Operario",
+    "role": "OPERATOR",
+    "operatorId": "JAVIER-DEV82"
+  }
+]
