@@ -307,5 +307,24 @@ El sistema cuenta con una plataforma Web autónoma (accesible vía navegador Web
 
 ## 12. Base de Datos como Fuente Única de la Verdad & PDF Auto-Healing
 
-- La base de datos SQLite (`phoneware.db`) almacena la totalidad del payload parseado del PDF y los registros de auditoría (`scan_logs`).
+- La base de datos SQLite (`phoneware.db`) almacena la totalidad del payload parseado del PDF, el binario del PDF (`pdfBlob`), y los registros de auditoría (`scan_logs`).
 - **Resiliencia (PDF Auto-Healing)**: Si un archivo PDF físico en `./delivery/doing/` se corrompe o elimina accidentalmente, el sistema **re-genera el comprobante automáticamente desde los datos de la base de datos** y lo restituye en su carpeta correspondiente sin interrumpir la operación del depósito.
+
+---
+
+## 13. Modal Vista Formato Factura en Panel Web Admin
+
+Al hacer clic en cualquier tarjeta del tablero Kanban (Backlog, Doing o Done), la aplicación Web Admin despliega un Modal / Drawer estilizado en formato **Factura / Comprobante de Venta**:
+- **Encabezado Comercial**: Razón Social del Cliente, Número de Pedido, Fecha de Emisión y Vencimiento.
+- **Detalle de Ítems**: Tabla completa con Código EAN, Descripción, Cantidad Requerida, Cantidad Verificada, Precio Unitario y Subtotal.
+- **Estado de Auditoría & Asignación**: Muestra en vivo quién tiene el pedido asignado (`operatorEmail` / `operatorId`), en qué paso del proceso se encuentra (`BACKLOG`, `DOING` o `DONE`) y la fecha/marca de agua digital.
+
+---
+
+## 14. Almacenamiento en Blob PDF, Punto Único de Entrada y Eliminación/Recarga en Backlog
+
+1. **Almacenamiento Blob de PDF**: Todos los archivos PDF subidos se almacenan en binario base64 / blob directamente en la base de datos.
+2. **Punto Único de Entrada**: El Panel Web Admin es el único canal autorizado para ingresar nuevos comprobantes al flujo logístico.
+3. **Eliminación y Recarga desde Backlog**:
+   - En la columna Backlog del Panel Web Admin, los administradores pueden **eliminar** un comprobante PDF.
+   - La eliminación borra el registro de la Base de Datos y elimina el archivo físico en `./delivery/backlog/`, permitiendo volver a subirlo y cargarlo desde cero.

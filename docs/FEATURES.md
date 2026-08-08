@@ -288,4 +288,29 @@ La interfaz de usuario ha sido concebida bajo estándares exigentes de ergonomí
 - **When** el archivo físico `.pdf` en `./delivery/doing/` no se encuentra presente o está corrupto,
 - **Then** el sistema regenera automáticamente el documento PDF desde los datos estructurados de SQLite.
 
+---
+
+### US-16: Modal de Detalle con Formato Factura Comercial en Panel Web Admin
+**Como** administrador de logística,  
+**Quiero** hacer clic en cualquier tarjeta del Kanban (Backlog, Doing, Done) y ver un Modal con formato Factura comercial completo,  
+**Para** revisar todos los datos almacenados en la base de datos (cliente, ítems, EAN, precios, operario asignado y avance).
+
+**Criterios de Aceptación:**
+- **Given** que el administrador hace clic sobre una tarjeta Kanban,
+- **When** se despliega el modal,
+- **Then** visualiza el comprobante maquetado en formato Factura comercial (Cliente, Fecha, Ítems con EAN y Precios, Operario Asignado y Estado del Proceso).
+
+---
+
+### US-17: Punto Único de Entrada, Eliminación y Recarga desde Backlog
+**Como** administrador,  
+**Quiero** poder borrar un comprobante en estado Backlog desde el Panel Web Admin,  
+**Para** eliminarlo de la base de datos y del disco y poder cargarlo nuevamente si fue necesario corregirlo.
+
+**Criterios de Aceptación:**
+- **Given** que un comprobante se encuentra en la columna Backlog del Panel Web Admin,
+- **When** el administrador presiona el botón "Eliminar",
+- **Then** el sistema elimina el pedido de la base de datos y remueve el archivo físico de `./delivery/backlog/`,
+- **And** permite volver a cargarlo desde el módulo de subida del Panel Web.
+
 
