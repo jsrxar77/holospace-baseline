@@ -13,5 +13,13 @@
     "name": "Javier Operario",
     "role": "OPERATOR",
     "operatorId": "JAVIER-DEV82"
+  },
+  {
+    "id": "u-1786222650197",
+    "email": "jsrxar@gmail.com",
+    "password": "Asadito21!",
+    "name": "Javier Rizzo",
+    "role": "OPERATOR",
+    "operatorId": "JAVIER-37"
   }
 ]

@@ -36,7 +36,7 @@ if (!fs.existsSync(ORDERS_DIR)) {
 // BASE DE DATOS EN MEMORIA / SQLITE (ALMACENAMIENTO CON PDF BLOBS)
 const ordersDb = new Map();
 
-// Helper para registrar un comprobante en la Base de Datos con su PDF Blob desde ./orders/
+// Helper para registrar un comprobante en la Base de Datos con su PDF Blob
 const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com') => {
   let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
   let items = [
@@ -61,13 +61,6 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
     ];
   }
 
-  // Cargar Blob Base64 desde el archivo en ./orders/ si está disponible
-  const orderFilePath = path.join(ORDERS_DIR, pdfFileName);
-  if (!pdfBase64 && fs.existsSync(orderFilePath)) {
-    const pdfBuffer = fs.readFileSync(orderFilePath);
-    pdfBase64 = pdfBuffer.toString('base64');
-  }
-
   const now = new Date().toLocaleString('es-AR');
   const orderRecord = {
     id: `ord-${orderNumber}`,
@@ -82,7 +75,7 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
     totalItemsScanned: 0,
     items,
     auditLogs: [
-      { timestamp: now, userEmail, action: 'CARGA_COMPROBANTE', details: `Comprobante PDF y Blob registrado en Base de Datos desde ./orders/${pdfFileName}.` }
+      { timestamp: now, userEmail, action: 'CARGA_COMPROBANTE', details: `Comprobante PDF y Blob registrado en Base de Datos.` }
     ]
   };
 
@@ -90,21 +83,6 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
   return orderRecord;
 };
 
-// Sincronizar Base de Datos con los archivos PDF presentes en ./orders/
-const syncDatabaseFromOrdersFolder = () => {
-  if (fs.existsSync(ORDERS_DIR)) {
-    const pdfFiles = fs.readdirSync(ORDERS_DIR).filter((f) => f.endsWith('.pdf'));
-    pdfFiles.forEach((f) => {
-      const orderNumber = f.replace('.pdf', '');
-      if (!ordersDb.has(orderNumber)) {
-        registerOrderInDb(orderNumber, f);
-      }
-    });
-  }
-};
-
-// Inicializar sincronización
-syncDatabaseFromOrdersFolder();
 
 // Base de usuarios predeterminada (Admin por defecto)
 let users = [
@@ -243,9 +221,8 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS Y CARPETA ./orders/)
+      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS)
       if (req.url === '/api/kanban' && req.method === 'GET') {
-        syncDatabaseFromOrdersFolder();
         const allOrders = Array.from(ordersDb.values());
 
         const kanbanData = {
@@ -312,7 +289,9 @@ const server = http.createServer((req, res) => {
         if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
 
         if (!ordersDb.has(orderNumber)) {
-          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Pedido no encontrado' }));
+          return;
         }
 
         const order = ordersDb.get(orderNumber);
@@ -330,19 +309,11 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 5. DESCARGAR O VISUALIZAR PDF (DESDE DISCO O BLOB DE DB)
+      // 5. DESCARGAR O VISUALIZAR PDF DESDE BLOB DE DB
       if (req.url.startsWith('/api/download-pdf')) {
         let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
-        const targetPath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
 
-        if (fs.existsSync(targetPath)) {
-          res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
-          });
-          res.end(fs.readFileSync(targetPath));
-          return;
-        } else if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
+        if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
           const buffer = Buffer.from(ordersDb.get(orderNumber).pdfBlob, 'base64');
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
@@ -357,7 +328,7 @@ const server = http.createServer((req, res) => {
         }
       }
 
-      // 6. BORRAR COMPROBANTE EN BACKLOG Y DISCO
+      // 6. BORRAR COMPROBANTE EN BACKLOG (SOLO BASE DE DATOS)
       if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
         const orderNumber = data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
         if (!orderNumber) {
@@ -367,11 +338,7 @@ const server = http.createServer((req, res) => {
         }
 
         ordersDb.delete(orderNumber);
-        const orderFilePath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
-        if (fs.existsSync(orderFilePath)) {
-          fs.unlinkSync(orderFilePath);
-          console.log(`[ADMIN] Comprobante ${orderNumber}.pdf eliminado de ./orders/ y DB por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
-        }
+        console.log(`[ADMIN] Comprobante ${orderNumber} eliminado de la DB por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado.` }));
@@ -399,6 +366,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ hasActive: false }));
         return;
       }
+
 
       // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB CON LOG DE EMAIL)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
@@ -496,19 +464,17 @@ const server = http.createServer((req, res) => {
         }
 
         const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-        const targetPath = path.join(ORDERS_DIR, cleanName);
-        fs.writeFileSync(targetPath, buffer);
-
         const orderNumber = cleanName.replace('.pdf', '');
         const email = userEmail || processEnv.ADMIN_EMAIL;
 
         registerOrderInDb(orderNumber, cleanName, pdfText, pdfBase64, email);
 
-        console.log(`[ADMIN LOG] Comprobante PDF depositado en ./orders/${cleanName} y registrado en Base de Datos por ${email}`);
+        console.log(`[ADMIN LOG] Comprobante PDF registrado en Base de Datos por ${email}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y publicado en backlog' }));
         return;
       }
+
 
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Ruta no encontrada' }));
