@@ -28,8 +28,7 @@
         {
           "cameraPermission": "Phone-Ware necesita acceso a la cámara para escanear códigos de barras de los productos en depósito."
         }
-      ],
-      "expo-sqlite"
+      ]
     ]
   }
 }
