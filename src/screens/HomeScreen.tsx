@@ -58,10 +58,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
           <TouchableOpacity
             style={styles.btnUpload}
+            onPress={() => handleSelectSamplePdf('34512175.pdf')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.btnUploadText}>+ Cargar Comprobante 34512175.pdf (Lunfa - 3 U)</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btnUpload, styles.btnSecondary]}
             onPress={() => handleSelectSamplePdf('34409313.pdf')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnUploadText}>+ Cargar Comprobante 34409313.pdf</Text>
+            <Text style={styles.btnSecondaryText}>+ Cargar Comprobante 34409313.pdf</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
