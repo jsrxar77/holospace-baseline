@@ -117,13 +117,13 @@ async function loadKanbanData() {
     const res = await fetch('/api/kanban');
     const data = await res.json();
 
-    // 1. Render Backlog (Gris)
+    // 1. Render Backlog (Gris - Draggable hacia LISTO)
     const backlogList = document.getElementById('backlogList');
     document.getElementById('backlogCount').innerText = (data.backlog || []).length;
     backlogList.innerHTML = (!data.backlog || data.backlog.length === 0)
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin comprobantes pendientes</div>'
       : data.backlog.map(item => `
-        <div class="kanban-card" style="border-color: var(--card-border);" onclick="openInvoiceModal('${item.orderNumber}')">
+        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
           <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
             <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.orderNumber}', event)">✓ Pasar a Listo</button>
             <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.orderNumber}', event)">🗑️</button>
@@ -131,6 +131,7 @@ async function loadKanbanData() {
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes hacer clic o arrastrar esta tarjeta a LISTO</div>
         </div>
       `).join('');
 
@@ -278,6 +279,36 @@ async function markOrderBacklog(orderNumber, event) {
 }
 
 
+// MANEJADORES DE DRAG AND DROP (ARRASTRAR DE BACKLOG A LISTO)
+function handleDragStart(event, orderNumber) {
+  event.dataTransfer.setData('text/plain', orderNumber);
+  event.dataTransfer.effectAllowed = 'move';
+}
+
+function allowDrop(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+}
+
+async function handleDropToListo(event) {
+  event.preventDefault();
+  const orderNumber = event.dataTransfer.getData('text/plain');
+  if (orderNumber) {
+    await markOrderReady(orderNumber, event);
+  }
+}
+
+async function markOrderReadyAndCloseModal(orderNumber) {
+  closeInvoiceModal();
+  await markOrderReady(orderNumber);
+}
+
+async function markOrderBacklogAndCloseModal(orderNumber) {
+  closeInvoiceModal();
+  await markOrderBacklog(orderNumber);
+}
+
+
 // DETALLE COMPLETO DE COMPROBANTE Y MARCA DE AGUA
 async function openInvoiceModal(orderNumber) {
   try {
@@ -311,6 +342,12 @@ async function openInvoiceModal(orderNumber) {
       </div>
     `).join('');
 
+    const statusActionButton = order.status === 'BACKLOG'
+      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 10px 16px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.orderNumber}')">✓ VALIDAR Y PASAR A LISTO</button>`
+      : order.status === 'READY'
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.orderNumber}')">↩️ DEVOLVER A BACKLOG</button>`
+      : '';
+
     const invoiceHtml = `
       <div class="invoice-card">
         <div class="invoice-header">
@@ -319,11 +356,14 @@ async function openInvoiceModal(orderNumber) {
             <div style="font-size: 24px; font-weight: 900; color: var(--emerald);">COMPROBANTE #${order.orderNumber}</div>
             <div style="font-size: 15px; margin-top: 4px;">Cliente: <strong>${order.clientName}</strong> ${order.contactPerson ? `(${order.contactPerson})` : ''}</div>
           </div>
-          <div style="text-align: right;">
+          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
             <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate || order.issueDate}</div>
             <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${order.status}</div>
             <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">👤 Usuario Asignado: ${order.operatorEmail}</div>
-            <button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="downloadPdf('${order.orderNumber}')">⬇️ Descargar PDF de la Orden</button>
+            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+              <button class="btn-secondary" style="font-size: 13px; padding: 8px 14px;" onclick="downloadPdf('${order.orderNumber}')">⬇️ Descargar PDF</button>
+              ${statusActionButton}
+            </div>
           </div>
         </div>
 
