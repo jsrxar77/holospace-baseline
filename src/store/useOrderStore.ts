@@ -41,7 +41,38 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
-      set({ orders: savedOrders, operatorId: fileWorkflowService.getOperatorId() });
+      const opId = fileWorkflowService.getOperatorId();
+
+      // Auto-detección de pedido activo asignado en ./delivery/doing/
+      const activeDoing = await fileWorkflowService.getActiveDoingOrder();
+      let restoredActiveOrder: Order | null = null;
+
+      if (activeDoing.hasActive && activeDoing.orderNumber) {
+        const targetFileName = activeDoing.pdfFileName || `${activeDoing.orderNumber}-${opId}.pdf`;
+        const existingInDb = savedOrders.find(
+          (o) => o.orderNumber === activeDoing.orderNumber && o.status !== 'CLOSED' && o.status !== 'PARTIAL_DISPATCH'
+        );
+
+        if (existingInDb) {
+          restoredActiveOrder = existingInDb;
+        } else {
+          const parsed = await parsePdfVoucher(targetFileName);
+          restoredActiveOrder = {
+            ...parsed,
+            orderNumber: activeDoing.orderNumber,
+            pdfFileName: targetFileName,
+            status: 'SCANNING'
+          };
+          await dbService.saveOrder(restoredActiveOrder);
+        }
+        console.log(`[STORE] Auto-recuperado pedido #${activeDoing.orderNumber} en proceso al iniciar la app.`);
+      }
+
+      set({
+        orders: savedOrders,
+        activeOrder: restoredActiveOrder || get().activeOrder,
+        operatorId: opId
+      });
     } catch (e) {
       console.log('Error loading initial orders:', e);
     }

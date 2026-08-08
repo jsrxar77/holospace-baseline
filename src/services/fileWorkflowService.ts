@@ -33,6 +33,22 @@ export const fileWorkflowService = {
     setOperatorName(name);
   },
 
+  // Auto-detectar si el operario tiene un pedido activo tomado en ./delivery/doing/
+  getActiveDoingOrder: async (): Promise<{ hasActive: boolean; orderNumber?: string; pdfFileName?: string }> => {
+    const operatorId = getHybridOperatorId();
+    try {
+      const response = await fetch(`${SERVER_URL}/api/active-order?operatorId=${operatorId}`);
+      const data = await response.json();
+      if (data && data.hasActive) {
+        console.log(`[AUTO-DETECCIÓN PROCESO] Encontrado pedido en doing: #${data.orderNumber} (${data.pdfFileName})`);
+        return { hasActive: true, orderNumber: data.orderNumber, pdfFileName: data.pdfFileName };
+      }
+    } catch (e) {
+      console.log('Error llamando a auto-detección de active-order:', e);
+    }
+    return { hasActive: false };
+  },
+
   // Acción: Tomar Pedido (Mover físicamente en el disco duro del Mac de delivery/backlog a delivery/doing)
   claimOrder: async (orderNumber: string): Promise<{ success: boolean; targetFileName: string; operatorId: string }> => {
     const operatorId = getHybridOperatorId();

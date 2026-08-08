@@ -34,6 +34,37 @@ const server = http.createServer((req, res) => {
     try {
       const data = body ? JSON.parse(body) : {};
 
+      // 0. CONSULTAR PEDIDO ACTIVO EN PROCESO (Doing Auto-Detection)
+      if ((req.url.startsWith('/api/active-order') || req.url === '/api/check-active-order')) {
+        let operatorId = data.operatorId;
+        if (!operatorId && req.url.includes('operatorId=')) {
+          operatorId = req.url.split('operatorId=')[1].split('&')[0];
+        }
+
+        if (fs.existsSync(DOING_DIR)) {
+          const doingFiles = fs.readdirSync(DOING_DIR).filter((f) => f.endsWith('.pdf'));
+          let activeFile = null;
+          if (operatorId) {
+            activeFile = doingFiles.find((f) => f.includes(operatorId));
+          }
+          if (!activeFile && doingFiles.length > 0) {
+            activeFile = doingFiles[0];
+          }
+
+          if (activeFile) {
+            const orderNumber = activeFile.split('-')[0];
+            console.log(`[DISCO REAL MAC] Auto-detectado pedido activo en doing: ${activeFile} (Pedido #${orderNumber})`);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ hasActive: true, orderNumber, pdfFileName: activeFile }));
+            return;
+          }
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ hasActive: false }));
+        return;
+      }
+
       // 1. TOMAR PEDIDO: Mover físicamente de ./delivery/backlog a ./delivery/doing/
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId } = data;
