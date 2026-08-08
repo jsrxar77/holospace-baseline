@@ -208,3 +208,18 @@ La interfaz de usuario ha sido concebida bajo estándares exigentes de ergonomí
 - **Then** el archivo PDF se traslada a `./delivery/done/34409313-JAVIER-DEV82.pdf`,
 - **And** se incrusta el sello digital / marca de agua conteniendo: `AUDITADO POR: JAVIER-DEV82 | FECHA: DD/MM/YYYY HH:mm | ESTADO: 100% OK`.
 
+---
+
+### US-10: Entorno de Trabajo Limpio y Exclusividad de Pedido Activo (Single Order Scope)
+**Como** operario de depósito,  
+**Quiero** ver únicamente mi pedido activo en pantalla sin interferencia ni contaminación visual de otros pedidos parseados en el sistema,  
+**Para** enfocarme al 100% en la auditoría del comprobante que estoy procesando.
+
+**Criterios de Aceptación:**
+- **Given** que tengo un pedido asignado en `./delivery/doing/34512175-JAVIER-DEV82.pdf`,
+- **When** navego por la aplicación,
+- **Then** la app muestra EXCLUSIVAMENTE los productos y el estado de ese pedido activo,
+- **And** NO muestra historial cruzado ni listas de productos de otros pedidos parseados,
+- **And** en la pantalla principal muestra únicamente el acceso a mi pedido en proceso o la lista de comprobantes libres en `./delivery/backlog/` con bloqueo de toma hasta liberar el actual.
+
+

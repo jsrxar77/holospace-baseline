@@ -2,22 +2,38 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { Header } from '../components/Header';
 import { useOrderStore } from '../store/useOrderStore';
-import { Order } from '../types';
 
 interface HomeScreenProps {
   onNavigateToSummary: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
-  const { orders, loadInitialOrders, loadPdfOrder, setActiveOrder } = useOrderStore();
+  const { activeOrder, operatorId, loadInitialOrders, releaseOrder } = useOrderStore();
 
   useEffect(() => {
     loadInitialOrders();
   }, []);
 
   const handleClaimOrder = async (orderNumber: string) => {
+    // Regla estricta: 1 operario = 1 pedido activo en doing
+    if (activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
+      Alert.alert(
+        'Límite de Pedido Activo (1 a 1)',
+        `Ya tienes el Pedido #${activeOrder.orderNumber} en proceso.\n\nDebes finalizar la auditoría o liberarlo a ./delivery/backlog/ antes de tomar un pedido nuevo.`,
+        [
+          { text: 'Ir al Pedido Activo', onPress: onNavigateToSummary },
+          {
+            text: 'Liberar Actual',
+            style: 'destructive',
+            onPress: () => handleReleaseCurrentOrder()
+          }
+        ]
+      );
+      return;
+    }
+
     try {
-      const { claimOrder, operatorId } = useOrderStore.getState();
+      const { claimOrder } = useOrderStore.getState();
       const claimedOrder = await claimOrder(orderNumber);
       Alert.alert(
         'Pedido Asignado',
@@ -36,16 +52,65 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     }
   };
 
-  const handleOpenOrder = (order: Order) => {
-    setActiveOrder(order);
-    onNavigateToSummary();
+  const handleReleaseCurrentOrder = async () => {
+    if (!activeOrder) return;
+    Alert.alert(
+      'Liberar Pedido',
+      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl archivo volverá a ./delivery/backlog/ limpio para que otro operario lo tome.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, Liberar',
+          style: 'destructive',
+          onPress: async () => {
+            await releaseOrder(activeOrder.orderNumber);
+            Alert.alert('Pedido Liberado', `El Pedido #${activeOrder.orderNumber} fue devuelto al backlog.`);
+          }
+        }
+      ]
+    );
   };
+
+  const hasActiveDoingOrder = activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH';
 
   return (
     <View style={styles.container}>
-      <Header title="Phone-Ware Depósito" badgeText="OP: JAVIER-DEV82" />
+      <Header title="Phone-Ware Depósito" badgeText={`OP: ${operatorId}`} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
+        {hasActiveDoingOrder ? (
+          <View style={styles.activeDoingCard}>
+            <View style={styles.activeBadgeCircle}>
+              <Text style={styles.activeBadgeText}>⚡</Text>
+            </View>
+            <Text style={styles.activeTitle}>TU PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
+            <Text style={styles.activeSubtitle}>
+              Ubicación: ./delivery/doing/{activeOrder.pdfFileName}
+            </Text>
+            <Text style={styles.activeProgressText}>
+              Verificado: {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
+              {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
+            </Text>
+
+            <TouchableOpacity
+              style={styles.btnContinue}
+              onPress={onNavigateToSummary}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnContinueText}>CONTINUAR AUDITORÍA #{activeOrder.orderNumber}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.btnReleaseHome}
+              onPress={handleReleaseCurrentOrder}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.btnReleaseHomeText}>🔓 LIBERAR PEDIDO A BACKLOG</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {/* Backlog Section Card */}
         <View style={styles.uploadCard}>
           <View style={styles.pdfIconCircle}>
@@ -53,88 +118,40 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           </View>
           <Text style={styles.uploadTitle}>Pedidos Libres en ./delivery/backlog/</Text>
           <Text style={styles.uploadSubtitle}>
-            Presiona "TOMAR PEDIDO" para asignarlo a tu dispositivo (JAVIER-DEV82) y moverlo a ./delivery/doing/:
+            {hasActiveDoingOrder
+              ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
+              : `Presiona "TOMAR PEDIDO" para asignarlo a tu dispositivo (${operatorId}) y moverlo a ./delivery/doing/:`}
           </Text>
 
           <TouchableOpacity
-            style={styles.btnUpload}
+            style={[styles.btnUpload, hasActiveDoingOrder && styles.btnDisabled]}
             onPress={() => handleClaimOrder('34512175')}
-            activeOpacity={0.8}
+            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
           >
-            <Text style={styles.btnUploadText}>TOMAR PEDIDO 34512175</Text>
+            <Text style={[styles.btnUploadText, hasActiveDoingOrder && styles.textDisabled]}>
+              TOMAR PEDIDO 34512175 (Lunfa - 3 U)
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btnUpload, styles.btnSecondary]}
+            style={[styles.btnUpload, styles.btnSecondary, hasActiveDoingOrder && styles.btnDisabled]}
             onPress={() => handleClaimOrder('34409313')}
-            activeOpacity={0.8}
+            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
           >
-            <Text style={styles.btnSecondaryText}>TOMAR PEDIDO 34409313</Text>
+            <Text style={[styles.btnSecondaryText, hasActiveDoingOrder && styles.textDisabled]}>
+              TOMAR PEDIDO 34409313 (Diego Poke)
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btnUpload, styles.btnSecondary]}
+            style={[styles.btnUpload, styles.btnSecondary, hasActiveDoingOrder && styles.btnDisabled]}
             onPress={() => handleClaimOrder('34512173')}
-            activeOpacity={0.8}
+            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
           >
-            <Text style={styles.btnSecondaryText}>TOMAR PEDIDO 34512173</Text>
+            <Text style={[styles.btnSecondaryText, hasActiveDoingOrder && styles.textDisabled]}>
+              TOMAR PEDIDO 34512173 (Diego Pascual)
+            </Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Section Title */}
-        <Text style={styles.sectionTitle}>Pedidos Recientes en Depósito</Text>
-
-        {/* Orders History List */}
-        <View style={styles.ordersList}>
-          {orders.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>No hay pedidos cargados recientemente.</Text>
-            </View>
-          ) : (
-            orders.map((order) => {
-              const isClosed = order.status === 'CLOSED' || order.status === 'PARTIAL_DISPATCH';
-              const isVerified = order.status === 'VERIFIED';
-              return (
-                <TouchableOpacity
-                  key={order.id}
-                  style={styles.orderCard}
-                  onPress={() => handleOpenOrder(order)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.orderInfo}>
-                    <Text style={styles.orderNumber}>Pedido #{order.orderNumber}</Text>
-                    <Text style={styles.orderClient}>Cliente: {order.clientName}</Text>
-                    <Text style={styles.orderDate}>Fecha: {order.issueDate}</Text>
-                  </View>
-
-                  <View style={styles.orderBadgeGroup}>
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        isClosed && styles.badgeClosed,
-                        isVerified && styles.badgeVerified,
-                        !isClosed && !isVerified && styles.badgePending
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.badgeText,
-                          isClosed && styles.badgeTextClosed,
-                          isVerified && styles.badgeTextVerified,
-                          !isClosed && !isVerified && styles.badgeTextPending
-                        ]}
-                      >
-                        {order.status}
-                      </Text>
-                    </View>
-                    <Text style={styles.itemsCountText}>
-                      {order.totalItemsScanned} / {order.totalItemsRequired} U
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })
-          )}
         </View>
       </ScrollView>
     </View>
@@ -149,6 +166,74 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     gap: 20
+  },
+  activeDoingCard: {
+    backgroundColor: '#161B22',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+    gap: 12
+  },
+  activeBadgeCircle: {
+    width: 56,
+    height: 56,
+    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  activeBadgeText: {
+    fontSize: 24
+  },
+  activeTitle: {
+    color: '#3B82F6',
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center'
+  },
+  activeSubtitle: {
+    color: '#8B949E',
+    fontSize: 13,
+    textAlign: 'center'
+  },
+  activeProgressText: {
+    color: '#00E676',
+    fontSize: 16,
+    fontWeight: '900'
+  },
+  btnContinue: {
+    width: '100%',
+    minHeight: 64, // Ergonomía > 64px
+    backgroundColor: '#00E676',
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16
+  },
+  btnContinueText: {
+    color: '#000000',
+    fontSize: 17,
+    fontWeight: '900',
+    textAlign: 'center'
+  },
+  btnReleaseHome: {
+    width: '100%',
+    minHeight: 52,
+    backgroundColor: '#21262D',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16
+  },
+  btnReleaseHomeText: {
+    color: '#F59E0B',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center'
   },
   uploadCard: {
     backgroundColor: '#161B22',
@@ -175,8 +260,9 @@ const styles = StyleSheet.create({
   },
   uploadTitle: {
     color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '900'
+    fontSize: 18,
+    fontWeight: '900',
+    textAlign: 'center'
   },
   uploadSubtitle: {
     color: '#8B949E',
@@ -191,6 +277,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
     marginTop: 6
   },
   btnUploadText: {
@@ -212,81 +299,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center'
   },
-  sectionTitle: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8
-  },
-  ordersList: {
-    gap: 12
-  },
-  emptyCard: {
+  btnDisabled: {
     backgroundColor: '#161B22',
-    padding: 20,
-    borderRadius: 16,
-    alignItems: 'center'
-  },
-  emptyText: {
-    color: '#8B949E',
-    fontSize: 14
-  },
-  orderCard: {
-    backgroundColor: '#161B22',
-    borderWidth: 1,
     borderColor: '#30363D',
-    borderRadius: 20,
-    padding: 18,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    opacity: 0.5
   },
-  orderInfo: {
-    gap: 4
-  },
-  orderNumber: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900'
-  },
-  orderClient: {
-    color: '#8B949E',
-    fontSize: 14,
-    fontWeight: '700'
-  },
-  orderDate: {
-    color: '#8B949E',
-    fontSize: 12
-  },
-  orderBadgeGroup: {
-    alignItems: 'flex-end',
-    gap: 6
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12
-  },
-  badgePending: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)'
-  },
-  badgeVerified: {
-    backgroundColor: '#00E676'
-  },
-  badgeClosed: {
-    backgroundColor: '#3B82F6'
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '900'
-  },
-  badgeTextPending: { color: '#F59E0B' },
-  badgeTextVerified: { color: '#000000' },
-  badgeTextClosed: { color: '#FFFFFF' },
-  itemsCountText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900'
+  textDisabled: {
+    color: '#8B949E'
   }
 });

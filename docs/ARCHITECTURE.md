@@ -252,3 +252,8 @@ Para soportar múltiples operarios trabajando en paralelo en el mismo depósito,
      - `AUDITADO POR`: `{OPERARIO}-{DISPOSITIVO}`
      - `FECHA Y HORA`: `YYYY-MM-DD HH:mm:ss`
      - `ESTADO`: `VERIFICADO 100% OK` (o `DESPACHO PARCIAL OK - PIN SUPERVISOR`).
+
+5. **Exclusividad del Espacio de Trabajo Limpio (Single Active Order Scope)**:
+   - La interfaz de la aplicación NO mostrará listas de otros pedidos parseados ni mantendrá instancias de comprobantes cruzados en la vista principal.
+   - La experiencia visual estará 100% dedicada y limpia para el pedido único asignado al operario en `./delivery/doing/`.
+   - Si no hay pedido asignado, muestra únicamente la lista limpia de comprobantes libres en `./delivery/backlog/`.
