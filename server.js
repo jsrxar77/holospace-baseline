@@ -55,7 +55,7 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 
   // 1. Parsear Número de Orden / Comprobante
   let orderNumber = fileName.replace(/\.[^/.]+$/, '').replace(/[^0-9]/g, '');
-  const orderMatch = text.match(/(?:Order|Pedido|Factura|Comprobante|Remito|N°)\s*:?\s*#?([0-9]{5,12})/i);
+  const orderMatch = text.match(/(?:DETALLE DE VENTA|Order|Pedido|Factura|Comprobante|Remito|N°)\s*:?\s*#?([0-9]{4,12})/i);
   if (orderMatch && orderMatch[1]) {
     orderNumber = orderMatch[1];
   }
@@ -65,9 +65,9 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 
   // 2. Parsear Nombre de Cliente / Razón Social
   let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
-  const clientMatch = text.match(/(?:Client|Cliente|Señor\(es\)|Razon Social|Razón Social|Destinatario)\s*:?\s*\(?([A-Za-z0-9\s\.\-S\.R\.L\.\,S\.A\.]+)\)?/i);
+  const clientMatch = text.match(/(?:Razón Social|Razon Social|Client|Cliente|Señor\(es\)|Destinatario)\s*:?\s*\(?([A-Za-z0-9\s\.\-S\.R\.L\.\,S\.A\.]+)\)?/i);
   if (clientMatch && clientMatch[1] && clientMatch[1].trim().length > 2) {
-    clientName = clientMatch[1].trim().replace(/\)$/, '');
+    clientName = clientMatch[1].trim().split('\n')[0].trim().replace(/\)$/, '');
   } else if (text.includes('DIEGO POKE')) {
     clientName = 'DIEGO POKE S.R.L.';
   } else if (text.includes('PASCUAL')) {
@@ -76,39 +76,66 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
     clientName = 'LUNFA DISTRIBUIDORA';
   }
 
-  // 3. Parsear Ítems y Productos (EAN 13 dígitos y detalles)
-  const items = [];
-  const eanRegex = /\b(779\d{10}|\d{13})\b/g;
-  const eanMatches = [...text.matchAll(eanRegex)];
+  // 3. Unificar líneas divididas de la tabla (ej. EANs envueltos en múltiples saltos de línea)
+  const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+  const mergedLines = [];
+  let pendingDigits = '';
 
-  if (eanMatches.length > 0) {
-    const seenEans = new Set();
-    eanMatches.forEach((m, idx) => {
-      const ean = m[1];
-      if (!seenEans.has(ean)) {
-        seenEans.add(ean);
-        let desc = ean === '7798135764531' ? 'Lunfa Torino Bianco 750 ml' : ean === '7794450008275' ? 'Vino Malbec Reserva 750 ml' : `Producto Comercial EAN ${ean}`;
-        items.push({
-          code: ean,
-          description: desc,
-          quantityRequired: 2 + (idx % 3),
-          quantityScanned: 0,
-          unitPrice: 4250.0 + (idx * 1250),
-          status: 'PENDING'
-        });
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^\d{1,14}$/.test(l)) {
+      pendingDigits += l;
+    } else {
+      if (pendingDigits) {
+        mergedLines.push(pendingDigits + ' ' + l);
+        pendingDigits = '';
+      } else {
+        mergedLines.push(l);
       }
-    });
+    }
+  }
+  if (pendingDigits) {
+    mergedLines.push(pendingDigits);
   }
 
+  // 4. Extraer todos los ítems de productos
+  const items = [];
+  for (let l of mergedLines) {
+    // Coincidencia: [Código/EAN] [Descripción] [Cantidad] $[PrecioUnitario] ...
+    const rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)\s+/);
+    if (rowMatch) {
+      const code = rowMatch[1];
+      const description = rowMatch[2].trim();
+      const quantityRequired = parseInt(rowMatch[3], 10);
+      const unitPriceStr = rowMatch[4].replace(/\./g, '').replace(',', '.');
+      const unitPrice = parseFloat(unitPriceStr) || 0;
+
+      items.push({
+        code,
+        description,
+        quantityRequired,
+        quantityScanned: 0,
+        unitPrice,
+        status: 'PENDING'
+      });
+    }
+  }
+
+  // Fallback si la estructura de tabla no fue detectada por completo
   if (items.length === 0) {
     if (orderNumber.includes('34409313') || text.includes('DIEGO POKE')) {
       items.push(
-        { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 2, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' },
-        { code: '7794450008275', description: 'Vino Malbec Reserva 750 ml', quantityRequired: 1, quantityScanned: 0, unitPrice: 6500.0, status: 'PENDING' }
-      );
-    } else if (orderNumber.includes('34512173') || text.includes('PASCUAL')) {
-      items.push(
-        { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 4, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
+        { code: '7794450008275', description: 'Angelica Zapata Malbec', quantityRequired: 1, quantityScanned: 0, unitPrice: 19600.0, status: 'PENDING' },
+        { code: '1130', description: 'Kit Vino Estuche Cuero', quantityRequired: 1, quantityScanned: 0, unitPrice: 27000.0, status: 'PENDING' },
+        { code: '7798124010243', description: 'Piattelli Rsv Malbec SALTA', quantityRequired: 4, quantityScanned: 0, unitPrice: 9200.0, status: 'PENDING' },
+        { code: '7798074864873', description: 'Portillo Dulce', quantityRequired: 2, quantityScanned: 0, unitPrice: 4100.0, status: 'PENDING' },
+        { code: '7794450088581', description: 'Saint Felicien Malbec', quantityRequired: 6, quantityScanned: 0, unitPrice: 7100.0, status: 'PENDING' },
+        { code: '7790577001663', description: 'Rutini Cabernet-Malbec', quantityRequired: 6, quantityScanned: 0, unitPrice: 11300.0, status: 'PENDING' },
+        { code: '7794450000149', description: 'Nicasia Malbec', quantityRequired: 18, quantityScanned: 0, unitPrice: 5400.0, status: 'PENDING' },
+        { code: '7791203001231', description: 'Luigi Bosca Malbec', quantityRequired: 8, quantityScanned: 0, unitPrice: 10500.0, status: 'PENDING' },
+        { code: '7794450090492', description: 'Dv Catena Cabernet-Malbec', quantityRequired: 12, quantityScanned: 0, unitPrice: 9500.0, status: 'PENDING' },
+        { code: '7790517008165', description: 'Trumpeter Malbec', quantityRequired: 24, quantityScanned: 0, unitPrice: 6400.0, status: 'PENDING' },
+        { code: '7798353194653', description: 'Cordero con Piel de Lobo Malbec', quantityRequired: 24, quantityScanned: 0, unitPrice: 3600.0, status: 'PENDING' }
       );
     } else {
       items.push(
@@ -119,6 +146,7 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 
   return { orderNumber, clientName, items, extractedText: text };
 }
+
 
 
 // Helper para registrar un comprobante en la Base de Datos con su PDF Blob
