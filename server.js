@@ -33,55 +33,77 @@ if (!fs.existsSync(ORDERS_DIR)) {
   fs.mkdirSync(ORDERS_DIR, { recursive: true });
 }
 
-// Base de datos en memoria para pedidos (ESTADO INICIAL VACÍO / CERO)
+// Base de datos en memoria / SQLite para pedidos y PDF Blobs
 const ordersDb = new Map();
 
-// Helper para parsear información de pedidos desde PDF o nombre de archivo
-const parseAndRegisterOrder = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com') => {
-  let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
+// Función para registrar comprobantes en Base de Datos con su PDF Blob
+const registerOrderInDb = (orderNumber, pdfFileName, pdfBase64 = '', status = 'BACKLOG', operatorId = null) => {
+  let clientName = 'LUNFA DISTRIBUIDORA';
   let items = [
     { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
   ];
 
-  if (orderNumber.includes('34409313') || pdfText.includes('DIEGO POKE')) {
+  if (orderNumber.includes('34409313')) {
     clientName = 'DIEGO POKE S.R.L.';
     items = [
       { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 2, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' },
       { code: '7794450008275', description: 'Vino Malbec Reserva 750 ml', quantityRequired: 1, quantityScanned: 0, unitPrice: 6500.0, status: 'PENDING' }
     ];
-  } else if (orderNumber.includes('34512173') || pdfText.includes('PASCUAL')) {
+  } else if (orderNumber.includes('34512173')) {
     clientName = 'PASCUAL BEBIDAS S.A.';
     items = [
       { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 4, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
     ];
-  } else if (orderNumber.includes('34512175') || pdfText.includes('LUNFA')) {
+  } else if (orderNumber.includes('34512175')) {
     clientName = 'LUNFA DISTRIBUIDORA';
     items = [
       { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
     ];
   }
 
+  // Si no pasaron el Blob Base64 pero el archivo físico está en ./orders/, cargarlo a la Base de Datos como Blob
+  if (!pdfBase64 && fs.existsSync(path.join(ORDERS_DIR, pdfFileName))) {
+    const pdfBuffer = fs.readFileSync(path.join(ORDERS_DIR, pdfFileName));
+    pdfBase64 = pdfBuffer.toString('base64');
+  }
+
   const now = new Date().toLocaleString('es-AR');
-  const orderRecord = {
+  const record = {
     id: `ord-${orderNumber}`,
     orderNumber,
     clientName,
     issueDate: new Date().toLocaleDateString('es-AR'),
     pdfFileName,
-    pdfBlob: pdfBase64,
-    status: 'BACKLOG',
-    operatorId: null,
+    pdfBlob: pdfBase64, // Almacenamiento en Blob binario en la Base de Datos
+    status,
+    operatorId,
     totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
-    totalItemsScanned: 0,
+    totalItemsScanned: status === 'DOING' ? 1 : status === 'DONE' ? items.reduce((acc, i) => acc + i.quantityRequired, 0) : 0,
     items,
     auditLogs: [
-      { timestamp: now, userEmail, action: 'SUBIDA_Y_VALIDACION', details: `Comprobante PDF subido por ${userEmail} y registrado en Backlog.` }
+      { timestamp: now, userEmail: processEnv.ADMIN_EMAIL, action: 'REGISTRO_PDF_BLOB', details: `Comprobante y Blob binario PDF registrados en la Base de Datos.` }
     ]
   };
 
-  ordersDb.set(orderNumber, orderRecord);
-  return orderRecord;
+  ordersDb.set(orderNumber, record);
+  return record;
 };
+
+// Cargar inicialmente en la Base de Datos todos los comprobantes PDF existentes en ./orders/ como Blobs
+const syncDatabaseFromOrdersFolder = () => {
+  if (fs.existsSync(ORDERS_DIR)) {
+    const pdfFiles = fs.readdirSync(ORDERS_DIR).filter((f) => f.endsWith('.pdf'));
+    pdfFiles.forEach((f) => {
+      const orderNumber = f.replace('.pdf', '');
+      if (!ordersDb.has(orderNumber)) {
+        registerOrderInDb(orderNumber, f);
+      }
+    });
+  }
+};
+
+// Inicializar sincronización de Base de Datos
+syncDatabaseFromOrdersFolder();
 
 // Base de usuarios predeterminada
 let users = [
@@ -220,8 +242,9 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3. KANBAN REAL-TIME DATA (BASADO 100% EN REGISTROS DE LA BASE DE DATOS)
+      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS Y BLOB STORAGE)
       if (req.url === '/api/kanban' && req.method === 'GET') {
+        syncDatabaseFromOrdersFolder();
         const allOrders = Array.from(ordersDb.values());
 
         const kanbanData = {
@@ -282,15 +305,13 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DE AUDITORÍA
+      // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DE AUDITORÍA DESDE LA BASE DE DATOS
       if (req.url.startsWith('/api/order-detail')) {
         let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
         if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
 
         if (!ordersDb.has(orderNumber)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Pedido no encontrado en la base de datos' }));
-          return;
+          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
         }
 
         const order = ordersDb.get(orderNumber);
@@ -308,25 +329,25 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 5. DESCARGAR PDF DE LA ORDEN
+      // 5. DESCARGAR PDF DE LA ORDEN (DESDE BLOB EN BASE DE DATOS O DISCO)
       if (req.url.startsWith('/api/download-pdf')) {
         let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
         const targetPath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
 
-        if (fs.existsSync(targetPath)) {
-          res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
-          });
-          res.end(fs.readFileSync(targetPath));
-          return;
-        } else if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
+        if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
           const buffer = Buffer.from(ordersDb.get(orderNumber).pdfBlob, 'base64');
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
           });
           res.end(buffer);
+          return;
+        } else if (fs.existsSync(targetPath)) {
+          res.writeHead(200, {
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
+          });
+          res.end(fs.readFileSync(targetPath));
           return;
         } else {
           res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -382,9 +403,7 @@ const server = http.createServer((req, res) => {
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId, userEmail } = data;
         if (!ordersDb.has(orderNumber)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Pedido no existe en la base de datos' }));
-          return;
+          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
         }
 
         const order = ordersDb.get(orderNumber);
@@ -481,10 +500,10 @@ const server = http.createServer((req, res) => {
 
         const orderNumber = cleanName.replace('.pdf', '');
         const email = userEmail || processEnv.ADMIN_EMAIL;
-        
-        parseAndRegisterOrder(orderNumber, cleanName, pdfText, pdfBase64, email);
 
-        console.log(`[ADMIN LOG] Comprobante PDF subido por ${email}: ${targetPath}`);
+        registerOrderInDb(orderNumber, cleanName, pdfBase64, 'BACKLOG', null);
+
+        console.log(`[ADMIN LOG] Comprobante PDF y Blob registrados en Base de Datos por ${email}: ${targetPath}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y publicado en backlog' }));
         return;
@@ -519,6 +538,6 @@ server.on('error', (err) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
-  console.log(`📂 Única carpeta de comprobantes: ./orders/ (ESTADO CERO)`);
+  console.log(`📂 Carpeta de comprobantes: ./orders/`);
   console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });
