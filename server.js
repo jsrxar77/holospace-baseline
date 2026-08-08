@@ -498,6 +498,23 @@ const server = http.createServer((req, res) => {
   });
 });
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`⚠️ Puerto ${PORT} ocupado. Liberando puerto automáticamente...`);
+    try {
+      const { execSync } = require('child_process');
+      execSync(`npx -y kill-port ${PORT}`);
+      setTimeout(() => {
+        server.listen(PORT, '0.0.0.0');
+      }, 1000);
+    } catch (e) {
+      console.error(`Error al liberar el puerto ${PORT}:`, e);
+    }
+  } else {
+    console.error('Server error:', err);
+  }
+});
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
   console.log(`📂 Única carpeta de comprobantes: ./orders/`);
