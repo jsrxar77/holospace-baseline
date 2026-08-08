@@ -263,3 +263,49 @@ Para soportar múltiples operarios trabajando en paralelo en el mismo depósito,
    - Durante la secuencia de inicio de la aplicación (`loadInitialOrders`), el sistema consulta automáticamente la existencia de comprobantes asignados al identificador del operario en `./delivery/doing/`.
    - Si detecta un archivo como `./delivery/doing/34409313-JAVIER-DEV82.pdf`, restaura automáticamente el Pedido `#34409313` como `activeOrder` activo.
    - Esto garantiza resistencia total a cierres forzados de la app o reinicios de dispositivo, impidiendo que el operario pueda tomar pedidos adicionales hasta liberar o finalizar el actual.
+
+---
+
+## 9. Aplicación Web de Administración & Tablero Kanban
+
+El sistema cuenta con una plataforma Web autónoma (accesible vía navegador Web/Móvil por URL) construida bajo estándares modernos de React/TypeScript y un servidor Node/Express (`server.js`).
+
+- **Tablero Kanban en Tiempo Real**:
+  - **Columna Backlog**: Visualiza comprobantes libres en `./delivery/backlog/`.
+  - **Columna Doing**: Visualiza pedidos tomados en `./delivery/doing/`, destacando el **Email/Nombre del Operario** y el **% de avance escaneado**.
+  - **Columna Done**: Visualiza pedidos auditados y archivados en `./delivery/done/` con sus marcas de agua.
+
+---
+
+## 10. Sistema de Autenticación & Control de Acceso (Email + Password)
+
+- **Gestión de Roles**:
+  - `ADMIN`: Acceso total al Panel Kanban Web, carga de comprobantes PDF y administración de usuarios.
+  - `OPERATOR`: Acceso a la App Móvil para tomar, escanear, liberar y despachar pedidos.
+
+- **Configuración Inicial en `.env`**:
+  - `ADMIN_EMAIL=admin@drinklovers.com`
+  - `ADMIN_PASSWORD=drinklovers2026!`
+
+- **Autenticación en App Móvil**:
+  - Los operarios inician sesión con Email y Contraseña. El identificador del dispositivo (`operatorId`) se asocia automáticamente a la cuenta del operario (ej: `javier@drinklovers.com -> JAVIER-DEV82`).
+
+---
+
+## 11. Pipeline de Carga y Validación Automática de PDF
+
+1. El Administrador carga un comprobante `.pdf` desde el Panel Web de Administración.
+2. El servidor valida inmediatamente la estructura del documento:
+   - Extracción de Número de Pedido, Cliente, Fecha e Ítems con códigos EAN.
+3. Si el PDF es **Válido**:
+   - Guarda los registros en la base de datos local SQLite.
+   - Deposita el comprobante en `./delivery/backlog/{numero-pedido}.pdf`.
+4. Si el PDF es **Inválido / Corrupto**:
+   - Se rechaza la carga devolviendo un error explícito.
+
+---
+
+## 12. Base de Datos como Fuente Única de la Verdad & PDF Auto-Healing
+
+- La base de datos SQLite (`phoneware.db`) almacena la totalidad del payload parseado del PDF y los registros de auditoría (`scan_logs`).
+- **Resiliencia (PDF Auto-Healing)**: Si un archivo PDF físico en `./delivery/doing/` se corrompe o elimina accidentalmente, el sistema **re-genera el comprobante automáticamente desde los datos de la base de datos** y lo restituye en su carpeta correspondiente sin interrumpir la operación del depósito.

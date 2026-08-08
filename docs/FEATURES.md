@@ -236,4 +236,56 @@ La interfaz de usuario ha sido concebida bajo estándares exigentes de ergonomí
 - **And** rehidrata automáticamente el Pedido `#34409313` como `activeOrder` manteniendo el progreso verificado,
 - **And** presenta la tarjeta "TU PEDIDO EN PROCESO #34409313" bloqueando la toma de nuevos pedidos de backlog.
 
+---
+
+### US-12: Autenticación de Usuarios y Operarios con Email y Password
+**Como** usuario del sistema (Administrador u Operario),  
+**Quiero** iniciar sesión con mi Email y Contraseña en la aplicación web o móvil,  
+**Para** asegurar el acceso restringido y vincular mis acciones de auditoría a mi perfil.
+
+**Criterios de Aceptación:**
+- **Given** que las credenciales iniciales de administrador se configuran en `.env` (`ADMIN_EMAIL=admin@drinklovers.com` y `ADMIN_PASSWORD=drinklovers2026!`),
+- **When** un usuario ingresa su email y contraseña correctos,
+- **Then** el sistema autentica el perfil y le otorga acceso según su rol (`ADMIN` o `OPERATOR`),
+- **And** los Administradores pueden crear nuevos perfiles de Administrador u Operario.
+
+---
+
+### US-13: Panel Kanban Web de Administración (Responsivo por URL)
+**Como** administrador de logística,  
+**Quiero** acceder por URL desde cualquier navegador web o teléfono al Panel Kanban de Administración,  
+**Para** monitorear en tiempo real los pedidos en Backlog, Doing (con operario y % de avance) y Done.
+
+**Criterios de Aceptación:**
+- **Given** que el administrador ha iniciado sesión en la plataforma Web,
+- **When** visualiza el tablero Kanban,
+- **Then** observa 3 columnas actualizadas en tiempo real: `Backlog`, `Doing` y `Done`,
+- **And** en la columna `Doing` visualiza la foto/email del operario trabajando y su % de avance.
+
+---
+
+### US-14: Carga y Validación Automática de Comprobantes PDF en Admin
+**Como** administrador,  
+**Quiero** subir nuevos comprobantes PDF arrastrándolos al Panel de Administración,  
+**Para** que el sistema extraiga y valide automáticamente todos los datos antes de publicarlo en Backlog.
+
+**Criterios de Aceptación:**
+- **Given** que el administrador sube un archivo `.pdf`,
+- **When** el servidor procesa el archivo,
+- **Then** valida que contenga número de pedido, cliente e ítems válidos con códigos EAN,
+- **And** si es válido lo deposita en `./delivery/backlog/{numero-pedido}.pdf` y lo registra en la base de datos,
+- **And** si es inválido rechaza la carga informando el error.
+
+---
+
+### US-15: Auto-Regeneración de PDF desde Base de Datos (PDF Self-Healing)
+**Como** sistema de almacenamiento resiliente,  
+**Quiero** que la base de datos SQLite contenga la totalidad de los datos del comprobante,  
+**Para** re-generar el archivo PDF automáticamente si este se borra o corrompe en la carpeta de trabajo.
+
+**Criterios de Aceptación:**
+- **Given** que un pedido se encuentra registrado en la base de datos `orders` y `order_items`,
+- **When** el archivo físico `.pdf` en `./delivery/doing/` no se encuentra presente o está corrupto,
+- **Then** el sistema regenera automáticamente el documento PDF desde los datos estructurados de SQLite.
+
 
