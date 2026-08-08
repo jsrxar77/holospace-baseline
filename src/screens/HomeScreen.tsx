@@ -15,24 +15,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     loadInitialOrders();
   }, []);
 
-  const handleSelectSamplePdf = async (fileName: string) => {
+  const handleClaimOrder = async (orderNumber: string) => {
     try {
-      const loadedOrder = await loadPdfOrder(fileName);
+      const { claimOrder, operatorId } = useOrderStore.getState();
+      const claimedOrder = await claimOrder(orderNumber);
       Alert.alert(
-        'Pedido Cargado',
-        `Se procesó el comprobante ${fileName} exitosamente (${loadedOrder.items.length} productos).`,
+        'Pedido Asignado',
+        `Has tomado el Pedido #${orderNumber}.\nEl archivo se movió a: ./delivery/doing/${orderNumber}-${operatorId}.pdf`,
         [
           {
-            text: 'Ir al Resumen',
+            text: 'Iniciar Auditoría',
             onPress: () => {
-              setActiveOrder(loadedOrder);
               onNavigateToSummary();
             }
           }
         ]
       );
     } catch (e) {
-      Alert.alert('Error', 'No se pudo procesar el archivo PDF.');
+      Alert.alert('Error', 'No se pudo tomar el pedido.');
     }
   };
 
@@ -43,41 +43,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   return (
     <View style={styles.container}>
-      <Header title="Phone-Ware Depósito" badgeText="Depósito #1" />
+      <Header title="Phone-Ware Depósito" badgeText="OP: JAVIER-DEV82" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Upload Card */}
+        {/* Backlog Section Card */}
         <View style={styles.uploadCard}>
           <View style={styles.pdfIconCircle}>
             <Text style={styles.pdfIconText}>PDF</Text>
           </View>
-          <Text style={styles.uploadTitle}>Cargar Pedido PDF</Text>
+          <Text style={styles.uploadTitle}>Pedidos Libres en ./delivery/backlog/</Text>
           <Text style={styles.uploadSubtitle}>
-            Selecciona un comprobante de pedido PDF para iniciar la auditoría de stock:
+            Presiona "TOMAR PEDIDO" para asignarlo a tu dispositivo (JAVIER-DEV82) y moverlo a ./delivery/doing/:
           </Text>
 
           <TouchableOpacity
             style={styles.btnUpload}
-            onPress={() => handleSelectSamplePdf('34512175.pdf')}
+            onPress={() => handleClaimOrder('34512175')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnUploadText}>Pedido 34512175</Text>
+            <Text style={styles.btnUploadText}>TOMAR PEDIDO 34512175</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btnUpload, styles.btnSecondary]}
-            onPress={() => handleSelectSamplePdf('34409313.pdf')}
+            onPress={() => handleClaimOrder('34409313')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnSecondaryText}>Pedido 34409313</Text>
+            <Text style={styles.btnSecondaryText}>TOMAR PEDIDO 34409313</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.btnUpload, styles.btnSecondary]}
-            onPress={() => handleSelectSamplePdf('34512173.pdf')}
+            onPress={() => handleClaimOrder('34512173')}
             activeOpacity={0.8}
           >
-            <Text style={styles.btnSecondaryText}>Pedido 34512173</Text>
+            <Text style={styles.btnSecondaryText}>TOMAR PEDIDO 34512173</Text>
           </TouchableOpacity>
         </View>
 

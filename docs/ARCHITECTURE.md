@@ -215,3 +215,40 @@ interface ScanLog {
    - Distribución vía Apple TestFlight o Ad-Hoc / Enterprise App Store.
 3. **Web / PWA**:
    - Despliegue en servidor HTTP estático (Nginx / Firebase Hosting) con Service Workers para caché de recursos offline.
+
+---
+
+## 8. Arquitectura de Gestión Multioferente & Auditoría en Carpetas
+
+Para soportar múltiples operarios trabajando en paralelo en el mismo depósito, el sistema utiliza un flujo de tres carpetas físicas y la asignación de un **Identificador Híbrido** por dispositivo/persona (`{OPERARIO}-{DISPOSITIVO}`).
+
+```
+./delivery/
+├── backlog/  --> Contiene comprobantes libres ({numero-pedido}.pdf)
+├── doing/    --> Contiene comprobantes tomados ({numero-pedido}-{identificador}.pdf)
+└── done/     --> Contiene comprobantes auditados finalizados con marca de agua ({numero-pedido}-{identificador}.pdf)
+```
+
+### Reglas de Transición de Archivos y Marca de Agua:
+
+1. **Identificador Híbrido (`Option 3`)**:
+   - Formato: `{OPERARIO}-{DISPOSITIVO}` (ej: `JAVIER-DEV82`).
+   - Se compone del Nombre/Legajo del operario ingresado en la app + el ID hash del teléfono/tablet.
+
+2. **Acción "Tomar Pedido"**:
+   - Origen: `./delivery/backlog/{numero-pedido}.pdf`
+   - Destino: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
+   - Estado: Pedido pasa a `DOING` (Tomado por el dispositivo activo).
+
+3. **Acción "Liberar Pedido"**:
+   - Origen: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
+   - Destino: `./delivery/backlog/{numero-pedido}.pdf`
+   - Estado: Pedido desasignado y devuelto al pozo común para otros operarios.
+
+4. **Acción "Cerrar y Despachar Pedido" (Marca de Agua)**:
+   - Origen: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
+   - Destino: `./delivery/done/{numero-pedido}-{identificador}.pdf`
+   - **Incrustación de Marca de Agua / Sello de Auditoría**:
+     - `AUDITADO POR`: `{OPERARIO}-{DISPOSITIVO}`
+     - `FECHA Y HORA`: `YYYY-MM-DD HH:mm:ss`
+     - `ESTADO`: `VERIFICADO 100% OK` (o `DESPACHO PARCIAL OK - PIN SUPERVISOR`).

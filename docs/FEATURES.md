@@ -40,10 +40,16 @@ Phone-Ware (Módulo de Depósito & Picking Audit)
 │   ├── Generación de Resumen de Auditoría / Despacho
 │   └── Historial Local de Pedidos Procesados
 │
-└── F06: Operatividad Offline & Resiliencia
-    ├── Persistencia automática en almacenamiento local (SQLite / IndexedDB)
-    └── Funcionamiento sin conectividad de red
-```
+├── F06: Operatividad Offline & Resiliencia
+│   ├── Persistencia automática en almacenamiento local (SQLite / IndexedDB)
+│   └── Funcionamiento sin conectividad de red
+│
+└── F07: Gestión Multioferente de Depósito (Flujo de Carpetas & Auditoría Asignada)
+    ├── Monitoreo de carpetas `./delivery/backlog/`, `./delivery/doing/` y `./delivery/done/`
+    ├── Identificador Híbrido de Operario/Dispositivo (`{OPERARIO}-{DISPOSITIVO}`)
+    ├── Asignación y renombrado al tomar pedido: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
+    ├── Liberación de pedido asignado: Devolución a `./delivery/backlog/{numero-pedido}.pdf`
+    └── Archivado final en `./delivery/done/` con marca de agua y sello digital de auditoría
 
 ---
 
@@ -162,3 +168,43 @@ La interfaz de usuario ha sido concebida bajo estándares exigentes de ergonomí
 - **When** presiono el botón, la app muestra un modal de felicitaciones/éxito,
 - **And** guarda el registro en el historial local con fecha, hora y detalle de escaneo,
 - **And** deja la app lista para recibir un nuevo comprobante PDF.
+
+---
+
+### US-07: Asignación y Toma de Pedido en Depósito Multioferente
+**Como** operario de depósito en un entorno con múltiples compañeros,  
+**Quiero** seleccionar un pedido libre de la carpeta `./delivery/backlog/` y presionando "TOMAR PEDIDO",  
+**Para** que el archivo se mueva a `./delivery/doing/{numero-pedido}-{identificador}.pdf` quedando asignado a mi dispositivo.
+
+**Criterios de Aceptación:**
+- **Given** que un comprobante PDF `34409313.pdf` se encuentra en la carpeta `./delivery/backlog/`,
+- **When** el operario con el identificador `JAVIER-DEV82` selecciona el pedido y presiona "TOMAR PEDIDO",
+- **Then** el archivo físico se renombra y mueve a `./delivery/doing/34409313-JAVIER-DEV82.pdf`,
+- **And** el pedido cambia a estado `DOING` bloqueando la toma por parte de otros dispositivos.
+
+---
+
+### US-08: Liberación de Pedido en Trabajo (Doing -> Backlog)
+**Como** operario de depósito,  
+**Quiero** tener la opción de liberar un pedido que tengo asignado en `./delivery/doing/`,  
+**Para** que otro compañero de depósito pueda continuarlo si debo atender otra urgencia.
+
+**Criterios de Aceptación:**
+- **Given** que tengo asignado el pedido `34409313-JAVIER-DEV82.pdf` en `./delivery/doing/`,
+- **When** presiono el botón "LIBERAR PEDIDO",
+- **Then** la app desasigna el pedido y mueve el archivo PDF de vuelta a `./delivery/backlog/34409313.pdf`,
+- **And** el pedido vuelve a mostrarse libre para cualquier operario en la pantalla de inicio.
+
+---
+
+### US-09: Cierre con Marca de Agua e Identificador Auditado (Doing -> Done)
+**Como** auditor de logística,  
+**Quiero** que al finalizar la verificación el pedido se mueva a `./delivery/done/{numero-pedido}-{identificador}.pdf` con una marca de agua de auditoría,  
+**Para** tener trazabilidad total e inalterable de quién realizó el despacho.
+
+**Criterios de Aceptación:**
+- **Given** que el pedido `34409313-JAVIER-DEV82.pdf` ha sido completado al 100% (o cerrado con PIN de supervisor),
+- **When** presiono "CERRAR Y DESPACHAR PEDIDO",
+- **Then** el archivo PDF se traslada a `./delivery/done/34409313-JAVIER-DEV82.pdf`,
+- **And** se incrusta el sello digital / marca de agua conteniendo: `AUDITADO POR: JAVIER-DEV82 | FECHA: DD/MM/YYYY HH:mm | ESTADO: 100% OK`.
+

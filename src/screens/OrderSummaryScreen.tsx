@@ -69,6 +69,25 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     }
   };
 
+  const handleReleaseOrder = async () => {
+    Alert.alert(
+      'Liberar Pedido',
+      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl archivo se devolverá a ./delivery/backlog/ para que lo tome otro operario.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Sí, Liberar',
+          style: 'destructive',
+          onPress: async () => {
+            const { releaseOrder } = useOrderStore.getState();
+            await releaseOrder(activeOrder.orderNumber);
+            onBack();
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.container}>
       {/* Top Header Row */}
@@ -79,10 +98,12 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 
         <View style={styles.headerTitles}>
           <Text style={styles.orderTitle}>DETALLE DE VENTA #{activeOrder.orderNumber}</Text>
-          <Text style={styles.clientTitle}>Cliente: {activeOrder.clientName}</Text>
+          <Text style={styles.clientTitle}>Ubicación: ./delivery/doing/{activeOrder.pdfFileName}</Text>
         </View>
 
-        <View style={{ width: 44 }} />
+        <TouchableOpacity style={styles.releaseBtn} onPress={handleReleaseOrder}>
+          <Text style={styles.releaseIcon}>🔓</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Global Progress Bar */}
@@ -155,6 +176,12 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
             {isClosed ? 'VER RESUMEN DE DESPACHO' : 'CERRAR Y DESPACHAR PEDIDO'}
           </Text>
         </TouchableOpacity>
+
+        {!isClosed && (
+          <TouchableOpacity style={styles.btnRelease} onPress={handleReleaseOrder} activeOpacity={0.8}>
+            <Text style={styles.btnReleaseText}>🔓 LIBERAR PEDIDO A BACKLOG</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Supervisor Exception PIN Modal */}
@@ -321,5 +348,34 @@ const styles = StyleSheet.create({
   },
   textDispatchDisabled: {
     color: '#8B949E'
+  },
+  releaseBtn: {
+    width: 44,
+    height: 44,
+    backgroundColor: '#21262D',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F59E0B'
+  },
+  releaseIcon: {
+    fontSize: 18
+  },
+  btnRelease: {
+    minHeight: 52,
+    backgroundColor: '#21262D',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16
+  },
+  btnReleaseText: {
+    color: '#F59E0B',
+    fontSize: 15,
+    fontWeight: '900',
+    textAlign: 'center'
   }
 });

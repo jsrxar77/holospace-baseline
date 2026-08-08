@@ -4,11 +4,13 @@ import { parsePdfVoucher } from '../services/pdfParser';
 import { dbService } from '../db/client';
 import { hapticsService } from '../services/hapticsService';
 import { audioService } from '../services/audioService';
+import { fileWorkflowService } from '../services/fileWorkflowService';
 
 interface OrderState {
   orders: Order[];
   activeOrder: Order | null;
   isScannerOpen: boolean;
+  operatorId: string;
   lastScanToast: {
     type: 'SUCCESS' | 'ERROR' | 'EXCESS';
     message: string;
@@ -19,6 +21,8 @@ interface OrderState {
   // Actions
   loadInitialOrders: () => Promise<void>;
   loadPdfOrder: (fileName: string, pdfText?: string) => Promise<Order>;
+  claimOrder: (orderNumber: string) => Promise<Order>;
+  releaseOrder: (orderNumber: string) => Promise<boolean>;
   setActiveOrder: (order: Order | null) => void;
   setScannerOpen: (isOpen: boolean) => void;
   scanBarcode: (barcode: string) => Promise<ScanResult>;
@@ -30,13 +34,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   activeOrder: null,
   isScannerOpen: false,
+  operatorId: fileWorkflowService.getOperatorId(),
   lastScanToast: null,
   lastScanTimestamp: 0,
 
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
-      set({ orders: savedOrders });
+      set({ orders: savedOrders, operatorId: fileWorkflowService.getOperatorId() });
     } catch (e) {
       console.log('Error loading initial orders:', e);
     }
@@ -52,6 +57,45 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     }));
 
     return order;
+  },
+
+  // Acción: Tomar Pedido de /delivery/backlog a /delivery/doing/(numero-pedido)-(identificador).pdf
+  claimOrder: async (orderNumber: string) => {
+    const { claimOrder: claimFile, getOperatorId } = fileWorkflowService;
+    const { targetFileName, operatorId } = await claimFile(orderNumber);
+    const order = await parsePdfVoucher(targetFileName);
+
+    const updatedOrder: Order = {
+      ...order,
+      orderNumber,
+      pdfFileName: targetFileName,
+      status: 'SCANNING'
+    };
+
+    await dbService.saveOrder(updatedOrder);
+
+    set((state) => ({
+      activeOrder: updatedOrder,
+      operatorId,
+      orders: [updatedOrder, ...state.orders.filter((o) => o.id !== updatedOrder.id)]
+    }));
+
+    return updatedOrder;
+  },
+
+  // Acción: Liberar Pedido de /delivery/doing a /delivery/backlog
+  releaseOrder: async (orderNumber: string) => {
+    const { releaseOrder: releaseFile } = fileWorkflowService;
+    const { success } = await releaseFile(orderNumber);
+
+    if (success) {
+      set((state) => ({
+        activeOrder: state.activeOrder?.orderNumber === orderNumber ? null : state.activeOrder,
+        orders: state.orders.filter((o) => o.orderNumber !== orderNumber)
+      }));
+    }
+
+    return success;
   },
 
   setActiveOrder: (order) => set({ activeOrder: order }),
@@ -193,13 +237,22 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       return false;
     }
 
+    // Mover a /delivery/done con marca de agua digital
+    const { doneFileName, watermarkText } = await fileWorkflowService.completeOrderWithWatermark(
+      activeOrder.orderNumber,
+      activeOrder.totalItemsScanned,
+      activeOrder.totalItemsRequired,
+      supervisorPin
+    );
+
     const finalStatus = isComplete ? 'CLOSED' : 'PARTIAL_DISPATCH';
     const closedOrder: Order = {
       ...activeOrder,
+      pdfFileName: doneFileName,
       status: finalStatus,
       closedAt: new Date().toISOString(),
       supervisorPin: supervisorPin || undefined,
-      exceptionReason: exceptionReason || undefined
+      exceptionReason: exceptionReason || (watermarkText ? `MARCA DE AGUA: ${watermarkText}` : undefined)
     };
 
     await dbService.saveOrder(closedOrder);

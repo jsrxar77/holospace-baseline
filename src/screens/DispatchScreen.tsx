@@ -87,6 +87,11 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
           {/* Audit Summary Details Box */}
           <View style={styles.detailsBox}>
             <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Operario Auditador:</Text>
+              <Text style={styles.detailValueHighlight}>JAVIER-DEV82</Text>
+            </View>
+
+            <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Cliente / Razón Social:</Text>
               <Text style={styles.detailValue}>{activeOrder.clientName}</Text>
             </View>
@@ -107,14 +112,14 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Ubicación de Salida:</Text>
-              <Text style={styles.detailValue}>Pasillo B-14 (Depósito #1)</Text>
+              <Text style={styles.detailLabel}>Archivo Archivado:</Text>
+              <Text style={styles.detailValue}>./delivery/done/{activeOrder.pdfFileName}</Text>
             </View>
 
             {activeOrder.exceptionReason && (
               <View style={[styles.detailRow, { flexDirection: 'column', gap: 4 }]}>
-                <Text style={styles.detailLabel}>Motivo de Excepción:</Text>
-                <Text style={styles.textAmber}>{activeOrder.exceptionReason}</Text>
+                <Text style={styles.detailLabel}>Marca de Agua / Auditoría:</Text>
+                <Text style={styles.textEmerald}>{activeOrder.exceptionReason}</Text>
               </View>
             )}
           </View>
