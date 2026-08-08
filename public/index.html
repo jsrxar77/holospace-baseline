@@ -470,15 +470,23 @@
       </div>
 
       <div class="kanban-grid">
-        <!-- BACKLOG -->
+        <!-- BACKLOG (Gris) -->
         <div class="kanban-col">
           <div class="col-header">
-            <div class="col-title" style="color: var(--emerald);">BACKLOG <span id="backlogCount" class="col-count">0</span></div>
+            <div class="col-title" style="color: var(--text-muted);">BACKLOG <span id="backlogCount" class="col-count">0</span></div>
           </div>
           <div id="backlogList" class="cards-list"></div>
         </div>
 
-        <!-- DOING -->
+        <!-- LISTO / READY (Verde) -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-title" style="color: var(--emerald);">LISTO (READY) <span id="readyCount" class="col-count">0</span></div>
+          </div>
+          <div id="readyList" class="cards-list"></div>
+        </div>
+
+        <!-- DOING (Azul) -->
         <div class="kanban-col">
           <div class="col-header">
             <div class="col-title" style="color: var(--cobalt);">EN PROCESO <span id="doingCount" class="col-count">0</span></div>

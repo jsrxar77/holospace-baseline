@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
 import { Header } from '../components/Header';
 import { useOrderStore } from '../store/useOrderStore';
 
@@ -7,19 +7,48 @@ interface HomeScreenProps {
   onNavigateToSummary: () => void;
 }
 
+interface ReadyOrder {
+  orderNumber: string;
+  clientName: string;
+  totalItems: number;
+}
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
   const { activeOrder, operatorId, loadInitialOrders, releaseOrder } = useOrderStore();
+  const [readyOrders, setReadyOrders] = useState<ReadyOrder[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchReadyOrders = async () => {
+    try {
+      const res = await fetch('http://192.168.100.247:3001/api/available-orders');
+      const data = await res.json();
+      if (data && data.success && Array.isArray(data.orders)) {
+        setReadyOrders(data.orders);
+      }
+    } catch (e) {
+      console.log('Error fetching ready orders:', e);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadInitialOrders();
+    await fetchReadyOrders();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     loadInitialOrders();
+    fetchReadyOrders();
+    const interval = setInterval(fetchReadyOrders, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleClaimOrder = async (orderNumber: string) => {
-    // Regla estricta: 1 operario = 1 pedido activo en doing
     if (activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
       Alert.alert(
         'Límite de Pedido Activo (1 a 1)',
-        `Ya tienes el Pedido #${activeOrder.orderNumber} en proceso.\n\nDebes finalizar la auditoría o liberarlo a ./delivery/backlog/ antes de tomar un pedido nuevo.`,
+        `Ya tienes el Pedido #${activeOrder.orderNumber} en proceso.\n\nDebes finalizar la auditoría o liberarlo antes de tomar un pedido nuevo.`,
         [
           { text: 'Ir al Pedido Activo', onPress: onNavigateToSummary },
           {
@@ -34,13 +63,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
     try {
       const { claimOrder } = useOrderStore.getState();
-      const claimedOrder = await claimOrder(orderNumber);
+      await claimOrder(orderNumber);
+      await fetchReadyOrders();
       Alert.alert(
         'Pedido Asignado',
-        `Has tomado el Pedido #${orderNumber}.\nEl archivo se movió a: ./delivery/doing/${orderNumber}-${operatorId}.pdf`,
+        `Has tomado el Pedido #${orderNumber}.\nEl pedido se ha asignado a tu dispositivo (${operatorId}).`,
         [
           {
-            text: 'Iniciar Auditoría',
+            text: 'Iniciar Escaneo',
             onPress: () => {
               onNavigateToSummary();
             }
@@ -56,7 +86,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     if (!activeOrder) return;
     Alert.alert(
       'Liberar Pedido',
-      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl archivo volverá a ./delivery/backlog/ limpio para que otro operario lo tome.`,
+      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl pedido volverá a la columna LISTO (READY) para que otro operario lo tome.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -64,7 +94,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           style: 'destructive',
           onPress: async () => {
             await releaseOrder(activeOrder.orderNumber);
-            Alert.alert('Pedido Liberado', `El Pedido #${activeOrder.orderNumber} fue devuelto al backlog.`);
+            await fetchReadyOrders();
+            Alert.alert('Pedido Liberado', `El Pedido #${activeOrder.orderNumber} fue devuelto a la columna LISTO (READY).`);
           }
         }
       ]
@@ -75,18 +106,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   return (
     <View style={styles.container}>
-      <Header title="Phone-Ware Depósito" badgeText={`OP: ${operatorId}`} />
+      <Header title="PHONEWARE SCANNER" badgeText={`OP: ${operatorId}`} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00E676" />}
+      >
         {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
         {hasActiveDoingOrder ? (
           <View style={styles.activeDoingCard}>
             <View style={styles.activeBadgeCircle}>
               <Text style={styles.activeBadgeText}>⚡</Text>
             </View>
-            <Text style={styles.activeTitle}>TU PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
+            <Text style={styles.activeTitle}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
             <Text style={styles.activeSubtitle}>
-              Ubicación: ./delivery/doing/{activeOrder.pdfFileName}
+              Cliente: {activeOrder.clientName}
             </Text>
             <Text style={styles.activeProgressText}>
               Verificado: {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
@@ -106,52 +140,47 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
               onPress={handleReleaseCurrentOrder}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnReleaseHomeText}>🔓 LIBERAR PEDIDO A BACKLOG</Text>
+              <Text style={styles.btnReleaseHomeText}>🔓 LIBERAR PEDIDO A LISTO (READY)</Text>
             </TouchableOpacity>
           </View>
         ) : null}
 
-        {/* Backlog Section Card */}
+        {/* Sección de Pedidos Disponibles en READY (Verde) */}
         <View style={styles.uploadCard}>
-          <View style={styles.pdfIconCircle}>
-            <Text style={styles.pdfIconText}>PDF</Text>
-          </View>
-          <Text style={styles.uploadTitle}>Pedidos Libres en ./delivery/backlog/</Text>
+          <Text style={styles.uploadTitle}>Pedidos Listos para Tomar (READY)</Text>
           <Text style={styles.uploadSubtitle}>
             {hasActiveDoingOrder
               ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
-              : `Presiona "TOMAR PEDIDO" para asignarlo a tu dispositivo (${operatorId}) y moverlo a ./delivery/doing/:`}
+              : readyOrders.length === 0
+              ? 'No hay pedidos en estado LISTO (READY). Espera a que el Administrador valide un comprobante.'
+              : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
           </Text>
 
-          <TouchableOpacity
-            style={[styles.btnUpload, hasActiveDoingOrder && styles.btnDisabled]}
-            onPress={() => handleClaimOrder('34512175')}
-            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
-          >
-            <Text style={[styles.btnUploadText, hasActiveDoingOrder && styles.textDisabled]}>
-              TOMAR PEDIDO 34512175 (Lunfa - 3 U)
-            </Text>
-          </TouchableOpacity>
+          {readyOrders.map((item) => (
+            <TouchableOpacity
+              key={item.orderNumber}
+              style={[styles.btnUpload, hasActiveDoingOrder && styles.btnDisabled]}
+              onPress={() => handleClaimOrder(item.orderNumber)}
+              activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
+            >
+              <Text style={[styles.btnUploadText, hasActiveDoingOrder && styles.textDisabled]}>
+                TOMAR PEDIDO #{item.orderNumber} ({item.clientName} - {item.totalItems} U)
+              </Text>
+            </TouchableOpacity>
+          ))}
 
-          <TouchableOpacity
-            style={[styles.btnUpload, styles.btnSecondary, hasActiveDoingOrder && styles.btnDisabled]}
-            onPress={() => handleClaimOrder('34409313')}
-            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
-          >
-            <Text style={[styles.btnSecondaryText, hasActiveDoingOrder && styles.textDisabled]}>
-              TOMAR PEDIDO 34409313 (Diego Poke)
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btnUpload, styles.btnSecondary, hasActiveDoingOrder && styles.btnDisabled]}
-            onPress={() => handleClaimOrder('34512173')}
-            activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
-          >
-            <Text style={[styles.btnSecondaryText, hasActiveDoingOrder && styles.textDisabled]}>
-              TOMAR PEDIDO 34512173 (Diego Pascual)
-            </Text>
-          </TouchableOpacity>
+          {/* Botones de prueba fija si no hay pedidos recibidos de API */}
+          {readyOrders.length === 0 && !hasActiveDoingOrder && (
+            <View style={{ marginTop: 10, width: '100%', gap: 10 }}>
+              <TouchableOpacity
+                style={styles.btnUpload}
+                onPress={() => handleClaimOrder('3010')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.btnUploadText}>TOMAR PEDIDO #3010 (DIEGO POKE - 11 U)</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -205,7 +234,7 @@ const styles = StyleSheet.create({
   },
   btnContinue: {
     width: '100%',
-    minHeight: 64, // Ergonomía > 64px
+    minHeight: 64,
     backgroundColor: '#00E676',
     borderRadius: 16,
     alignItems: 'center',
@@ -219,90 +248,57 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   btnReleaseHome: {
-    width: '100%',
-    minHeight: 52,
+    marginTop: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     backgroundColor: '#21262D',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F59E0B',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16
+    borderColor: '#30363D'
   },
   btnReleaseHomeText: {
-    color: '#F59E0B',
-    fontSize: 15,
-    fontWeight: '900',
-    textAlign: 'center'
+    color: '#FF5252',
+    fontSize: 13,
+    fontWeight: '700'
   },
   uploadCard: {
     backgroundColor: '#161B22',
-    borderWidth: 2,
-    borderColor: '#00E676',
-    borderStyle: 'dashed',
     borderRadius: 24,
     padding: 24,
     alignItems: 'center',
-    gap: 14
-  },
-  pdfIconCircle: {
-    width: 64,
-    height: 64,
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  pdfIconText: {
-    color: '#00E676',
-    fontSize: 18,
-    fontWeight: '900'
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#30363D'
   },
   uploadTitle: {
-    color: '#FFFFFF',
+    color: '#00E676',
     fontSize: 18,
     fontWeight: '900',
     textAlign: 'center'
   },
   uploadSubtitle: {
     color: '#8B949E',
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 20
+    marginBottom: 8
   },
   btnUpload: {
     width: '100%',
-    minHeight: 64, // Ergonomía > 64px
+    minHeight: 56,
     backgroundColor: '#00E676',
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    marginTop: 6
+    paddingHorizontal: 16
   },
   btnUploadText: {
     color: '#000000',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
-  },
-  btnSecondary: {
-    backgroundColor: '#21262D',
-    borderWidth: 1,
-    borderColor: '#30363D'
-  },
-  btnSecondaryText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 0.5,
     textAlign: 'center'
   },
   btnDisabled: {
-    backgroundColor: '#161B22',
-    borderColor: '#30363D',
-    opacity: 0.5
+    opacity: 0.4
   },
   textDisabled: {
     color: '#8B949E'

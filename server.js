@@ -438,7 +438,7 @@ const server = http.createServer((req, res) => {
       }
 
 
-      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS)
+      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS - 4 COLUMNAS: BACKLOG, READY, DOING, DONE)
       if (req.url === '/api/kanban' && req.method === 'GET') {
         const allOrders = Array.from(ordersDb.values());
 
@@ -452,6 +452,17 @@ const server = http.createServer((req, res) => {
               totalItems: o.totalItemsRequired,
               scannedItems: 0,
               status: 'BACKLOG'
+            })),
+
+          ready: allOrders
+            .filter((o) => o.status === 'READY')
+            .map((o) => ({
+              orderNumber: o.orderNumber,
+              fileName: o.pdfFileName,
+              clientName: o.clientName,
+              totalItems: o.totalItemsRequired,
+              scannedItems: 0,
+              status: 'READY'
             })),
 
           doing: allOrders
@@ -499,6 +510,71 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify(kanbanData));
         return;
       }
+
+      // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) POR EL ADMIN
+      if (req.url === '/api/mark-ready' && req.method === 'POST') {
+        const { orderNumber, userEmail } = data;
+        if (ordersDb.has(orderNumber)) {
+          const order = ordersDb.get(orderNumber);
+          const email = userEmail || processEnv.ADMIN_EMAIL;
+          const now = new Date().toLocaleString('es-AR');
+
+          order.status = 'READY';
+          order.auditLogs.push({
+            timestamp: now,
+            userEmail: email,
+            action: 'VALIDAR_COMPROBANTE',
+            details: `Comprobante #${orderNumber} validado por Administrador ${email}. Estado cambiado a LISTO (READY).`
+          });
+          console.log(`[ADMIN LOG] Pedido ${orderNumber} validado y pasado a READY por ${email}.`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
+      // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG POR EL ADMIN
+      if (req.url === '/api/mark-backlog' && req.method === 'POST') {
+        const { orderNumber, userEmail } = data;
+        if (ordersDb.has(orderNumber)) {
+          const order = ordersDb.get(orderNumber);
+          const email = userEmail || processEnv.ADMIN_EMAIL;
+          const now = new Date().toLocaleString('es-AR');
+
+          order.status = 'BACKLOG';
+          order.auditLogs.push({
+            timestamp: now,
+            userEmail: email,
+            action: 'DEVOLVER_A_BACKLOG',
+            details: `Comprobante #${orderNumber} devuelto a Backlog por Administrador ${email}.`
+          });
+          console.log(`[ADMIN LOG] Pedido ${orderNumber} devuelto a BACKLOG por ${email}.`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
+      // 3.3 PEDIDOS DISPONIBLES EN READY PARA OPERARIOS EN MÓVIL
+      if (req.url === '/api/available-orders' && req.method === 'GET') {
+        const readyOrders = Array.from(ordersDb.values())
+          .filter((o) => o.status === 'READY')
+          .map((o) => ({
+            orderNumber: o.orderNumber,
+            fileName: o.pdfFileName,
+            clientName: o.clientName,
+            totalItems: o.totalItemsRequired,
+            scannedItems: 0,
+            status: 'READY'
+          }));
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, orders: readyOrders }));
+        return;
+      }
+
 
       // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DE AUDITORÍA
       if (req.url.startsWith('/api/order-detail')) {
@@ -619,12 +695,12 @@ const server = http.createServer((req, res) => {
           const email = userEmail || 'javier@drinklovers.com';
           const now = new Date().toLocaleString('es-AR');
 
-          order.status = 'BACKLOG';
+          order.status = 'READY';
           order.auditLogs.push({
             timestamp: now,
             userEmail: email,
             action: 'LIBERAR_PEDIDO',
-            details: `Pedido #${orderNumber} liberado por ${email}. Devuelto a backlog libre.`
+            details: `Pedido #${orderNumber} liberado por ${email}. Devuelto a columna LISTO (READY).`
           });
           order.operatorId = null;
           console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${email}.`);

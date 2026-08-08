@@ -111,31 +111,48 @@ function toggleUserGroup(groupId) {
   loadKanbanData();
 }
 
-// KANBAN EN TIEMPO REAL CON SUB-GRUPOS COLAPSABLES POR USUARIO
+// KANBAN EN TIEMPO REAL CON 4 COLUMNAS Y SUB-GRUPOS COLAPSABLES POR USUARIO
 async function loadKanbanData() {
   try {
     const res = await fetch('/api/kanban');
     const data = await res.json();
 
-    // 1. Render Backlog
+    // 1. Render Backlog (Gris)
     const backlogList = document.getElementById('backlogList');
-    document.getElementById('backlogCount').innerText = data.backlog.length;
-    backlogList.innerHTML = data.backlog.length === 0
-      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos libres</div>'
+    document.getElementById('backlogCount').innerText = (data.backlog || []).length;
+    backlogList.innerHTML = (!data.backlog || data.backlog.length === 0)
+      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin comprobantes pendientes</div>'
       : data.backlog.map(item => `
-        <div class="kanban-card" onclick="openInvoiceModal('${item.orderNumber}')">
-          <button class="btn-delete-card" onclick="deleteBacklogOrder('${item.orderNumber}', event)">🗑️ Borrar</button>
-          <div class="card-order-no">Pedido #${item.orderNumber}</div>
+        <div class="kanban-card" style="border-color: var(--card-border);" onclick="openInvoiceModal('${item.orderNumber}')">
+          <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
+            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.orderNumber}', event)">✓ Pasar a Listo</button>
+            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.orderNumber}', event)">🗑️</button>
+          </div>
+          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
         </div>
       `).join('');
 
-    // 2. Render Doing por Usuario (Acordeón colapsable)
+    // 2. Render Ready (Verde)
+    const readyList = document.getElementById('readyList');
+    document.getElementById('readyCount').innerText = (data.ready || []).length;
+    readyList.innerHTML = (!data.ready || data.ready.length === 0)
+      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
+      : data.ready.map(item => `
+        <div class="kanban-card" style="border-color: var(--emerald);" onclick="openInvoiceModal('${item.orderNumber}')">
+          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.orderNumber}', event)">↩️ A Backlog</button>
+          <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
+          <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
+          <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
+        </div>
+      `).join('');
+
+    // 3. Render Doing por Usuario (Acordeón colapsable)
     const doingList = document.getElementById('doingList');
-    document.getElementById('doingCount').innerText = data.doing.length;
+    document.getElementById('doingCount').innerText = (data.doing || []).length;
     
-    if (data.doing.length === 0) {
+    if (!data.doing || data.doing.length === 0) {
       doingList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos en proceso</div>';
     } else {
       const doingGroups = {};
@@ -173,11 +190,11 @@ async function loadKanbanData() {
       }).join('');
     }
 
-    // 3. Render Done por Usuario (Acordeón colapsable)
+    // 4. Render Done por Usuario (Acordeón colapsable)
     const doneList = document.getElementById('doneList');
-    document.getElementById('doneCount').innerText = data.done.length;
+    document.getElementById('doneCount').innerText = (data.done || []).length;
 
-    if (data.done.length === 0) {
+    if (!data.done || data.done.length === 0) {
       doneList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos completados</div>';
     } else {
       const doneGroups = {};
@@ -216,6 +233,50 @@ async function loadKanbanData() {
     console.error('Error cargando Kanban:', e);
   }
 }
+
+// FUNCIONES PARA PASAR ENTRE BACKLOG Y LISTO (READY)
+async function markOrderReady(orderNumber, event) {
+  if (event) event.stopPropagation();
+
+  try {
+    const res = await fetch('/api/mark-ready', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber,
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadKanbanData();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function markOrderBacklog(orderNumber, event) {
+  if (event) event.stopPropagation();
+
+  try {
+    const res = await fetch('/api/mark-backlog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderNumber,
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadKanbanData();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 
 // DETALLE COMPLETO DE COMPROBANTE Y MARCA DE AGUA
 async function openInvoiceModal(orderNumber) {
