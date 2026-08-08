@@ -135,17 +135,18 @@ async function loadKanbanData() {
         </div>
       `).join('');
 
-    // 2. Render Ready (Verde)
+    // 2. Render Ready (Verde - Draggable hacia BACKLOG)
     const readyList = document.getElementById('readyList');
     document.getElementById('readyCount').innerText = (data.ready || []).length;
     readyList.innerHTML = (!data.ready || data.ready.length === 0)
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
       : data.ready.map(item => `
-        <div class="kanban-card" style="border-color: var(--emerald);" onclick="openInvoiceModal('${item.orderNumber}')">
+        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
           <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.orderNumber}', event)">↩️ A Backlog</button>
           <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar esta tarjeta de vuelta a BACKLOG</div>
         </div>
       `).join('');
 
@@ -295,6 +296,14 @@ async function handleDropToListo(event) {
   const orderNumber = event.dataTransfer.getData('text/plain');
   if (orderNumber) {
     await markOrderReady(orderNumber, event);
+  }
+}
+
+async function handleDropToBacklog(event) {
+  event.preventDefault();
+  const orderNumber = event.dataTransfer.getData('text/plain');
+  if (orderNumber) {
+    await markOrderBacklog(orderNumber, event);
   }
 }
 

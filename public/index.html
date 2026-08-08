@@ -470,8 +470,8 @@
       </div>
 
       <div class="kanban-grid">
-        <!-- BACKLOG (Gris) -->
-        <div class="kanban-col">
+        <!-- BACKLOG (Gris - Drop Target para devolver) -->
+        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToBacklog(event)" style="border-style: dashed; border-color: rgba(139, 148, 158, 0.4);">
           <div class="col-header">
             <div class="col-title" style="color: var(--text-muted);">BACKLOG <span id="backlogCount" class="col-count">0</span></div>
           </div>

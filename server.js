@@ -555,12 +555,20 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG POR EL ADMIN
+      // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-backlog' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
+        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase();
+        const callerUser = users.find((u) => u.email.toLowerCase() === email);
+
+        if (callerUser && callerUser.role !== 'ADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Permiso denegado. Solo administradores pueden devolver comprobantes a Backlog.' }));
+          return;
+        }
+
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const email = userEmail || processEnv.ADMIN_EMAIL;
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'BACKLOG';
