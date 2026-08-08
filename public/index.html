@@ -538,22 +538,31 @@
         </div>
       </div>
 
-      <div style="display: flex; gap: 16px; flex-wrap: wrap; background-color: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--card-border);">
-        <input type="text" id="orderSearchQuery" class="input-field" placeholder="Buscar por pedido #, cliente, EAN, producto..." style="flex: 2; min-width: 250px;" oninput="fetchExplorerOrders()">
-        
-        <select id="orderStatusFilter" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
-          <option value="">Todos los Estados</option>
-          <option value="BACKLOG">BACKLOG</option>
-          <option value="DOING">EN PROCESO (DOING)</option>
-          <option value="DONE">COMPLETADO (DONE)</option>
-        </select>
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; background-color: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--card-border); flex-direction: column;">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap; width: 100%;">
+          <input type="text" id="orderSearchQuery" class="input-field" placeholder="Buscar por pedido #, cliente, EAN, producto..." style="flex: 2; min-width: 250px;" oninput="fetchExplorerOrders()">
+          
+          <select id="orderStatusFilter" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
+            <option value="">Todos los Estados</option>
+            <option value="BACKLOG">BACKLOG</option>
+            <option value="READY">LISTO</option>
+            <option value="DOING">EN PROCESO</option>
+            <option value="DONE">COMPLETADO</option>
+          </select>
 
-        <select id="orderSortBy" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
-          <option value="date_desc">Fecha (Recientes primero)</option>
-          <option value="date_asc">Fecha (Antiguos primero)</option>
-          <option value="amount_desc">Importe ($ Mayor a Menor)</option>
-          <option value="items_desc">Ítems (Mayor a Menor)</option>
-        </select>
+          <select id="orderSortBy" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
+            <option value="date_desc">Fecha (Recientes primero)</option>
+            <option value="date_asc">Fecha (Antiguos primero)</option>
+            <option value="amount_desc">Importe ($ Mayor a Menor)</option>
+            <option value="items_desc">Ítems (Mayor a Menor)</option>
+          </select>
+        </div>
+
+        <!-- Multi-Selección de Operarios -->
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--card-border); padding-top: 14px;">
+          <span style="font-size: 13px; font-weight: 800; color: var(--text-muted);">Filtrar por Operarios (Multi-selección):</span>
+          <div id="operatorPillsContainer" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
       </div>
 
       <div id="ordersExplorerGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>

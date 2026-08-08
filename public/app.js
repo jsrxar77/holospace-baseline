@@ -553,39 +553,96 @@ async function toggleUserStatus(id, currentActive) {
 }
 
 // ----------------------------------------------------
-// EXPLORADOR INTELIGENTE DE PEDIDOS
+// EXPLORADOR INTELIGENTE DE PEDIDOS CON MULTI-SELECCIÓN DE OPERARIOS
 // ----------------------------------------------------
+let selectedExplorerOperators = new Set();
+let allOperatorEmails = [];
+
+async function renderOperatorPills() {
+  try {
+    const res = await fetch('/api/users');
+    const data = await res.json();
+    allOperatorEmails = (data.users || []).map((u) => u.email);
+
+    const container = document.getElementById('operatorPillsContainer');
+    if (!container) return;
+
+    container.innerHTML = allOperatorEmails
+      .map((email) => {
+        const isSelected = selectedExplorerOperators.has(email);
+        return `
+        <button type="button" 
+          onclick="toggleOperatorFilter('${email}')"
+          style="background: ${isSelected ? 'var(--emerald)' : '#21262D'}; color: ${isSelected ? '#000' : '#FFF'}; border: 1px solid ${isSelected ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+          ${isSelected ? '✓ ' : ''}${email}
+        </button>
+      `;
+      })
+      .join('');
+  } catch (e) {
+    console.error('Error cargando operarios:', e);
+  }
+}
+
+function toggleOperatorFilter(email) {
+  if (selectedExplorerOperators.has(email)) {
+    selectedExplorerOperators.delete(email);
+  } else {
+    selectedExplorerOperators.add(email);
+  }
+  renderOperatorPills();
+  fetchExplorerOrders();
+}
+
 async function fetchExplorerOrders() {
   const query = document.getElementById('orderSearchQuery').value;
   const status = document.getElementById('orderStatusFilter').value;
   const sortBy = document.getElementById('orderSortBy').value;
+  const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
-    const res = await fetch(`/api/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}`);
+    const res = await fetch(
+      `/api/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`
+    );
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');
 
     if (!data.orders || data.orders.length === 0) {
-      grid.innerHTML = '<div style="color: var(--text-muted); font-size: 15px; grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron pedidos que coincidan con la búsqueda.</div>';
+      grid.innerHTML =
+        '<div style="color: var(--text-muted); font-size: 15px; grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron pedidos que coincidan con la búsqueda y filtros seleccionados.</div>';
       return;
     }
 
-    grid.innerHTML = data.orders.map(o => `
+    grid.innerHTML = data.orders
+      .map(
+        (o) => `
       <div class="kanban-card" onclick="openInvoiceModal('${o.orderNumber}')">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div class="card-order-no">Pedido #${o.orderNumber}</div>
-          <span class="badge-role" style="font-size: 11px;">${o.status}</span>
+          <span class="badge-role" style="font-size: 11px;">${o.status === 'READY' ? 'LISTO' : o.status === 'DOING' ? 'EN PROCESO' : o.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG'}</span>
         </div>
         <div class="card-meta" style="color: #FFF; font-weight: 800;">Cliente: ${o.clientName}</div>
+        <div class="card-meta">Operario: ${o.operatorEmail || 'Sin Asignar'}</div>
         <div class="card-meta">Fecha: ${o.issueDate || 'Hoy'}</div>
         <div class="card-meta">Ítems: <strong>${o.totalItemsRequired} U</strong></div>
         <div class="card-meta" style="color: var(--emerald); font-weight: 900; font-size: 15px;">Total: $${(o.totalAmount || 0).toLocaleString('es-AR')}</div>
       </div>
-    `).join('');
+    `
+      )
+      .join('');
   } catch (e) {
     console.error('Error al explorar pedidos:', e);
   }
 }
+
+// Inicializar pills cuando se cambia a la pestaña orders
+const originalSwitchTab = switchTab;
+switchTab = function (tabName) {
+  originalSwitchTab(tabName);
+  if (tabName === 'orders') {
+    renderOperatorPills();
+  }
+};
 
 function openQrModal() {
   document.getElementById('qrModal').classList.remove('hidden');
@@ -601,3 +658,4 @@ function logout() {
   currentUser = null;
   document.getElementById('loginModal').classList.remove('hidden');
 }
+

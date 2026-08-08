@@ -398,17 +398,29 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 2.1 BUSCADOR Y EXPLORADOR INTELIGENTE DE PEDIDOS
+      // 2.1 BUSCADOR Y EXPLORADOR INTELIGENTE DE PEDIDOS (CON MULTI-SELECCIÓN DE OPERARIOS)
       if (req.url.startsWith('/api/orders') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const query = (urlParams.get('q') || '').toLowerCase();
         const statusFilter = urlParams.get('status') || '';
         const sortBy = urlParams.get('sortBy') || 'date_desc';
+        const operatorsParam = urlParams.get('operators') || '';
+        const selectedOperators = operatorsParam ? operatorsParam.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean) : [];
 
         let results = Array.from(ordersDb.values());
 
         if (statusFilter) {
           results = results.filter((o) => o.status === statusFilter);
+        }
+
+        if (selectedOperators.length > 0) {
+          results = results.filter((o) => {
+            const operatorUser = users.find(
+              (u) => u.operatorId === o.operatorId || (o.operatorId && u.email.includes(o.operatorId.split('-')[0].toLowerCase()))
+            );
+            const opEmail = (operatorUser ? operatorUser.email : (o.operatorEmail || '')).toLowerCase();
+            return selectedOperators.includes(opEmail);
+          });
         }
 
         if (query) {
@@ -436,6 +448,7 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ orders: results }));
         return;
       }
+
 
 
       // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS - 4 COLUMNAS: BACKLOG, READY, DOING, DONE)
@@ -511,12 +524,20 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) POR EL ADMIN
+      // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-ready' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
+        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase();
+        const callerUser = users.find((u) => u.email.toLowerCase() === email);
+
+        if (callerUser && callerUser.role !== 'ADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Permiso denegado. Solo administradores pueden validar comprobantes a LISTO.' }));
+          return;
+        }
+
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const email = userEmail || processEnv.ADMIN_EMAIL;
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'READY';
@@ -524,7 +545,7 @@ const server = http.createServer((req, res) => {
             timestamp: now,
             userEmail: email,
             action: 'VALIDAR_COMPROBANTE',
-            details: `Comprobante #${orderNumber} validado por Administrador ${email}. Estado cambiado a LISTO (READY).`
+            details: `Comprobante #${orderNumber} validado por Administrador ${email}. Estado cambiado a LISTO.`
           });
           console.log(`[ADMIN LOG] Pedido ${orderNumber} validado y pasado a READY por ${email}.`);
         }
