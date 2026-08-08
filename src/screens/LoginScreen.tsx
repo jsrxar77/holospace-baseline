@@ -34,7 +34,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.brandTitle}>PHONEWARE SCANNER</Text>
+        <Text style={styles.brandTitleWhite}>
+          PHONEWARE <Text style={styles.brandTitleGreen}>SCANNER</Text>
+        </Text>
         <Text style={styles.subtitle}>Ingreso obligatorio para operarios de logística</Text>
 
         {!!errorMessage && (
@@ -114,13 +116,17 @@ const styles = StyleSheet.create({
     borderColor: '#30363D',
     alignItems: 'center'
   },
-  brandTitle: {
-    color: '#00E676',
+  brandTitleWhite: {
+    color: '#FFFFFF',
     fontSize: 26,
     fontWeight: '900',
     letterSpacing: 0.5,
     marginBottom: 6,
     textAlign: 'center'
+  },
+  brandTitleGreen: {
+    color: '#00E676',
+    fontWeight: '900'
   },
   subtitle: {
     color: '#8B949E',

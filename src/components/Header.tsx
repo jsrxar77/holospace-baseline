@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'PHONEWARE SCANNER',
+  title,
   badgeText,
   onLogout
 }) => {
@@ -24,7 +24,9 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.brandGroup}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.titleWhite}>
+          PHONEWARE <Text style={styles.titleGreen}>SCANNER</Text>
+        </Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{displayBadge}</Text>
         </View>
@@ -52,11 +54,15 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 4
   },
-  title: {
+  titleWhite: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: 0.5
+  },
+  titleGreen: {
+    color: '#00E676',
+    fontWeight: '900'
   },
   badge: {
     alignSelf: 'flex-start'
