@@ -144,8 +144,35 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
     }
   }
 
-  return { orderNumber, clientName, items, extractedText: text };
+  // 5. Extraer metadatos adicionales del comprobante
+  let vendorName = 'WYPRA SA';
+  const vendorMatch = text.match(/([A-Z0-9\s\.]{3,30}\s+(?:SA|SRL|S\.A\.|S\.R\.L\.))/i);
+  if (vendorMatch) vendorName = vendorMatch[1].trim();
+
+  let vendorCuit = '30-71828749-5';
+  const cuitMatch = text.match(/CUIT\s*:?\s*(\d{2}-\d{8}-\d{1})/i);
+  if (cuitMatch) vendorCuit = cuitMatch[1];
+
+  let issueDate = new Date().toLocaleDateString('es-AR');
+  const issueMatch = text.match(/(?:Fecha de Emisión|Fecha Emision)\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if (issueMatch) issueDate = issueMatch[1];
+
+  let dueDate = issueDate;
+  const dueMatch = text.match(/(?:Fecha de Vto\.|Vencimiento)\s*(?:para el pago)?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
+  if (dueMatch) dueDate = dueMatch[1];
+
+  let contactPerson = '';
+  const nameMatch = text.match(/Nombre\s*:?\s*([^\n\r]+)/i);
+  const lastNameMatch = text.match(/Apellido\s*:?\s*([^\n\r]+)/i);
+  if (nameMatch && lastNameMatch && nameMatch[1].trim() !== '-' && lastNameMatch[1].trim() !== '-') {
+    contactPerson = nameMatch[1].trim() + ' ' + lastNameMatch[1].trim();
+  }
+
+  const totalAmount = items.reduce((acc, i) => acc + (i.unitPrice * i.quantityRequired), 0);
+
+  return { orderNumber, clientName, items, vendorName, vendorCuit, issueDate, dueDate, contactPerson, totalAmount, extractedText: text };
 }
+
 
 
 
@@ -303,10 +330,10 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 2. AUTH: LISTAR / CREAR USUARIOS
+      // 2. AUTH: LISTAR / CREAR / EDITAR / BORRADO LÓGICO DE USUARIOS
       if (req.url === '/api/users' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ users: users.map(({ password, ...u }) => u) }));
+        res.end(JSON.stringify({ users: users.map(({ password, ...u }) => ({ ...u, active: u.active !== false })) }));
         return;
       }
 
@@ -324,7 +351,8 @@ const server = http.createServer((req, res) => {
           password: password.trim(),
           name: name.trim(),
           role: role === 'ADMIN' ? 'ADMIN' : 'OPERATOR',
-          operatorId: `${name.split(' ')[0].toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`
+          operatorId: `${name.split(' ')[0].toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
+          active: true
         };
 
         users.push(newUser);
@@ -333,6 +361,82 @@ const server = http.createServer((req, res) => {
         res.end(JSON.stringify({ success: true, user: newUser }));
         return;
       }
+
+      if (req.url === '/api/users' && req.method === 'PUT') {
+        const { id, email, password, name, role, active } = data;
+        const user = users.find((u) => u.id === id || u.email.toLowerCase() === (email || '').toLowerCase());
+        if (!user) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        if (name) user.name = name.trim();
+        if (email) user.email = email.trim();
+        if (password) user.password = password.trim();
+        if (role) user.role = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
+        if (active !== undefined) user.active = !!active;
+
+        saveUsers();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, user }));
+        return;
+      }
+
+      if ((req.url === '/api/users' || req.url.startsWith('/api/users/')) && req.method === 'DELETE') {
+        const id = data.id || (req.url.split('/api/users/')[1] || '');
+        const user = users.find((u) => u.id === id);
+        if (user) {
+          user.active = false; // Borrado lógico
+          saveUsers();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: `Usuario ${user.email} desactivado correctamente.` }));
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+        }
+        return;
+      }
+
+      // 2.1 BUSCADOR Y EXPLORADOR INTELIGENTE DE PEDIDOS
+      if (req.url.startsWith('/api/orders') && req.method === 'GET') {
+        const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+        const query = (urlParams.get('q') || '').toLowerCase();
+        const statusFilter = urlParams.get('status') || '';
+        const sortBy = urlParams.get('sortBy') || 'date_desc';
+
+        let results = Array.from(ordersDb.values());
+
+        if (statusFilter) {
+          results = results.filter((o) => o.status === statusFilter);
+        }
+
+        if (query) {
+          results = results.filter((o) => {
+            const numMatch = (o.orderNumber || '').toLowerCase().includes(query);
+            const clientMatch = (o.clientName || '').toLowerCase().includes(query);
+            const fileMatch = (o.pdfFileName || '').toLowerCase().includes(query);
+            const opMatch = (o.operatorId || '').toLowerCase().includes(query);
+            const itemMatch = o.items.some((i) => i.description.toLowerCase().includes(query) || i.code.includes(query));
+            return numMatch || clientMatch || fileMatch || opMatch || itemMatch;
+          });
+        }
+
+        if (sortBy === 'date_desc') {
+          results.sort((a, b) => new Date(b.issueDate || 0) - new Date(a.issueDate || 0));
+        } else if (sortBy === 'date_asc') {
+          results.sort((a, b) => new Date(a.issueDate || 0) - new Date(b.issueDate || 0));
+        } else if (sortBy === 'amount_desc') {
+          results.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+        } else if (sortBy === 'items_desc') {
+          results.sort((a, b) => (b.totalItemsRequired || 0) - (a.totalItemsRequired || 0));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ orders: results }));
+        return;
+      }
+
 
       // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS)
       if (req.url === '/api/kanban' && req.method === 'GET') {

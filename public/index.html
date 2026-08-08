@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Phone-Ware | Panel Kanban de Administración</title>
+  <title>PhoneWare Board</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg-black: #0B0E14;
@@ -15,6 +15,7 @@
       --emerald: #00E676;
       --cobalt: #3B82F6;
       --amber: #F59E0B;
+      --red: #FF5252;
       --text-main: #FFFFFF;
       --text-muted: #8B949E;
     }
@@ -42,31 +43,49 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
 
-    .brand {
+    .brand-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #FFFFFF;
+      text-transform: uppercase;
+    }
+
+    .brand-title span {
+      color: var(--emerald);
+    }
+
+    .nav-tabs {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .brand-logo {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--emerald), var(--cobalt));
+    .nav-tab {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      padding: 10px 18px;
       border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 900;
-      font-size: 20px;
-      color: #000;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
     }
 
-    .brand-title {
-      font-size: 20px;
+    .nav-tab:hover {
+      color: #FFF;
+      background-color: #21262D;
+    }
+
+    .nav-tab.active {
+      color: #000;
+      background-color: var(--emerald);
       font-weight: 900;
-      letter-spacing: 0.5px;
     }
 
     .user-profile {
@@ -116,7 +135,23 @@
       transform: translateY(-1px);
     }
 
-    /* Container & Kanban */
+    .btn-danger {
+      background-color: rgba(255, 82, 82, 0.15);
+      color: var(--red);
+      border: 1px solid var(--red);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-danger:hover {
+      background-color: var(--red);
+      color: #FFF;
+    }
+
+    /* Container & Views */
     main {
       flex: 1;
       padding: 32px;
@@ -125,6 +160,18 @@
       gap: 24px;
     }
 
+    .view-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      flex: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Actions Bar */
     .actions-bar {
       display: flex;
       align-items: center;
@@ -148,6 +195,7 @@
       background-color: rgba(0, 230, 118, 0.05);
     }
 
+    /* Kanban Grid */
     .kanban-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -177,9 +225,6 @@
     .col-title {
       font-size: 18px;
       font-weight: 900;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .col-count {
@@ -195,6 +240,39 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+    }
+
+    /* User Accordion Subgroup */
+    .user-group {
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      background-color: #0F131A;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .user-group-header {
+      padding: 14px 18px;
+      background-color: #1A202C;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 14px;
+      color: #FFF;
+      user-select: none;
+    }
+
+    .user-group-header:hover {
+      background-color: #252D3C;
+    }
+
+    .user-group-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
 
     .kanban-card {
@@ -300,25 +378,43 @@
       border-color: var(--emerald);
     }
 
-    .hidden {
-      display: none !important;
+    /* Data Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
     }
 
-    /* Estilo Factura Comercial */
+    .data-table th, .data-table td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .data-table th {
+      background-color: #1A202C;
+      color: var(--text-muted);
+      font-weight: 800;
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
     .invoice-card {
       background-color: #0B0E14;
-      border: 2px solid var(--emerald);
+      border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .invoice-header {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
       border-bottom: 1px solid var(--card-border);
       padding-bottom: 16px;
     }
@@ -326,145 +422,227 @@
     .invoice-table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
+
     }
 
     .invoice-table th, .invoice-table td {
       padding: 12px;
       text-align: left;
-      border-bottom: 1px solid var(--card-border);
+      border-bottom: 1px solid #21262D;
       font-size: 14px;
     }
 
     .invoice-table th {
       color: var(--text-muted);
-      font-weight: 700;
     }
   </style>
 </head>
 <body>
 
-  <!-- Modal Login -->
-  <div id="loginModal" class="modal-overlay">
-    <div class="modal-content" style="max-width: 440px;">
-      <div style="text-align: center;">
-        <div class="brand-logo" style="margin: 0 auto 16px auto; width: 56px; height: 56px; font-size: 28px;">📦</div>
-        <h2 style="font-weight: 900; font-size: 24px;">Phone-Ware Admin</h2>
-        <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">Ingresa tus credenciales de Administrador</p>
-      </div>
-
-      <form id="loginForm" style="display: flex; flex-direction: column; gap: 14px;">
-        <input type="email" id="loginEmail" class="input-field" placeholder="Email (ej: admin@drinklovers.com)" value="admin@drinklovers.com" required />
-        <input type="password" id="loginPassword" class="input-field" placeholder="Contraseña" value="drinklovers2026!" required />
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">INICIAR SESIÓN</button>
-      </form>
-      <div id="loginError" style="color: #FF5252; font-size: 14px; text-align: center; display: none;"></div>
-    </div>
-  </div>
-
-  <!-- Header principal -->
+  <!-- Header -->
   <header>
-    <div class="brand">
-      <div class="brand-logo">📦</div>
-      <div>
-        <div class="brand-title">Phone-Ware Admin</div>
-        <div style="font-size: 12px; color: var(--text-muted);">Depósito Multioferente Kanban</div>
-      </div>
+    <div class="brand-title">PHONEWARE <span>BOARD</span></div>
+    
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tabKanban" onclick="switchTab('kanban')">Tablero Kanban</button>
+      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">Usuarios</button>
+      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')">Explorador de Pedidos</button>
     </div>
 
     <div class="user-profile">
-      <span class="badge-role" id="userBadge">ADMIN: admin@drinklovers.com</span>
-      <button class="btn-secondary" style="border-color: var(--emerald); color: var(--emerald);" onclick="openQrModal()">📱 Conectar Celular (QR)</button>
-      <button class="btn-secondary" onclick="openUserModal()">+ Crear Usuario</button>
+      <button class="btn-secondary" onclick="openQrModal()">Conectar Celular (QR)</button>
+      <div id="userBadge" class="badge-role">ADMIN: admin@drinklovers.com</div>
       <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
   </header>
 
-  <!-- Main Body Kanban -->
+  <!-- Main View Area -->
   <main>
-    <div class="actions-bar">
-      <div class="upload-dropzone" onclick="document.getElementById('fileInput').click()">
-        <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
-        <div style="font-weight: 900; font-size: 18px;">Subir y Validar Nuevo Comprobante PDF</div>
-        <div style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Arrastra un archivo PDF aquí o haz clic para seleccionar (Único punto de entrada)</div>
-        <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
+
+    <!-- 1. KANBAN BOARD VIEW -->
+    <div id="viewKanban" class="view-panel">
+      <div class="actions-bar">
+        <div class="upload-dropzone" onclick="document.getElementById('fileInput').click()">
+          <h3 style="font-size: 18px; font-weight: 800; color: var(--emerald);">Subir Comprobante PDF (Factura Comercial)</h3>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Arrastra aquí tu archivo PDF o haz clic para seleccionarlo de tu equipo</p>
+          <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
+        </div>
+      </div>
+
+      <div class="kanban-grid">
+        <!-- BACKLOG -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-title" style="color: var(--emerald);">BACKLOG <span id="backlogCount" class="col-count">0</span></div>
+          </div>
+          <div id="backlogList" class="cards-list"></div>
+        </div>
+
+        <!-- DOING -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-title" style="color: var(--cobalt);">EN PROCESO <span id="doingCount" class="col-count">0</span></div>
+          </div>
+          <div id="doingList" class="cards-list"></div>
+        </div>
+
+        <!-- DONE -->
+        <div class="kanban-col">
+          <div class="col-header">
+            <div class="col-title" style="color: var(--amber);">COMPLETADO <span id="doneCount" class="col-count">0</span></div>
+          </div>
+          <div id="doneList" class="cards-list"></div>
+        </div>
       </div>
     </div>
 
-    <div class="kanban-grid">
-      <!-- Columna Backlog -->
-      <div class="kanban-col">
-        <div class="col-header">
-          <div class="col-title" style="color: var(--emerald);">📥 Backlog (Libres)</div>
-          <span class="col-count" id="backlogCount">0</span>
+    <!-- 2. USERS MANAGEMENT VIEW -->
+    <div id="viewUsers" class="view-panel hidden">
+      <div class="actions-bar">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900;">Gestión de Usuarios</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Administra los accesos del panel web y de los operarios de escáner móvil</p>
         </div>
-        <div class="cards-list" id="backlogList"></div>
+        <button class="btn-primary" onclick="openUserModal()">+ Crear Nuevo Usuario</button>
       </div>
 
-      <!-- Columna Doing -->
-      <div class="kanban-col">
-        <div class="col-header">
-          <div class="col-title" style="color: var(--cobalt);">⚡ Doing (En Proceso)</div>
-          <span class="col-count" id="doingCount">0</span>
-        </div>
-        <div class="cards-list" id="doingList"></div>
-      </div>
-
-      <!-- Columna Done -->
-      <div class="kanban-col">
-        <div class="col-header">
-          <div class="col-title" style="color: var(--amber);">✅ Done (Auditados)</div>
-          <span class="col-count" id="doneCount">0</span>
-        </div>
-        <div class="cards-list" id="doneList"></div>
-      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>ID Operario</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
     </div>
+
+    <!-- 3. ORDERS EXPLORER VIEW -->
+    <div id="viewOrders" class="view-panel hidden">
+      <div class="actions-bar">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900;">Explorador de Pedidos</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Buscador universal con filtros avanzados de comprobantes</p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 16px; flex-wrap: wrap; background-color: var(--card-bg); padding: 20px; border-radius: 20px; border: 1px solid var(--card-border);">
+        <input type="text" id="orderSearchQuery" class="input-field" placeholder="Buscar por pedido #, cliente, EAN, producto..." style="flex: 2; min-width: 250px;" oninput="fetchExplorerOrders()">
+        
+        <select id="orderStatusFilter" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
+          <option value="">Todos los Estados</option>
+          <option value="BACKLOG">BACKLOG</option>
+          <option value="DOING">EN PROCESO (DOING)</option>
+          <option value="DONE">COMPLETADO (DONE)</option>
+        </select>
+
+        <select id="orderSortBy" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
+          <option value="date_desc">Fecha (Recientes primero)</option>
+          <option value="date_asc">Fecha (Antiguos primero)</option>
+          <option value="amount_desc">Importe ($ Mayor a Menor)</option>
+          <option value="items_desc">Ítems (Mayor a Menor)</option>
+        </select>
+      </div>
+
+      <div id="ordersExplorerGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+    </div>
+
   </main>
 
-  <!-- Modal Detalle Factura Comercial -->
+  <!-- MODAL DE AUTENTICACIÓN / LOGIN -->
+  <div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="font-size: 28px; font-weight: 900; text-align: center; color: var(--emerald);">PHONEWARE BOARD</h2>
+      <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Inicia sesión con tus credenciales de administrador u operario</p>
+      
+      <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Email de Usuario</label>
+          <input type="email" id="loginEmail" class="input-field" placeholder="admin@drinklovers.com" value="admin@drinklovers.com" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña</label>
+          <input type="password" id="loginPassword" class="input-field" placeholder="••••••••" value="drinklovers2026!" required>
+        </div>
+        <div id="loginError" style="color: var(--red); font-size: 13px; display: none; text-align: center;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 10px;">Iniciar Sesión</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DIÁLOGO PERSONALIZADO (CERO ALERT DEL SISTEMA) -->
+  <div id="customDialogModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <h3 id="dialogTitle" style="font-size: 22px; font-weight: 900; color: #FFF;"></h3>
+      <p id="dialogMessage" style="color: var(--text-muted); font-size: 15px; margin-top: 8px; line-height: 22px;"></p>
+      <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+        <button id="dialogCancelBtn" class="btn-secondary" style="flex: 1;" onclick="closeCustomDialog(false)">Cancelar</button>
+        <button id="dialogConfirmBtn" class="btn-primary" style="flex: 1;" onclick="closeCustomDialog(true)">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ALTA / EDICIÓN DE USUARIOS -->
+  <div id="userModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 id="userModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Crear Nuevo Usuario</h3>
+      <form id="userForm" style="display: flex; flex-direction: column; gap: 16px;" onsubmit="saveUserSubmit(event)">
+        <input type="hidden" id="userId">
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre Completo</label>
+          <input type="text" id="userNameInput" class="input-field" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Email</label>
+          <input type="email" id="userEmailInput" class="input-field" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña</label>
+          <input type="password" id="userPasswordInput" class="input-field" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Rol de Sistema</label>
+          <select id="userRoleInput" class="input-field">
+            <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
+            <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
+          <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Usuario</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CONECTAR EXPO GO (QR) -->
+  <div id="qrModal" class="modal-overlay hidden">
+    <div class="modal-content" style="text-align: center; max-width: 480px;">
+      <h3 style="font-size: 22px; font-weight: 900; color: var(--cobalt);">Conectar Celular (Expo Go)</h3>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;">Escanea este código QR desde la cámara de tu teléfono para abrir PhoneWare Scanner</p>
+      
+      <div style="background: #FFF; padding: 20px; border-radius: 20px; display: inline-block; margin: 20px auto;">
+        <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=exp://192.168.100.247:8081" alt="Expo Go QR Code" style="width: 220px; height: 220px; display: block;">
+      </div>
+
+      <p style="font-size: 13px; font-weight: 700; color: var(--emerald); font-family: monospace;">exp://192.168.100.247:8081</p>
+      <button class="btn-secondary" style="margin-top: 20px;" onclick="closeQrModal()">Cerrar</button>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE DE FACTURA Y LOGS DE AUDITORÍA -->
   <div id="invoiceModal" class="modal-overlay hidden">
     <div class="modal-content">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-weight: 900; font-size: 20px;">DETALLE DE COMPROBANTE (FACTURA COMERCIAL)</h3>
-        <button class="btn-secondary" style="padding: 6px 12px;" onclick="closeInvoiceModal()">✕ Cerrar</button>
+        <h3 style="font-size: 22px; font-weight: 900; color: var(--emerald);">Detalle del Comprobante</h3>
+        <button class="btn-secondary" onclick="closeInvoiceModal()">Cerrar</button>
       </div>
-      <div id="invoiceContent"></div>
-    </div>
-  </div>
 
-  <!-- Modal Código QR Expo Go -->
-  <div id="qrModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 420px; text-align: center;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-weight: 900; font-size: 20px;">Escanea con Expo Go</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeQrModal()">✕</button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 14px;">Abre la app <strong>Expo Go</strong> en tu celular y escanea este código QR:</p>
-      <div style="background: #FFF; padding: 16px; border-radius: 16px; display: inline-block; margin: 10px auto;">
-        <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=exp://192.168.100.247:8081" alt="Expo QR Code" style="width: 220px; height: 220px; display: block;" />
-      </div>
-      <div style="font-family: monospace; font-size: 13px; color: var(--emerald);">exp://192.168.100.247:8081</div>
-      <button class="btn-primary" style="margin-top: 10px;" onclick="closeQrModal()">Entendido</button>
-    </div>
-  </div>
-
-  <!-- Modal Crear Usuario -->
-  <div id="userModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 440px;">
-      <h3 style="font-weight: 900; font-size: 20px;">Crear Nuevo Usuario / Operario</h3>
-      <form id="userForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateUser(event)">
-        <input type="text" id="newName" class="input-field" placeholder="Nombre completo" required />
-        <input type="email" id="newEmail" class="input-field" placeholder="Email de ingreso" required />
-        <input type="password" id="newPassword" class="input-field" placeholder="Contraseña" required />
-        <select id="newRole" class="input-field" style="color: #FFF; background: #0B0E14;">
-          <option value="OPERATOR">OPERARIO DE DEPÓSITO</option>
-          <option value="ADMIN">ADMINISTRADOR</option>
-        </select>
-        <div style="display: flex; gap: 12px; margin-top: 8px;">
-          <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeUserModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" style="flex: 1;">Guardar</button>
-        </div>
-      </form>
+      <div id="invoiceModalBody"></div>
     </div>
   </div>
 

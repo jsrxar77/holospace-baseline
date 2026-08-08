@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 
 interface LoginScreenProps {
@@ -10,14 +10,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('javier@drinklovers.com');
   const [password, setPassword] = useState('op123456');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { login } = useAuthStore();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Por favor ingresa tu email y contraseña.');
+      setErrorMessage('Por favor ingresa tu email y contraseña.');
       return;
     }
 
+    setErrorMessage('');
     setLoading(true);
     const success = await login(email.trim(), password.trim());
     setLoading(false);
@@ -25,19 +27,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     if (success) {
       onLoginSuccess();
     } else {
-      Alert.alert('Error de Autenticación', 'Email o contraseña incorrectos. Verifica con el administrador.');
+      setErrorMessage('Email o contraseña incorrectos. Verifica con el administrador.');
     }
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.card}>
-        <View style={styles.logoCircle}>
-          <Text style={styles.logoText}>📦</Text>
-        </View>
-
-        <Text style={styles.title}>Phone-Ware Depósito</Text>
+        <Text style={styles.brandTitle}>PHONEWARE SCANNER</Text>
         <Text style={styles.subtitle}>Ingreso obligatorio para operarios de logística</Text>
+
+        {!!errorMessage && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          </View>
+        )}
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Email del Operario</Text>
@@ -48,7 +52,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(txt) => {
+              setEmail(txt);
+              setErrorMessage('');
+            }}
           />
         </View>
 
@@ -60,7 +67,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             placeholderTextColor="#8B949E"
             secureTextEntry
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(txt) => {
+              setPassword(txt);
+              setErrorMessage('');
+            }}
           />
         </View>
 
@@ -73,7 +83,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           {loading ? (
             <ActivityIndicator color="#000000" />
           ) : (
-            <Text style={styles.btnSubmitText}>INICIAR SESIÓN EN DEPÓSITO</Text>
+            <Text style={styles.btnSubmitText}>INICIAR SESIÓN EN ESCÁNER</Text>
           )}
         </TouchableOpacity>
 
@@ -98,89 +108,89 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     backgroundColor: '#161B22',
-    borderWidth: 2,
-    borderColor: '#00E676',
-    borderRadius: 28,
-    padding: 28,
-    alignItems: 'center',
-    gap: 16
-  },
-  logoCircle: {
-    width: 72,
-    height: 72,
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
-    borderWidth: 2,
-    borderColor: '#00E676',
     borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center'
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    alignItems: 'center'
   },
-  logoText: {
-    fontSize: 36
-  },
-  title: {
-    color: '#FFFFFF',
-    fontSize: 24,
+  brandTitle: {
+    color: '#00E676',
+    fontSize: 26,
     fontWeight: '900',
+    letterSpacing: 0.5,
+    marginBottom: 6,
     textAlign: 'center'
   },
   subtitle: {
     color: '#8B949E',
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: -8
+    fontSize: 13,
+    marginBottom: 24,
+    textAlign: 'center'
+  },
+  errorContainer: {
+    backgroundColor: 'rgba(255, 82, 82, 0.15)',
+    borderWidth: 1,
+    borderColor: '#FF5252',
+    borderRadius: 12,
+    padding: 12,
+    width: '100%',
+    marginBottom: 16
+  },
+  errorText: {
+    color: '#FF5252',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center'
   },
   formGroup: {
     width: '100%',
-    gap: 6
+    marginBottom: 16
   },
   label: {
     color: '#8B949E',
-    fontSize: 13,
-    fontWeight: '700'
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6
   },
   input: {
-    width: '100%',
-    minHeight: 52,
     backgroundColor: '#0B0E14',
     borderWidth: 1,
     borderColor: '#30363D',
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 16,
+    paddingVertical: 12,
     color: '#FFFFFF',
-    fontSize: 16
+    fontSize: 15
   },
   btnSubmit: {
-    width: '100%',
-    minHeight: 64, // Ergonomía > 64px
     backgroundColor: '#00E676',
-    borderRadius: 16,
+    borderRadius: 14,
+    paddingVertical: 16,
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
     marginTop: 10
-  },
-  btnSubmitText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
   },
   btnDisabled: {
     opacity: 0.6
   },
+  btnSubmitText: {
+    color: '#000000',
+    fontSize: 14,
+    fontWeight: '900'
+  },
   hintBox: {
-    marginTop: 8,
-    padding: 10,
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-    borderRadius: 10,
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: '#0B0E14',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.3)'
+    borderColor: '#30363D',
+    width: '100%'
   },
   hintText: {
-    color: '#3B82F6',
-    fontSize: 12,
+    color: '#8B949E',
+    fontSize: 11,
     textAlign: 'center'
   }
 });

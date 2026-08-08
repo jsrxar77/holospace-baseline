@@ -8,7 +8,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title = 'Phone-Ware Depósito',
+  title = 'PHONEWARE SCANNER',
   badgeText
 }) => {
   const { user, logout } = useAuthStore();
@@ -17,9 +17,6 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.brandGroup}>
-        <View style={styles.logoIcon}>
-          <Text style={styles.logoText}>PW</Text>
-        </View>
         <Text style={styles.title}>{title}</Text>
       </View>
       <TouchableOpacity style={styles.badge} onPress={logout} activeOpacity={0.7}>
@@ -43,26 +40,13 @@ const styles = StyleSheet.create({
   },
   brandGroup: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12
-  },
-  logoIcon: {
-    width: 40,
-    height: 40,
-    backgroundColor: '#00E676',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  logoText: {
-    color: '#000000',
-    fontSize: 20,
-    fontWeight: '900'
+    alignItems: 'center'
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900'
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 0.5
   },
   badge: {
     backgroundColor: '#21262D',
