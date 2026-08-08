@@ -1,20 +1,25 @@
-import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 import { Order, OrderItem, ScanLog } from '../types';
 
-// Singleton DB helper for Phone-Ware SQLite Storage
-const DB_NAME = 'phoneware.db';
+// En la web usamos almacenamiento en memoria o localStorage
+const memoryOrders: Map<string, Order> = new Map();
+const memoryLogs: ScanLog[] = [];
 
-let dbInstance: SQLite.SQLiteDatabase | null = null;
+let dbInstance: any = null;
 
 export const getDb = async () => {
+  if (Platform.OS === 'web') {
+    return null;
+  }
+  const SQLite = require('expo-sqlite');
   if (!dbInstance) {
-    dbInstance = await SQLite.openDatabaseAsync(DB_NAME);
+    dbInstance = await SQLite.openDatabaseAsync('phoneware.db');
     await initTables(dbInstance);
   }
   return dbInstance;
 };
 
-const initTables = async (db: SQLite.SQLiteDatabase) => {
+const initTables = async (db: any) => {
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
     PRAGMA foreign_keys = ON;
@@ -60,6 +65,11 @@ const initTables = async (db: SQLite.SQLiteDatabase) => {
 
 export const dbService = {
   saveOrder: async (order: Order): Promise<void> => {
+    if (Platform.OS === 'web') {
+      memoryOrders.set(order.id, JSON.parse(JSON.stringify(order)));
+      return;
+    }
+
     const db = await getDb();
     await db.runAsync(
       `INSERT OR REPLACE INTO orders (id, orderNumber, clientName, issueDate, pdfFileName, status, createdAt, closedAt, totalItemsRequired, totalItemsScanned, exceptionReason, supervisorPin)
@@ -99,12 +109,16 @@ export const dbService = {
   },
 
   getAllOrders: async (): Promise<Order[]> => {
+    if (Platform.OS === 'web') {
+      return Array.from(memoryOrders.values());
+    }
+
     const db = await getDb();
-    const rows = await db.getAllAsync<any>(`SELECT * FROM orders ORDER BY createdAt DESC`);
+    const rows: any[] = await db.getAllAsync(`SELECT * FROM orders ORDER BY createdAt DESC`);
     const orders: Order[] = [];
 
     for (const row of rows) {
-      const items = await db.getAllAsync<OrderItem>(`SELECT * FROM order_items WHERE orderId = ?`, [row.id]);
+      const items: OrderItem[] = await db.getAllAsync(`SELECT * FROM order_items WHERE orderId = ?`, [row.id]);
       orders.push({
         ...row,
         items
@@ -115,6 +129,11 @@ export const dbService = {
   },
 
   logScan: async (log: ScanLog): Promise<void> => {
+    if (Platform.OS === 'web') {
+      memoryLogs.push(log);
+      return;
+    }
+
     const db = await getDb();
     await db.runAsync(
       `INSERT INTO scan_logs (id, orderId, barcodeScanned, timestamp, result, matchedItemId)
@@ -123,3 +142,4 @@ export const dbService = {
     );
   }
 };
+
