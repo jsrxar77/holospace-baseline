@@ -59,14 +59,14 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
   return (
     <View style={styles.container}>
       <CameraView
-        style={styles.camera}
+        style={StyleSheet.absoluteFillObject}
         enableTorch={torch}
         barcodeScannerSettings={{
           barcodeTypes: ['ean13', 'code128', 'qr', 'ean8', 'code39']
         }}
         onBarcodeScanned={handleBarcodeScanned}
-      >
-        <View style={styles.overlay}>
+      />
+      <View style={styles.overlay}>
           {/* Top Real-Time Notification Toast */}
           {lastScanToast && (
             <View
@@ -122,7 +122,6 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
             </TouchableOpacity>
           </View>
         </View>
-      </CameraView>
 
       {/* Manual Input Backup Modal */}
       <Modal visible={isManualModalOpen} transparent animationType="slide">
