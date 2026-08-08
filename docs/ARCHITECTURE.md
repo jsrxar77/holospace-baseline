@@ -235,23 +235,24 @@ Para soportar múltiples operarios trabajando en paralelo en el mismo depósito,
    - Formato: `{OPERARIO}-{DISPOSITIVO}` (ej: `JAVIER-DEV82`).
    - Se compone del Nombre/Legajo del operario ingresado en la app + el ID hash del teléfono/tablet.
 
-2. **Acción "Tomar Pedido"**:
+2. **Acción "Tomar Pedido" (Movimiento Físico en Disco)**:
    - Origen: `./delivery/backlog/{numero-pedido}.pdf`
    - Destino: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
-   - Estado: Pedido pasa a `DOING` (Tomado por el dispositivo activo).
+   - Operación: La app ejecuta `moveAsync` / `fs.renameSync` real en el disco para trasladar y renombrar el PDF físico.
 
-3. **Acción "Liberar Pedido"**:
+3. **Acción "Liberar Pedido" (Devolución Física en Disco)**:
    - Origen: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
    - Destino: `./delivery/backlog/{numero-pedido}.pdf`
-   - Estado: Pedido desasignado y devuelto al pozo común para otros operarios.
+   - Operación: La app remueve el identificador del nombre de archivo y lo mueve físicamente de regreso a `./delivery/backlog/{numero-pedido}.pdf`.
 
-4. **Acción "Cerrar y Despachar Pedido" (Marca de Agua)**:
+4. **Acción "Cerrar y Despachar Pedido" (Marca de Agua Física)**:
    - Origen: `./delivery/doing/{numero-pedido}-{identificador}.pdf`
    - Destino: `./delivery/done/{numero-pedido}-{identificador}.pdf`
-   - **Incrustación de Marca de Agua / Sello de Auditoría**:
+   - **Incrustación Física de Marca de Agua / Sello de Auditoría**:
      - `AUDITADO POR`: `{OPERARIO}-{DISPOSITIVO}`
      - `FECHA Y HORA`: `YYYY-MM-DD HH:mm:ss`
      - `ESTADO`: `VERIFICADO 100% OK` (o `DESPACHO PARCIAL OK - PIN SUPERVISOR`).
+     - Operación: El archivo se traslada a `./delivery/done/` e incrusta el registro del sello digital en el documento.
 
 5. **Exclusividad del Espacio de Trabajo Limpio (Single Active Order Scope)**:
    - La interfaz de la aplicación NO mostrará listas de otros pedidos parseados ni mantendrá instancias de comprobantes cruzados en la vista principal.
