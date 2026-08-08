@@ -87,7 +87,7 @@ async function loadKanbanData() {
       : data.done.map(item => `
         <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.orderNumber}')">
           <div class="card-order-no" style="color: var(--amber);">Pedido #${item.orderNumber}</div>
-          <div class="card-meta">Auditado por: ${item.operatorId}</div>
+          <div class="card-meta">👤 Auditado por: ${item.operatorEmail}</div>
           <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
         </div>
       `).join('');
@@ -119,6 +119,16 @@ async function openInvoiceModal(orderNumber) {
 
     const totalAmount = order.items.reduce((acc, i) => acc + (i.unitPrice || 0) * i.quantityRequired, 0);
 
+    const logsHtml = (order.auditLogs || []).map(log => `
+      <div style="background: #161B22; border-left: 3px solid var(--cobalt); padding: 10px 14px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
+        <div style="display: flex; justify-content: space-between; font-weight: 700;">
+          <span style="color: var(--emerald);">👤 ${log.userEmail}</span>
+          <span style="color: var(--text-muted); font-size: 11px;">⏱️ ${log.timestamp}</span>
+        </div>
+        <div style="color: #FFF;">${log.details}</div>
+      </div>
+    `).join('');
+
     const invoiceHtml = `
       <div class="invoice-card">
         <div class="invoice-header">
@@ -129,8 +139,9 @@ async function openInvoiceModal(orderNumber) {
           </div>
           <div style="text-align: right;">
             <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate}</div>
-            <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">Paso: ${order.status}</div>
-            ${order.operatorId ? `<div style="font-size: 12px; color: var(--amber); margin-top: 2px;">Operario: ${order.operatorId}</div>` : ''}
+            <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">PASO ACTUAL: ${order.status}</div>
+            <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">👤 Usuario / Operario: ${order.operatorEmail}</div>
+            <button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="downloadPdf('${order.orderNumber}')">⬇️ Descargar PDF de la Orden</button>
           </div>
         </div>
 
@@ -153,6 +164,14 @@ async function openInvoiceModal(orderNumber) {
           <div style="font-size: 13px; color: var(--text-muted);">Total de unidades requeridas: ${order.totalItemsRequired} U</div>
           <div style="font-size: 20px; font-weight: 900; color: var(--emerald);">TOTAL: $${totalAmount.toLocaleString('es-AR')}</div>
         </div>
+
+        <!-- Historial de Logs de Auditoría -->
+        <div style="margin-top: 16px; border-top: 1px solid var(--card-border); padding-top: 16px;">
+          <h4 style="font-weight: 900; font-size: 16px; margin-bottom: 12px; color: var(--cobalt);">📜 Historial Completo de Trazabilidad (Email Usuario & Logs)</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            ${logsHtml || '<div style="color: var(--text-muted); font-size: 13px;">Sin logs registrados</div>'}
+          </div>
+        </div>
       </div>
     `;
 
@@ -163,6 +182,10 @@ async function openInvoiceModal(orderNumber) {
   }
 }
 
+function downloadPdf(orderNumber) {
+  window.open(`/api/download-pdf?orderNumber=${orderNumber}`, '_blank');
+}
+
 function closeInvoiceModal() {
   document.getElementById('invoiceModal').classList.add('hidden');
 }
@@ -171,15 +194,17 @@ async function deleteBacklogOrder(orderNumber, event) {
   event.stopPropagation();
   if (!confirm(`¿Estás seguro de eliminar el Pedido #${orderNumber} de Backlog y de la Base de Datos?`)) return;
 
+  const userEmail = currentUser ? currentUser.email : 'admin@drinklovers.com';
+
   try {
     const res = await fetch('/api/delete-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderNumber })
+      body: JSON.stringify({ orderNumber, userEmail })
     });
     const data = await res.json();
     if (data.success) {
-      alert(`Pedido #${orderNumber} eliminado de Backlog y de la Base de Datos.`);
+      alert(`Pedido #${orderNumber} eliminado por ${userEmail}.`);
       loadKanbanData();
     } else {
       alert(`Error al borrar: ${data.error}`);
@@ -196,18 +221,20 @@ async function handleFileUpload(event) {
   const reader = new FileReader();
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1] || e.target.result;
+    const userEmail = currentUser ? currentUser.email : 'admin@drinklovers.com';
     try {
       const res = await fetch('/api/upload-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileName: file.name,
-          pdfBase64: base64
+          pdfBase64: base64,
+          userEmail
         })
       });
       const data = await res.json();
       if (data.success) {
-        alert(`¡Comprobante ${file.name} validado y publicado en Backlog!`);
+        alert(`¡Comprobante ${file.name} validado y cargado por ${userEmail}!`);
         loadKanbanData();
       } else {
         alert(`Error al validar el PDF: ${data.error}`);
@@ -217,6 +244,14 @@ async function handleFileUpload(event) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+function openQrModal() {
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+
+function closeQrModal() {
+  document.getElementById('qrModal').classList.add('hidden');
 }
 
 function openUserModal() {

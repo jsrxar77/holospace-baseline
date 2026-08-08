@@ -374,6 +374,7 @@
 
     <div class="user-profile">
       <span class="badge-role" id="userBadge">ADMIN: admin@drinklovers.com</span>
+      <button class="btn-secondary" style="border-color: var(--emerald); color: var(--emerald);" onclick="openQrModal()">📱 Conectar Celular (QR)</button>
       <button class="btn-secondary" onclick="openUserModal()">+ Crear Usuario</button>
       <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -428,6 +429,22 @@
         <button class="btn-secondary" style="padding: 6px 12px;" onclick="closeInvoiceModal()">✕ Cerrar</button>
       </div>
       <div id="invoiceContent"></div>
+    </div>
+  </div>
+
+  <!-- Modal Código QR Expo Go -->
+  <div id="qrModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 420px; text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-weight: 900; font-size: 20px;">Escanea con Expo Go</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeQrModal()">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px;">Abre la app <strong>Expo Go</strong> en tu celular y escanea este código QR:</p>
+      <div style="background: #FFF; padding: 16px; border-radius: 16px; display: inline-block; margin: 10px auto;">
+        <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=exp://192.168.100.247:8081" alt="Expo QR Code" style="width: 220px; height: 220px; display: block;" />
+      </div>
+      <div style="font-family: monospace; font-size: 13px; color: var(--emerald);">exp://192.168.100.247:8081</div>
+      <button class="btn-primary" style="margin-top: 10px;" onclick="closeQrModal()">Entendido</button>
     </div>
   </div>
 

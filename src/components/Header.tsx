@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface HeaderProps {
   title?: string;
@@ -8,8 +9,11 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({
   title = 'Phone-Ware Depósito',
-  badgeText = 'Depósito #1'
+  badgeText
 }) => {
+  const { user, logout } = useAuthStore();
+  const displayBadge = badgeText || (user ? user.email : 'OP: javier@drinklovers.com');
+
   return (
     <View style={styles.container}>
       <View style={styles.brandGroup}>
@@ -18,9 +22,9 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
         <Text style={styles.title}>{title}</Text>
       </View>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{badgeText}</Text>
-      </View>
+      <TouchableOpacity style={styles.badge} onPress={logout} activeOpacity={0.7}>
+        <Text style={styles.badgeText}>{displayBadge} (Salir)</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -57,7 +61,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900'
   },
   badge: {
@@ -66,11 +70,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#30363D'
+    borderColor: '#00E676'
   },
   badgeText: {
-    color: '#8B949E',
-    fontSize: 13,
+    color: '#00E676',
+    fontSize: 12,
     fontWeight: '700'
   }
 });
