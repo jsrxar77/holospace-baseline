@@ -1,5 +1,4 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { Platform } from 'react-native';
 
 export interface WorkflowFile {
   orderNumber: string;
@@ -22,43 +21,28 @@ export const setOperatorName = (name: string) => {
   }
 };
 
-// Intento de importar fs si estamos en entorno Node/Web local
-let fs: any = null;
-let path: any = null;
-try {
-  if (typeof window === 'undefined' || (typeof process !== 'undefined' && process.versions && process.versions.node)) {
-    fs = require('fs');
-    path = require('path');
-  }
-} catch (e) {
-  // Ignorar en cliente React Native estricto
-}
-
-const getProjectBaseDir = (): string => {
-  if (path && typeof process !== 'undefined' && process.cwd) {
-    return process.cwd();
-  }
-  return FileSystem.documentDirectory || '';
-};
-
-// Directorios físicos
+// Directorios nativos seguros en Expo FileSystem
 const getPaths = () => {
-  const base = getProjectBaseDir();
-  if (fs && path) {
-    return {
-      backlog: path.join(base, 'delivery', 'backlog'),
-      doing: path.join(base, 'delivery', 'doing'),
-      done: path.join(base, 'delivery', 'done')
-    };
-  }
+  const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory || '';
   return {
-    backlog: `${FileSystem.documentDirectory}delivery/backlog/`,
-    doing: `${FileSystem.documentDirectory}delivery/doing/`,
-    done: `${FileSystem.documentDirectory}delivery/done/`
+    backlog: `${baseDir}delivery/backlog/`,
+    doing: `${baseDir}delivery/doing/`,
+    done: `${baseDir}delivery/done/`
   };
 };
 
-// Estado auxiliar en memoria de respaldo
+const ensureDirectoriesExist = async () => {
+  try {
+    const paths = getPaths();
+    await FileSystem.makeDirectoryAsync(paths.backlog, { intermediates: true }).catch(() => {});
+    await FileSystem.makeDirectoryAsync(paths.doing, { intermediates: true }).catch(() => {});
+    await FileSystem.makeDirectoryAsync(paths.done, { intermediates: true }).catch(() => {});
+  } catch (e) {
+    // Ignorar si ya existen
+  }
+};
+
+// Registro de estado local de auditoría
 const memoryRegistry = {
   doing: new Map<string, { orderNumber: string; operatorId: string; fileName: string }>(),
   done: new Map<string, { orderNumber: string; operatorId: string; fileName: string; auditStamp: string }>()
@@ -73,113 +57,77 @@ export const fileWorkflowService = {
     setOperatorName(name);
   },
 
-  // Listar archivos físicos en backlog
+  // Listar archivos disponibles en backlog
   getBacklogFiles: async (): Promise<string[]> => {
+    await ensureDirectoriesExist();
     const paths = getPaths();
     try {
-      if (fs && fs.existsSync(paths.backlog)) {
-        const files = fs.readdirSync(paths.backlog);
-        return files.filter((f: string) => f.endsWith('.pdf'));
-      }
+      const files = await FileSystem.readDirectoryAsync(paths.backlog);
+      const pdfFiles = files.filter((f) => f.endsWith('.pdf'));
+      if (pdfFiles.length > 0) return pdfFiles;
     } catch (e) {
-      console.log('Error leyendo backlog en disco:', e);
+      console.log('Directorio backlog nativo vacio o no disponible:', e);
     }
     return ['34512175.pdf', '34409313.pdf', '34512173.pdf'];
   },
 
-  // Acción: Tomar Pedido (Mover físicamente de backlog -> doing con marca de operador)
+  // Acción: Tomar Pedido (Mover nativamente de backlog -> doing con marca de operador)
   claimOrder: async (orderNumber: string): Promise<{ success: boolean; targetFileName: string; operatorId: string }> => {
+    await ensureDirectoriesExist();
     const operatorId = getHybridOperatorId();
     const targetFileName = `${orderNumber}-${operatorId}.pdf`;
     const paths = getPaths();
 
+    const srcUri = `${paths.backlog}${orderNumber}.pdf`;
+    const destUri = `${paths.doing}${targetFileName}`;
+
     try {
-      if (fs && path) {
-        const srcPath = path.join(paths.backlog, `${orderNumber}.pdf`);
-        const destPath = path.join(paths.doing, targetFileName);
-
-        // Asegurar directorio doing
-        if (!fs.existsSync(paths.doing)) {
-          fs.mkdirSync(paths.doing, { recursive: true });
-        }
-
-        if (fs.existsSync(srcPath)) {
-          fs.renameSync(srcPath, destPath);
-          console.log(`[DISCO REAL] Archivo movido físicamente: ${srcPath} -> ${destPath}`);
-        } else {
-          // Si el src con nombre limpio no existe, buscar si hay coincidencia
-          const backlogFiles = fs.readdirSync(paths.backlog);
-          const match = backlogFiles.find((f: string) => f.includes(orderNumber));
-          if (match) {
-            fs.renameSync(path.join(paths.backlog, match), destPath);
-            console.log(`[DISCO REAL] Archivo movido físicamente: ${match} -> ${destPath}`);
-          }
-        }
-      } else {
-        // En móvil Expo FileSystem
-        const srcUri = `${paths.backlog}${orderNumber}.pdf`;
-        const destUri = `${paths.doing}${targetFileName}`;
-        await FileSystem.moveAsync({ from: srcUri, to: destUri }).catch(() => {});
+      const srcInfo = await FileSystem.getInfoAsync(srcUri);
+      if (srcInfo.exists) {
+        await FileSystem.moveAsync({ from: srcUri, to: destUri });
+        console.log(`[FILE WORKFLOW] Archivo movido nativamente de backlog a doing: ${targetFileName}`);
       }
     } catch (e) {
-      console.log('Error en movimiento físico de archivo en claimOrder:', e);
+      console.log('No se pudo mover archivo físico nativo en claimOrder:', e);
     }
 
     memoryRegistry.doing.set(orderNumber, { orderNumber, operatorId, fileName: targetFileName });
     return { success: true, targetFileName, operatorId };
   },
 
-  // Acción: Liberar Pedido (Mover físicamente de doing -> backlog sin identificador)
+  // Acción: Liberar Pedido (Mover nativamente de doing -> backlog sin identificador)
   releaseOrder: async (orderNumber: string): Promise<{ success: boolean }> => {
+    await ensureDirectoriesExist();
     const operatorId = getHybridOperatorId();
     const doingFileName = `${orderNumber}-${operatorId}.pdf`;
     const cleanFileName = `${orderNumber}.pdf`;
     const paths = getPaths();
 
+    const doingUri = `${paths.doing}${doingFileName}`;
+    const backlogUri = `${paths.backlog}${cleanFileName}`;
+
     try {
-      if (fs && path) {
-        const doingPath = path.join(paths.doing, doingFileName);
-        const backlogPath = path.join(paths.backlog, cleanFileName);
-
-        // Asegurar directorio backlog
-        if (!fs.existsSync(paths.backlog)) {
-          fs.mkdirSync(paths.backlog, { recursive: true });
-        }
-
-        if (fs.existsSync(doingPath)) {
-          fs.renameSync(doingPath, backlogPath);
-          console.log(`[DISCO REAL] Archivo liberado y devuelto a backlog: ${doingPath} -> ${backlogPath}`);
-        } else {
-          // Buscar en doing cualquier archivo que contenga orderNumber
-          if (fs.existsSync(paths.doing)) {
-            const doingFiles = fs.readdirSync(paths.doing);
-            const match = doingFiles.find((f: string) => f.includes(orderNumber));
-            if (match) {
-              fs.renameSync(path.join(paths.doing, match), backlogPath);
-              console.log(`[DISCO REAL] Archivo liberado: ${match} -> ${backlogPath}`);
-            }
-          }
-        }
-      } else {
-        const doingUri = `${paths.doing}${doingFileName}`;
-        const backlogUri = `${paths.backlog}${cleanFileName}`;
-        await FileSystem.moveAsync({ from: doingUri, to: backlogUri }).catch(() => {});
+      const doingInfo = await FileSystem.getInfoAsync(doingUri);
+      if (doingInfo.exists) {
+        await FileSystem.moveAsync({ from: doingUri, to: backlogUri });
+        console.log(`[FILE WORKFLOW] Archivo liberado nativamente de doing a backlog: ${cleanFileName}`);
       }
     } catch (e) {
-      console.log('Error en movimiento físico de archivo en releaseOrder:', e);
+      console.log('No se pudo mover archivo físico nativo en releaseOrder:', e);
     }
 
     memoryRegistry.doing.delete(orderNumber);
     return { success: true };
   },
 
-  // Acción: Finalizar Pedido (Mover físicamente de doing -> done con marca de agua)
+  // Acción: Finalizar Pedido (Mover nativamente de doing -> done con marca de agua)
   completeOrderWithWatermark: async (
     orderNumber: string,
     scannedCount: number,
     totalCount: number,
     supervisorPin?: string
   ): Promise<{ success: boolean; doneFileName: string; watermarkText: string }> => {
+    await ensureDirectoriesExist();
     const operatorId = getHybridOperatorId();
     const doingFileName = `${orderNumber}-${operatorId}.pdf`;
     const doneFileName = `${orderNumber}-${operatorId}.pdf`;
@@ -189,40 +137,19 @@ export const fileWorkflowService = {
     const statusText = scannedCount === totalCount ? '100% OK' : `PARCIAL OK (PIN: ${supervisorPin || '9999'})`;
     const watermarkText = `AUDITADO POR: ${operatorId} | FECHA: ${nowIso} | ESTADO: ${statusText} (${scannedCount}/${totalCount} U)`;
 
+    const doingUri = `${paths.doing}${doingFileName}`;
+    const doneUri = `${paths.done}${doneFileName}`;
+    const auditUri = `${paths.done}${orderNumber}-${operatorId}.audit.txt`;
+
     try {
-      if (fs && path) {
-        const doingPath = path.join(paths.doing, doingFileName);
-        const donePath = path.join(paths.done, doneFileName);
-        const auditLogPath = path.join(paths.done, `${orderNumber}-${operatorId}.audit.txt`);
-
-        // Asegurar directorio done
-        if (!fs.existsSync(paths.done)) {
-          fs.mkdirSync(paths.done, { recursive: true });
-        }
-
-        if (fs.existsSync(doingPath)) {
-          fs.renameSync(doingPath, donePath);
-          console.log(`[DISCO REAL] Archivo finalizado trasladado a done: ${doingPath} -> ${donePath}`);
-        } else {
-          // Fallback si estaba en backlog o con otro nombre
-          const backlogPath = path.join(paths.backlog, `${orderNumber}.pdf`);
-          if (fs.existsSync(backlogPath)) {
-            fs.renameSync(backlogPath, donePath);
-          }
-        }
-
-        // Estampar la marca de agua y registro de auditoría en disco
-        fs.writeFileSync(auditLogPath, watermarkText, 'utf8');
-        console.log(`[MARCA DE AGUA REAL EN DISCO]: "${auditLogPath}" -> "${watermarkText}"`);
-      } else {
-        const doingUri = `${paths.doing}${doingFileName}`;
-        const doneUri = `${paths.done}${doneFileName}`;
-        const auditUri = `${paths.done}${orderNumber}-${operatorId}.audit.txt`;
-        await FileSystem.moveAsync({ from: doingUri, to: doneUri }).catch(() => {});
-        await FileSystem.writeAsStringAsync(auditUri, watermarkText).catch(() => {});
+      const doingInfo = await FileSystem.getInfoAsync(doingUri);
+      if (doingInfo.exists) {
+        await FileSystem.moveAsync({ from: doingUri, to: doneUri });
       }
+      await FileSystem.writeAsStringAsync(auditUri, watermarkText);
+      console.log(`[MARCA DE AGUA AUDITADA NATIVA]: "${watermarkText}" en ${doneFileName}`);
     } catch (e) {
-      console.log('Error en movimiento físico de archivo en completeOrderWithWatermark:', e);
+      console.log('Error escribiendo marca de agua nativa:', e);
     }
 
     memoryRegistry.doing.delete(orderNumber);
