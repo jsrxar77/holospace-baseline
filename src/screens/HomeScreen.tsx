@@ -169,16 +169,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             </TouchableOpacity>
           ))}
 
-          {/* Botones de prueba fija si no hay pedidos recibidos de API */}
           {readyOrders.length === 0 && !hasActiveDoingOrder && (
-            <View style={{ marginTop: 10, width: '100%', gap: 10 }}>
-              <TouchableOpacity
-                style={styles.btnUpload}
-                onPress={() => handleClaimOrder('3010')}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.btnUploadText}>TOMAR PEDIDO #3010 (DIEGO POKE - 11 U)</Text>
-              </TouchableOpacity>
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <Text style={{ color: '#8B949E', fontSize: 13, textAlign: 'center' }}>
+                ⏳ Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde PhoneWare Board.
+              </Text>
             </View>
           )}
         </View>

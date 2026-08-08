@@ -12,7 +12,8 @@
     "password": "op123456",
     "name": "Javier Operario",
     "role": "OPERATOR",
-    "operatorId": "JAVIER-DEV82"
+    "operatorId": "JAVIER-DEV82",
+    "active": false
   },
   {
     "id": "u-1786222650197",
