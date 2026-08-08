@@ -38,6 +38,42 @@ const USERS_FILE = path.join(__dirname, 'users.json');
   }
 });
 
+// Base de datos en memoria / disco de respaldo para pedidos y PDF blobs
+const ordersDb = new Map();
+
+const seedOrderData = (orderNumber, pdfFileName, folder = 'backlog', operatorId = null) => {
+  let clientName = 'LUNFA DISTRIBUIDORA';
+  let items = [
+    { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
+  ];
+
+  if (orderNumber === '34409313') {
+    clientName = 'DIEGO POKE S.R.L.';
+    items = [
+      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 2, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' },
+      { code: '7794450008275', description: 'Vino Malbec Reserva 750 ml', quantityRequired: 1, quantityScanned: 0, unitPrice: 6500.0, status: 'PENDING' }
+    ];
+  } else if (orderNumber === '34512173') {
+    clientName = 'PASCUAL BEBIDAS S.A.';
+    items = [
+      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 4, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
+    ];
+  }
+
+  ordersDb.set(orderNumber, {
+    id: `ord-${orderNumber}`,
+    orderNumber,
+    clientName,
+    issueDate: new Date().toLocaleDateString('es-AR'),
+    pdfFileName,
+    status: folder === 'backlog' ? 'BACKLOG' : folder === 'doing' ? 'DOING' : 'DONE',
+    operatorId,
+    totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
+    totalItemsScanned: folder === 'doing' ? 1 : folder === 'done' ? items.reduce((acc, i) => acc + i.quantityRequired, 0) : 0,
+    items
+  });
+};
+
 // Base de usuarios predeterminada
 let users = [
   {
@@ -170,7 +206,6 @@ const server = http.createServer((req, res) => {
 
         users.push(newUser);
         saveUsers();
-        console.log(`[AUTH] Usuario creado: ${newUser.email} (${newUser.role})`);
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, user: newUser }));
         return;
@@ -185,11 +220,13 @@ const server = http.createServer((req, res) => {
         const kanbanData = {
           backlog: backlogFiles.map((f) => {
             const orderNumber = f.replace('.pdf', '');
+            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'backlog');
+            const cached = ordersDb.get(orderNumber);
             return {
               orderNumber,
               fileName: f,
-              clientName: orderNumber === '34512175' ? 'LUNFA DISTRIBUIDORA' : 'CLIENTE DEPÓSITO',
-              totalItems: 3,
+              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
+              totalItems: cached ? cached.totalItemsRequired : 3,
               scannedItems: 0,
               status: 'BACKLOG'
             };
@@ -198,6 +235,9 @@ const server = http.createServer((req, res) => {
             const parts = f.replace('.pdf', '').split('-');
             const orderNumber = parts[0];
             const operatorId = parts.slice(1).join('-') || 'OP-DESCONOCIDO';
+            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'doing', operatorId);
+            const cached = ordersDb.get(orderNumber);
+
             const operatorUser = users.find((u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase()));
 
             return {
@@ -205,10 +245,10 @@ const server = http.createServer((req, res) => {
               fileName: f,
               operatorId,
               operatorEmail: operatorUser ? operatorUser.email : `${operatorId.toLowerCase()}@drinklovers.com`,
-              clientName: orderNumber === '34512175' ? 'LUNFA DISTRIBUIDORA' : 'CLIENTE DEPÓSITO',
-              totalItems: 3,
-              scannedItems: 2, // Simulado / dinámico
-              progressPercentage: 67,
+              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
+              totalItems: cached ? cached.totalItemsRequired : 3,
+              scannedItems: cached ? cached.totalItemsScanned : 1,
+              progressPercentage: cached ? Math.round((cached.totalItemsScanned / cached.totalItemsRequired) * 100) : 33,
               status: 'DOING'
             };
           }),
@@ -216,6 +256,9 @@ const server = http.createServer((req, res) => {
             const parts = f.replace('.pdf', '').split('-');
             const orderNumber = parts[0];
             const operatorId = parts.slice(1).join('-') || 'OP-DESCONOCIDO';
+            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'done', operatorId);
+            const cached = ordersDb.get(orderNumber);
+
             const auditFile = path.join(DONE_DIR, `${f.replace('.pdf', '')}.audit.txt`);
             let auditStamp = 'AUDITADO OK';
             if (fs.existsSync(auditFile)) {
@@ -226,6 +269,7 @@ const server = http.createServer((req, res) => {
               orderNumber,
               fileName: f,
               operatorId,
+              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
               auditStamp,
               status: 'DONE'
             };
@@ -237,7 +281,43 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 4. AUTO-DETECCIÓN DE PEDIDO ACTIVO
+      // 4. VER DETALLE COMPLETO FORMATO FACTURA
+      if (req.url.startsWith('/api/order-detail')) {
+        let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
+        if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
+
+        if (!ordersDb.has(orderNumber)) {
+          seedOrderData(orderNumber, `${orderNumber}.pdf`);
+        }
+
+        const order = ordersDb.get(orderNumber);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, order }));
+        return;
+      }
+
+      // 5. BORRAR COMPROBANTE EN BACKLOG
+      if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
+        const orderNumber = data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
+        if (!orderNumber) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Falta orderNumber' }));
+          return;
+        }
+
+        ordersDb.delete(orderNumber);
+        const backlogPath = path.join(BACKLOG_DIR, `${orderNumber}.pdf`);
+        if (fs.existsSync(backlogPath)) {
+          fs.unlinkSync(backlogPath);
+          console.log(`[ADMIN] Comprobante ${orderNumber}.pdf eliminado de backlog y DB`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado.` }));
+        return;
+      }
+
+      // 6. AUTO-DETECCIÓN DE PEDIDO ACTIVO
       if (req.url.startsWith('/api/active-order') || req.url === '/api/check-active-order') {
         let operatorId = data.operatorId;
         if (!operatorId && req.url.includes('operatorId=')) {
@@ -267,7 +347,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 5. TOMAR PEDIDO (backlog -> doing)
+      // 7. TOMAR PEDIDO (backlog -> doing)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId } = data;
         const cleanFileName = `${orderNumber}.pdf`;
@@ -279,12 +359,6 @@ const server = http.createServer((req, res) => {
         if (fs.existsSync(srcPath)) {
           fs.renameSync(srcPath, destPath);
           console.log(`[SERVER] Archivo tomado: delivery/backlog/${cleanFileName} -> delivery/doing/${targetFileName}`);
-        } else {
-          const backlogFiles = fs.readdirSync(BACKLOG_DIR);
-          const match = backlogFiles.find((f) => f.includes(orderNumber));
-          if (match) {
-            fs.renameSync(path.join(BACKLOG_DIR, match), destPath);
-          }
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -292,7 +366,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 6. LIBERAR PEDIDO (doing -> backlog)
+      // 8. LIBERAR PEDIDO (doing -> backlog)
       if (req.url === '/api/release-order' && req.method === 'POST') {
         const { orderNumber, operatorId } = data;
         const doingFileName = `${orderNumber}-${operatorId}.pdf`;
@@ -304,12 +378,6 @@ const server = http.createServer((req, res) => {
         if (fs.existsSync(doingPath)) {
           fs.renameSync(doingPath, backlogPath);
           console.log(`[SERVER] Archivo liberado: delivery/doing/${doingFileName} -> delivery/backlog/${cleanFileName}`);
-        } else {
-          const doingFiles = fs.existsSync(DOING_DIR) ? fs.readdirSync(DOING_DIR) : [];
-          const match = doingFiles.find((f) => f.includes(orderNumber));
-          if (match) {
-            fs.renameSync(path.join(DOING_DIR, match), backlogPath);
-          }
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -317,7 +385,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 7. FINALIZAR PEDIDO (doing -> done)
+      // 9. FINALIZAR PEDIDO (doing -> done)
       if (req.url === '/api/complete-order' && req.method === 'POST') {
         const { orderNumber, operatorId, watermarkText } = data;
         const doingFileName = `${orderNumber}-${operatorId}.pdf`;
@@ -339,7 +407,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 8. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN
+      // 10. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN
       if (req.url === '/api/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64 } = data;
         if (!fileName || !pdfBase64) {
@@ -351,7 +419,6 @@ const server = http.createServer((req, res) => {
         const buffer = Buffer.from(pdfBase64, 'base64');
         const pdfText = buffer.toString('utf8');
 
-        // Validación estricta
         if (!pdfText.includes('%PDF') && !pdfText.includes('obj')) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'El archivo subido no es un documento PDF válido' }));
@@ -360,6 +427,11 @@ const server = http.createServer((req, res) => {
 
         const targetPath = path.join(BACKLOG_DIR, fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
         fs.writeFileSync(targetPath, buffer);
+
+        const orderNumber = fileName.replace('.pdf', '');
+        seedOrderData(orderNumber, fileName, 'backlog');
+        const cached = ordersDb.get(orderNumber);
+        if (cached) cached.pdfBlob = pdfBase64;
 
         console.log(`[ADMIN] Comprobante PDF subido y validado exitosamente: ${targetPath}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -205,7 +205,9 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      cursor: pointer;
       transition: transform 0.2s;
+      position: relative;
     }
 
     .kanban-card:hover {
@@ -225,6 +227,20 @@
       line-height: 18px;
     }
 
+    .btn-delete-card {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 82, 82, 0.15);
+      color: #FF5252;
+      border: 1px solid #FF5252;
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     .progress-bar-bg {
       width: 100%;
       height: 8px;
@@ -239,7 +255,7 @@
       border-radius: 4px;
     }
 
-    /* Modal Login & Users */
+    /* Modal Styling */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -261,10 +277,12 @@
       border-radius: 28px;
       padding: 32px;
       width: 100%;
-      max-width: 440px;
+      max-width: 680px;
       display: flex;
       flex-direction: column;
       gap: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .input-field {
@@ -285,13 +303,50 @@
     .hidden {
       display: none !important;
     }
+
+    /* Estilo Factura Comercial */
+    .invoice-card {
+      background-color: #0B0E14;
+      border: 2px solid var(--emerald);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+    }
+
+    .invoice-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .invoice-table th, .invoice-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 14px;
+    }
+
+    .invoice-table th {
+      color: var(--text-muted);
+      font-weight: 700;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Modal Autenticación Login -->
+  <!-- Modal Login -->
   <div id="loginModal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 440px;">
       <div style="text-align: center;">
         <div class="brand-logo" style="margin: 0 auto 16px auto; width: 56px; height: 56px; font-size: 28px;">📦</div>
         <h2 style="font-weight: 900; font-size: 24px;">Phone-Ware Admin</h2>
@@ -330,7 +385,7 @@
       <div class="upload-dropzone" onclick="document.getElementById('fileInput').click()">
         <div style="font-size: 32px; margin-bottom: 8px;">📄</div>
         <div style="font-weight: 900; font-size: 18px;">Subir y Validar Nuevo Comprobante PDF</div>
-        <div style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Arrastra un archivo PDF aquí o haz clic para seleccionar</div>
+        <div style="color: var(--text-muted); font-size: 13px; margin-top: 4px;">Arrastra un archivo PDF aquí o haz clic para seleccionar (Único punto de entrada)</div>
         <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
       </div>
     </div>
@@ -365,9 +420,20 @@
     </div>
   </main>
 
+  <!-- Modal Detalle Factura Comercial -->
+  <div id="invoiceModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="font-weight: 900; font-size: 20px;">DETALLE DE COMPROBANTE (FACTURA COMERCIAL)</h3>
+        <button class="btn-secondary" style="padding: 6px 12px;" onclick="closeInvoiceModal()">✕ Cerrar</button>
+      </div>
+      <div id="invoiceContent"></div>
+    </div>
+  </div>
+
   <!-- Modal Crear Usuario -->
   <div id="userModal" class="modal-overlay hidden">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 440px;">
       <h3 style="font-weight: 900; font-size: 20px;">Crear Nuevo Usuario / Operario</h3>
       <form id="userForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateUser(event)">
         <input type="text" id="newName" class="input-field" placeholder="Nombre completo" required />
