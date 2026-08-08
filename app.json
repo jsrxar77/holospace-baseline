@@ -4,22 +4,12 @@
     "slug": "phone-ware",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0B0E14"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.phoneware.deposito"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0B0E14"
-      },
       "package": "com.phoneware.deposito"
     },
     "plugins": [
@@ -28,7 +18,8 @@
         {
           "cameraPermission": "Phone-Ware necesita acceso a la cámara para escanear códigos de barras de los productos en depósito."
         }
-      ]
+      ],
+      "expo-sqlite"
     ]
   }
 }
