@@ -25,23 +25,18 @@ if (fs.existsSync(envPath)) {
 }
 
 const PORT = parseInt(processEnv.PORT, 10) || 3001;
-const BASE_DIR = path.join(__dirname, 'delivery');
-const BACKLOG_DIR = path.join(BASE_DIR, 'backlog');
-const DOING_DIR = path.join(BASE_DIR, 'doing');
-const DONE_DIR = path.join(BASE_DIR, 'done');
+const ORDERS_DIR = path.join(__dirname, 'orders');
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// Asegurar directorios
-[BACKLOG_DIR, DOING_DIR, DONE_DIR].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
+// Asegurar directorio orders
+if (!fs.existsSync(ORDERS_DIR)) {
+  fs.mkdirSync(ORDERS_DIR, { recursive: true });
+}
 
-// Base de datos en memoria / disco de respaldo para pedidos y PDF blobs
+// Base de datos en memoria para pedidos y PDF blobs
 const ordersDb = new Map();
 
-const seedOrderData = (orderNumber, pdfFileName, folder = 'backlog', operatorId = null) => {
+const seedOrderData = (orderNumber, pdfFileName, status = 'BACKLOG', operatorId = null) => {
   let clientName = 'LUNFA DISTRIBUIDORA';
   let items = [
     { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
@@ -65,11 +60,11 @@ const seedOrderData = (orderNumber, pdfFileName, folder = 'backlog', operatorId 
     orderNumber,
     clientName,
     issueDate: new Date().toLocaleDateString('es-AR'),
-    pdfFileName,
-    status: folder === 'backlog' ? 'BACKLOG' : folder === 'doing' ? 'DOING' : 'DONE',
+    pdfFileName: `${orderNumber}.pdf`,
+    status,
     operatorId,
     totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
-    totalItemsScanned: folder === 'doing' ? 1 : folder === 'done' ? items.reduce((acc, i) => acc + i.quantityRequired, 0) : 0,
+    totalItemsScanned: status === 'DOING' ? 1 : status === 'DONE' ? items.reduce((acc, i) => acc + i.quantityRequired, 0) : 0,
     items
   });
 };
@@ -211,69 +206,60 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3. KANBAN REAL-TIME DATA (Backlog, Doing, Done)
+      // 3. KANBAN REAL-TIME DATA (Backlog, Doing, Done 100% DB)
       if (req.url === '/api/kanban' && req.method === 'GET') {
-        const backlogFiles = fs.existsSync(BACKLOG_DIR) ? fs.readdirSync(BACKLOG_DIR).filter((f) => f.endsWith('.pdf')) : [];
-        const doingFiles = fs.existsSync(DOING_DIR) ? fs.readdirSync(DOING_DIR).filter((f) => f.endsWith('.pdf')) : [];
-        const doneFiles = fs.existsSync(DONE_DIR) ? fs.readdirSync(DONE_DIR).filter((f) => f.endsWith('.pdf')) : [];
+        const orderFiles = fs.existsSync(ORDERS_DIR) ? fs.readdirSync(ORDERS_DIR).filter((f) => f.endsWith('.pdf')) : [];
+        orderFiles.forEach((f) => {
+          const orderNumber = f.replace('.pdf', '');
+          if (!ordersDb.has(orderNumber)) {
+            seedOrderData(orderNumber, f, 'BACKLOG');
+          }
+        });
+
+        const allOrders = Array.from(ordersDb.values());
 
         const kanbanData = {
-          backlog: backlogFiles.map((f) => {
-            const orderNumber = f.replace('.pdf', '');
-            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'backlog');
-            const cached = ordersDb.get(orderNumber);
-            return {
-              orderNumber,
-              fileName: f,
-              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
-              totalItems: cached ? cached.totalItemsRequired : 3,
+          backlog: allOrders
+            .filter((o) => o.status === 'BACKLOG')
+            .map((o) => ({
+              orderNumber: o.orderNumber,
+              fileName: `${o.orderNumber}.pdf`,
+              clientName: o.clientName,
+              totalItems: o.totalItemsRequired,
               scannedItems: 0,
               status: 'BACKLOG'
-            };
-          }),
-          doing: doingFiles.map((f) => {
-            const parts = f.replace('.pdf', '').split('-');
-            const orderNumber = parts[0];
-            const operatorId = parts.slice(1).join('-') || 'OP-DESCONOCIDO';
-            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'doing', operatorId);
-            const cached = ordersDb.get(orderNumber);
+            })),
 
-            const operatorUser = users.find((u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase()));
+          doing: allOrders
+            .filter((o) => o.status === 'DOING' || o.status === 'SCANNING')
+            .map((o) => {
+              const operatorId = o.operatorId || 'OP-DESCONOCIDO';
+              const operatorUser = users.find(
+                (u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase())
+              );
+              return {
+                orderNumber: o.orderNumber,
+                fileName: `${o.orderNumber}.pdf`,
+                operatorId,
+                operatorEmail: operatorUser ? operatorUser.email : `${operatorId.toLowerCase()}@drinklovers.com`,
+                clientName: o.clientName,
+                totalItems: o.totalItemsRequired,
+                scannedItems: o.totalItemsScanned,
+                progressPercentage: Math.round((o.totalItemsScanned / o.totalItemsRequired) * 100),
+                status: 'DOING'
+              };
+            }),
 
-            return {
-              orderNumber,
-              fileName: f,
-              operatorId,
-              operatorEmail: operatorUser ? operatorUser.email : `${operatorId.toLowerCase()}@drinklovers.com`,
-              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
-              totalItems: cached ? cached.totalItemsRequired : 3,
-              scannedItems: cached ? cached.totalItemsScanned : 1,
-              progressPercentage: cached ? Math.round((cached.totalItemsScanned / cached.totalItemsRequired) * 100) : 33,
-              status: 'DOING'
-            };
-          }),
-          done: doneFiles.map((f) => {
-            const parts = f.replace('.pdf', '').split('-');
-            const orderNumber = parts[0];
-            const operatorId = parts.slice(1).join('-') || 'OP-DESCONOCIDO';
-            if (!ordersDb.has(orderNumber)) seedOrderData(orderNumber, f, 'done', operatorId);
-            const cached = ordersDb.get(orderNumber);
-
-            const auditFile = path.join(DONE_DIR, `${f.replace('.pdf', '')}.audit.txt`);
-            let auditStamp = 'AUDITADO OK';
-            if (fs.existsSync(auditFile)) {
-              auditStamp = fs.readFileSync(auditFile, 'utf8');
-            }
-
-            return {
-              orderNumber,
-              fileName: f,
-              operatorId,
-              clientName: cached ? cached.clientName : 'CLIENTE DEPÓSITO',
-              auditStamp,
+          done: allOrders
+            .filter((o) => o.status === 'DONE' || o.status === 'CLOSED' || o.status === 'PARTIAL_DISPATCH')
+            .map((o) => ({
+              orderNumber: o.orderNumber,
+              fileName: `${o.orderNumber}.pdf`,
+              operatorId: o.operatorId || 'JAVIER-DEV82',
+              clientName: o.clientName,
+              auditStamp: `AUDITADO POR: ${o.operatorId || 'JAVIER-DEV82'} | FECHA: ${o.issueDate} | ESTADO: 100% OK`,
               status: 'DONE'
-            };
-          })
+            }))
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -306,10 +292,10 @@ const server = http.createServer((req, res) => {
         }
 
         ordersDb.delete(orderNumber);
-        const backlogPath = path.join(BACKLOG_DIR, `${orderNumber}.pdf`);
-        if (fs.existsSync(backlogPath)) {
-          fs.unlinkSync(backlogPath);
-          console.log(`[ADMIN] Comprobante ${orderNumber}.pdf eliminado de backlog y DB`);
+        const orderFilePath = path.join(ORDERS_DIR, `${orderNumber}.pdf`);
+        if (fs.existsSync(orderFilePath)) {
+          fs.unlinkSync(orderFilePath);
+          console.log(`[ADMIN] Comprobante ${orderNumber}.pdf eliminado de ./orders/ y DB`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -317,29 +303,21 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 6. AUTO-DETECCIÓN DE PEDIDO ACTIVO
+      // 6. AUTO-DETECCIÓN DE PEDIDO ACTIVO EN DB
       if (req.url.startsWith('/api/active-order') || req.url === '/api/check-active-order') {
         let operatorId = data.operatorId;
         if (!operatorId && req.url.includes('operatorId=')) {
           operatorId = req.url.split('operatorId=')[1].split('&')[0];
         }
 
-        if (fs.existsSync(DOING_DIR)) {
-          const doingFiles = fs.readdirSync(DOING_DIR).filter((f) => f.endsWith('.pdf'));
-          let activeFile = null;
-          if (operatorId) {
-            activeFile = doingFiles.find((f) => f.includes(operatorId));
-          }
-          if (!activeFile && doingFiles.length > 0) {
-            activeFile = doingFiles[0];
-          }
+        const activeOrder = Array.from(ordersDb.values()).find(
+          (o) => (o.status === 'DOING' || o.status === 'SCANNING') && (!operatorId || o.operatorId === operatorId)
+        );
 
-          if (activeFile) {
-            const orderNumber = activeFile.split('-')[0];
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ hasActive: true, orderNumber, pdfFileName: activeFile }));
-            return;
-          }
+        if (activeOrder) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ hasActive: true, orderNumber: activeOrder.orderNumber, pdfFileName: `${activeOrder.orderNumber}.pdf` }));
+          return;
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -347,37 +325,31 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 7. TOMAR PEDIDO (backlog -> doing)
+      // 7. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId } = data;
-        const cleanFileName = `${orderNumber}.pdf`;
-        const targetFileName = `${orderNumber}-${operatorId}.pdf`;
-
-        const srcPath = path.join(BACKLOG_DIR, cleanFileName);
-        const destPath = path.join(DOING_DIR, targetFileName);
-
-        if (fs.existsSync(srcPath)) {
-          fs.renameSync(srcPath, destPath);
-          console.log(`[SERVER] Archivo tomado: delivery/backlog/${cleanFileName} -> delivery/doing/${targetFileName}`);
+        if (!ordersDb.has(orderNumber)) {
+          seedOrderData(orderNumber, `${orderNumber}.pdf`);
         }
 
+        const order = ordersDb.get(orderNumber);
+        order.status = 'DOING';
+        order.operatorId = operatorId;
+
+        console.log(`[SERVER DB] Pedido ${orderNumber} tomado por ${operatorId}. Estado -> DOING`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, targetFileName }));
+        res.end(JSON.stringify({ success: true, targetFileName: `${orderNumber}.pdf` }));
         return;
       }
 
-      // 8. LIBERAR PEDIDO (doing -> backlog)
+      // 8. LIBERAR PEDIDO (CAMBIO DE ESTADO EN DB)
       if (req.url === '/api/release-order' && req.method === 'POST') {
-        const { orderNumber, operatorId } = data;
-        const doingFileName = `${orderNumber}-${operatorId}.pdf`;
-        const cleanFileName = `${orderNumber}.pdf`;
-
-        const doingPath = path.join(DOING_DIR, doingFileName);
-        const backlogPath = path.join(BACKLOG_DIR, cleanFileName);
-
-        if (fs.existsSync(doingPath)) {
-          fs.renameSync(doingPath, backlogPath);
-          console.log(`[SERVER] Archivo liberado: delivery/doing/${doingFileName} -> delivery/backlog/${cleanFileName}`);
+        const { orderNumber } = data;
+        if (ordersDb.has(orderNumber)) {
+          const order = ordersDb.get(orderNumber);
+          order.status = 'BACKLOG';
+          order.operatorId = null;
+          console.log(`[SERVER DB] Pedido ${orderNumber} liberado. Estado -> BACKLOG`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -385,29 +357,24 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 9. FINALIZAR PEDIDO (doing -> done)
+      // 9. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN DB CON MARCA DE AGUA)
       if (req.url === '/api/complete-order' && req.method === 'POST') {
         const { orderNumber, operatorId, watermarkText } = data;
-        const doingFileName = `${orderNumber}-${operatorId}.pdf`;
-        const doneFileName = `${orderNumber}-${operatorId}.pdf`;
-        const auditTxtFileName = `${orderNumber}-${operatorId}.audit.txt`;
-
-        const doingPath = path.join(DOING_DIR, doingFileName);
-        const donePath = path.join(DONE_DIR, doneFileName);
-        const auditPath = path.join(DONE_DIR, auditTxtFileName);
-
-        if (fs.existsSync(doingPath)) {
-          fs.renameSync(doingPath, donePath);
-          console.log(`[SERVER] Archivo finalizado: delivery/doing/${doingFileName} -> delivery/done/${doneFileName}`);
+        if (ordersDb.has(orderNumber)) {
+          const order = ordersDb.get(orderNumber);
+          order.status = 'DONE';
+          order.operatorId = operatorId;
+          order.auditStamp = watermarkText;
+          order.totalItemsScanned = order.totalItemsRequired;
+          console.log(`[SERVER DB] Pedido ${orderNumber} finalizado y archivado. Estado -> DONE`);
         }
 
-        fs.writeFileSync(auditPath, watermarkText, 'utf8');
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, doneFileName, auditPath }));
+        res.end(JSON.stringify({ success: true, doneFileName: `${orderNumber}.pdf`, auditPath: watermarkText }));
         return;
       }
 
-      // 10. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN
+      // 10. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (GUARDAR EN ./orders/)
       if (req.url === '/api/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64 } = data;
         if (!fileName || !pdfBase64) {
@@ -425,17 +392,18 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        const targetPath = path.join(BACKLOG_DIR, fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`);
+        const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
+        const targetPath = path.join(ORDERS_DIR, cleanName);
         fs.writeFileSync(targetPath, buffer);
 
-        const orderNumber = fileName.replace('.pdf', '');
-        seedOrderData(orderNumber, fileName, 'backlog');
+        const orderNumber = cleanName.replace('.pdf', '');
+        seedOrderData(orderNumber, cleanName, 'BACKLOG');
         const cached = ordersDb.get(orderNumber);
         if (cached) cached.pdfBlob = pdfBase64;
 
-        console.log(`[ADMIN] Comprobante PDF subido y validado exitosamente: ${targetPath}`);
+        console.log(`[ADMIN] Comprobante PDF subido y validado exitosamente en ./orders/: ${targetPath}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, fileName, message: 'Comprobante validado y publicado en backlog' }));
+        res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y publicado en backlog' }));
         return;
       }
 
@@ -451,5 +419,6 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
+  console.log(`📂 Única carpeta de comprobantes: ./orders/`);
   console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });

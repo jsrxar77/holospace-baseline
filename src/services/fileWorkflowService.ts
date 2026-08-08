@@ -21,7 +21,7 @@ export const setOperatorName = (name: string) => {
   }
 };
 
-// URL del Servidor de Archivos Físicos en Disco (Mac Host)
+// URL del Servidor de Archivos y Base de Datos (Mac Host)
 const SERVER_URL = 'http://192.168.100.247:3001';
 
 export const fileWorkflowService = {
@@ -33,15 +33,15 @@ export const fileWorkflowService = {
     setOperatorName(name);
   },
 
-  // Auto-detectar si el operario tiene un pedido activo tomado en ./delivery/doing/
+  // Auto-detectar si el operario tiene un pedido activo en DB
   getActiveDoingOrder: async (): Promise<{ hasActive: boolean; orderNumber?: string; pdfFileName?: string }> => {
     const operatorId = getHybridOperatorId();
     try {
       const response = await fetch(`${SERVER_URL}/api/active-order?operatorId=${operatorId}`);
       const data = await response.json();
       if (data && data.hasActive) {
-        console.log(`[AUTO-DETECCIÓN PROCESO] Encontrado pedido en doing: #${data.orderNumber} (${data.pdfFileName})`);
-        return { hasActive: true, orderNumber: data.orderNumber, pdfFileName: data.pdfFileName };
+        console.log(`[AUTO-DETECCIÓN PROCESO] Encontrado pedido activo en DB: #${data.orderNumber}`);
+        return { hasActive: true, orderNumber: data.orderNumber, pdfFileName: `${data.orderNumber}.pdf` };
       }
     } catch (e) {
       console.log('Error llamando a auto-detección de active-order:', e);
@@ -49,10 +49,10 @@ export const fileWorkflowService = {
     return { hasActive: false };
   },
 
-  // Acción: Tomar Pedido (Mover físicamente en el disco duro del Mac de delivery/backlog a delivery/doing)
+  // Acción: Tomar Pedido (Cambio de estado a DOING en DB)
   claimOrder: async (orderNumber: string): Promise<{ success: boolean; targetFileName: string; operatorId: string }> => {
     const operatorId = getHybridOperatorId();
-    const targetFileName = `${orderNumber}-${operatorId}.pdf`;
+    const targetFileName = `${orderNumber}.pdf`;
 
     try {
       const response = await fetch(`${SERVER_URL}/api/claim-order`, {
@@ -61,15 +61,15 @@ export const fileWorkflowService = {
         body: JSON.stringify({ orderNumber, operatorId })
       });
       const data = await response.json();
-      console.log('[MOVIMIENTO FÍSICO REAL EN MAC] claimOrder:', data);
+      console.log('[BASE DE DATOS] claimOrder estado a DOING:', data);
     } catch (e) {
-      console.log('Error llamando al servidor de archivos físico:', e);
+      console.log('Error llamando a claimOrder en DB:', e);
     }
 
     return { success: true, targetFileName, operatorId };
   },
 
-  // Acción: Liberar Pedido (Mover físicamente en el disco duro del Mac de delivery/doing a delivery/backlog)
+  // Acción: Liberar Pedido (Cambio de estado a BACKLOG en DB)
   releaseOrder: async (orderNumber: string): Promise<{ success: boolean }> => {
     const operatorId = getHybridOperatorId();
 
@@ -80,15 +80,15 @@ export const fileWorkflowService = {
         body: JSON.stringify({ orderNumber, operatorId })
       });
       const data = await response.json();
-      console.log('[DEVOLUCIÓN FÍSICA REAL EN MAC] releaseOrder:', data);
+      console.log('[BASE DE DATOS] releaseOrder estado a BACKLOG:', data);
     } catch (e) {
-      console.log('Error llamando al servidor de archivos físico:', e);
+      console.log('Error llamando a releaseOrder en DB:', e);
     }
 
     return { success: true };
   },
 
-  // Acción: Finalizar Pedido (Mover físicamente en el disco duro del Mac de delivery/doing a delivery/done con marca de agua)
+  // Acción: Finalizar Pedido (Cambio de estado a DONE en DB con Marca de Agua)
   completeOrderWithWatermark: async (
     orderNumber: string,
     scannedCount: number,
@@ -96,7 +96,7 @@ export const fileWorkflowService = {
     supervisorPin?: string
   ): Promise<{ success: boolean; doneFileName: string; watermarkText: string }> => {
     const operatorId = getHybridOperatorId();
-    const doneFileName = `${orderNumber}-${operatorId}.pdf`;
+    const doneFileName = `${orderNumber}.pdf`;
     const nowIso = new Date().toLocaleString('es-AR');
     const statusText = scannedCount === totalCount ? '100% OK' : `PARCIAL OK (PIN: ${supervisorPin || '9999'})`;
     const watermarkText = `AUDITADO POR: ${operatorId} | FECHA: ${nowIso} | ESTADO: ${statusText} (${scannedCount}/${totalCount} U)`;
@@ -108,9 +108,9 @@ export const fileWorkflowService = {
         body: JSON.stringify({ orderNumber, operatorId, watermarkText })
       });
       const data = await response.json();
-      console.log('[ARCHIVADO FÍSICO Y MARCA DE AGUA EN MAC] completeOrder:', data);
+      console.log('[BASE DE DATOS] completeOrder estado a DONE:', data);
     } catch (e) {
-      console.log('Error llamando al servidor de archivos físico:', e);
+      console.log('Error llamando a completeOrder en DB:', e);
     }
 
     return { success: true, doneFileName, watermarkText };
