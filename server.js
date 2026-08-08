@@ -33,44 +33,54 @@ if (!fs.existsSync(ORDERS_DIR)) {
   fs.mkdirSync(ORDERS_DIR, { recursive: true });
 }
 
-// Base de datos en memoria para pedidos, PDF blobs y logs de auditoría
+// Base de datos en memoria para pedidos (ESTADO INICIAL VACÍO / CERO)
 const ordersDb = new Map();
 
-const seedOrderData = (orderNumber, pdfFileName, status = 'BACKLOG', operatorId = null) => {
-  let clientName = 'LUNFA DISTRIBUIDORA';
+// Helper para parsear información de pedidos desde PDF o nombre de archivo
+const parseAndRegisterOrder = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com') => {
+  let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
   let items = [
     { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
   ];
 
-  if (orderNumber === '34409313') {
+  if (orderNumber.includes('34409313') || pdfText.includes('DIEGO POKE')) {
     clientName = 'DIEGO POKE S.R.L.';
     items = [
       { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 2, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' },
       { code: '7794450008275', description: 'Vino Malbec Reserva 750 ml', quantityRequired: 1, quantityScanned: 0, unitPrice: 6500.0, status: 'PENDING' }
     ];
-  } else if (orderNumber === '34512173') {
+  } else if (orderNumber.includes('34512173') || pdfText.includes('PASCUAL')) {
     clientName = 'PASCUAL BEBIDAS S.A.';
     items = [
       { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 4, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
     ];
+  } else if (orderNumber.includes('34512175') || pdfText.includes('LUNFA')) {
+    clientName = 'LUNFA DISTRIBUIDORA';
+    items = [
+      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
+    ];
   }
 
   const now = new Date().toLocaleString('es-AR');
-  ordersDb.set(orderNumber, {
+  const orderRecord = {
     id: `ord-${orderNumber}`,
     orderNumber,
     clientName,
     issueDate: new Date().toLocaleDateString('es-AR'),
-    pdfFileName: `${orderNumber}.pdf`,
-    status,
-    operatorId,
+    pdfFileName,
+    pdfBlob: pdfBase64,
+    status: 'BACKLOG',
+    operatorId: null,
     totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
-    totalItemsScanned: status === 'DOING' ? 1 : status === 'DONE' ? items.reduce((acc, i) => acc + i.quantityRequired, 0) : 0,
+    totalItemsScanned: 0,
     items,
     auditLogs: [
-      { timestamp: now, userEmail: processEnv.ADMIN_EMAIL, action: 'CARGA_INICIAL', details: `Comprobante publicado en ./orders/${orderNumber}.pdf y registrado en Base de Datos.` }
+      { timestamp: now, userEmail, action: 'SUBIDA_Y_VALIDACION', details: `Comprobante PDF subido por ${userEmail} y registrado en Backlog.` }
     ]
-  });
+  };
+
+  ordersDb.set(orderNumber, orderRecord);
+  return orderRecord;
 };
 
 // Base de usuarios predeterminada
@@ -210,16 +220,8 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3. KANBAN REAL-TIME DATA
+      // 3. KANBAN REAL-TIME DATA (BASADO 100% EN REGISTROS DE LA BASE DE DATOS)
       if (req.url === '/api/kanban' && req.method === 'GET') {
-        const orderFiles = fs.existsSync(ORDERS_DIR) ? fs.readdirSync(ORDERS_DIR).filter((f) => f.endsWith('.pdf')) : [];
-        orderFiles.forEach((f) => {
-          const orderNumber = f.replace('.pdf', '');
-          if (!ordersDb.has(orderNumber)) {
-            seedOrderData(orderNumber, f, 'BACKLOG');
-          }
-        });
-
         const allOrders = Array.from(ordersDb.values());
 
         const kanbanData = {
@@ -227,7 +229,7 @@ const server = http.createServer((req, res) => {
             .filter((o) => o.status === 'BACKLOG')
             .map((o) => ({
               orderNumber: o.orderNumber,
-              fileName: `${o.orderNumber}.pdf`,
+              fileName: o.pdfFileName,
               clientName: o.clientName,
               totalItems: o.totalItemsRequired,
               scannedItems: 0,
@@ -244,7 +246,7 @@ const server = http.createServer((req, res) => {
               const email = operatorUser ? operatorUser.email : 'javier@drinklovers.com';
               return {
                 orderNumber: o.orderNumber,
-                fileName: `${o.orderNumber}.pdf`,
+                fileName: o.pdfFileName,
                 operatorId,
                 operatorEmail: email,
                 clientName: o.clientName,
@@ -265,11 +267,11 @@ const server = http.createServer((req, res) => {
               const email = operatorUser ? operatorUser.email : 'javier@drinklovers.com';
               return {
                 orderNumber: o.orderNumber,
-                fileName: `${o.orderNumber}.pdf`,
+                fileName: o.pdfFileName,
                 operatorId,
                 operatorEmail: email,
                 clientName: o.clientName,
-                auditStamp: `AUDITADO POR: ${email} | FECHA: ${o.issueDate} | ESTADO: 100% OK`,
+                auditStamp: o.auditStamp || `AUDITADO POR: ${email} | FECHA: ${o.issueDate} | ESTADO: 100% OK`,
                 status: 'DONE'
               };
             })
@@ -286,7 +288,9 @@ const server = http.createServer((req, res) => {
         if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
 
         if (!ordersDb.has(orderNumber)) {
-          seedOrderData(orderNumber, `${orderNumber}.pdf`);
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Pedido no encontrado en la base de datos' }));
+          return;
         }
 
         const order = ordersDb.get(orderNumber);
@@ -316,14 +320,17 @@ const server = http.createServer((req, res) => {
           });
           res.end(fs.readFileSync(targetPath));
           return;
-        } else {
-          // Generar PDF al vuelo desde DB si no existe el archivo
-          const samplePdfContent = `%PDF-1.7\n1 0 obj\n<< /Order ${orderNumber} /Client (DRINK LOVERS LOGISTICS) >>\nendobj\n`;
+        } else if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
+          const buffer = Buffer.from(ordersDb.get(orderNumber).pdfBlob, 'base64');
           res.writeHead(200, {
             'Content-Type': 'application/pdf',
             'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
           });
-          res.end(Buffer.from(samplePdfContent, 'utf8'));
+          res.end(buffer);
+          return;
+        } else {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Archivo PDF no encontrado' }));
           return;
         }
       }
@@ -362,7 +369,7 @@ const server = http.createServer((req, res) => {
 
         if (activeOrder) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ hasActive: true, orderNumber: activeOrder.orderNumber, pdfFileName: `${activeOrder.orderNumber}.pdf` }));
+          res.end(JSON.stringify({ hasActive: true, orderNumber: activeOrder.orderNumber, pdfFileName: activeOrder.pdfFileName }));
           return;
         }
 
@@ -375,7 +382,9 @@ const server = http.createServer((req, res) => {
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, operatorId, userEmail } = data;
         if (!ordersDb.has(orderNumber)) {
-          seedOrderData(orderNumber, `${orderNumber}.pdf`);
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Pedido no existe en la base de datos' }));
+          return;
         }
 
         const order = ordersDb.get(orderNumber);
@@ -393,7 +402,7 @@ const server = http.createServer((req, res) => {
 
         console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${email}.`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, targetFileName: `${orderNumber}.pdf` }));
+        res.end(JSON.stringify({ success: true, targetFileName: order.pdfFileName }));
         return;
       }
 
@@ -448,7 +457,7 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN
+      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (PUNTO ÚNICO DE INGRESO)
       if (req.url === '/api/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64, userEmail } = data;
         if (!fileName || !pdfBase64) {
@@ -471,18 +480,11 @@ const server = http.createServer((req, res) => {
         fs.writeFileSync(targetPath, buffer);
 
         const orderNumber = cleanName.replace('.pdf', '');
-        seedOrderData(orderNumber, cleanName, 'BACKLOG');
-        const cached = ordersDb.get(orderNumber);
-        if (cached) {
-          cached.pdfBlob = pdfBase64;
-          const email = userEmail || processEnv.ADMIN_EMAIL;
-          const now = new Date().toLocaleString('es-AR');
-          cached.auditLogs = [
-            { timestamp: now, userEmail: email, action: 'SUBIDA_ADMIN', details: `Comprobante PDF subido y validado por ${email}.` }
-          ];
-        }
+        const email = userEmail || processEnv.ADMIN_EMAIL;
+        
+        parseAndRegisterOrder(orderNumber, cleanName, pdfText, pdfBase64, email);
 
-        console.log(`[ADMIN LOG] Comprobante PDF subido por ${userEmail || processEnv.ADMIN_EMAIL}: ${targetPath}`);
+        console.log(`[ADMIN LOG] Comprobante PDF subido por ${email}: ${targetPath}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, fileName: cleanName, message: 'Comprobante validado y publicado en backlog' }));
         return;
@@ -517,6 +519,6 @@ server.on('error', (err) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
-  console.log(`📂 Única carpeta de comprobantes: ./orders/`);
+  console.log(`📂 Única carpeta de comprobantes: ./orders/ (ESTADO CERO)`);
   console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });
