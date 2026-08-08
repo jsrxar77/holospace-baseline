@@ -1,7 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import * as Sharing from 'expo-sharing';
-import * as FileSystem from 'expo-file-system/legacy';
 import { useOrderStore } from '../store/useOrderStore';
 
 interface DispatchScreenProps {
@@ -9,7 +7,7 @@ interface DispatchScreenProps {
 }
 
 export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) => {
-  const { activeOrder, setActiveOrder } = useOrderStore();
+  const { activeOrder, setActiveOrder, closeOrder } = useOrderStore();
 
   if (!activeOrder) {
     return (
@@ -22,42 +20,30 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
     );
   }
 
-  const isComplete = activeOrder.totalItemsScanned === activeOrder.totalItemsRequired;
   const isPartial = activeOrder.status === 'PARTIAL_DISPATCH';
 
-  const handleExportAuditReport = async () => {
+  const handleCorroborateAndFinish = async () => {
     try {
-      const csvHeader = 'EAN,Descripcion,Requerido,Escaneado,Estado\n';
-      const csvRows = activeOrder.items
-        .map(
-          (item) =>
-            `"${item.code}","${item.description}",${item.quantityRequired},${item.quantityScanned},"${item.status}"`
-        )
-        .join('\n');
-
-      const csvContent = `${csvHeader}${csvRows}`;
-      const filePath = `${FileSystem.documentDirectory}Reporte_Auditoria_${activeOrder.orderNumber}.csv`;
-
-      await FileSystem.writeAsStringAsync(filePath, csvContent, {
-        encoding: FileSystem.EncodingType.UTF8
-      });
-
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(filePath, {
-          mimeType: 'text/csv',
-          dialogTitle: `Compartir Reporte de Auditoría #${activeOrder.orderNumber}`
-        });
-      } else {
-        Alert.alert('Reporte Creado', `Se generó el archivo en: ${filePath}`);
+      if (activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
+        await closeOrder();
       }
+      Alert.alert(
+        'Despacho Concluido',
+        `El Pedido #${activeOrder.orderNumber} fue corroborado y archivado físicamente en ./delivery/done/.\n\nAhora puedes tomar un nuevo pedido.`,
+        [
+          {
+            text: 'Ir a Pedidos Libres',
+            onPress: () => {
+              setActiveOrder(null);
+              onBackToHome();
+            }
+          }
+        ]
+      );
     } catch (e) {
-      Alert.alert('Error', 'No se pudo generar el reporte CSV de auditoría.');
+      setActiveOrder(null);
+      onBackToHome();
     }
-  };
-
-  const handleFinishDispatch = () => {
-    setActiveOrder(null);
-    onBackToHome();
   };
 
   return (
@@ -80,7 +66,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
 
           <Text style={styles.subtitle}>
             {isPartial
-              ? 'El pedido fue cerrado con autorización de supervisor por faltantes físicos.'
+              ? 'El pedido fue verificado con autorización de supervisor por faltantes físicos.'
               : 'La auditoría de stock ha finalizado con éxito. Todas las unidades han sido confirmadas.'}
           </Text>
 
@@ -88,17 +74,17 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
           <View style={styles.detailsBox}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Operario Auditador:</Text>
-              <Text style={styles.detailValueHighlight}>JAVIER-DEV82</Text>
+              <Text style={[styles.detailValue, styles.textEmerald]}>JAVIER-DEV82</Text>
             </View>
 
-            <View style={styles.detailRow}>
+            <View style={styles.detailBlock}>
               <Text style={styles.detailLabel}>Cliente / Razón Social:</Text>
-              <Text style={styles.detailValue}>{activeOrder.clientName}</Text>
+              <Text style={styles.detailValueBlock}>{activeOrder.clientName}</Text>
             </View>
 
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Unidades Verificadas:</Text>
-              <Text style={styles.detailValueHighlight}>
+              <Text style={[styles.detailValue, styles.textEmerald]}>
                 {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
                 {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
               </Text>
@@ -111,26 +97,22 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
               </Text>
             </View>
 
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Archivo Archivado:</Text>
-              <Text style={styles.detailValue}>./delivery/done/{activeOrder.pdfFileName}</Text>
+            <View style={styles.detailBlock}>
+              <Text style={styles.detailLabel}>Archivo Archivado en Disco:</Text>
+              <Text style={styles.detailValuePath}>./delivery/done/{activeOrder.pdfFileName}</Text>
             </View>
 
             {activeOrder.exceptionReason && (
-              <View style={[styles.detailRow, { flexDirection: 'column', gap: 4 }]}>
+              <View style={styles.detailBlock}>
                 <Text style={styles.detailLabel}>Marca de Agua / Auditoría:</Text>
                 <Text style={styles.textEmerald}>{activeOrder.exceptionReason}</Text>
               </View>
             )}
           </View>
 
-          {/* Actions */}
-          <TouchableOpacity style={styles.btnExport} onPress={handleExportAuditReport} activeOpacity={0.8}>
-            <Text style={styles.btnExportText}>📄 Exportar Reporte de Auditoría (CSV)</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.btnHome} onPress={handleFinishDispatch} activeOpacity={0.8}>
-            <Text style={styles.btnHomeText}>PROCESAR NUEVO COMPROBANTE PDF</Text>
+          {/* Single Action Button: Corroborar y Finalizar */}
+          <TouchableOpacity style={styles.btnHome} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
+            <Text style={styles.btnHomeText}>CORROBORAR DATOS Y FINALIZAR DESPACHO</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -144,8 +126,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B0E14'
   },
   scrollContent: {
-    padding: 20,
-    paddingTop: 60,
+    padding: 16,
+    paddingTop: 40,
+    paddingBottom: 40,
     alignItems: 'center'
   },
   modalCard: {
@@ -153,19 +136,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#161B22',
     borderWidth: 2,
     borderColor: '#00E676',
-    borderRadius: 28,
-    padding: 24,
+    borderRadius: 24,
+    padding: 20,
     alignItems: 'center',
-    gap: 16,
-    elevation: 10
+    gap: 16
   },
   iconCircle: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     backgroundColor: 'rgba(0, 230, 118, 0.15)',
     borderWidth: 3,
     borderColor: '#00E676',
-    borderRadius: 40,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center'
   },
@@ -174,7 +156,7 @@ const styles = StyleSheet.create({
     borderColor: '#F59E0B'
   },
   iconText: {
-    fontSize: 40,
+    fontSize: 36,
     color: '#00E676',
     fontWeight: '900'
   },
@@ -183,21 +165,21 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900',
     textAlign: 'center',
-    lineHeight: 28
+    lineHeight: 26
   },
   subtitle: {
     color: '#8B949E',
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 20
+    lineHeight: 18
   },
   detailsBox: {
     width: '100%',
     backgroundColor: '#0B0E14',
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 16,
     gap: 12,
     borderWidth: 1,
@@ -206,22 +188,36 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6
+  },
+  detailBlock: {
+    flexDirection: 'column',
+    gap: 4
   },
   detailLabel: {
     color: '#8B949E',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700'
   },
   detailValue: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '800'
+    fontWeight: '800',
+    flexShrink: 1
   },
-  detailValueHighlight: {
-    color: '#00E676',
-    fontSize: 15,
-    fontWeight: '900'
+  detailValueBlock: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    lineHeight: 20
+  },
+  detailValuePath: {
+    color: '#3B82F6',
+    fontSize: 13,
+    fontWeight: '800',
+    lineHeight: 18
   },
   textEmerald: {
     color: '#00E676',
@@ -231,23 +227,6 @@ const styles = StyleSheet.create({
     color: '#F59E0B',
     fontWeight: '900'
   },
-  btnExport: {
-    width: '100%',
-    minHeight: 56,
-    backgroundColor: '#21262D',
-    borderWidth: 1,
-    borderColor: '#30363D',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16
-  },
-  btnExportText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '800',
-    textAlign: 'center'
-  },
   btnHome: {
     width: '100%',
     minHeight: 64, // Ergonomía > 64px
@@ -256,7 +235,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    elevation: 6
+    marginTop: 8
   },
   btnHomeText: {
     color: '#000000',
