@@ -222,4 +222,18 @@ La interfaz de usuario ha sido concebida bajo estándares exigentes de ergonomí
 - **And** NO muestra historial cruzado ni listas de productos de otros pedidos parseados,
 - **And** en la pantalla principal muestra únicamente el acceso a mi pedido en proceso o la lista de comprobantes libres en `./delivery/backlog/` con bloqueo de toma hasta liberar el actual.
 
+---
+
+### US-11: Persistencia y Auto-Recuperación de Pedido Activo al Reiniciar la App (Doing Auto-Detection)
+**Como** operario de depósito,  
+**Quiero** que si la aplicación se cierra inesperadamente o la reinicio, al abrirla reconozca automáticamente mi pedido en proceso en `./delivery/doing/`,  
+**Para** continuar la auditoría sin perder datos y sin permitir la toma de otros pedidos.
+
+**Criterios de Aceptación:**
+- **Given** que el operario `JAVIER-DEV82` tiene un archivo asignado `34409313-JAVIER-DEV82.pdf` en `./delivery/doing/`,
+- **When** el operario cierra la app por completo o reinicia el celular y vuelve a ingresar a la aplicación,
+- **Then** durante la carga inicial la app escanea `./delivery/doing/` y detecta la existencia del pedido asignado,
+- **And** rehidrata automáticamente el Pedido `#34409313` como `activeOrder` manteniendo el progreso verificado,
+- **And** presenta la tarjeta "TU PEDIDO EN PROCESO #34409313" bloqueando la toma de nuevos pedidos de backlog.
+
 

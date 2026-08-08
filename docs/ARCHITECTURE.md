@@ -258,3 +258,8 @@ Para soportar múltiples operarios trabajando en paralelo en el mismo depósito,
    - La interfaz de la aplicación NO mostrará listas de otros pedidos parseados ni mantendrá instancias de comprobantes cruzados en la vista principal.
    - La experiencia visual estará 100% dedicada y limpia para el pedido único asignado al operario en `./delivery/doing/`.
    - Si no hay pedido asignado, muestra únicamente la lista limpia de comprobantes libres en `./delivery/backlog/`.
+
+6. **Persistencia y Auto-Recuperación al Iniciar la App (Doing Auto-Detection)**:
+   - Durante la secuencia de inicio de la aplicación (`loadInitialOrders`), el sistema consulta automáticamente la existencia de comprobantes asignados al identificador del operario en `./delivery/doing/`.
+   - Si detecta un archivo como `./delivery/doing/34409313-JAVIER-DEV82.pdf`, restaura automáticamente el Pedido `#34409313` como `activeOrder` activo.
+   - Esto garantiza resistencia total a cierres forzados de la app o reinicios de dispositivo, impidiendo que el operario pueda tomar pedidos adicionales hasta liberar o finalizar el actual.
