@@ -32,17 +32,27 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
     );
   }
 
-  const handleBarcodeScanned = ({ data }: { data: string }) => {
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (data) {
-      scanBarcode(data);
+      const result = await scanBarcode(data);
+      if (result === 'SUCCESS') {
+        setTimeout(() => {
+          onClose();
+        }, 400);
+      }
     }
   };
 
-  const handleManualSubmit = () => {
+  const handleManualSubmit = async () => {
     if (manualCode.trim()) {
-      scanBarcode(manualCode.trim());
+      const result = await scanBarcode(manualCode.trim());
       setManualCode('');
       setManualModalOpen(false);
+      if (result === 'SUCCESS') {
+        setTimeout(() => {
+          onClose();
+        }, 400);
+      }
     }
   };
 
@@ -180,7 +190,8 @@ const styles = StyleSheet.create({
   btnPermissionText: {
     color: '#000000',
     fontSize: 16,
-    fontWeight: '900'
+    fontWeight: '900',
+    textAlign: 'center'
   },
   camera: {
     flex: 1
@@ -270,6 +281,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
     gap: 4
   },
   btnTacticalActive: {
@@ -282,20 +294,23 @@ const styles = StyleSheet.create({
   tacticalText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
   btnClose: {
     minHeight: 64, // Ergonomía > 64px
     backgroundColor: '#FF5252',
     borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 12
   },
   btnCloseText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   modalOverlay: {
     flex: 1,
@@ -314,11 +329,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     color: '#00E676',
     fontSize: 18,
-    fontWeight: '900'
+    fontWeight: '900',
+    textAlign: 'center'
   },
   modalSubtitle: {
     color: '#8B949E',
-    fontSize: 14
+    fontSize: 14,
+    textAlign: 'center'
   },
   modalInput: {
     backgroundColor: '#0B0E14',
@@ -340,12 +357,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#21262D',
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 8
   },
   btnModalCancelText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
   btnModalSubmit: {
     flex: 1,
@@ -353,11 +372,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#00E676',
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 8
   },
   btnModalSubmitText: {
     color: '#000000',
     fontSize: 16,
-    fontWeight: '900'
+    fontWeight: '900',
+    textAlign: 'center'
   }
 });

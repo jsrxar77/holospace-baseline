@@ -141,12 +141,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#21262D',
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 8
   },
   btnCancelText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
   btnConfirm: {
     flex: 1,
@@ -154,11 +156,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F59E0B',
     borderRadius: 14,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 8
   },
   btnConfirmText: {
     color: '#000000',
     fontSize: 16,
-    fontWeight: '900'
+    fontWeight: '900',
+    textAlign: 'center'
   }
 });

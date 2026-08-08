@@ -259,7 +259,8 @@ const styles = StyleSheet.create({
   tabText: {
     color: '#8B949E',
     fontSize: 12,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
   tabTextActive: {
     color: '#000000',
@@ -283,19 +284,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
     elevation: 6
   },
   btnScanText: {
     color: '#000000',
     fontSize: 18,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   btnDispatch: {
     minHeight: 56,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
     borderWidth: 2
   },
   btnDispatchActive: {
@@ -309,7 +313,8 @@ const styles = StyleSheet.create({
   btnDispatchText: {
     fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   textDispatchActive: {
     color: '#FFFFFF'

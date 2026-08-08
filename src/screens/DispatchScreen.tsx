@@ -234,12 +234,14 @@ const styles = StyleSheet.create({
     borderColor: '#30363D',
     borderRadius: 16,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    paddingHorizontal: 16
   },
   btnExportText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800'
+    fontWeight: '800',
+    textAlign: 'center'
   },
   btnHome: {
     width: '100%',
@@ -248,12 +250,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 16,
     elevation: 6
   },
   btnHomeText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   }
 });
