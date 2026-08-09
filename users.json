@@ -1,0 +1,18 @@
+[
+  {
+    "id": "admin@drinklovers.com.ar",
+    "email": "admin@drinklovers.com.ar",
+    "password": "drinklovers2026!",
+    "name": "Administrador Principal",
+    "role": "ADMIN",
+    "active": true
+  },
+  {
+    "id": "jsrxar@gmail.com",
+    "email": "jsrxar@gmail.com",
+    "password": "Asadito21!",
+    "name": "Javier Rizzo",
+    "role": "OPERATOR",
+    "active": true
+  }
+]

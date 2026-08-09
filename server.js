@@ -74,6 +74,18 @@ const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
+// Auto-Migración de Esquema: recrear tablas si la estructura relacional legada no posee orderId
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(order_items)").all();
+  const hasOrderId = tableInfo.some(col => col.name === 'orderId');
+  if (!hasOrderId && tableInfo.length > 0) {
+    console.log('⚡ Migrando esquema relacional SQLite a Claves Primarias Subrogadas (orderId)...');
+    db.exec('DROP TABLE IF EXISTS audit_logs; DROP TABLE IF EXISTS order_items; DROP TABLE IF EXISTS orders;');
+  }
+} catch (e) {
+  console.error('Error verificando esquema relacional:', e);
+}
+
 // Inicializar tablas en la base de datos relacional SQLite
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (

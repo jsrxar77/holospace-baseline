@@ -10,29 +10,6 @@ echo "======================================================"
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA_DIR="$PROJECT_ROOT/data"
 DB_FILE="$DATA_DIR/phoneware.db"
-USERS_FILE="$PROJECT_ROOT/users.json"
-
-# 1. Asegurar archivo users.json con los 2 usuarios autorizados
-cat << 'EOF' > "$USERS_FILE"
-[
-  {
-    "id": "admin@drinklovers.com.ar",
-    "email": "admin@drinklovers.com.ar",
-    "password": "drinklovers2026!",
-    "name": "Administrador Principal",
-    "role": "ADMIN",
-    "active": true
-  },
-  {
-    "id": "jsrxar@gmail.com",
-    "email": "jsrxar@gmail.com",
-    "password": "Asadito21!",
-    "name": "Javier Rizzo",
-    "role": "OPERATOR",
-    "active": true
-  }
-]
-EOF
 
 # 2. Intentar reseteo en vivo vía API HTTP usando 127.0.0.1 (sin apagar el puerto 3001)
 RESET_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/reset-db 2>/dev/null || echo "000")
