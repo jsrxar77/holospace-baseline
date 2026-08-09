@@ -269,6 +269,24 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
         }
       }
     }
+
+    // Estrategia de Rescate: si la agrupación por coordenadas Y no halló ítems, parsear líneas completas
+    if (items.length === 0 && fullText.trim().length > 0) {
+      const lines = fullText.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+      for (let l of lines) {
+        const rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)/) ||
+                         l.match(/^(.+?)\s+(\d{3,14})\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
+        if (rowMatch) {
+          const code = rowMatch[1].match(/^\d+$/) ? rowMatch[1] : rowMatch[2];
+          const description = (rowMatch[1].match(/^\d+$/) ? rowMatch[2] : rowMatch[1]).trim();
+          const quantityRequired = parseInt(rowMatch[3], 10) || 1;
+          const unitPriceStr = rowMatch[4] ? rowMatch[4].replace(/\./g, '').replace(',', '.') : '0';
+          const unitPrice = parseFloat(unitPriceStr) || 0;
+
+          items.push({ code, description, quantityRequired, quantityScanned: 0, unitPrice, status: 'PENDING' });
+        }
+      }
+    }
   } catch (e) {
     logDetailedError(`parsePdfBuffer: ${fileName}`, e, { fileName });
   }
@@ -840,6 +858,18 @@ const server = http.createServer(async (req, res) => {
         const errorContent = fs.existsSync(ERROR_LOG_PATH) ? fs.readFileSync(ERROR_LOG_PATH, 'utf8') : 'Sin registro de errores.';
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end(errorContent);
+        return;
+      }
+
+      // 13. RECEPCIÓN Y CENTRALIZACIÓN DE ERRORES DESDE APP MÓVIL Y WEB
+      if (req.url === '/api/log-client-error' && req.method === 'POST') {
+        const { platform, context, error, stack, extra } = data;
+        const errObj = new Error(error || 'Error reportado por cliente');
+        if (stack) errObj.stack = stack;
+
+        logDetailedError(`[CLIENTE ${platform || 'MÓVIL'}] ${context || 'App Mobile'}`, errObj, extra || data);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
         return;
       }
 
