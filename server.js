@@ -26,7 +26,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const PORT = parseInt(processEnv.PORT, 10) || 3001;
+const PORT = parseInt(processEnv.HW_PORT || processEnv.PORT, 10) || 3001;
 
 // BASE DE DATOS SQLITE RELACIONAL Y PERSISTENTE EN ./data/holoware.db
 const DATA_DIR = path.join(__dirname, 'data');
@@ -166,7 +166,7 @@ db.exec(`
 
 // Inicializar el tema en app_settings usando .env si no fue configurado
 const initTheme = () => {
-  const defaultTheme = (processEnv.THEME || 'original').toLowerCase().trim();
+  const defaultTheme = (processEnv.HW_THEME || processEnv.THEME || 'original').toLowerCase().trim();
   const existing = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
   if (!existing) {
     db.prepare("INSERT INTO app_settings (key, value) VALUES ('active_theme', ?)").run(defaultTheme);
@@ -408,9 +408,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Rutas de archivos estáticos para la interfaz Web Admin (PhoneWare Board)
+  // Rutas de archivos estáticos para la interfaz Web Admin (PhoneWare Board / HoloWare Core)
   if (req.url === '/' || req.url === '/index.html') {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
+    let indexPath = path.join(__dirname, 'modules', 'core', 'public', 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      indexPath = path.join(__dirname, 'public', 'index.html');
+    }
     fs.readFile(indexPath, (err, content) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });

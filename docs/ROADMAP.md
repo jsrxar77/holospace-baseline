@@ -77,6 +77,11 @@ holoware-baseline/
 | C-20 | P-08: Endpoint `GET/POST /api/modules` | SUPERADMIN toggle + log en `platform_audit_logs` |
 | C-21 | P-09: Panel Super Admin (UI) | Pestaña `🏛️ Plataforma` (SUPERADMIN only) + gestión de módulos + logs |
 | C-22 | P-10: Modulos public JS (`core.js`, `scanban.js`) | `modules/core/public/core.js` y `modules/scanban/public/scanban.js` |
+| C-23 | M-01 / L-01: `.env` y `app.js` HW_ | `HW_THEME`, `HW_PORT`, `hw_token` localStorage keys |
+| C-24 | M-02 / M-03: Route modules | `modules/core/routes/core.routes.js` y `modules/scanban/routes/scanban.routes.js` |
+| C-25 | M-04: Servir index.html desde Core | `modules/core/public/index.html` servido por `server.js` |
+| C-26 | L-03: Plantilla 2º módulo | `modules/stockflow/` (README + estructura) |
+| C-27 | L-04: Guía de creación de módulos | `docs/MODULE_CREATION.md` |
 
 ---
 
@@ -88,13 +93,7 @@ holoware-baseline/
 
 ### 🟡 PENDIENTE — Media Prioridad
 
-| # | Ítem | Dónde | Descripción |
-|---|---|---|---|
-| M-01 | **Renombrar localStorage `pw_` → `hw_`** | `public/app.js` | Consistencia con convención de plataforma |
-| M-02 | **Separar `core.routes.js`** | `modules/core/routes/` | Extraer rutas core de server.js a archivo propio |
-| M-03 | **Separar `scanban.routes.js`** | `modules/scanban/routes/` | Extraer rutas ScanBan de server.js a archivo propio |
-| M-04 | **Mover `index.html` → `modules/core/public/`** | `modules/core/public/` | server.js sirve desde allí |
-| M-05 | **Seed de usuario SUPERADMIN** | `server.js` (initUsers) | Crear usuario superadmin por defecto vía .env |
+*(¡Todos los ítems de media prioridad han sido completados!)*
 
 ---
 
@@ -102,11 +101,8 @@ holoware-baseline/
 
 | # | Ítem | Dónde | Descripción |
 |---|---|---|---|
-| L-01 | Prefijo `HW_` en variables de `.env` | `.env` + `server.js` | Renombrar `THEME` → `HW_THEME`, `PORT` → `HW_PORT` |
-| L-05 | Convertir a monorepo real | `modules/scanban/package.json` | Dar a ScanBan su propio `package.json` + `node_modules`. `.expo/` vivirá dentro de `modules/scanban/` naturalmente. |
 | L-02 | Git push a `holoware-baseline` en GitHub | GitHub + terminal | **Requiere rename manual del repo en GitHub primero** |
-| L-03 | Módulo StockFlow (estructura base) | `modules/stockflow/` | Crear carpeta y README como plantilla de futuro módulo |
-| L-04 | Documentar convención de creación de módulos | `docs/MODULE_CREATION.md` | Guía paso a paso para agregar un nuevo módulo |
+| L-05 | Monorepo con `package.json` propio | `modules/scanban/package.json` | Dar a ScanBan su propio `package.json` + `node_modules` en el futuro |
 
 ---
 
