@@ -35,6 +35,41 @@ if (!fs.existsSync(DATA_DIR)) {
 }
 
 const DB_PATH = path.join(DATA_DIR, 'phoneware.db');
+const ERROR_LOG_PATH = path.join(DATA_DIR, 'errors.log');
+
+// Sistema de Registro de Errores Detallados en Consola y Archivo ./data/errors.log
+function logDetailedError(context, err, payload = {}) {
+  const timestamp = new Date().toLocaleString('es-AR');
+  const errorMessage = err ? (err.message || String(err)) : 'Error sin descripción';
+  const stackTrace = err && err.stack ? err.stack : 'No hay stack trace disponible';
+
+  const logEntry = `
+======================================================
+🚨 [ERROR DETALLADO - ${timestamp}]
+📌 Contexto / Ruta: ${context}
+👤 Usuario: ${payload.userEmail || payload.email || 'No especificado'}
+❌ Error: ${errorMessage}
+📦 Payload Contexto: ${JSON.stringify(payload, null, 2)}
+📜 Stack Trace:
+${stackTrace}
+======================================================
+`;
+
+  console.error(logEntry);
+  try {
+    fs.appendFileSync(ERROR_LOG_PATH, logEntry, 'utf8');
+  } catch (e) {
+    console.error('Error escribiendo en log de archivo:', e);
+  }
+
+  return {
+    timestamp,
+    context,
+    error: errorMessage,
+    details: payload,
+    stackTrace
+  };
+}
 const db = new Database(DB_PATH);
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
@@ -806,12 +841,24 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 12. CONSULTA Y LECTURA DE LOGS DE ERRORES DEL SISTEMA (DEVOPS)
+      if (req.url.startsWith('/api/error-logs') && req.method === 'GET') {
+        const errorContent = fs.existsSync(ERROR_LOG_PATH) ? fs.readFileSync(ERROR_LOG_PATH, 'utf8') : 'Sin registro de errores.';
+        res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(errorContent);
+        return;
+      }
+
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Ruta no encontrada' }));
     } catch (e) {
-      console.error('Error en el servidor:', e);
+      const errorDetail = logDetailedError(req.url || 'Ruta Desconocida', e, data);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Error interno del servidor', details: e.message }));
+      res.end(JSON.stringify({
+        error: 'Error interno del servidor',
+        message: e.message,
+        errorDetail
+      }));
     }
   });
 });
