@@ -176,7 +176,6 @@ function getFullOrderFromDb(identifier) {
     clientName: order.clientName,
     issueDate: order.issueDate,
     pdfFileName: order.pdfFileName,
-    pdfBlob: order.pdfBlob,
     status: order.status,
     operatorEmail: order.operatorEmail,
     totalItemsRequired: order.totalItemsRequired,
@@ -377,15 +376,24 @@ const server = http.createServer(async (req, res) => {
   // DESCARGA DE COMPROBANTE PDF DESDE LA BASE DE DATOS SQLITE (BLOB)
   if (req.url.startsWith('/api/download-pdf')) {
     const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-    const orderNumber = urlParams.get('orderNumber');
+    const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
 
-    if (!orderNumber) {
+    if (!identifier) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Falta orderNumber' }));
+      res.end(JSON.stringify({ error: 'Falta identificador de pedido (id o orderNumber)' }));
       return;
     }
 
-    const order = db.prepare('SELECT pdfBlob, pdfFileName FROM orders WHERE orderNumber = ?').get(orderNumber);
+    let order = null;
+    if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
+      order = db.prepare('SELECT pdfBlob, pdfFileName FROM orders WHERE id = ?').get(Number(identifier));
+    }
+    if (!order) {
+      order = db.prepare('SELECT pdfBlob, pdfFileName FROM orders WHERE uuid = ?').get(String(identifier));
+    }
+    if (!order) {
+      order = db.prepare('SELECT pdfBlob, pdfFileName FROM orders WHERE orderNumber = ? ORDER BY id DESC LIMIT 1').get(String(identifier));
+    }
 
     if (!order || !order.pdfBlob) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
