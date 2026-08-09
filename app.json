@@ -1,22 +1,23 @@
 {
   "expo": {
-    "name": "Phone-Ware",
-    "slug": "phone-ware",
+    "name": "HoloWare Baseline",
+    "slug": "holoware-baseline",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "scheme": "holoware",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.phoneware.deposito"
+      "bundleIdentifier": "com.holoware.baseline"
     },
     "android": {
-      "package": "com.phoneware.deposito"
+      "package": "com.holoware.baseline"
     },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "Phone-Ware necesita acceso a la cámara para escanear códigos de barras de los productos en depósito."
+          "cameraPermission": "ScanBan necesita acceso a la cámara para escanear códigos de barras de los productos en depósito."
         }
       ],
       "expo-sqlite"

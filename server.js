@@ -28,13 +28,13 @@ if (fs.existsSync(envPath)) {
 
 const PORT = parseInt(processEnv.PORT, 10) || 3001;
 
-// BASE DE DATOS SQLITE RELACIONAL Y PERSISTENTE EN ./data/phoneware.db
+// BASE DE DATOS SQLITE RELACIONAL Y PERSISTENTE EN ./data/holoware.db
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const DB_PATH = path.join(DATA_DIR, 'phoneware.db');
+const DB_PATH = path.join(DATA_DIR, 'holoware.db');
 const ERROR_LOG_PATH = path.join(DATA_DIR, 'errors.log');
 
 // Sistema de Registro de Errores Detallados en Consola y Archivo ./data/errors.log

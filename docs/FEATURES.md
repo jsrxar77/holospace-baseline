@@ -1,10 +1,40 @@
-# Especificación de Funcionalidades: PhoneWare SaaS
+# Especificación de Funcionalidades: ScanBan (Módulo de HoloWare Baseline)
 
-Este documento detalla todas las características, módulos y funcionalidades implementadas en **PhoneWare Board** (Panel Web Administrador) y **PhoneWare Scanner** (App Móvil Operarios).
+> **Plataforma contenedora:** HoloWare Baseline — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md).
+
+Este documento detalla todas las características, módulos y funcionalidades implementadas en **ScanBan Board** (Panel Web Administrador) y **ScanBan Scanner** (App Móvil Operarios), más las funcionalidades del core de la plataforma HoloWare Baseline.
 
 ---
 
-## 1. PhoneWare Board (Panel Web Administrador)
+## 0. HoloWare Baseline (Core de Plataforma)
+
+### 0.1 Autenticación & Sesiones
+- **Login JWT**: Credenciales validadas contra SQLite. Token persistido en `localStorage` (`hw_token`).
+- **RBAC**: Roles `SUPERADMIN`, `ADMIN`, `OPERATOR` con verificación server-side en cada endpoint.
+- **Logout**: Limpieza de token y estado local.
+
+### 0.2 Gestión de Usuarios (ABM + Borrado Lógico)
+- Alta de usuarios con rol y estado activo/inactivo.
+- Edición de nombre, email, contraseña y rol.
+- **Borrado Lógico**: Desactivación (`active = 0`) preservando historial de auditoría.
+
+### 0.3 Motor de Temas
+- **7 temas disponibles**: `original`, `midnight`, `ocean`, `sunset`, `forest`, `neon`, `catppuccin`.
+- **Selector en panel Admin**: Dropdown que aplica el tema instantáneamente en web y mobile.
+- **Persistencia en DB**: El tema elegido se guarda en `app_settings` (prioridad máxima sobre `.env`).
+- **Bootstrap desde `.env`**: Si no hay tema en DB, se usa la variable `THEME` del `.env`.
+
+### 0.4 Registro de Módulos (Super Admin)
+- Catálogo de módulos disponibles con estado activo/inactivo.
+- Super Admin puede activar o desactivar módulos desde el panel de plataforma.
+
+### 0.5 Logs y Diagnóstico
+- **Endpoint**: `POST /api/log-client-error` / `GET /api/error-logs`.
+- **Archivo**: `./data/errors.log`.
+
+---
+
+## 1. ScanBan Board (Panel Web Administrador)
 
 ### 1.1 Tablero Kanban de 4 Columnas
 - **Visualización en Tiempo Real**:
@@ -42,7 +72,7 @@ Este documento detalla todas las características, módulos y funcionalidades im
 
 ---
 
-## 2. PhoneWare Scanner (App Móvil Expo Operarios)
+## 2. ScanBan Scanner (App Móvil Expo Operarios)
 
 ### 2.1 Autenticación Obligatoria por Email
 - **Pantalla de Login**: Validación de credenciales contra la base de datos SQLite del servidor.
@@ -61,3 +91,10 @@ Este documento detalla todas las características, módulos y funcionalidades im
 
 ### 2.4 Cierre con Estampa Digital de Auditoría
 - **Finalización Validada**: Al completar el 100% de los ítems requeridos, la orden pasa a `DONE` y genera la marca de agua inmutable de expedición.
+
+---
+
+## 3. Referencias
+
+- [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md) — Visión de plataforma y roadmap de módulos.
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — Arquitectura técnica detallada.

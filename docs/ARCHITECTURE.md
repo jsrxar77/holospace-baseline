@@ -1,28 +1,32 @@
-# Arquitectura del Sistema SaaS World-Class: PhoneWare Board & PhoneWare Scanner
+# Arquitectura Técnica: ScanBan (Módulo de HoloWare Baseline)
 
-**PhoneWare** es una plataforma logística SaaS empresarial de clase mundial, diseñada para gestionar, auditar y controlar en tiempo real el flujo de preparación y despacho de pedidos en depósitos y centros de distribución a través del procesamiento inteligente de comprobantes PDF y la verificación estricta por código de barras.
+> **Plataforma contenedora:** HoloWare Baseline — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md) para la visión de plataforma completa.
+
+**ScanBan** es el primer módulo de HoloWare Baseline. Es una aplicación logística SaaS empresarial de clase mundial, diseñada para gestionar, auditar y controlar en tiempo real el flujo de preparación y despacho de pedidos en depósitos y centros de distribución a través del procesamiento inteligente de comprobantes PDF y la verificación estricta por código de barras.
 
 ---
 
 ## 1. Visión General y Componentes Principales
 
-The PhoneWare Ecosystem se compone de dos aplicaciones complementarias conectadas a una base de datos relacional centralizada:
+El ecosistema ScanBan se compone de dos aplicaciones complementarias dentro de HoloWare Baseline:
 
-1. **PhoneWare Board** (Panel Web Administrador):
+1. **ScanBan Board** (Panel Web — parte del shell de HoloWare Baseline):
    - **Tecnología**: HTML5, CSS3 vanilla (estética dark glassmorphism premium con diseño receptivo), JavaScript ES2024.
    - **Propósito**: Permite a los Administradores cargar comprobantes PDF, gestionar usuarios con RBAC, supervisar el tablero Kanban de 4 columnas, explorar pedidos mediante filtros inteligentes y validar comprobantes de forma ininterrumpida.
 
-2. **PhoneWare Scanner** (App Móvil Operarios):
+2. **ScanBan Scanner** (App Móvil Operarios):
    - **Tecnología**: React Native con **Expo SDK 51+** y TypeScript.
    - **Propósito**: Permite a los operarios autenticarse mediante email, seleccionar órdenes validadas en estado `LISTO`, escanear códigos de barras EAN-13 con feedback multisensorial (háptico y sonoro) en tiempo real y generar estampas digitales de auditoría inmutables.
 
 ---
 
-## 2. Base de Datos Relacional SQLite Persistente (`./data/phoneware.db`)
+## 2. Base de Datos Relacional SQLite Persistente (`./data/holoware.db`)
 
 El sistema utiliza **SQLite3 (`better-sqlite3`)** como motor relacional de base de datos de alta performance y persistencia permanente en el servidor backend:
 
-- **Ruta de la DB**: `./data/phoneware.db` (Modo WAL habilitado, `foreign_keys = ON`).
+- **Ruta de la DB**: `./data/holoware.db` (Modo WAL habilitado, `foreign_keys = ON`).
+- **Tablas Core** (HoloWare Baseline): `users`, `app_settings`, `platform_audit_logs`, `modules`.
+- **Tablas de Módulo** (ScanBan): `orders`, `order_items`, `audit_logs`.
 - **Almacenamiento de Blobs PDF**: Los comprobantes PDF subidos se persisten directamente como **Blobs en formato Base64** en la tabla `orders`, garantizando la integridad del documento original sin depender de archivos temporales.
 - **Claves Primarias Subrogadas (*Surrogate Keys*)**: Todas las relaciones utilizan identificadores autoincrementales incorruptibles (`id INTEGER PRIMARY KEY AUTOINCREMENT`) y UUIDs únicos (`uuid TEXT UNIQUE NOT NULL`), eliminando cualquier riesgo de colisión de datos por duplicados en números de factura externos.
 
@@ -80,7 +84,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 ## 3. Sistema Centralizado de Registro y Diagnóstico de Errores
 
-PhoneWare implementa una arquitectura de trazabilidad y logging centralizada para clientes Web, Móviles y Servidor Backend:
+HoloWare Baseline implementa una arquitectura de trazabilidad y logging centralizada para clientes Web, Móviles y Servidor Backend:
 
 - **Logs de Consola Estructurados**: Captura excepciones en tiempo real mostrando marca de tiempo, ruta/contexto, email del usuario, datos adjuntos y stack trace.
 - **Archivo de Persistencia de Errores**: `./data/errors.log`.
@@ -117,5 +121,12 @@ La lectura de comprobantes PDF utiliza `pdfjs-dist` mediante un **Algoritmo de E
 
 ## 6. Herramientas DevOps & Automatización
 
-- `./bin/devops-db-refresh.sh`: Realiza un reseteo en vivo de SQLite sin apagar el puerto 3001, poblando únicamente los usuarios autorizados (`admin@drinklovers.com.ar` y `jsrxar@gmail.com`).
+- `./bin/devops-db-refresh.sh`: Realiza un reseteo en vivo de SQLite sin apagar el servidor, repoblando usuarios autorizados. Opera sobre `./data/holoware.db`.
 - `./bin/devops-git-push-verify.sh`: Ejecuta la prueba de compilación TypeScript (`npx tsc --noEmit`), crea el commit y verifica la sincronización limpia con GitHub.
+
+---
+
+## 7. Referencias
+
+- [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md) — Visión general de la plataforma y roadmap de módulos.
+- [FEATURES.md](./FEATURES.md) — Especificación detallada de funcionalidades de ScanBan.
