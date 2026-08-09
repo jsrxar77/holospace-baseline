@@ -138,6 +138,30 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  -- =============================================
+  -- HOLOWARE BASELINE CORE PLATFORM TABLES
+  -- =============================================
+
+  -- Audit log for platform-level events (theme changes, module toggles, etc.)
+  CREATE TABLE IF NOT EXISTS platform_audit_logs (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL,
+    userEmail TEXT NOT NULL,
+    action    TEXT NOT NULL,
+    details   TEXT NOT NULL
+  );
+
+  -- Module registry: catalog of available modules and their active state
+  CREATE TABLE IF NOT EXISTS modules (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    key         TEXT UNIQUE NOT NULL,
+    name        TEXT NOT NULL,
+    description TEXT,
+    active      INTEGER NOT NULL DEFAULT 0,
+    activatedBy TEXT,
+    activatedAt TEXT
+  );
 `);
 
 // Inicializar el tema en app_settings usando .env si no fue configurado
@@ -149,21 +173,46 @@ const initTheme = () => {
   }
 };
 
-// Asegurar los 2 usuarios autorizados por defecto en la base de datos
+// Inicializar el registro de módulos con ScanBan pre-cargado (activo)
+const initModules = () => {
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO modules (key, name, description, active, activatedBy, activatedAt)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+  stmt.run(
+    'scanban',
+    'ScanBan',
+    'Módulo de logística: Kanban de pedidos, parseo de PDF y scanner móvil EAN-13.',
+    1,
+    'system',
+    new Date().toISOString()
+  );
+};
+
+// Asegurar los usuarios autorizados por defecto en la base de datos
 const initUsers = () => {
+  const superAdminEmail = (processEnv.SUPERADMIN_EMAIL || 'superadmin@holoware.io').toLowerCase();
+  const superAdminPassword = processEnv.SUPERADMIN_PASSWORD || 'HoloWare2026!';
   const adminEmail = (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
   const adminPassword = processEnv.ADMIN_PASSWORD || 'drinklovers2026!';
 
   const stmt = db.prepare(`
-    INSERT OR REPLACE INTO users (email, password, name, role, active)
+    INSERT OR IGNORE INTO users (email, password, name, role, active)
     VALUES (?, ?, ?, ?, ?)
   `);
 
-  stmt.run(adminEmail, adminPassword, 'Administrador Principal', 'ADMIN', 1);
-  stmt.run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR', 1);
+  // Super Admin de plataforma (solo se inserta si no existe, nunca se sobreescribe)
+  stmt.run(superAdminEmail, superAdminPassword, 'Super Administrador', 'SUPERADMIN', 1);
+  // Admin de módulo ScanBan
+  db.prepare(`INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, ?)`)
+    .run(adminEmail, adminPassword, 'Administrador Principal', 'ADMIN', 1);
+  db.prepare(`INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, ?)`)
+    .run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR', 1);
 };
+
 initUsers();
 initTheme();
+initModules();
 
 // Helper para obtener una orden completa estructurada desde SQLite por ID, UUID o orderNumber
 function getFullOrderFromDb(identifier) {
