@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const pdfjsLib = require('pdfjs-dist');
+const Database = require('better-sqlite3');
 
 // Leer variables de entorno desde .env
 let processEnv = {
@@ -26,10 +27,105 @@ if (fs.existsSync(envPath)) {
 }
 
 const PORT = parseInt(processEnv.PORT, 10) || 3001;
-const USERS_FILE = path.join(__dirname, 'users.json');
 
-// BASE DE DATOS EN MEMORIA / SQLITE (ALMACENAMIENTO CON PDF BLOBS)
-const ordersDb = new Map();
+// BASE DE DATOS SQLITE RELACIONAL Y PERSISTENTE EN ./data/phoneware.db
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const DB_PATH = path.join(DATA_DIR, 'phoneware.db');
+const db = new Database(DB_PATH);
+db.pragma('journal_mode = WAL');
+db.pragma('foreign_keys = ON');
+
+// Inicializar tablas en la base de datos relacional SQLite
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    email TEXT PRIMARY KEY NOT NULL,
+    password TEXT NOT NULL,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1
+  );
+
+  CREATE TABLE IF NOT EXISTS orders (
+    orderNumber TEXT PRIMARY KEY NOT NULL,
+    clientName TEXT NOT NULL,
+    issueDate TEXT NOT NULL,
+    pdfFileName TEXT NOT NULL,
+    pdfBlob TEXT NOT NULL,
+    status TEXT NOT NULL,
+    operatorEmail TEXT,
+    totalItemsRequired INTEGER NOT NULL,
+    totalItemsScanned INTEGER NOT NULL DEFAULT 0,
+    auditStamp TEXT,
+    createdAt TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS order_items (
+    id TEXT PRIMARY KEY NOT NULL,
+    orderNumber TEXT NOT NULL,
+    code TEXT NOT NULL,
+    description TEXT NOT NULL,
+    unitPrice REAL DEFAULT 0.0,
+    quantityRequired INTEGER NOT NULL,
+    quantityScanned INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    FOREIGN KEY (orderNumber) REFERENCES orders(orderNumber) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS audit_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orderNumber TEXT NOT NULL,
+    timestamp TEXT NOT NULL,
+    userEmail TEXT NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT NOT NULL,
+    FOREIGN KEY (orderNumber) REFERENCES orders(orderNumber) ON DELETE CASCADE
+  );
+`);
+
+// Asegurar los 2 usuarios autorizados por defecto en la base de datos
+const initUsers = () => {
+  const adminEmail = (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
+  const adminPassword = processEnv.ADMIN_PASSWORD || 'drinklovers2026!';
+
+  const stmt = db.prepare(`
+    INSERT OR REPLACE INTO users (email, password, name, role, active)
+    VALUES (?, ?, ?, ?, ?)
+  `);
+
+  stmt.run(adminEmail, adminPassword, 'Administrador Principal', 'ADMIN', 1);
+  stmt.run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR', 1);
+};
+initUsers();
+
+// Helper para obtener una orden completa estructurada desde SQLite
+function getFullOrderFromDb(orderNumber) {
+  const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+  if (!order) return null;
+
+  const items = db.prepare('SELECT id, orderNumber as orderId, code, description, quantityRequired, quantityScanned, unitPrice, status FROM order_items WHERE orderNumber = ?').all(orderNumber);
+  const auditLogs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderNumber = ? ORDER BY id ASC').all(orderNumber);
+
+  return {
+    id: `ord-${order.orderNumber}`,
+    orderNumber: order.orderNumber,
+    clientName: order.clientName,
+    issueDate: order.issueDate,
+    pdfFileName: order.pdfFileName,
+    pdfBlob: order.pdfBlob,
+    status: order.status,
+    operatorEmail: order.operatorEmail,
+    totalItemsRequired: order.totalItemsRequired,
+    totalItemsScanned: order.totalItemsScanned,
+    auditStamp: order.auditStamp,
+    createdAt: order.createdAt,
+    items,
+    auditLogs
+  };
+}
 
 // Parser Real de Archivos PDF
 async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
@@ -70,7 +166,7 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
     clientName = 'LUNFA DISTRIBUIDORA';
   }
 
-  // 3. Unificar líneas divididas de la tabla (ej. EANs envueltos en múltiples saltos de línea)
+  // 3. Unificar líneas divididas de la tabla
   const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
   const mergedLines = [];
   let pendingDigits = '';
@@ -95,7 +191,6 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
   // 4. Extraer todos los ítems de productos
   const items = [];
   for (let l of mergedLines) {
-    // Coincidencia: [Código/EAN] [Descripción] [Cantidad] $[PrecioUnitario] ...
     const rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)\s+/);
     if (rowMatch) {
       const code = rowMatch[1];
@@ -167,368 +262,229 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
   return { orderNumber, clientName, items, vendorName, vendorCuit, issueDate, dueDate, contactPerson, totalAmount, extractedText: text };
 }
 
-
-
-
-// Helper para registrar un comprobante en la Base de Datos con su PDF Blob
-const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com.ar') => {
-  let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
-  let items = [
-    { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
-  ];
-
-  if (orderNumber.includes('34409313') || pdfText.includes('DIEGO POKE')) {
-    clientName = 'DIEGO POKE S.R.L.';
-    items = [
-      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 2, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' },
-      { code: '7794450008275', description: 'Vino Malbec Reserva 750 ml', quantityRequired: 1, quantityScanned: 0, unitPrice: 6500.0, status: 'PENDING' }
-    ];
-  } else if (orderNumber.includes('34512173') || pdfText.includes('PASCUAL')) {
-    clientName = 'PASCUAL BEBIDAS S.A.';
-    items = [
-      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 4, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
-    ];
-  } else if (orderNumber.includes('34512175') || pdfText.includes('LUNFA')) {
-    clientName = 'LUNFA DISTRIBUIDORA';
-    items = [
-      { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
-    ];
-  }
-
-  const now = new Date().toLocaleString('es-AR');
-  const orderRecord = {
-    id: `ord-${orderNumber}`,
-    orderNumber,
-    clientName,
-    issueDate: new Date().toLocaleDateString('es-AR'),
-    pdfFileName,
-    pdfBlob: pdfBase64, // Guardado como Blob binario en la Base de Datos
-    status: 'BACKLOG',
-    operatorId: null,
-    totalItemsRequired: items.reduce((acc, i) => acc + i.quantityRequired, 0),
-    totalItemsScanned: 0,
-    items,
-    auditLogs: [
-      { timestamp: now, userEmail, action: 'CARGA_COMPROBANTE', details: `Comprobante PDF y Blob registrado en Base de Datos.` }
-    ]
-  };
-
-  ordersDb.set(orderNumber, orderRecord);
-  return orderRecord;
-};
-
-
-// Base de usuarios predeterminada (Email como ID Único de Usuario)
-let users = [
-  {
-    id: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase(),
-    email: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase(),
-    password: processEnv.ADMIN_PASSWORD || 'drinklovers2026!',
-    name: 'Administrador Principal',
-    role: 'ADMIN',
-    active: true
-  },
-  {
-    id: 'jsrxar@gmail.com',
-    email: 'jsrxar@gmail.com',
-    password: 'Asadito21!',
-    name: 'Javier Rizzo',
-    role: 'OPERATOR',
-    active: true
-  }
-];
-
-if (fs.existsSync(USERS_FILE)) {
-  try {
-    const saved = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
-    if (Array.isArray(saved) && saved.length > 0) {
-      users = saved.map((u) => ({
-        ...u,
-        id: (u.email || u.id).toLowerCase(),
-        email: (u.email || u.id).toLowerCase()
-      }));
-    }
-  } catch (e) {}
-} else {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
-}
-
-const saveUsers = () => {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2), 'utf8');
-};
-
-const server = http.createServer((req, res) => {
+// Configuración de Servidor HTTP
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
-    res.writeHead(204);
+    res.writeHead(200);
     res.end();
     return;
   }
 
-  // Servir archivos estáticos del Panel Web Admin (/admin o /)
-  if (req.method === 'GET' && (!req.url.startsWith('/api/') || req.url === '/')) {
-    let filePath = path.join(__dirname, 'public', req.url === '/' ? 'index.html' : req.url);
-    if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
-      filePath = path.join(__dirname, 'public', 'index.html');
-    }
-    if (fs.existsSync(filePath)) {
-      const ext = path.extname(filePath);
-      const mimeTypes = {
-        '.html': 'text/html',
-        '.js': 'text/javascript',
-        '.css': 'text/css',
-        '.json': 'application/json',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.svg': 'image/svg+xml'
-      };
-      res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'text/plain' });
-      res.end(fs.readFileSync(filePath));
+  // Rutas de archivos estáticos para la interfaz Web Admin (PhoneWare Board)
+  if (req.url === '/' || req.url === '/index.html') {
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    fs.readFile(indexPath, (err, content) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error cargando index.html');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(content);
+    });
+    return;
+  }
+
+  if (req.url === '/app.js') {
+    const jsPath = path.join(__dirname, 'public', 'app.js');
+    fs.readFile(jsPath, (err, content) => {
+      if (err) {
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Error cargando app.js');
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/javascript' });
+      res.end(content);
+    });
+    return;
+  }
+
+  // DESCARGA DE COMPROBANTE PDF DESDE LA BASE DE DATOS SQLITE (BLOB)
+  if (req.url.startsWith('/api/download-pdf')) {
+    const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+    const orderNumber = urlParams.get('orderNumber');
+
+    if (!orderNumber) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Falta orderNumber' }));
       return;
     }
+
+    const order = db.prepare('SELECT pdfBlob, pdfFileName FROM orders WHERE orderNumber = ?').get(orderNumber);
+
+    if (!order || !order.pdfBlob) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Comprobante PDF no encontrado en la Base de Datos' }));
+      return;
+    }
+
+    const pdfBuffer = Buffer.from(order.pdfBlob, 'base64');
+    res.writeHead(200, {
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${order.pdfFileName}"`,
+      'Content-Length': pdfBuffer.length
+    });
+    res.end(pdfBuffer);
+    return;
   }
 
   let body = '';
-  req.on('data', (chunk) => (body += chunk));
-
+  req.on('data', chunk => { body += chunk.toString(); });
   req.on('end', async () => {
-    try {
-      const data = body ? JSON.parse(body) : {};
+    let data = {};
+    if (body) {
+      try { data = JSON.parse(body); } catch (e) {}
+    }
 
-      // 1. AUTH: LOGIN (Email como ID Único de Usuario)
+    try {
+      // 1. ENDPOINT DE AUTENTICACIÓN / LOGIN
       if (req.url === '/api/login' && req.method === 'POST') {
         const { email, password } = data;
-        const cleanEmail = (email || '').toLowerCase().trim();
-        const user = users.find(
-          (u) => u.email.toLowerCase() === cleanEmail && u.password === password && u.active !== false
-        );
+        const normalizedEmail = (email || '').toLowerCase().trim();
 
-        if (user) {
-          console.log(`[AUTH] Login exitoso: ${user.email} (${user.role})`);
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(
-            JSON.stringify({
-              success: true,
-              user: {
-                id: user.email,
-                email: user.email,
-                name: user.name,
-                role: user.role
-              },
-              token: `token_${user.email}_${Date.now()}`
-            })
-          );
-        } else {
-          console.log(`[AUTH] Intento de login fallido para: ${cleanEmail}`);
+        const user = db.prepare('SELECT email as id, email, password, name, role, active FROM users WHERE LOWER(email) = ? AND active = 1').get(normalizedEmail);
+
+        if (!user || user.password !== password) {
+          console.log(`[AUTH] Intento de login fallido para: ${normalizedEmail}`);
           res.writeHead(401, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Email o contraseña incorrectos' }));
+          res.end(JSON.stringify({ success: false, error: 'Credenciales inválidas o usuario inactivo' }));
+          return;
         }
-        return;
-      }
 
-      // 2. AUTH: LISTAR / CREAR / EDITAR / BORRADO LÓGICO DE USUARIOS
-      if (req.url === '/api/users' && req.method === 'GET') {
+        console.log(`[AUTH] Login exitoso: ${user.email} (${user.role})`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ users: users.map(({ password, ...u }) => ({ ...u, id: u.email, active: u.active !== false })) }));
+        res.end(JSON.stringify({
+          success: true,
+          user: { id: user.email, email: user.email, name: user.name, role: user.role }
+        }));
         return;
       }
 
-      if (req.url === '/api/users' && req.method === 'POST') {
-        const { email, password, name, role } = data;
-        if (!email || !password || !name) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Faltan campos obligatorios (email, password, name)' }));
-          return;
-        }
-
-        const cleanEmail = email.trim().toLowerCase();
-        const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
-
-        if (existing) {
-          existing.active = true;
-          existing.password = password.trim();
-          existing.name = name.trim();
-          existing.role = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
-          saveUsers();
+      // 2. ENDPOINTS ABM DE USUARIOS EN BASE DE DATOS
+      if (req.url.startsWith('/api/users')) {
+        if (req.method === 'GET') {
+          const userList = db.prepare('SELECT email as id, email, name, role, active FROM users').all().map(u => ({
+            ...u,
+            active: Boolean(u.active)
+          }));
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, user: existing }));
+          res.end(JSON.stringify(userList));
           return;
         }
 
-        const newUser = {
-          id: cleanEmail,
-          email: cleanEmail,
-          password: password.trim(),
-          name: name.trim(),
-          role: role === 'ADMIN' ? 'ADMIN' : 'OPERATOR',
-          active: true
-        };
+        if (req.method === 'POST') {
+          const { email, password, name, role } = data;
+          if (!email || !password || !name) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Datos incompletos' }));
+            return;
+          }
+          const cleanEmail = email.toLowerCase().trim();
 
-        users.push(newUser);
-        saveUsers();
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, user: newUser }));
-        return;
-      }
+          db.prepare('INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, 1)').run(
+            cleanEmail, password, name, role || 'OPERATOR'
+          );
 
-      if (req.url === '/api/users' && req.method === 'PUT') {
-        const { id, email, password, name, role, active } = data;
-        const targetEmail = (email || id || '').toLowerCase().trim();
-        const user = users.find((u) => u.email.toLowerCase() === targetEmail);
-        if (!user) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
-          return;
-        }
-
-        if (name) user.name = name.trim();
-        if (password) user.password = password.trim();
-        if (role) user.role = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
-        if (active !== undefined) user.active = !!active;
-
-        saveUsers();
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, user }));
-        return;
-      }
-
-      if ((req.url === '/api/users' || req.url.startsWith('/api/users/')) && req.method === 'DELETE') {
-        const id = data.id || (req.url.split('/api/users/')[1] || '');
-        const user = users.find((u) => u.id === id);
-        if (user) {
-          user.active = false; // Borrado lógico
-          saveUsers();
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, message: `Usuario ${user.email} desactivado correctamente.` }));
-        } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          res.end(JSON.stringify({ success: true, message: 'Usuario guardado en Base de Datos' }));
+          return;
         }
-        return;
+
+        if (req.method === 'PUT') {
+          const { email, password, name, role, active } = data;
+          const cleanEmail = email.toLowerCase().trim();
+
+          const existing = db.prepare('SELECT * FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+          if (!existing) {
+            res.writeHead(404, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+            return;
+          }
+
+          db.prepare(`
+            UPDATE users
+            SET password = ?, name = ?, role = ?, active = ?
+            WHERE LOWER(email) = ?
+          `).run(
+            password || existing.password,
+            name || existing.name,
+            role || existing.role,
+            typeof active === 'boolean' ? (active ? 1 : 0) : existing.active,
+            cleanEmail
+          );
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Usuario actualizado en Base de Datos' }));
+          return;
+        }
+
+        if (req.method === 'DELETE') {
+          const emailToDelete = data.email || (req.url.includes('email=') ? req.url.split('email=')[1].split('&')[0] : '');
+          const cleanEmail = emailToDelete.toLowerCase().trim();
+
+          db.prepare('UPDATE users SET active = 0 WHERE LOWER(email) = ?').run(cleanEmail);
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, message: 'Usuario desactivado en Base de Datos' }));
+          return;
+        }
       }
 
-      // 2.1 BUSCADOR Y EXPLORADOR INTELIGENTE DE PEDIDOS (CON MULTI-SELECCIÓN DE OPERARIOS)
+      // 3. CONSULTA DE TABLERO KANBAN DE 4 COLUMNAS DESDE SQLITE
       if (req.url.startsWith('/api/orders') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const query = (urlParams.get('q') || '').toLowerCase();
-        const statusFilter = urlParams.get('status') || '';
-        const sortBy = urlParams.get('sortBy') || 'date_desc';
-        const operatorsParam = urlParams.get('operators') || '';
-        const selectedOperators = operatorsParam ? operatorsParam.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean) : [];
+        const search = (urlParams.get('search') || '').toLowerCase().trim();
+        const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
+        const selectedOperators = (urlParams.get('operators') || '').split(',').map(o => o.trim().toLowerCase()).filter(Boolean);
 
-        let results = Array.from(ordersDb.values());
+        const allOrdersInDb = db.prepare('SELECT * FROM orders').all();
 
-        if (statusFilter) {
-          results = results.filter((o) => o.status === statusFilter);
-        }
+        const formattedOrders = allOrdersInDb.map(o => {
+          const items = db.prepare('SELECT * FROM order_items WHERE orderNumber = ?').all(o.orderNumber);
+          const logs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderNumber = ? ORDER BY id ASC').all(o.orderNumber);
 
-        if (selectedOperators.length > 0) {
-          results = results.filter((o) => {
-            const operatorUser = users.find(
-              (u) => u.operatorId === o.operatorId || (o.operatorId && u.email.includes(o.operatorId.split('-')[0].toLowerCase()))
-            );
-            const opEmail = (operatorUser ? operatorUser.email : (o.operatorEmail || '')).toLowerCase();
-            return selectedOperators.includes(opEmail);
-          });
-        }
+          return {
+            id: `ord-${o.orderNumber}`,
+            orderNumber: o.orderNumber,
+            clientName: o.clientName,
+            issueDate: o.issueDate,
+            fileName: o.pdfFileName,
+            pdfFileName: o.pdfFileName,
+            status: o.status,
+            operatorEmail: o.operatorEmail || 'Sin asignar',
+            operatorId: o.operatorEmail || 'Sin asignar',
+            totalItemsRequired: o.totalItemsRequired,
+            totalItemsScanned: o.totalItemsScanned,
+            auditStamp: o.auditStamp,
+            createdAt: o.createdAt,
+            items,
+            auditLogs: logs
+          };
+        });
 
-        if (query) {
-          results = results.filter((o) => {
-            const numMatch = (o.orderNumber || '').toLowerCase().includes(query);
-            const clientMatch = (o.clientName || '').toLowerCase().includes(query);
-            const fileMatch = (o.pdfFileName || '').toLowerCase().includes(query);
-            const opMatch = (o.operatorId || '').toLowerCase().includes(query);
-            const itemMatch = o.items.some((i) => i.description.toLowerCase().includes(query) || i.code.includes(query));
-            return numMatch || clientMatch || fileMatch || opMatch || itemMatch;
-          });
-        }
+        // Filtrado en servidor para Explorador Inteligente de Pedidos
+        const filtered = formattedOrders.filter(o => {
+          const matchesSearch = !search ||
+            o.orderNumber.toLowerCase().includes(search) ||
+            o.clientName.toLowerCase().includes(search) ||
+            o.pdfFileName.toLowerCase().includes(search) ||
+            o.operatorEmail.toLowerCase().includes(search);
 
-        if (sortBy === 'date_desc') {
-          results.sort((a, b) => new Date(b.issueDate || 0) - new Date(a.issueDate || 0));
-        } else if (sortBy === 'date_asc') {
-          results.sort((a, b) => new Date(a.issueDate || 0) - new Date(b.issueDate || 0));
-        } else if (sortBy === 'amount_desc') {
-          results.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
-        } else if (sortBy === 'items_desc') {
-          results.sort((a, b) => (b.totalItemsRequired || 0) - (a.totalItemsRequired || 0));
-        }
+          const matchesStatus = statusFilter === 'ALL' || o.status === statusFilter;
+          const matchesOperator = selectedOperators.length === 0 || selectedOperators.includes(o.operatorEmail.toLowerCase());
 
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ orders: results }));
-        return;
-      }
-
-
-
-      // 3. KANBAN REAL-TIME DATA (BASADO EN BASE DE DATOS - 4 COLUMNAS: BACKLOG, READY, DOING, DONE)
-      if (req.url === '/api/kanban' && req.method === 'GET') {
-        const allOrders = Array.from(ordersDb.values());
+          return matchesSearch && matchesStatus && matchesOperator;
+        });
 
         const kanbanData = {
-          backlog: allOrders
-            .filter((o) => o.status === 'BACKLOG')
-            .map((o) => ({
-              orderNumber: o.orderNumber,
-              fileName: o.pdfFileName,
-              clientName: o.clientName,
-              totalItems: o.totalItemsRequired,
-              scannedItems: 0,
-              status: 'BACKLOG'
-            })),
-
-          ready: allOrders
-            .filter((o) => o.status === 'READY')
-            .map((o) => ({
-              orderNumber: o.orderNumber,
-              fileName: o.pdfFileName,
-              clientName: o.clientName,
-              totalItems: o.totalItemsRequired,
-              scannedItems: 0,
-              status: 'READY'
-            })),
-
-          doing: allOrders
-            .filter((o) => o.status === 'DOING' || o.status === 'SCANNING')
-            .map((o) => {
-              const operatorId = o.operatorId || 'OP-DESCONOCIDO';
-              const operatorUser = users.find(
-                (u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase())
-              );
-              const email = operatorUser ? operatorUser.email : 'jsrxar@gmail.com';
-              return {
-                orderNumber: o.orderNumber,
-                fileName: o.pdfFileName,
-                operatorId,
-                operatorEmail: email,
-                clientName: o.clientName,
-                totalItems: o.totalItemsRequired,
-                scannedItems: o.totalItemsScanned,
-                progressPercentage: Math.round((o.totalItemsScanned / o.totalItemsRequired) * 100),
-                status: 'DOING'
-              };
-            }),
-
-          done: allOrders
-            .filter((o) => o.status === 'DONE' || o.status === 'CLOSED' || o.status === 'PARTIAL_DISPATCH')
-            .map((o) => {
-              const operatorId = o.operatorId || 'JAVIER-DEV82';
-              const operatorUser = users.find(
-                (u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase())
-              );
-              const email = operatorUser ? operatorUser.email : 'jsrxar@gmail.com';
-              return {
-                orderNumber: o.orderNumber,
-                fileName: o.pdfFileName,
-                operatorId,
-                operatorEmail: email,
-                clientName: o.clientName,
-                auditStamp: o.auditStamp || `AUDITADO POR: ${email} | FECHA: ${o.issueDate} | ESTADO: 100% OK`,
-                status: 'DONE'
-              };
-            })
+          backlog: filtered.filter(o => o.status === 'BACKLOG'),
+          ready: filtered.filter(o => o.status === 'READY'),
+          doing: filtered.filter(o => o.status === 'DOING' || o.status === 'SCANNING'),
+          done: filtered.filter(o => o.status === 'DONE' || o.status === 'CLOSED' || o.status === 'PARTIAL_DISPATCH')
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -540,25 +496,23 @@ const server = http.createServer((req, res) => {
       if (req.url === '/api/mark-ready' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
-        const callerUser = users.find((u) => u.email.toLowerCase() === email);
+        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
 
         if (callerUser && callerUser.role !== 'ADMIN') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Permiso denegado. Solo administradores pueden validar comprobantes a LISTO.' }));
+          res.end(JSON.stringify({ error: 'Solo los usuarios Administradores pueden validar comprobantes.' }));
           return;
         }
 
-        if (ordersDb.has(orderNumber)) {
-          const order = ordersDb.get(orderNumber);
+        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        if (order) {
           const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'READY' WHERE orderNumber = ?").run(orderNumber);
+          db.prepare(`
+            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(orderNumber, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${orderNumber} validado y pasado a LISTO por Admin (${email}).`);
 
-          order.status = 'READY';
-          order.auditLogs.push({
-            timestamp: now,
-            userEmail: email,
-            action: 'VALIDAR_COMPROBANTE',
-            details: `Comprobante #${orderNumber} validado por Administrador ${email}. Estado cambiado a LISTO.`
-          });
           console.log(`[ADMIN LOG] Pedido ${orderNumber} validado y pasado a READY por ${email}.`);
         }
 
@@ -571,25 +525,23 @@ const server = http.createServer((req, res) => {
       if (req.url === '/api/mark-backlog' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
-        const callerUser = users.find((u) => u.email.toLowerCase() === email);
+        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
 
         if (callerUser && callerUser.role !== 'ADMIN') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Permiso denegado. Solo administradores pueden devolver comprobantes a Backlog.' }));
+          res.end(JSON.stringify({ error: 'Solo los usuarios Administradores pueden mover comprobantes a Backlog.' }));
           return;
         }
 
-        if (ordersDb.has(orderNumber)) {
-          const order = ordersDb.get(orderNumber);
+        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        if (order) {
           const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'BACKLOG', operatorEmail = NULL WHERE orderNumber = ?").run(orderNumber);
+          db.prepare(`
+            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(orderNumber, now, email, 'DEVOLVER_BACKLOG', `Pedido #${orderNumber} devuelto a BACKLOG por Admin (${email}).`);
 
-          order.status = 'BACKLOG';
-          order.auditLogs.push({
-            timestamp: now,
-            userEmail: email,
-            action: 'DEVOLVER_A_BACKLOG',
-            details: `Comprobante #${orderNumber} devuelto a Backlog por Administrador ${email}.`
-          });
           console.log(`[ADMIN LOG] Pedido ${orderNumber} devuelto a BACKLOG por ${email}.`);
         }
 
@@ -598,71 +550,32 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 3.3 PEDIDOS DISPONIBLES EN READY PARA OPERARIOS EN MÓVIL
+      // 4. CONSULTA DE PEDIDOS DISPONIBLES EN LISTO PARA APP MÓVIL
       if (req.url === '/api/available-orders' && req.method === 'GET') {
-        const readyOrders = Array.from(ordersDb.values())
-          .filter((o) => o.status === 'READY')
-          .map((o) => ({
-            orderNumber: o.orderNumber,
-            fileName: o.pdfFileName,
-            clientName: o.clientName,
-            totalItems: o.totalItemsRequired,
-            scannedItems: 0,
-            status: 'READY'
-          }));
-
+        const readyOrders = db.prepare("SELECT orderNumber, clientName, totalItemsRequired as totalItems FROM orders WHERE status = 'READY'").all();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, orders: readyOrders }));
         return;
       }
 
+      // 5. DETALLE REAL DE UN PEDIDO CON PRODUCTOS PARSEADOS Y AUDITORÍA
+      if (req.url.startsWith('/api/order-detail') && req.method === 'GET') {
+        const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+        const orderNumber = urlParams.get('orderNumber') || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
 
-      // 4. VER DETALLE COMPLETO FORMATO FACTURA Y LOGS DE AUDITORÍA
-      if (req.url.startsWith('/api/order-detail')) {
-        let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
-        if (!orderNumber && data.orderNumber) orderNumber = data.orderNumber;
-
-        if (!ordersDb.has(orderNumber)) {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Pedido no encontrado' }));
+        const fullOrder = getFullOrderFromDb(orderNumber);
+        if (fullOrder) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, order: fullOrder }));
           return;
         }
 
-        const order = ordersDb.get(orderNumber);
-        const operatorUser = users.find(
-          (u) => u.operatorId === order.operatorId || (order.operatorId && u.email.includes(order.operatorId.split('-')[0].toLowerCase()))
-        );
-
-        const responseData = {
-          ...order,
-          operatorEmail: operatorUser ? operatorUser.email : order.operatorId ? 'jsrxar@gmail.com' : 'Sin asignar'
-        };
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, order: responseData }));
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Pedido no encontrado' }));
         return;
       }
 
-      // 5. DESCARGAR O VISUALIZAR PDF DESDE BLOB DE DB
-      if (req.url.startsWith('/api/download-pdf')) {
-        let orderNumber = req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '';
-
-        if (ordersDb.has(orderNumber) && ordersDb.get(orderNumber).pdfBlob) {
-          const buffer = Buffer.from(ordersDb.get(orderNumber).pdfBlob, 'base64');
-          res.writeHead(200, {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="${orderNumber}.pdf"`
-          });
-          res.end(buffer);
-          return;
-        } else {
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Archivo PDF no encontrado' }));
-          return;
-        }
-      }
-
-      // 6. BORRAR COMPROBANTE EN BACKLOG (SOLO BASE DE DATOS)
+      // 6. BORRAR COMPROBANTE EN SQLITE
       if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
         const orderNumber = data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
         if (!orderNumber) {
@@ -671,8 +584,8 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        ordersDb.delete(orderNumber);
-        console.log(`[ADMIN] Comprobante ${orderNumber} eliminado de la DB por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
+        db.prepare('DELETE FROM orders WHERE orderNumber = ?').run(orderNumber);
+        console.log(`[ADMIN] Comprobante ${orderNumber} eliminado de SQLite por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado.` }));
@@ -685,17 +598,16 @@ const server = http.createServer((req, res) => {
         let email = data.userEmail || data.email || data.operatorId || urlParams.get('userEmail') || urlParams.get('email') || urlParams.get('operatorId') || '';
         email = email.toLowerCase().trim();
 
-        const activeOrder = Array.from(ordersDb.values()).find(
-          (o) => (o.status === 'DOING' || o.status === 'SCANNING') && (!email || (o.operatorEmail || '').toLowerCase() === email)
-        );
+        const activeOrderRow = db.prepare("SELECT orderNumber FROM orders WHERE (status = 'DOING' OR status = 'SCANNING') AND LOWER(operatorEmail) = ?").get(email);
 
-        if (activeOrder) {
+        if (activeOrderRow) {
+          const fullOrder = getFullOrderFromDb(activeOrderRow.orderNumber);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             hasActive: true,
-            orderNumber: activeOrder.orderNumber,
-            pdfFileName: activeOrder.pdfFileName,
-            order: activeOrder
+            orderNumber: fullOrder.orderNumber,
+            pdfFileName: fullOrder.pdfFileName,
+            order: fullOrder
           }));
           return;
         }
@@ -705,42 +617,56 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB CON EMAIL DE USUARIO)
+      // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN SQLITE CON EMAIL DE USUARIO)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, userEmail, email } = data;
         const operatorEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
-        if (!ordersDb.has(orderNumber)) {
-          registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
+        const existingOrder = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        if (existingOrder) {
+          const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'DOING', operatorEmail = ? WHERE orderNumber = ?").run(operatorEmail, orderNumber);
+          db.prepare(`
+            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(orderNumber, now, operatorEmail, 'TOMAR_PEDIDO', `Pedido #${orderNumber} tomado por operario ${operatorEmail}. Estado -> DOING`);
+
+          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${operatorEmail}.`);
+          const updatedFull = getFullOrderFromDb(orderNumber);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, targetFileName: updatedFull.pdfFileName, order: updatedFull }));
+          return;
         }
 
-        const order = ordersDb.get(orderNumber);
-        order.status = 'DOING';
-        order.operatorEmail = operatorEmail;
-        order.operatorId = operatorEmail;
-        const now = new Date().toLocaleString('es-AR');
-
-        order.auditLogs.push({
-          timestamp: now,
-          userEmail: operatorEmail,
-          action: 'TOMAR_PEDIDO',
-          details: `Pedido #${orderNumber} tomado por operario ${operatorEmail}. Estado -> DOING`
-        });
-
-        console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${operatorEmail}.`);
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, targetFileName: order.pdfFileName, order }));
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Pedido no existe en la Base de Datos' }));
         return;
       }
 
-      // 8.1 ACTUALIZAR PROGRESO DE ESCANEO EN DB DEL SERVIDOR
+      // 8.1 ACTUALIZAR PROGRESO DE ESCANEO EN SQLITE
       if (req.url === '/api/update-scan-progress' && req.method === 'POST') {
         const { orderNumber, items, totalItemsScanned } = data;
-        if (ordersDb.has(orderNumber)) {
-          const order = ordersDb.get(orderNumber);
-          if (Array.isArray(items)) order.items = items;
-          if (typeof totalItemsScanned === 'number') order.totalItemsScanned = totalItemsScanned;
-          console.log(`[ESCÁNER DB] Avance de escaneo guardado en servidor para Pedido #${orderNumber}: ${totalItemsScanned} U.`);
+        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+
+        if (order) {
+          if (Array.isArray(items)) {
+            const updateItemStmt = db.prepare(`
+              UPDATE order_items
+              SET quantityScanned = ?, status = ?
+              WHERE orderNumber = ? AND (id = ? OR code = ?)
+            `);
+
+            for (const item of items) {
+              const status = item.quantityScanned >= item.quantityRequired ? 'COMPLETED' : item.quantityScanned > 0 ? 'IN_PROGRESS' : 'PENDING';
+              updateItemStmt.run(item.quantityScanned, status, orderNumber, item.id || '', item.code || '');
+            }
+          }
+
+          if (typeof totalItemsScanned === 'number') {
+            db.prepare('UPDATE orders SET totalItemsScanned = ? WHERE orderNumber = ?').run(totalItemsScanned, orderNumber);
+          }
+
+          console.log(`[ESCÁNER SQLITE] Avance guardado para Pedido #${orderNumber}: ${totalItemsScanned} U.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -748,23 +674,20 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 9. LIBERAR PEDIDO (CAMBIO DE ESTADO EN DB CON LOG DE EMAIL)
+      // 9. LIBERAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A READY)
       if (req.url === '/api/release-order' && req.method === 'POST') {
         const { orderNumber, userEmail, email } = data;
-        if (ordersDb.has(orderNumber)) {
-          const order = ordersDb.get(orderNumber);
-          const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
-          const now = new Date().toLocaleString('es-AR');
+        const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
-          order.status = 'READY';
-          order.auditLogs.push({
-            timestamp: now,
-            userEmail: opEmail,
-            action: 'LIBERAR_PEDIDO',
-            details: `Pedido #${orderNumber} liberado por ${opEmail}. Devuelto a columna LISTO (READY).`
-          });
-          order.operatorEmail = null;
-          order.operatorId = null;
+        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        if (order) {
+          const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'READY', operatorEmail = NULL WHERE orderNumber = ?").run(orderNumber);
+          db.prepare(`
+            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(orderNumber, now, opEmail, 'LIBERAR_PEDIDO', `Pedido #${orderNumber} liberado por ${opEmail}. Devuelto a columna LISTO (READY).`);
+
           console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${opEmail}.`);
         }
 
@@ -773,37 +696,31 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 10. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN DB CON MARCA DE AGUA Y LOG DE EMAIL)
+      // 10. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A DONE CON MARCA DE AGUA)
       if (req.url === '/api/complete-order' && req.method === 'POST') {
         const { orderNumber, userEmail, email, watermarkText } = data;
-        if (ordersDb.has(orderNumber)) {
-          const order = ordersDb.get(orderNumber);
-          const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
+        const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
+
+        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        if (order) {
           const now = new Date().toLocaleString('es-AR');
+          const auditStamp = watermarkText || `AUDITADO Y EXPEDIDO POR OPERARIO ${opEmail} | FECHA: ${now}`;
 
-          order.status = 'DONE';
-          order.operatorEmail = opEmail;
-          order.operatorId = opEmail;
-          order.auditStamp = watermarkText || `AUDITADO Y EXPEDIDO POR OPERARIO ${opEmail} | FECHA: ${now}`;
-          order.totalItemsScanned = order.totalItemsRequired;
-          order.auditStamp = watermarkText;
-          order.totalItemsScanned = order.totalItemsRequired;
+          db.prepare("UPDATE orders SET status = 'DONE', operatorEmail = ?, auditStamp = ?, totalItemsScanned = totalItemsRequired WHERE orderNumber = ?").run(opEmail, auditStamp, orderNumber);
+          db.prepare(`
+            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(orderNumber, now, opEmail, 'DESPACHAR_PEDIDO', `Pedido #${orderNumber} auditado y despachado por ${opEmail}. Marca de Agua: ${auditStamp}`);
 
-          order.auditLogs.push({
-            timestamp: now,
-            userEmail: email,
-            action: 'DESPACHAR_PEDIDO',
-            details: `Pedido #${orderNumber} auditado y despachado por ${email}. Marca de Agua: ${watermarkText}`
-          });
-          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} despachado por ${email}.`);
+          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} despachado por ${opEmail}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, doneFileName: `${orderNumber}.pdf`, auditPath: watermarkText }));
+        res.end(JSON.stringify({ success: true, doneFileName: `${orderNumber}.pdf` }));
         return;
       }
 
-      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (PUNTO ÚNICO DE INGRESO)
+      // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (CON PDF BLOB EN SQLITE)
       if (req.url === '/api/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64, userEmail } = data;
         if (!fileName || !pdfBase64) {
@@ -814,68 +731,62 @@ const server = http.createServer((req, res) => {
 
         const buffer = Buffer.from(pdfBase64, 'base64');
         const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-        const email = userEmail || processEnv.ADMIN_EMAIL;
+        const email = (userEmail || processEnv.ADMIN_EMAIL).toLowerCase();
 
         // Parseo real del contenido del PDF
         const parsed = await parsePdfBuffer(buffer, cleanName);
-
         const now = new Date().toLocaleString('es-AR');
-        const orderRecord = {
-          id: `ord-${parsed.orderNumber}`,
-          orderNumber: parsed.orderNumber,
-          clientName: parsed.clientName,
-          issueDate: new Date().toLocaleDateString('es-AR'),
-          pdfFileName: cleanName,
-          pdfBlob: pdfBase64,
-          status: 'BACKLOG',
-          operatorId: null,
-          totalItemsRequired: parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0),
-          totalItemsScanned: 0,
-          items: parsed.items,
-          auditLogs: [
-            { timestamp: now, userEmail: email, action: 'CARGA_COMPROBANTE', details: `Comprobante PDF parseado y Blob registrado en Base de Datos por ${email}.` }
-          ]
-        };
+        const totalItemsRequired = parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0);
 
-        ordersDb.set(parsed.orderNumber, orderRecord);
+        // Guardar Orden principal en SQLite con el Blob Base64
+        db.prepare(`
+          INSERT OR REPLACE INTO orders (orderNumber, clientName, issueDate, pdfFileName, pdfBlob, status, operatorEmail, totalItemsRequired, totalItemsScanned, auditStamp, createdAt)
+          VALUES (?, ?, ?, ?, ?, 'BACKLOG', NULL, ?, 0, NULL, ?)
+        `).run(
+          parsed.orderNumber,
+          parsed.clientName,
+          new Date().toLocaleDateString('es-AR'),
+          cleanName,
+          pdfBase64,
+          totalItemsRequired,
+          now
+        );
 
-        console.log(`[ADMIN LOG] Comprobante PDF ${parsed.orderNumber} (${parsed.clientName}) parseado y registrado en Base de Datos por ${email}`);
+        // Limpiar e insertar ítems relacionales en order_items
+        db.prepare('DELETE FROM order_items WHERE orderNumber = ?').run(parsed.orderNumber);
+        const insertItemStmt = db.prepare(`
+          INSERT INTO order_items (id, orderNumber, code, description, unitPrice, quantityRequired, quantityScanned, status)
+          VALUES (?, ?, ?, ?, ?, ?, 0, 'PENDING')
+        `);
+
+        parsed.items.forEach((item, idx) => {
+          insertItemStmt.run(`item_${parsed.orderNumber}_${idx}`, parsed.orderNumber, item.code, item.description, item.unitPrice || 0, item.quantityRequired);
+        });
+
+        // Insertar log de auditoría
+        db.prepare(`
+          INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+          VALUES (?, ?, ?, ?, ?)
+        `).run(parsed.orderNumber, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF parseado y Blob guardado en SQLite por ${email}.`);
+
+        console.log(`[ADMIN LOG] Comprobante PDF ${parsed.orderNumber} (${parsed.clientName}) parseado y guardado en SQLite por ${email}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante parseado y publicado en backlog' }));
+        res.end(JSON.stringify({ success: true, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante parseado y publicado en backlog en SQLite' }));
         return;
       }
-
-
 
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Ruta no encontrada' }));
     } catch (e) {
       console.error('Error en el servidor:', e);
       res.writeHead(500, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: e.message }));
+      res.end(JSON.stringify({ error: 'Error interno del servidor', details: e.message }));
     }
   });
 });
 
-server.on('error', (err) => {
-  if (err.code === 'EADDRINUSE') {
-    console.log(`⚠️ Puerto ${PORT} ocupado. Liberando puerto automáticamente...`);
-    try {
-      const { execSync } = require('child_process');
-      execSync(`npx -y kill-port ${PORT}`);
-      setTimeout(() => {
-        server.listen(PORT, '0.0.0.0');
-      }, 1000);
-    } catch (e) {
-      console.error(`Error al liberar el puerto ${PORT}:`, e);
-    }
-  } else {
-    console.error('Server error:', err);
-  }
-});
-
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
-  console.log(`📂 Carpeta de entrada de comprobantes: ./orders/`);
+  console.log(`🗄️ Base de Datos Relacional SQLite Activa en: ${DB_PATH}`);
   console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });
