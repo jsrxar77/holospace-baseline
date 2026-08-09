@@ -35,14 +35,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   activeOrder: null,
   isScannerOpen: false,
-  operatorId: useAuthStore.getState().user?.email || 'javier@drinklovers.com',
+  operatorId: useAuthStore.getState().user?.email || 'jsrxar@gmail.com',
   lastScanToast: null,
   lastScanTimestamp: 0,
 
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
-      const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
+      const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
 
       // Auto-detección de pedido activo asignado por email en el servidor
       const activeDoing = await fileWorkflowService.getActiveDoingOrder(currentUserEmail);
@@ -81,7 +81,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando Email
   claimOrder: async (orderNumber: string) => {
-    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
+    const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
     const { claimOrder: claimFile } = fileWorkflowService;
     const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
 
@@ -111,7 +111,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   // Acción: Liberar Pedido de /delivery/doing a /delivery/ready
   releaseOrder: async (orderNumber: string) => {
-    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
+    const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
     const { releaseOrder: releaseFile } = fileWorkflowService;
     const { success } = await releaseFile(orderNumber, currentUserEmail);
 
@@ -258,7 +258,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const { activeOrder } = get();
     if (!activeOrder) return false;
 
-    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
+    const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
     const isComplete = activeOrder.totalItemsScanned === activeOrder.totalItemsRequired;
     const isSupervisorOverride = !!supervisorPin && supervisorPin === '9999';
 

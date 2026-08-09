@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout
 }) => {
   const { user, logout } = useAuthStore();
-  const displayBadge = badgeText || (user ? user.email : 'OP: javier@drinklovers.com');
+  const displayBadge = badgeText || (user ? user.email : 'OP: jsrxar@gmail.com');
 
   const handleLogoutPress = () => {
     logout();

@@ -7,7 +7,7 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('javier@drinklovers.com');
+  const [email, setEmail] = useState('jsrxar@gmail.com');
   const [password, setPassword] = useState('op123456');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -49,7 +49,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <Text style={styles.label}>Email del Operario</Text>
           <TextInput
             style={styles.input}
-            placeholder="ej: javier@drinklovers.com"
+            placeholder="ej: jsrxar@gmail.com"
             placeholderTextColor="#8B949E"
             keyboardType="email-address"
             autoCapitalize="none"

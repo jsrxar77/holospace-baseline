@@ -130,7 +130,7 @@ export const fileWorkflowService = {
   ): Promise<{ success: boolean; doneFileName: string; watermarkText: string }> => {
     const doneFileName = `${orderNumber}.pdf`;
     const nowIso = new Date().toLocaleString('es-AR');
-    const email = userEmail || 'javier@drinklovers.com';
+    const email = userEmail || 'jsrxar@gmail.com';
     const watermarkText = `AUDITADO Y EXPEDIDO POR OPERARIO ${email} | FECHA: ${nowIso} | BULTOS: ${scannedCount}/${totalCount}`;
 
     try {

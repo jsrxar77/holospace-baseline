@@ -235,10 +235,10 @@ let users = [
     active: true
   },
   {
-    id: 'javier@drinklovers.com',
-    email: 'javier@drinklovers.com',
-    password: 'op123456',
-    name: 'Javier Operario',
+    id: 'jsrxar@gmail.com',
+    email: 'jsrxar@gmail.com',
+    password: 'Asadito21!',
+    name: 'Javier Rizzo',
     role: 'OPERATOR',
     active: true
   }
@@ -503,7 +503,7 @@ const server = http.createServer((req, res) => {
               const operatorUser = users.find(
                 (u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase())
               );
-              const email = operatorUser ? operatorUser.email : 'javier@drinklovers.com';
+              const email = operatorUser ? operatorUser.email : 'jsrxar@gmail.com';
               return {
                 orderNumber: o.orderNumber,
                 fileName: o.pdfFileName,
@@ -524,7 +524,7 @@ const server = http.createServer((req, res) => {
               const operatorUser = users.find(
                 (u) => u.operatorId === operatorId || u.email.includes(operatorId.split('-')[0].toLowerCase())
               );
-              const email = operatorUser ? operatorUser.email : 'javier@drinklovers.com';
+              const email = operatorUser ? operatorUser.email : 'jsrxar@gmail.com';
               return {
                 orderNumber: o.orderNumber,
                 fileName: o.pdfFileName,
@@ -641,7 +641,7 @@ const server = http.createServer((req, res) => {
 
         const responseData = {
           ...order,
-          operatorEmail: operatorUser ? operatorUser.email : order.operatorId ? 'javier@drinklovers.com' : 'Sin asignar'
+          operatorEmail: operatorUser ? operatorUser.email : order.operatorId ? 'jsrxar@gmail.com' : 'Sin asignar'
         };
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -714,7 +714,7 @@ const server = http.createServer((req, res) => {
       // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB CON EMAIL DE USUARIO)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
         const { orderNumber, userEmail, email } = data;
-        const operatorEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
+        const operatorEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
         if (!ordersDb.has(orderNumber)) {
           registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
@@ -759,7 +759,7 @@ const server = http.createServer((req, res) => {
         const { orderNumber, userEmail, email } = data;
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const opEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
+          const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'READY';
@@ -784,7 +784,7 @@ const server = http.createServer((req, res) => {
         const { orderNumber, userEmail, email, watermarkText } = data;
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const opEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
+          const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'DONE';
