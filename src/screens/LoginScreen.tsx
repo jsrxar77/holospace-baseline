@@ -1,17 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore, getSavedCredentials } from '../store/useAuthStore';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('jsrxar@gmail.com');
-  const [password, setPassword] = useState('op123456');
+  const initialCreds = getSavedCredentials();
+  const [email, setEmail] = useState(initialCreds.email || 'jsrxar@gmail.com');
+  const [password, setPassword] = useState(initialCreds.pass || 'Asadito21!');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { login } = useAuthStore();
+
+  useEffect(() => {
+    const creds = getSavedCredentials();
+    if (creds.email) setEmail(creds.email);
+    if (creds.pass) setPassword(creds.pass);
+  }, []);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -63,17 +71,26 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Contraseña</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="••••••••"
-            placeholderTextColor="#8B949E"
-            secureTextEntry
-            value={password}
-            onChangeText={(txt) => {
-              setPassword(txt);
-              setErrorMessage('');
-            }}
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, { flex: 1, paddingRight: 44 }]}
+              placeholder="••••••••"
+              placeholderTextColor="#8B949E"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={(txt) => {
+                setPassword(txt);
+                setErrorMessage('');
+              }}
+            />
+            <TouchableOpacity
+              style={styles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -91,7 +108,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         <View style={styles.hintBox}>
           <Text style={styles.hintText}>
-            💡 Admin por defecto: admin@drinklovers.com.ar / drinklovers2026!
+            💡 Operario por defecto: jsrxar@gmail.com / Asadito21!
           </Text>
         </View>
       </View>
@@ -168,6 +185,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     color: '#FFFFFF',
     fontSize: 15
+  },
+  passwordContainer: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%'
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: 6
+  },
+  eyeText: {
+    fontSize: 18
   },
   btnSubmit: {
     backgroundColor: '#00E676',

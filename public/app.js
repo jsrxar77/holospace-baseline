@@ -2,7 +2,33 @@ let currentUser = null;
 let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
+function populateSavedCredentials() {
+  const savedEmail = localStorage.getItem('pw_saved_email') || 'admin@drinklovers.com.ar';
+  const savedPassword = localStorage.getItem('pw_saved_password') || 'drinklovers2026!';
+  const emailInput = document.getElementById('loginEmail');
+  const passwordInput = document.getElementById('loginPassword');
+
+  if (emailInput) emailInput.value = savedEmail;
+  if (passwordInput) passwordInput.value = savedPassword;
+}
+
+function toggleLoginPasswordVisibility() {
+  const passwordInput = document.getElementById('loginPassword');
+  const toggleBtn = document.getElementById('togglePasswordBtn');
+  if (passwordInput) {
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      if (toggleBtn) toggleBtn.innerText = '🙈';
+    } else {
+      passwordInput.type = 'password';
+      if (toggleBtn) toggleBtn.innerText = '👁️';
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  populateSavedCredentials();
+
   const token = localStorage.getItem('pw_token');
   const userJson = localStorage.getItem('pw_user');
   if (token && userJson) {
@@ -31,6 +57,9 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = data.user;
         localStorage.setItem('pw_token', data.token);
         localStorage.setItem('pw_user', JSON.stringify(data.user));
+        localStorage.setItem('pw_saved_email', email);
+        localStorage.setItem('pw_saved_password', password);
+
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email}`;
         loadKanbanData();
@@ -761,6 +790,7 @@ function logout() {
   localStorage.removeItem('pw_token');
   localStorage.removeItem('pw_user');
   currentUser = null;
+  populateSavedCredentials();
   document.getElementById('loginModal').classList.remove('hidden');
 }
 
