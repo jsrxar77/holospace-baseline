@@ -740,10 +740,16 @@ const THEMES = {
             res.end(JSON.stringify({ error: 'Datos incompletos' }));
             return;
           }
+          const targetRole = role || 'OPERATOR';
+          if (targetRole === 'SUPERADMIN' && (!currentUser || currentUser.role !== 'SUPERADMIN')) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Solo un Super Administrador puede asignar el rol SUPERADMIN.' }));
+            return;
+          }
           const cleanEmail = email.toLowerCase().trim();
 
           db.prepare('INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, 1)').run(
-            cleanEmail, password, name, role || 'OPERATOR'
+            cleanEmail, password, name, targetRole
           );
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -762,31 +768,39 @@ const THEMES = {
             return;
           }
 
+          // Protección de rol SUPERADMIN
+          if ((existing.role === 'SUPERADMIN' || role === 'SUPERADMIN') && (!currentUser || currentUser.role !== 'SUPERADMIN')) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Solo un Super Administrador puede modificar cuentas SuperAdmin.' }));
+            return;
+          }
+
+          const newRole = role || existing.role;
+          const newActive = typeof active === 'boolean' ? (active ? 1 : 0) : existing.active;
+
           db.prepare(`
-            UPDATE users
-            SET password = ?, name = ?, role = ?, active = ?
-            WHERE LOWER(email) = ?
-          `).run(
-            password || existing.password,
-            name || existing.name,
-            role || existing.role,
-            typeof active === 'boolean' ? (active ? 1 : 0) : existing.active,
-            cleanEmail
-          );
+            UPDATE users SET name = ?, password = ?, role = ?, active = ? WHERE LOWER(email) = ?
+          `).run(name || existing.name, password || existing.password, newRole, newActive, cleanEmail);
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, message: 'Usuario actualizado en Base de Datos' }));
+          res.end(JSON.stringify({ success: true, message: 'Usuario actualizado correctamente' }));
           return;
         }
 
         if (req.method === 'DELETE') {
           const emailToDelete = data.email || (req.url.includes('email=') ? req.url.split('email=')[1].split('&')[0] : '');
           const cleanEmail = emailToDelete.toLowerCase().trim();
+          const existing = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(cleanEmail);
+
+          if (existing && existing.role === 'SUPERADMIN' && (!currentUser || currentUser.role !== 'SUPERADMIN')) {
+            res.writeHead(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'No tienes permisos para desactivar una cuenta SuperAdmin.' }));
+            return;
+          }
 
           db.prepare('UPDATE users SET active = 0 WHERE LOWER(email) = ?').run(cleanEmail);
-
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, message: 'Usuario desactivado en Base de Datos' }));
+          res.end(JSON.stringify({ success: true, message: 'Usuario desactivado' }));
           return;
         }
       }
