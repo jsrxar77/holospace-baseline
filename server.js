@@ -6,9 +6,7 @@ const Database = require('better-sqlite3');
 
 // Leer variables de entorno desde .env
 let processEnv = {
-  PORT: process.env.PORT || '3001',
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@drinklovers.com.ar',
-  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'drinklovers2026!'
+  HW_PORT: process.env.HW_PORT || process.env.PORT || '3001'
 };
 
 const envPath = path.join(__dirname, '.env');
@@ -188,25 +186,24 @@ const initModules = () => {
   );
 };
 
-// Asegurar los usuarios autorizados por defecto en la base de datos
+// Inicialización de Usuarios: SuperAdmin desde .env + Usuarios de Semilla para Desarrollo
 const initUsers = () => {
-  const superAdminEmail = (processEnv.SUPERADMIN_EMAIL || 'superadmin@holoware.com.ar').toLowerCase();
+  const superAdminEmail = (processEnv.SUPERADMIN_EMAIL || 'superadmin@hologrowth.com.ar').toLowerCase().trim();
   const superAdminPassword = processEnv.SUPERADMIN_PASSWORD || 'BrunaSeRelambe22!';
-  const adminEmail = (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
-  const adminPassword = processEnv.ADMIN_PASSWORD || 'drinklovers2026!';
 
   const stmt = db.prepare(`
     INSERT OR REPLACE INTO users (email, password, name, role, active)
-    VALUES (?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, 1)
   `);
 
-  // Super Admin de plataforma
-  stmt.run(superAdminEmail, superAdminPassword, 'Super Administrador', 'SUPERADMIN', 1);
-  // Admin de módulo ScanBan
-  db.prepare(`INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, ?)`)
-    .run(adminEmail, adminPassword, 'Administrador Principal', 'ADMIN', 1);
-  db.prepare(`INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, ?)`)
-    .run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR', 1);
+  // 1. SuperAdmin de Plataforma (Bootstrap desde .env)
+  stmt.run(superAdminEmail, superAdminPassword, 'Super Administrador', 'SUPERADMIN');
+
+  // 2. Usuarios de Prueba / Semilla para Desarrollo
+  db.prepare(`INSERT OR IGNORE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, 1)`)
+    .run('admin@drinklovers.com.ar', 'drinklovers2026!', 'Administrador Principal', 'ADMIN');
+  db.prepare(`INSERT OR IGNORE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, 1)`)
+    .run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR');
 };
 
 initUsers();
