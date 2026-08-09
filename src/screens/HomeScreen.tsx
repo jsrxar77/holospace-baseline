@@ -145,14 +145,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           </View>
         ) : null}
 
-        {/* Sección de Pedidos Disponibles en READY (Verde) */}
+        {/* Sección de Pedidos Disponibles en LISTO (Verde) */}
         <View style={styles.uploadCard}>
-          <Text style={styles.uploadTitle}>Pedidos Listos para Tomar (READY)</Text>
+          <Text style={styles.uploadTitle}>Pedidos Listos para Tomar</Text>
           <Text style={styles.uploadSubtitle}>
             {hasActiveDoingOrder
               ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
               : readyOrders.length === 0
-              ? 'No hay pedidos en estado LISTO (READY). Espera a que el Administrador valide un comprobante.'
+              ? 'No hay pedidos en estado LISTO. Espera a que el Administrador valide un comprobante.'
               : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
           </Text>
 

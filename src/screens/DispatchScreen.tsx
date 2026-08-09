@@ -74,7 +74,9 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
           <View style={styles.detailsBox}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Operario Auditador:</Text>
-              <Text style={[styles.detailValue, styles.textEmerald]}>JAVIER-DEV82</Text>
+              <Text style={[styles.detailValue, styles.textEmerald]} numberOfLines={1} ellipsizeMode="tail">
+                {activeOrder.operatorEmail || 'jsrxar@gmail.com'}
+              </Text>
             </View>
 
             <View style={styles.detailBlock}>
@@ -98,8 +100,10 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
             </View>
 
             <View style={styles.detailBlock}>
-              <Text style={styles.detailLabel}>Archivo Archivado en Disco:</Text>
-              <Text style={styles.detailValuePath}>./delivery/done/{activeOrder.pdfFileName}</Text>
+              <Text style={styles.detailLabel}>Comprobante Registrado:</Text>
+              <Text style={styles.detailValuePath} numberOfLines={1} ellipsizeMode="middle">
+                {activeOrder.pdfFileName || `Pedido #${activeOrder.orderNumber}`}
+              </Text>
             </View>
 
             {activeOrder.exceptionReason && (
@@ -112,7 +116,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
 
           {/* Single Action Button: Corroborar y Finalizar */}
           <TouchableOpacity style={styles.btnHome} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
-            <Text style={styles.btnHomeText}>CORROBORAR DATOS Y FINALIZAR DESPACHO</Text>
+            <Text style={styles.btnHomeText}>VOLVER A LISTA DE PEDIDOS</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

@@ -177,6 +177,11 @@ async function loadKanbanData() {
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" style="width: ${item.progressPercentage}%;"></div>
             </div>
+            ${currentUser && currentUser.role === 'ADMIN' ? `
+              <button class="btn-action" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #3B82F6; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 700; cursor: pointer;" onclick="resetOrderDoingToReady('${item.id}', '${item.orderNumber}', event)">
+                ↩️ Reasignar / Liberar a Listo
+              </button>
+            ` : ''}
           </div>
         `).join('');
 
@@ -284,6 +289,36 @@ async function markOrderBacklog(orderNumber, event) {
 }
 
 
+async function resetOrderDoingToReady(orderId, orderNumber, event) {
+  if (event) event.stopPropagation();
+
+  try {
+    const res = await fetch('/api/reset-doing-to-ready', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        orderNumber,
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadKanbanData();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No fue posible reasignar el pedido.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+  }
+}
+
+async function resetOrderDoingToReadyAndCloseModal(orderId, orderNumber) {
+  closeInvoiceModal();
+  await resetOrderDoingToReady(orderId, orderNumber);
+}
+
+
 // MANEJADORES DE DRAG AND DROP (ARRASTRAR DE BACKLOG A LISTO)
 function handleDragStart(event, orderNumber) {
   event.dataTransfer.setData('text/plain', orderNumber);
@@ -355,10 +390,14 @@ async function openInvoiceModal(orderNumber) {
       </div>
     `).join('');
 
+    const statusLabelEs = order.status === 'READY' ? 'LISTO' : order.status === 'DOING' || order.status === 'SCANNING' ? 'EN PROCESO' : order.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG';
+
     const statusActionButton = order.status === 'BACKLOG'
-      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 10px 16px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.orderNumber}')">✓ VALIDAR Y PASAR A LISTO</button>`
+      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 10px 16px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id || order.orderNumber}')">✓ VALIDAR Y PASAR A LISTO</button>`
       : order.status === 'READY'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.orderNumber}')">↩️ DEVOLVER A BACKLOG</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id || order.orderNumber}')">↩️ DEVOLVER A BACKLOG</button>`
+      : (order.status === 'DOING' || order.status === 'SCANNING') && currentUser && currentUser.role === 'ADMIN'
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">↩️ REASIGNAR Y LIBERAR A LISTO</button>`
       : '';
 
     const invoiceHtml = `
@@ -371,7 +410,7 @@ async function openInvoiceModal(orderNumber) {
           </div>
           <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
             <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate || order.issueDate}</div>
-            <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${order.status}</div>
+            <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${statusLabelEs}</div>
             <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">👤 Usuario Asignado: ${order.operatorEmail}</div>
             <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
               <button class="btn-secondary" style="font-size: 13px; padding: 8px 14px;" onclick="downloadPdf('${order.orderNumber}')">⬇️ Descargar PDF</button>
@@ -661,19 +700,31 @@ async function fetchExplorerOrders() {
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');
 
-    if (!data.orders || data.orders.length === 0) {
+    let ordersList = data.orders || [];
+
+    if (sortBy === 'date-asc') {
+      ordersList.sort((a, b) => a.id - b.id);
+    } else if (sortBy === 'amount-desc') {
+      ordersList.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+    } else if (sortBy === 'items-desc') {
+      ordersList.sort((a, b) => (b.totalItemsRequired || 0) - (a.totalItemsRequired || 0));
+    } else {
+      ordersList.sort((a, b) => b.id - a.id);
+    }
+
+    if (ordersList.length === 0) {
       grid.innerHTML =
         '<div style="color: var(--text-muted); font-size: 15px; grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron pedidos que coincidan con la búsqueda y filtros seleccionados.</div>';
       return;
     }
 
-    grid.innerHTML = data.orders
+    grid.innerHTML = ordersList
       .map(
         (o) => `
       <div class="kanban-card" onclick="openInvoiceModal('${o.orderNumber}')">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div class="card-order-no">Pedido #${o.orderNumber}</div>
-          <span class="badge-role" style="font-size: 11px;">${o.status === 'READY' ? 'LISTO' : o.status === 'DOING' ? 'EN PROCESO' : o.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG'}</span>
+          <span class="badge-role" style="font-size: 11px; ${o.status === 'READY' ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;' : o.status === 'DOING' ? 'background: rgba(59, 130, 246, 0.2); color: #60A5FA;' : o.status === 'DONE' ? 'background: rgba(255, 215, 0, 0.2); color: #FFD700;' : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;'}">${o.status === 'READY' ? 'LISTO' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PROCESO' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'BACKLOG'}</span>
         </div>
         <div class="card-meta" style="color: #FFF; font-weight: 800;">Cliente: ${o.clientName}</div>
         <div class="card-meta">Operario: ${o.operatorEmail || 'Sin Asignar'}</div>

@@ -24,12 +24,12 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.brandGroup}>
-        <Text style={styles.titleWhite}>
+        <Text style={styles.titleWhite} numberOfLines={1} ellipsizeMode="tail">
           PHONEWARE <Text style={styles.titleGreen}>SCANNER</Text>
         </Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{displayBadge}</Text>
-        </View>
+        <Text style={styles.badgeText} numberOfLines={1} ellipsizeMode="tail">
+          👤 {displayBadge}
+        </Text>
       </View>
       <TouchableOpacity style={styles.btnLogout} onPress={handleLogoutPress} activeOpacity={0.7}>
         <Text style={styles.btnLogoutText}>CERRAR SESIÓN</Text>
@@ -40,9 +40,9 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingTop: 48,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 52,
+    paddingBottom: 14,
     backgroundColor: '#161B22',
     borderBottomWidth: 1,
     borderBottomColor: '#30363D',
@@ -51,12 +51,13 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   brandGroup: {
-    flexDirection: 'column',
-    gap: 4
+    flex: 1,
+    marginRight: 10,
+    justifyContent: 'center'
   },
   titleWhite: {
     color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     letterSpacing: 0.5
   },
@@ -64,21 +65,20 @@ const styles = StyleSheet.create({
     color: '#00E676',
     fontWeight: '900'
   },
-  badge: {
-    alignSelf: 'flex-start'
-  },
   badgeText: {
     color: '#00E676',
     fontSize: 12,
-    fontWeight: '700'
+    fontWeight: '700',
+    marginTop: 2
   },
   btnLogout: {
-    backgroundColor: '#21262D',
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255, 82, 82, 0.12)',
+    paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FF5252'
+    borderColor: '#FF5252',
+    flexShrink: 0
   },
   btnLogoutText: {
     color: '#FF5252',

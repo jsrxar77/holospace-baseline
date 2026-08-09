@@ -528,10 +528,10 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
-      // 3. CONSULTA DE TABLERO KANBAN DE 4 COLUMNAS DESDE SQLITE
+      // 3. CONSULTA DE TABLERO KANBAN Y EXPLORADOR DE PEDIDOS DESDE SQLITE
       if ((req.url.startsWith('/api/orders') || req.url.startsWith('/api/kanban')) && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const search = (urlParams.get('search') || '').toLowerCase().trim();
+        const search = (urlParams.get('q') || urlParams.get('search') || '').toLowerCase().trim();
         const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
         const selectedOperators = (urlParams.get('operators') || '').split(',').map(o => o.trim().toLowerCase()).filter(Boolean);
 
@@ -544,6 +544,7 @@ const server = http.createServer(async (req, res) => {
           const scannedItems = o.totalItemsScanned || 0;
           const totalItems = o.totalItemsRequired || 1;
           const progressPercentage = Math.round((scannedItems / totalItems) * 100);
+          const totalAmount = items.reduce((acc, i) => acc + ((i.unitPrice || 0) * (i.quantityRequired || 1)), 0);
 
           return {
             id: o.id,
@@ -561,6 +562,7 @@ const server = http.createServer(async (req, res) => {
             scannedItems,
             totalItems,
             progressPercentage,
+            totalAmount,
             auditStamp: o.auditStamp,
             createdAt: o.createdAt,
             items,
@@ -574,7 +576,8 @@ const server = http.createServer(async (req, res) => {
             o.orderNumber.toLowerCase().includes(search) ||
             o.clientName.toLowerCase().includes(search) ||
             o.pdfFileName.toLowerCase().includes(search) ||
-            o.operatorEmail.toLowerCase().includes(search);
+            o.operatorEmail.toLowerCase().includes(search) ||
+            (o.items && o.items.some(i => i.code.toLowerCase().includes(search) || i.description.toLowerCase().includes(search)));
 
           const matchesStatus = statusFilter === 'ALL' || o.status === statusFilter;
           const matchesOperator = selectedOperators.length === 0 || selectedOperators.includes(o.operatorEmail.toLowerCase());
@@ -583,6 +586,8 @@ const server = http.createServer(async (req, res) => {
         });
 
         const kanbanData = {
+          success: true,
+          orders: filtered,
           backlog: filtered.filter(o => o.status === 'BACKLOG'),
           ready: filtered.filter(o => o.status === 'READY'),
           doing: filtered.filter(o => o.status === 'DOING' || o.status === 'SCANNING'),
@@ -594,7 +599,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) EXCLUSIVO POR ADMIN
+      // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-ready' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
@@ -613,9 +618,9 @@ const server = http.createServer(async (req, res) => {
           db.prepare(`
             INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(order.id, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a LISTO por Admin (${email}).`);
+          `).run(order.id, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a Listo por Admin (${email}).`);
 
-          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a READY por ${email}.`);
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a Listo por ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -623,7 +628,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG EXCLUSIVO POR ADMIN
+      // 3.2 DEVOLVER COMPROBANTE DE LISTO A BACKLOG EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-backlog' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
@@ -642,9 +647,39 @@ const server = http.createServer(async (req, res) => {
           db.prepare(`
             INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(order.id, now, email, 'DEVOLVER_BACKLOG', `Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a BACKLOG por Admin (${email}).`);
+          `).run(order.id, now, email, 'DEVOLVER_BACKLOG', `Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a Backlog por Admin (${email}).`);
 
-          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a BACKLOG por ${email}.`);
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a Backlog por ${email}.`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
+      // 3.3 LIBERAR Y RESETEAR PEDIDO EN PROCESO A LISTO EXCLUSIVO POR ADMIN
+      if ((req.url === '/api/reset-doing-to-ready' || req.url === '/api/release-order-admin') && req.method === 'POST') {
+        const { orderId, orderNumber, userEmail } = data;
+        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
+        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
+
+        if (callerUser && callerUser.role !== 'ADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Solo los usuarios Administradores pueden reasignar pedidos en proceso.' }));
+          return;
+        }
+
+        const order = getFullOrderFromDb(orderId || orderNumber);
+        if (order) {
+          const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'READY', operatorEmail = NULL, totalItemsScanned = 0 WHERE id = ?").run(order.id);
+          db.prepare("UPDATE order_items SET quantityScanned = 0, status = 'PENDING' WHERE orderId = ?").run(order.id);
+          db.prepare(`
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(order.id, now, email, 'REASIGNAR_A_LISTO', `Pedido #${order.orderNumber} (ID: ${order.id}) liberado por Admin (${email}) de En Proceso a Listo para reasignación (escaneo reseteado a 0).`);
+
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) liberado de En Proceso a Listo por Admin ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
