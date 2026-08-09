@@ -3,8 +3,8 @@ let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
 function populateSavedCredentials() {
-  const savedEmail = localStorage.getItem('pw_saved_email') || 'admin@drinklovers.com.ar';
-  const savedPassword = localStorage.getItem('pw_saved_password') || 'drinklovers2026!';
+  const savedEmail = localStorage.getItem('hw_saved_email') || 'admin@drinklovers.com.ar';
+  const savedPassword = localStorage.getItem('hw_saved_password') || 'drinklovers2026!';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
@@ -79,8 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
   loadActiveTheme();
   populateSavedCredentials();
 
-  const token = localStorage.getItem('pw_token');
-  const userJson = localStorage.getItem('pw_user');
+  const token = localStorage.getItem('hw_token');
+  const userJson = localStorage.getItem('hw_user');
   if (token && userJson) {
     currentUser = JSON.parse(userJson);
     document.getElementById('loginModal').classList.add('hidden');
@@ -105,10 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success) {
         currentUser = data.user;
-        localStorage.setItem('pw_token', data.token);
-        localStorage.setItem('pw_user', JSON.stringify(data.user));
-        localStorage.setItem('pw_saved_email', email);
-        localStorage.setItem('pw_saved_password', password);
+        localStorage.setItem('hw_token', data.token);
+        localStorage.setItem('hw_user', JSON.stringify(data.user));
+        localStorage.setItem('hw_saved_email', email);
+        localStorage.setItem('hw_saved_password', password);
 
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email}`;
@@ -194,7 +194,7 @@ function toggleUserGroup(groupId) {
 async function loadKanbanData() {
   try {
     loadActiveTheme();
-    const res = await fetch('/api/kanban');
+    const res = await fetch('/api/scanban/kanban');
     const data = await res.json();
 
     // 1. Render Backlog (Gris - Draggable hacia LISTO)
@@ -332,7 +332,7 @@ async function markOrderReady(orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
-    const res = await fetch('/api/mark-ready', {
+    const res = await fetch('/api/scanban/mark-ready', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -355,7 +355,7 @@ async function markOrderBacklog(orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
-    const res = await fetch('/api/mark-backlog', {
+    const res = await fetch('/api/scanban/mark-backlog', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -379,7 +379,7 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
-    const res = await fetch('/api/reset-doing-to-ready', {
+    const res = await fetch('/api/scanban/release-order-admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -455,7 +455,7 @@ async function confirmAssignOperatorSubmit() {
   }
 
   try {
-    const res = await fetch('/api/assign-order-admin', {
+    const res = await fetch('/api/scanban/assign-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -496,7 +496,7 @@ async function handleDropToListo(event) {
   const orderNumber = event.dataTransfer.getData('text/plain');
   if (orderNumber) {
     try {
-      const res = await fetch(`/api/order-detail?orderNumber=${orderNumber}`);
+      const res = await fetch(`/api/scanban/order-detail?orderNumber=${orderNumber}`);
       const data = await res.json();
       if (data.success && data.order && (data.order.status === 'DOING' || data.order.status === 'SCANNING')) {
         await resetOrderDoingToReady(data.order.id, orderNumber, event);
@@ -538,7 +538,7 @@ async function markOrderBacklogAndCloseModal(orderNumber) {
 // DETALLE COMPLETO DE COMPROBANTE Y MARCA DE AGUA
 async function openInvoiceModal(orderNumber) {
   try {
-    const res = await fetch(`/api/order-detail?orderNumber=${orderNumber}`);
+    const res = await fetch(`/api/scanban/order-detail?orderNumber=${orderNumber}`);
     const data = await res.json();
     if (!data.success || !data.order) {
       await showCustomAlert('Error', 'No se pudo cargar el detalle del comprobante.');
@@ -639,7 +639,7 @@ function closeInvoiceModal() {
 }
 
 function downloadPdf(orderNumber) {
-  window.open(`/api/download-pdf?orderNumber=${orderNumber}`, '_blank');
+  window.open(`/api/scanban/download-pdf?orderNumber=${orderNumber}`, '_blank');
 }
 
 // SUBIDA DE COMPROBANTES PDF
@@ -651,7 +651,7 @@ async function handleFileUpload(event) {
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1];
     try {
-      const res = await fetch('/api/upload-pdf', {
+      const res = await fetch('/api/scanban/upload-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -686,7 +686,7 @@ async function deleteBacklogOrder(orderNumber, event) {
   if (!confirmed) return;
 
   try {
-    const res = await fetch('/api/delete-order', {
+    const res = await fetch('/api/scanban/delete-order', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -891,7 +891,7 @@ async function fetchExplorerOrders() {
 
   try {
     const res = await fetch(
-      `/api/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`
+      `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`
     );
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');
@@ -980,8 +980,8 @@ function closeQrModal() {
 }
 
 function logout() {
-  localStorage.removeItem('pw_token');
-  localStorage.removeItem('pw_user');
+  localStorage.removeItem('hw_token');
+  localStorage.removeItem('hw_user');
   currentUser = null;
   populateSavedCredentials();
   document.getElementById('loginModal').classList.remove('hidden');

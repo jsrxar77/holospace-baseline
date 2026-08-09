@@ -20,7 +20,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   const fetchReadyOrders = async () => {
     try {
-      const res = await fetch('http://192.168.100.247:3001/api/available-orders');
+      const res = await fetch('http://192.168.100.247:3001/api/scanban/available-orders');
       const data = await res.json();
       if (data && data.success && Array.isArray(data.orders)) {
         setReadyOrders(data.orders);

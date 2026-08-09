@@ -15,7 +15,7 @@ export const fileWorkflowService = {
   getActiveDoingOrder: async (userEmail?: string): Promise<{ hasActive: boolean; orderNumber?: string; pdfFileName?: string; order?: Order }> => {
     try {
       const emailParam = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
-      const response = await fetch(`${SERVER_URL}/api/active-order${emailParam}`);
+      const response = await fetch(`${SERVER_URL}/api/scanban/active-order${emailParam}`);
       const data = await response.json();
       if (data && data.hasActive) {
         console.log(`[AUTO-DETECCIÓN PROCESO] Encontrado pedido activo en DB: #${data.orderNumber} para ${userEmail}`);
@@ -35,7 +35,7 @@ export const fileWorkflowService = {
   // Obtener detalle 100% REAL de la orden desde el servidor
   getOrderDetails: async (orderNumber: string): Promise<Order | null> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/order-detail?orderNumber=${orderNumber}`);
+      const response = await fetch(`${SERVER_URL}/api/scanban/order-detail?orderNumber=${orderNumber}`);
       const data = await response.json();
       if (data && data.success && data.order) {
         const o = data.order;
@@ -69,7 +69,7 @@ export const fileWorkflowService = {
   // Guardar avance de escaneo en tiempo real en la base de datos del servidor
   updateScanProgress: async (orderNumber: string, items: any[], totalItemsScanned: number): Promise<boolean> => {
     try {
-      await fetch(`${SERVER_URL}/api/update-scan-progress`, {
+      await fetch(`${SERVER_URL}/api/scanban/update-scan-progress`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderNumber, items, totalItemsScanned })
@@ -86,7 +86,7 @@ export const fileWorkflowService = {
     const targetFileName = `${orderNumber}.pdf`;
 
     try {
-      const response = await fetch(`${SERVER_URL}/api/claim-order`, {
+      const response = await fetch(`${SERVER_URL}/api/scanban/claim-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderNumber, userEmail })
@@ -106,7 +106,7 @@ export const fileWorkflowService = {
   // Acción: Liberar Pedido (Cambio de estado a READY en DB)
   releaseOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean }> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/release-order`, {
+      const response = await fetch(`${SERVER_URL}/api/scanban/release-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderNumber, userEmail })
@@ -134,7 +134,7 @@ export const fileWorkflowService = {
     const watermarkText = `AUDITADO Y EXPEDIDO POR OPERARIO ${email} | FECHA: ${nowIso} | BULTOS: ${scannedCount}/${totalCount}`;
 
     try {
-      await fetch(`${SERVER_URL}/api/complete-order`, {
+      await fetch(`${SERVER_URL}/api/scanban/complete-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderNumber, userEmail: email, watermarkText })

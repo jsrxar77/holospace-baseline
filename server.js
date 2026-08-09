@@ -438,7 +438,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // DESCARGA DE COMPROBANTE PDF DESDE LA BASE DE DATOS SQLITE (BLOB)
-  if (req.url.startsWith('/api/download-pdf')) {
+  if (req.url.startsWith('/api/scanban/download-pdf')) {
     const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
     const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
 
@@ -638,6 +638,50 @@ const THEMES = {
         return;
       }
 
+      // CORE: MÓDULOS — GET lista todos los módulos, POST activa/desactiva (solo SUPERADMIN)
+      if (req.url === '/api/modules' && req.method === 'GET') {
+        const mods = db.prepare('SELECT id, key, name, description, active, activatedBy, activatedAt FROM modules ORDER BY id ASC').all();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, modules: mods }));
+        return;
+      }
+
+      if (req.url === '/api/modules' && req.method === 'POST') {
+        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede gestionar módulos.' }));
+          return;
+        }
+        const { key, active } = data;
+        if (!key) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Se requiere el campo key del módulo.' }));
+          return;
+        }
+        const mod = db.prepare('SELECT * FROM modules WHERE key = ?').get(key);
+        if (!mod) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: `Módulo '${key}' no encontrado.` }));
+          return;
+        }
+        if (mod.key === 'core') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'El módulo Core no puede desactivarse.' }));
+          return;
+        }
+        const newActive = active ? 1 : 0;
+        db.prepare('UPDATE modules SET active = ?, activatedBy = ?, activatedAt = ? WHERE key = ?')
+          .run(newActive, currentUser.email, new Date().toISOString(), key);
+        // Log en platform_audit_logs
+        db.prepare('INSERT INTO platform_audit_logs (timestamp, userEmail, action, details) VALUES (?, ?, ?, ?)')
+          .run(new Date().toISOString(), currentUser.email, newActive ? 'MODULE_ACTIVATED' : 'MODULE_DEACTIVATED',
+            JSON.stringify({ module: key, active: newActive }));
+        const updated = db.prepare('SELECT * FROM modules WHERE key = ?').get(key);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, module: updated }));
+        return;
+      }
+
       // 1. ENDPOINT DE AUTENTICACIÓN / LOGIN
       if (req.url === '/api/login' && req.method === 'POST') {
         const { email, password } = data;
@@ -732,7 +776,7 @@ const THEMES = {
       }
 
       // 3. CONSULTA DE TABLERO KANBAN Y EXPLORADOR DE PEDIDOS DESDE SQLITE
-      if ((req.url.startsWith('/api/orders') || req.url.startsWith('/api/kanban')) && req.method === 'GET') {
+      if ((req.url.startsWith('/api/scanban/orders') || req.url.startsWith('/api/scanban/kanban')) && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const search = (urlParams.get('q') || urlParams.get('search') || '').toLowerCase().trim();
         const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
@@ -803,7 +847,7 @@ const THEMES = {
       }
 
       // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO EXCLUSIVO POR ADMIN
-      if (req.url === '/api/mark-ready' && req.method === 'POST') {
+      if (req.url === '/api/scanban/mark-ready' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
@@ -832,7 +876,7 @@ const THEMES = {
       }
 
       // 3.2 DEVOLVER COMPROBANTE DE LISTO A BACKLOG EXCLUSIVO POR ADMIN
-      if (req.url === '/api/mark-backlog' && req.method === 'POST') {
+      if (req.url === '/api/scanban/mark-backlog' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
@@ -861,7 +905,7 @@ const THEMES = {
       }
 
       // 3.3 LIBERAR Y RESETEAR PEDIDO EN PROCESO A LISTO EXCLUSIVO POR ADMIN
-      if ((req.url === '/api/reset-doing-to-ready' || req.url === '/api/release-order-admin') && req.method === 'POST') {
+      if ((req.url === '/api/scanban/release-order-admin' || req.url === '/api/scanban/release-order-admin') && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
@@ -891,7 +935,7 @@ const THEMES = {
       }
 
       // 3.4 ASIGNAR PEDIDO DE LISTO A EN PROCESO EXCLUSIVO POR ADMIN CON SELECCIÓN DE OPERARIO
-      if ((req.url === '/api/assign-order-admin' || req.url === '/api/assign-order') && req.method === 'POST') {
+      if ((req.url === '/api/scanban/assign-order' || req.url === '/api/scanban/assign-order') && req.method === 'POST') {
         const { orderId, orderNumber, operatorEmail, userEmail } = data;
         const adminEmail = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
 
@@ -927,7 +971,7 @@ const THEMES = {
       }
 
       // 4. CONSULTA DE PEDIDOS DISPONIBLES EN LISTO PARA APP MÓVIL
-      if (req.url === '/api/available-orders' && req.method === 'GET') {
+      if (req.url === '/api/scanban/available-orders' && req.method === 'GET') {
         const readyOrders = db.prepare("SELECT id, uuid, orderNumber, clientName, totalItemsRequired as totalItems FROM orders WHERE status = 'READY'").all();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, orders: readyOrders }));
@@ -935,7 +979,7 @@ const THEMES = {
       }
 
       // 5. DETALLE REAL DE UN PEDIDO CON PRODUCTOS PARSEADOS Y AUDITORÍA
-      if (req.url.startsWith('/api/order-detail') && req.method === 'GET') {
+      if (req.url.startsWith('/api/scanban/order-detail') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber') || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
 
@@ -952,7 +996,7 @@ const THEMES = {
       }
 
       // 6. BORRAR COMPROBANTE EN SQLITE
-      if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
+      if ((req.url === '/api/scanban/delete-order' || req.url.startsWith('/api/scanban/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
         const identifier = data.id || data.orderId || data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
         const targetOrder = getFullOrderFromDb(identifier);
         if (!targetOrder) {
@@ -970,7 +1014,7 @@ const THEMES = {
       }
 
       // 7. AUTO-DETECCIÓN DE PEDIDO ACTIVO EN DB (POR EMAIL DE USUARIO)
-      if (req.url.startsWith('/api/active-order') || req.url === '/api/check-active-order') {
+      if (req.url.startsWith('/api/scanban/active-order') || req.url === '/api/scanban/active-order') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         let email = data.userEmail || data.email || data.operatorId || urlParams.get('userEmail') || urlParams.get('email') || urlParams.get('operatorId') || '';
         email = email.toLowerCase().trim();
@@ -996,7 +1040,7 @@ const THEMES = {
       }
 
       // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN SQLITE CON EMAIL DE USUARIO)
-      if (req.url === '/api/claim-order' && req.method === 'POST') {
+      if (req.url === '/api/scanban/claim-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail, email } = data;
         const operatorEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
@@ -1022,7 +1066,7 @@ const THEMES = {
       }
 
       // 8.1 ACTUALIZAR PROGRESO DE ESCANEO EN SQLITE
-      if (req.url === '/api/update-scan-progress' && req.method === 'POST') {
+      if (req.url === '/api/scanban/update-scan-progress' && req.method === 'POST') {
         const { orderId, orderNumber, items, totalItemsScanned } = data;
         const order = getFullOrderFromDb(orderId || orderNumber);
 
@@ -1059,7 +1103,7 @@ const THEMES = {
       }
 
       // 9. LIBERAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A READY)
-      if (req.url === '/api/release-order' && req.method === 'POST') {
+      if (req.url === '/api/scanban/release-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail, email } = data;
         const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
@@ -1081,7 +1125,7 @@ const THEMES = {
       }
 
       // 10. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A DONE CON MARCA DE AGUA)
-      if (req.url === '/api/complete-order' && req.method === 'POST') {
+      if (req.url === '/api/scanban/complete-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail, email, watermarkText } = data;
         const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
@@ -1105,7 +1149,7 @@ const THEMES = {
       }
 
       // 11. SUBIDA Y VALIDACIÓN DE COMPROBANTE PDF EN ADMIN (CON PDF BLOB EN SQLITE)
-      if (req.url === '/api/upload-pdf' && req.method === 'POST') {
+      if (req.url === '/api/scanban/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64, userEmail } = data;
         if (!fileName || !pdfBase64) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
