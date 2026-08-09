@@ -91,18 +91,19 @@ export const dbService = {
     );
 
     for (const item of order.items) {
+      const itemId = item.id || `item_${order.orderNumber}_${item.code}`;
       await db.runAsync(
         `INSERT OR REPLACE INTO order_items (id, orderId, code, description, quantityRequired, quantityScanned, unitPrice, status)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          item.id,
-          item.orderId,
+          itemId,
+          order.id,
           item.code,
           item.description,
           item.quantityRequired,
-          item.quantityScanned,
-          item.unitPrice || null,
-          item.status
+          item.quantityScanned || 0,
+          item.unitPrice || 0,
+          item.status || 'PENDING'
         ]
       );
     }

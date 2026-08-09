@@ -7,6 +7,8 @@ import { audioService } from '../services/audioService';
 import { fileWorkflowService } from '../services/fileWorkflowService';
 import { useAuthStore } from './useAuthStore';
 
+import { loggerService } from '../services/loggerService';
+
 interface OrderState {
   orders: Order[];
   activeOrder: Order | null;
@@ -64,6 +66,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       });
     } catch (e) {
       console.log('Error loading initial orders:', e);
+      loggerService.logError('useOrderStore.loadInitialOrders', e);
     }
   },
 
@@ -82,31 +85,36 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando Email
   claimOrder: async (orderNumber: string) => {
     const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
-    const { claimOrder: claimFile } = fileWorkflowService;
-    const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
+    try {
+      const { claimOrder: claimFile } = fileWorkflowService;
+      const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
 
-    // Obtener la orden real con sus ítems reales parsed del servidor
-    let realOrder = serverOrder || (await fileWorkflowService.getOrderDetails(orderNumber));
+      // Obtener la orden real con sus ítems reales parsed del servidor
+      let realOrder = serverOrder || (await fileWorkflowService.getOrderDetails(orderNumber));
 
-    if (!realOrder) {
-      const parsed = await parsePdfVoucher(targetFileName);
-      realOrder = {
-        ...parsed,
-        orderNumber,
-        pdfFileName: targetFileName,
-        status: 'SCANNING'
-      };
+      if (!realOrder) {
+        const parsed = await parsePdfVoucher(targetFileName);
+        realOrder = {
+          ...parsed,
+          orderNumber,
+          pdfFileName: targetFileName,
+          status: 'SCANNING'
+        };
+      }
+
+      await dbService.saveOrder(realOrder);
+
+      set((state) => ({
+        activeOrder: realOrder,
+        operatorId: currentUserEmail,
+        orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
+      }));
+
+      return realOrder;
+    } catch (e) {
+      loggerService.logError('useOrderStore.claimOrder', e, { orderNumber, currentUserEmail });
+      throw e;
     }
-
-    await dbService.saveOrder(realOrder);
-
-    set((state) => ({
-      activeOrder: realOrder,
-      operatorId: currentUserEmail,
-      orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
-    }));
-
-    return realOrder;
   },
 
   // Acción: Liberar Pedido de /delivery/doing a /delivery/ready
