@@ -162,137 +162,131 @@ function getFullOrderFromDb(orderNumber) {
   };
 }
 
-// Parser Real de Archivos PDF
+// Parser Real de Archivos PDF con Extracción por Coordenadas Y
 async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
-  let text = '';
+  let orderNumber = fileName.replace(/\.[^/.]+$/, '').replace(/[^0-9]/g, '');
+  let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
+  let vendorName = 'WYPRA SA';
+  let vendorCuit = '30-71828749-5';
+  let issueDate = new Date().toLocaleDateString('es-AR');
+  let contactPerson = '';
+
+  const items = [];
+  let fullText = '';
+
   try {
     const data = new Uint8Array(pdfBuffer);
     const loadingTask = pdfjsLib.getDocument({ data, useSystemFonts: true, disableFontFace: true });
     const pdfDocument = await loadingTask.promise;
-    for (let i = 1; i <= pdfDocument.numPages; i++) {
-      const page = await pdfDocument.getPage(i);
+
+    for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
+      const page = await pdfDocument.getPage(pageNum);
       const content = await page.getTextContent();
-      text += content.items.map(item => item.str).join(' ') + '\n';
-    }
-  } catch (e) {
-    text = pdfBuffer.toString('utf8');
-  }
 
-  // 1. Parsear Número de Orden / Comprobante
-  let orderNumber = fileName.replace(/\.[^/.]+$/, '').replace(/[^0-9]/g, '');
-  const orderMatch = text.match(/(?:DETALLE DE VENTA|Order|Pedido|Factura|Comprobante|Remito|N°)\s*:?\s*#?([0-9]{4,12})/i);
-  if (orderMatch && orderMatch[1]) {
-    orderNumber = orderMatch[1];
-  }
-  if (!orderNumber) {
-    orderNumber = '34' + Math.floor(100000 + Math.random() * 900000);
-  }
+      // Agrupar elementos por coordenada Y (posición vertical en la página)
+      const linesByY = {};
+      content.items.forEach(item => {
+        const y = Math.round(item.transform[5]);
+        if (!linesByY[y]) linesByY[y] = [];
+        linesByY[y].push(item.str);
+      });
 
-  // 2. Parsear Nombre de Cliente / Razón Social
-  let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
-  const clientMatch = text.match(/(?:Razón Social|Razon Social|Client|Cliente|Señor\(es\)|Destinatario)\s*:?\s*\(?([A-Za-z0-9\s\.\-S\.R\.L\.\,S\.A\.]+)\)?/i);
-  if (clientMatch && clientMatch[1] && clientMatch[1].trim().length > 2) {
-    clientName = clientMatch[1].trim().split('\n')[0].trim().replace(/\)$/, '');
-  } else if (text.includes('DIEGO POKE')) {
-    clientName = 'DIEGO POKE S.R.L.';
-  } else if (text.includes('PASCUAL')) {
-    clientName = 'PASCUAL BEBIDAS S.A.';
-  } else if (text.includes('LUNFA')) {
-    clientName = 'LUNFA DISTRIBUIDORA';
-  }
+      const sortedY = Object.keys(linesByY).map(Number).sort((a, b) => b - a);
+      const pageLines = sortedY.map(y => ({ y, text: linesByY[y].join(' ').trim() }));
 
-  // 3. Unificar líneas divididas de la tabla
-  const lines = text.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
-  const mergedLines = [];
-  let pendingDigits = '';
+      pageLines.forEach(l => {
+        fullText += l.text + '\n';
+        if (/DETALLE DE VENTA\s+(\d+)/i.test(l.text)) {
+          orderNumber = l.text.match(/DETALLE DE VENTA\s+(\d+)/i)[1];
+        }
+        if (/Razón Social:\s*([^\n\r]+)/i.test(l.text)) {
+          const m = l.text.match(/Razón Social:\s*([^\n\r]+)/i)[1].trim();
+          clientName = m.replace(/\s*CUIT:.*$/, '').trim();
+        }
+        if (/Nombre:\s*([^\n\r]+)/i.test(l.text)) {
+          contactPerson = l.text.match(/Nombre:\s*([^\n\r]+)/i)[1].trim().replace(/\s*Condición.*$/, '').trim();
+        }
+        if (/\d{2}\/\d{2}\/\d{4}/.test(l.text) && l.y > 700) {
+          issueDate = l.text.match(/\d{2}\/\d{2}\/\d{4}/)[0];
+        }
+      });
 
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i];
-    if (/^\d{1,14}$/.test(l)) {
-      pendingDigits += l;
-    } else {
-      if (pendingDigits) {
-        mergedLines.push(pendingDigits + ' ' + l);
-        pendingDigits = '';
-      } else {
-        mergedLines.push(l);
+      const headerLineIndex = pageLines.findIndex(l => l.text.includes('Código') && l.text.includes('Descripción'));
+      const footerLineIndex = pageLines.findIndex(l => l.text.includes('Importe') || l.text.includes('Total Venta') || l.text.includes('Contagram'));
+
+      const tableStartY = headerLineIndex !== -1 ? pageLines[headerLineIndex].y : 600;
+      const tableEndY = footerLineIndex !== -1 ? pageLines[footerLineIndex].y : 50;
+
+      const tableLines = pageLines.filter(l => l.y < tableStartY && l.y > tableEndY && l.text.length > 0);
+
+      for (let i = 0; i < tableLines.length; i++) {
+        const line = tableLines[i];
+        const qtyPriceMatch = line.text.match(/^(\d+)\s+\$([\d\.\,]+)/);
+        if (qtyPriceMatch) {
+          const quantityRequired = parseInt(qtyPriceMatch[1], 10);
+          const unitPrice = parseFloat(qtyPriceMatch[2].replace(/\./g, '').replace(',', '.')) || 0;
+
+          const prevLine = i > 0 ? tableLines[i - 1] : null;
+          if (!prevLine) continue;
+
+          let rawCode = '';
+          let description = prevLine.text;
+
+          const codeMatch = prevLine.text.match(/^(\d{2,14})\s+(.+)/);
+          if (codeMatch) {
+            rawCode = codeMatch[1];
+            description = codeMatch[2].trim();
+          }
+
+          let fullCode = rawCode;
+          let nextIdx = i + 1;
+          while (nextIdx < tableLines.length) {
+            const nextLine = tableLines[nextIdx];
+            if (/^\d{1,10}$/.test(nextLine.text)) {
+              fullCode += nextLine.text;
+              nextIdx++;
+            } else {
+              break;
+            }
+          }
+
+          if (!fullCode) {
+            fullCode = `SKU-${Math.floor(1000 + Math.random() * 9000)}`;
+          }
+
+          description = description.replace(/\b\d{4,14}\b/g, '').trim();
+
+          if (description.length > 0 && quantityRequired > 0) {
+            items.push({
+              code: fullCode,
+              description,
+              quantityRequired,
+              quantityScanned: 0,
+              unitPrice,
+              status: 'PENDING'
+            });
+          }
+        }
       }
     }
-  }
-  if (pendingDigits) {
-    mergedLines.push(pendingDigits);
-  }
-
-  // 4. Extraer todos los ítems de productos con múltiples patrones de tabla
-  const items = [];
-  for (let l of mergedLines) {
-    // Patrón 1: [EAN/Código] [Descripción] [Cantidad] [Precio]
-    let rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
-    if (rowMatch) {
-      const code = rowMatch[1];
-      const description = rowMatch[2].trim();
-      const quantityRequired = parseInt(rowMatch[3], 10);
-      const unitPriceStr = rowMatch[4].replace(/\./g, '').replace(',', '.');
-      const unitPrice = parseFloat(unitPriceStr) || 0;
-
-      items.push({ code, description, quantityRequired, quantityScanned: 0, unitPrice, status: 'PENDING' });
-      continue;
-    }
-
-    // Patrón 2: [Descripción] [EAN/Código] [Cantidad] [Precio]
-    rowMatch = l.match(/^(.+?)\s+(\d{3,14})\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
-    if (rowMatch) {
-      const description = rowMatch[1].trim();
-      const code = rowMatch[2];
-      const quantityRequired = parseInt(rowMatch[3], 10);
-      const unitPriceStr = rowMatch[4].replace(/\./g, '').replace(',', '.');
-      const unitPrice = parseFloat(unitPriceStr) || 0;
-
-      items.push({ code, description, quantityRequired, quantityScanned: 0, unitPrice, status: 'PENDING' });
-      continue;
-    }
-
-    // Patrón 3: [EAN/Código] [Descripción] [Cantidad]
-    const simpleMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)$/);
-    if (simpleMatch) {
-      items.push({
-        code: simpleMatch[1],
-        description: simpleMatch[2].trim(),
-        quantityRequired: parseInt(simpleMatch[3], 10),
-        quantityScanned: 0,
-        unitPrice: 0,
-        status: 'PENDING'
-      });
-    }
-  }
-
-  // 5. Extraer metadatos adicionales del comprobante
-  let vendorName = 'WYPRA SA';
-  const vendorMatch = text.match(/([A-Z0-9\s\.]{3,30}\s+(?:SA|SRL|S\.A\.|S\.R\.L\.))/i);
-  if (vendorMatch) vendorName = vendorMatch[1].trim();
-
-  let vendorCuit = '30-71828749-5';
-  const cuitMatch = text.match(/CUIT\s*:?\s*(\d{2}-\d{8}-\d{1})/i);
-  if (cuitMatch) vendorCuit = cuitMatch[1];
-
-  let issueDate = new Date().toLocaleDateString('es-AR');
-  const issueMatch = text.match(/(?:Fecha de Emisión|Fecha Emision)\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
-  if (issueMatch) issueDate = issueMatch[1];
-
-  let dueDate = issueDate;
-  const dueMatch = text.match(/(?:Fecha de Vto\.|Vencimiento)\s*(?:para el pago)?\s*:?\s*(\d{2}\/\d{2}\/\d{4})/i);
-  if (dueMatch) dueDate = dueMatch[1];
-
-  let contactPerson = '';
-  const nameMatch = text.match(/Nombre\s*:?\s*([^\n\r]+)/i);
-  const lastNameMatch = text.match(/Apellido\s*:?\s*([^\n\r]+)/i);
-  if (nameMatch && lastNameMatch && nameMatch[1].trim() !== '-' && lastNameMatch[1].trim() !== '-') {
-    contactPerson = nameMatch[1].trim() + ' ' + lastNameMatch[1].trim();
+  } catch (e) {
+    logDetailedError(`parsePdfBuffer: ${fileName}`, e, { fileName });
   }
 
   const totalAmount = items.reduce((acc, i) => acc + (i.unitPrice * i.quantityRequired), 0);
 
-  return { orderNumber, clientName, items, vendorName, vendorCuit, issueDate, dueDate, contactPerson, totalAmount, extractedText: text };
+  return {
+    orderNumber,
+    clientName,
+    items,
+    vendorName,
+    vendorCuit,
+    issueDate,
+    dueDate: issueDate,
+    contactPerson,
+    totalAmount,
+    extractedText: fullText
+  };
 }
 
 // Configuración de Servidor HTTP
