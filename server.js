@@ -419,7 +419,106 @@ const server = http.createServer(async (req, res) => {
       try { data = JSON.parse(body); } catch (e) {}
     }
 
+const THEMES = {
+  original: {
+    name: 'Original Dark Glassmorphism',
+    background: '#0B0E14',
+    cardBg: '#161B22',
+    cardBorder: '#30363D',
+    emerald: '#00E676',
+    cobalt: '#3B82F6',
+    amber: '#F59E0B',
+    red: '#FF5252',
+    textMain: '#FFFFFF',
+    textMuted: '#8B949E'
+  },
+  cyberpunk_neon: {
+    name: 'Cyberpunk Neon',
+    background: '#0A0A12',
+    cardBg: '#121224',
+    cardBorder: '#2D2B55',
+    emerald: '#00F0FF',
+    cobalt: '#A855F7',
+    amber: '#FF007F',
+    red: '#FF3366',
+    textMain: '#FFFFFF',
+    textMuted: '#A594F9'
+  },
+  nordic_frost: {
+    name: 'Nordic Frost',
+    background: '#0F172A',
+    cardBg: '#1E293B',
+    cardBorder: '#334155',
+    emerald: '#38BDF8',
+    cobalt: '#14B8A6',
+    amber: '#F59E0B',
+    red: '#F43F5E',
+    textMain: '#F8FAFC',
+    textMuted: '#94A3B8'
+  },
+  dracula_pro: {
+    name: 'Dracula Pro',
+    background: '#282A36',
+    cardBg: '#44475A',
+    cardBorder: '#6272A4',
+    emerald: '#50FA7B',
+    cobalt: '#BD93F9',
+    amber: '#FFB86C',
+    red: '#FF5555',
+    textMain: '#F8F8F2',
+    textMuted: '#8BE9FD'
+  },
+  emerald_light: {
+    name: 'Modern Light Corporate',
+    background: '#F8FAFC',
+    cardBg: '#FFFFFF',
+    cardBorder: '#E2E8F0',
+    emerald: '#059669',
+    cobalt: '#2563EB',
+    amber: '#D97706',
+    red: '#DC2626',
+    textMain: '#0F172A',
+    textMuted: '#64748B'
+  },
+  monochrome_minimal: {
+    name: 'Monochrome Minimal',
+    background: '#000000',
+    cardBg: '#111111',
+    cardBorder: '#222222',
+    emerald: '#FFFFFF',
+    cobalt: '#CCCCCC',
+    amber: '#888888',
+    red: '#FF4444',
+    textMain: '#FFFFFF',
+    textMuted: '#777777'
+  },
+  catppuccin_mocha: {
+    name: 'Catppuccin Mocha',
+    background: '#1E1E2E',
+    cardBg: '#181825',
+    cardBorder: '#313244',
+    emerald: '#A6E3A1',
+    cobalt: '#89B4FA',
+    amber: '#F9E2AF',
+    red: '#F38BA8',
+    textMain: '#CDD6F4',
+    textMuted: '#A6ADC8'
+  }
+};
+
     try {
+      // -1. CONSULTA DE TEMA DINÁMICO DESDE .ENV
+      if (req.url === '/api/theme' && req.method === 'GET') {
+        const themeKey = (process.env.THEME || 'original').toLowerCase().trim();
+        const activeTheme = THEMES[themeKey] || THEMES.original;
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          activeThemeKey: themeKey in THEMES ? themeKey : 'original',
+          theme: activeTheme
+        }));
+        return;
+      }
       // 0. RESETEO DE BASE DE DATOS EN VIVO (DEVOPS - SIN APAGAR PUERTO 3001)
       if (req.url === '/api/reset-db' && req.method === 'POST') {
         db.prepare('DELETE FROM audit_logs').run();

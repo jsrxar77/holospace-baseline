@@ -26,7 +26,30 @@ function toggleLoginPasswordVisibility() {
   }
 }
 
+async function loadActiveTheme() {
+  try {
+    const res = await fetch('/api/theme');
+    const data = await res.json();
+    if (data && data.theme) {
+      const root = document.documentElement;
+      const t = data.theme;
+      if (t.background) root.style.setProperty('--bg-dark', t.background);
+      if (t.cardBg) root.style.setProperty('--card-bg', t.cardBg);
+      if (t.cardBorder) root.style.setProperty('--card-border', t.cardBorder);
+      if (t.emerald) root.style.setProperty('--emerald', t.emerald);
+      if (t.cobalt) root.style.setProperty('--cobalt', t.cobalt);
+      if (t.amber) root.style.setProperty('--amber', t.amber);
+      if (t.red) root.style.setProperty('--red', t.red);
+      if (t.textMain) root.style.setProperty('--text-main', t.textMain);
+      if (t.textMuted) root.style.setProperty('--text-muted', t.textMuted);
+    }
+  } catch (e) {
+    console.error('Error cargando tema dinámico:', e);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  loadActiveTheme();
   populateSavedCredentials();
 
   const token = localStorage.getItem('pw_token');
