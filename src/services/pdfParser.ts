@@ -3,140 +3,74 @@ import { Order, OrderItem } from '../types';
 export const parsePdfVoucher = async (fileName: string, pdfTextContent?: string): Promise<Order> => {
   const orderId = `ord_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   const nowIso = new Date().toISOString();
+  const cleanOrderNumber = fileName.replace(/\.[^/.]+$/, '').replace(/[^0-9]/g, '') || `ORD-${Date.now()}`;
+
+  const items: OrderItem[] = [];
 
   // Si se proporciona un texto extraído del PDF
   if (pdfTextContent && pdfTextContent.trim().length > 0) {
-    const orderNumberMatch = pdfTextContent.match(/DETALLE DE VENTA\s+(\d+)/i) || pdfTextContent.match(/Pedido\s+#?(\d+)/i);
-    const orderNumber = orderNumberMatch ? orderNumberMatch[1] : fileName.replace('.pdf', '');
+    const orderNumberMatch = pdfTextContent.match(/(?:DETALLE DE VENTA|Order|Pedido|Factura|Comprobante|Remito|N°)\s*:?\s*#?([0-9]{4,12})/i);
+    const orderNumber = orderNumberMatch ? orderNumberMatch[1] : cleanOrderNumber;
 
-    const clientMatch = pdfTextContent.match(/(?:Razón Social|Cliente|Nombre):\s*([^\n\r]+)/i);
-    const clientName = clientMatch ? clientMatch[1].trim() : 'CLIENTE DEPOSITO';
+    const clientMatch = pdfTextContent.match(/(?:Razón Social|Razon Social|Client|Cliente|Señor\(es\)|Destinatario)\s*:?\s*\(?([A-Za-z0-9\s\.\-S\.R\.L\.\,S\.A\.]+)\)?/i);
+    const clientName = clientMatch ? clientMatch[1].trim().split('\n')[0].trim().replace(/\)$/, '') : 'CLIENTE DEPOSITO';
 
-    const dateMatch = pdfTextContent.match(/(?:Fecha|Emisión):\s*(\d{2}\/\d{2}\/\d{4})/i);
+    const dateMatch = pdfTextContent.match(/(?:Fecha|Emisión|Fecha Emision):\s*(\d{2}\/\d{2}\/\d{4})/i);
     const issueDate = dateMatch ? dateMatch[1] : new Date().toLocaleDateString('es-AR');
 
-    // Parsear líneas de productos con Regex EAN-13 (13 dígitos)
-    const items: OrderItem[] = [];
-    const lines = pdfTextContent.split('\n');
+    // Parsear líneas de productos con Regex EAN-13 o SKU (3 a 14 dígitos)
+    const lines = pdfTextContent.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
 
     lines.forEach((line, index) => {
-      const eanMatch = line.match(/\b(\d{13})\b/);
-      if (eanMatch) {
-        const code = eanMatch[1];
-        // Buscar cantidad al final de la línea
-        const qtyMatch = line.match(/(\d+)\s*$/);
-        const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
-
-        // Limpiar descripción de la línea
-        let desc = line.replace(code, '').replace(/(\d+)\s*$/, '').trim();
-        if (!desc) desc = `Producto EAN ${code}`;
+      const rowMatch = line.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)/) ||
+                       line.match(/^(.+?)\s+(\d{3,14})\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
+      if (rowMatch) {
+        const code = rowMatch[1].match(/^\d+$/) ? rowMatch[1] : rowMatch[2];
+        const description = (rowMatch[1].match(/^\d+$/) ? rowMatch[2] : rowMatch[1]).trim();
+        const quantityRequired = parseInt(rowMatch[3], 10) || 1;
+        const unitPriceStr = rowMatch[4] ? rowMatch[4].replace(/\./g, '').replace(',', '.') : '0';
+        const unitPrice = parseFloat(unitPriceStr) || 0;
 
         items.push({
           id: `item_${orderId}_${index}`,
           orderId,
           code,
-          description: desc,
-          quantityRequired: qty > 0 ? qty : 1,
+          description,
+          quantityRequired,
           quantityScanned: 0,
+          unitPrice,
           status: 'PENDING'
         });
       }
     });
 
-    if (items.length > 0) {
-      const totalReq = items.reduce((acc, it) => acc + it.quantityRequired, 0);
-      return {
-        id: orderId,
-        orderNumber,
-        clientName,
-        issueDate,
-        pdfFileName: fileName,
-        status: 'PARSED',
-        createdAt: nowIso,
-        totalItemsRequired: totalReq,
-        totalItemsScanned: 0,
-        items
-      };
-    }
-  }
+    const totalReq = items.reduce((acc, it) => acc + it.quantityRequired, 0);
 
-  // Caso específico para comprobante Lunfa Torino Bianco (34512175.pdf)
-  if (fileName.includes('34512175')) {
-    const lunfaItem: OrderItem = {
-      id: `item_${orderId}_1`,
-      orderId,
-      code: '7798135764531',
-      description: 'Lunfa Torino Bianco 750 ml',
-      quantityRequired: 3,
-      quantityScanned: 0,
-      status: 'PENDING'
-    };
     return {
       id: orderId,
-      orderNumber: '34512175',
-      clientName: 'LUNFA DISTRIBUIDORA',
-      issueDate: new Date().toLocaleDateString('es-AR'),
+      orderNumber,
+      clientName,
+      issueDate,
       pdfFileName: fileName,
       status: 'PARSED',
       createdAt: nowIso,
-      totalItemsRequired: 3,
+      totalItemsRequired: totalReq,
       totalItemsScanned: 0,
-      items: [lunfaItem]
+      items
     };
   }
 
-  // Fallback con datos reales de comprobante del depósito (Comprobante 34409313.pdf)
-  const defaultItems: OrderItem[] = [
-    {
-      id: `item_${orderId}_1`,
-      orderId,
-      code: '7794450008275',
-      description: 'Angelica Zapata Malbec 750ml',
-      quantityRequired: 6,
-      quantityScanned: 0,
-      status: 'PENDING'
-    },
-    {
-      id: `item_${orderId}_2`,
-      orderId,
-      code: '7790517008165',
-      description: 'Catena Zapata Chardonnay 750ml',
-      quantityRequired: 12,
-      quantityScanned: 0,
-      status: 'PENDING'
-    },
-    {
-      id: `item_${orderId}_3`,
-      orderId,
-      code: '7791234567890',
-      description: 'DV Catena Cabernet Malbec 750ml',
-      quantityRequired: 24,
-      quantityScanned: 0,
-      status: 'PENDING'
-    },
-    {
-      id: `item_${orderId}_4`,
-      orderId,
-      code: '7799876543210',
-      description: 'Rutini Extra Brut 750ml',
-      quantityRequired: 6,
-      quantityScanned: 0,
-      status: 'PENDING'
-    }
-  ];
-
-  const totalReq = defaultItems.reduce((acc, it) => acc + it.quantityRequired, 0);
-
+  // Devolución dinámica básica si no hay texto pasado
   return {
     id: orderId,
-    orderNumber: fileName.includes('34409313') ? '3010' : '3158',
-    clientName: fileName.includes('34409313') ? 'DIEGO POKE' : 'Diego Pascual',
+    orderNumber: cleanOrderNumber,
+    clientName: 'CLIENTE REGISTRADO',
     issueDate: new Date().toLocaleDateString('es-AR'),
     pdfFileName: fileName,
     status: 'PARSED',
     createdAt: nowIso,
-    totalItemsRequired: totalReq,
+    totalItemsRequired: 0,
     totalItemsScanned: 0,
-    items: defaultItems
+    items: []
   };
 };
