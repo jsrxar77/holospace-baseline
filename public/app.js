@@ -491,9 +491,10 @@ async function fetchUsers() {
   try {
     const res = await fetch('/api/users');
     const data = await res.json();
+    const usersList = Array.isArray(data) ? data : (data.users || []);
     const tbody = document.getElementById('usersTableBody');
 
-    tbody.innerHTML = data.users.map(u => `
+    tbody.innerHTML = usersList.map(u => `
       <tr>
         <td><strong>${u.name}</strong></td>
         <td>${u.email}</td>
