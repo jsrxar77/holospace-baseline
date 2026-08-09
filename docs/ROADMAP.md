@@ -66,6 +66,11 @@ holoware-baseline/
 | C-09 | Actualizar `docs/ARCHITECTURE.md` | Rebrandeado a ScanBan/HoloWare |
 | C-10 | Actualizar `docs/FEATURES.md` | Sección §0 Core + ScanBan rebrandeado |
 | C-11 | Git commit consolidado | 33 files, historial de renombres preservado |
+| C-12 | Crear `modules/core/` (carpeta + README) | `modules/core/public/`, `routes/`, `README.md` |
+| C-13 | Tabla `modules` en DB + seed ScanBan | `server.js` — `initModules()` |
+| C-14 | Tabla `platform_audit_logs` en DB | `server.js` — core platform event auditing |
+| C-15 | Soporte rol `SUPERADMIN` + seed user | `server.js` — `superadmin@holoware.io` / `HoloWare2026!` |
+| C-16 | Crear `docs/ROADMAP.md` | Este archivo |
 
 ---
 
@@ -73,10 +78,6 @@ holoware-baseline/
 
 | # | Ítem | Dónde | Descripción |
 |---|---|---|---|
-| P-01 | **Crear `modules/core/`** | `modules/core/` | Carpeta, README.md del módulo core |
-| P-02 | **Tabla `modules` en DB** | `server.js` (initDB) | Registro de módulos activos/inactivos. ScanBan pre-cargado. |
-| P-03 | **Tabla `platform_audit_logs`** | `server.js` (initDB) | Log de eventos de plataforma (temas, accesos, cambios de módulo) |
-| P-04 | **Soporte rol `SUPERADMIN`** | `server.js` (auth + schema) | Validación de rol en endpoints de gestión de plataforma |
 | P-05 | **Prefijar rutas ScanBan** | `server.js` (21 rutas) | `/api/kanban` → `/api/scanban/kanban`, etc. |
 | P-06 | **Actualizar `public/app.js`** | `public/app.js` | Nuevas rutas `/api/scanban/...` + prefijo `hw_` en localStorage |
 | P-07 | **Actualizar app móvil** | `modules/scanban/src/` | Nuevas rutas `/api/scanban/...` en stores/services |
@@ -103,6 +104,7 @@ holoware-baseline/
 | # | Ítem | Dónde | Descripción |
 |---|---|---|---|
 | L-01 | Prefijo `HW_` en variables de `.env` | `.env` + `server.js` | Renombrar `THEME` → `HW_THEME`, `PORT` → `HW_PORT` |
+| L-05 | Convertir a monorepo real | `modules/scanban/package.json` | Dar a ScanBan su propio `package.json` + `node_modules`. `.expo/` vivirá dentro de `modules/scanban/` naturalmente. |
 | L-02 | Git push a `holoware-baseline` en GitHub | GitHub + terminal | **Requiere rename manual del repo en GitHub primero** |
 | L-03 | Módulo StockFlow (estructura base) | `modules/stockflow/` | Crear carpeta y README como plantilla de futuro módulo |
 | L-04 | Documentar convención de creación de módulos | `docs/MODULE_CREATION.md` | Guía paso a paso para agregar un nuevo módulo |
