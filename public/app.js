@@ -164,7 +164,7 @@ async function loadKanbanData() {
         </div>
       `).join('');
 
-    // 2. Render Ready (Verde - Draggable hacia BACKLOG)
+    // 2. Render Ready (Verde - Draggable hacia BACKLOG o EN PROCESO)
     const readyList = document.getElementById('readyList');
     document.getElementById('readyCount').innerText = (data.ready || []).length;
     readyList.innerHTML = (!data.ready || data.ready.length === 0)
@@ -175,7 +175,12 @@ async function loadKanbanData() {
           <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar esta tarjeta de vuelta a BACKLOG</div>
+          ${currentUser && currentUser.role === 'ADMIN' ? `
+            <button class="btn-primary" style="background: var(--emerald); color: #000; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 900; cursor: pointer;" onclick="openAssignOperatorModal('${item.id}', '${item.orderNumber}', event)">
+              👤 Asignar a Operario
+            </button>
+          ` : ''}
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a BACKLOG o EN PROCESO</div>
         </div>
       `).join('');
 
@@ -199,7 +204,7 @@ async function loadKanbanData() {
         const userOrders = doingGroups[email];
 
         const cardsHtml = userOrders.map(item => `
-          <div class="kanban-card" style="border-color: var(--cobalt);" onclick="openInvoiceModal('${item.orderNumber}')">
+          <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
             <div class="card-order-no" style="color: var(--cobalt);">Pedido #${item.orderNumber}</div>
             <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
@@ -211,6 +216,7 @@ async function loadKanbanData() {
                 ↩️ Reasignar / Liberar a Listo
               </button>
             ` : ''}
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a LISTO para liberar</div>
           </div>
         `).join('');
 
@@ -348,7 +354,82 @@ async function resetOrderDoingToReadyAndCloseModal(orderId, orderNumber) {
 }
 
 
-// MANEJADORES DE DRAG AND DROP (ARRASTRAR DE BACKLOG A LISTO)
+let pendingAssignOrderId = null;
+let pendingAssignOrderNumber = null;
+
+async function openAssignOperatorModal(orderId, orderNumber, event) {
+  if (event) event.stopPropagation();
+
+  pendingAssignOrderId = orderId;
+  pendingAssignOrderNumber = orderNumber;
+
+  const titleEl = document.getElementById('assignOrderTitleText');
+  if (titleEl) titleEl.innerText = `Pedido #${orderNumber}`;
+
+  const selectEl = document.getElementById('operatorSelectModal');
+  if (selectEl) {
+    selectEl.innerHTML = '<option value="">Cargando operarios...</option>';
+    try {
+      const res = await fetch('/api/users');
+      const data = await res.json();
+      if (data.users && Array.isArray(data.users)) {
+        const activeUsers = data.users.filter(u => u.active !== 0 && u.active !== false);
+        selectEl.innerHTML = activeUsers.map(u => `
+          <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>
+        `).join('');
+      } else {
+        selectEl.innerHTML = '<option value="jsrxar@gmail.com">Javier Rizzo (jsrxar@gmail.com)</option>';
+      }
+    } catch (e) {
+      selectEl.innerHTML = '<option value="jsrxar@gmail.com">Javier Rizzo (jsrxar@gmail.com)</option>';
+    }
+  }
+
+  document.getElementById('assignOperatorModal').classList.remove('hidden');
+}
+
+function closeAssignOperatorModal() {
+  document.getElementById('assignOperatorModal').classList.add('hidden');
+  pendingAssignOrderId = null;
+  pendingAssignOrderNumber = null;
+}
+
+async function confirmAssignOperatorSubmit() {
+  const selectEl = document.getElementById('operatorSelectModal');
+  const selectedOperator = selectEl ? selectEl.value : '';
+
+  if (!selectedOperator) {
+    await showCustomAlert('Selección Requerida', 'Por favor selecciona un operario para asignar el pedido.');
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/assign-order-admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId: pendingAssignOrderId,
+        orderNumber: pendingAssignOrderNumber,
+        operatorEmail: selectedOperator,
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+      })
+    });
+    const data = await res.json();
+
+    closeAssignOperatorModal();
+
+    if (data.success) {
+      loadKanbanData();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No fue posible asignar el pedido.');
+    }
+  } catch (e) {
+    closeAssignOperatorModal();
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+  }
+}
+
+// MANEJADORES DE DRAG AND DROP (ARRASTRAR DE BACKLOG A LISTO Y EN PROCESO)
 function handleDragStart(event, orderNumber) {
   event.dataTransfer.setData('text/plain', orderNumber);
   event.dataTransfer.effectAllowed = 'move';
@@ -363,6 +444,15 @@ async function handleDropToListo(event) {
   event.preventDefault();
   const orderNumber = event.dataTransfer.getData('text/plain');
   if (orderNumber) {
+    try {
+      const res = await fetch(`/api/order-detail?orderNumber=${orderNumber}`);
+      const data = await res.json();
+      if (data.success && data.order && (data.order.status === 'DOING' || data.order.status === 'SCANNING')) {
+        await resetOrderDoingToReady(data.order.id, orderNumber, event);
+        return;
+      }
+    } catch (e) {}
+
     await markOrderReady(orderNumber, event);
   }
 }
@@ -372,6 +462,14 @@ async function handleDropToBacklog(event) {
   const orderNumber = event.dataTransfer.getData('text/plain');
   if (orderNumber) {
     await markOrderBacklog(orderNumber, event);
+  }
+}
+
+async function handleDropToDoing(event) {
+  event.preventDefault();
+  const orderNumber = event.dataTransfer.getData('text/plain');
+  if (orderNumber) {
+    await openAssignOperatorModal(null, orderNumber, event);
   }
 }
 

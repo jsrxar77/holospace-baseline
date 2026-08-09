@@ -72,7 +72,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   const handleReleaseOrder = async () => {
     Alert.alert(
       'Liberar Pedido',
-      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl archivo se devolverá a ./delivery/backlog/ para que lo tome otro operario.`,
+      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl pedido se devolverá a la columna LISTO para que lo tome otro operario.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -97,8 +97,10 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         </TouchableOpacity>
 
         <View style={styles.headerTitles}>
-          <Text style={styles.orderTitle}>DETALLE DE VENTA #{activeOrder.orderNumber}</Text>
-          <Text style={styles.clientTitle}>Ubicación: ./delivery/doing/{activeOrder.pdfFileName}</Text>
+          <Text style={styles.orderTitle}>PEDIDO #{activeOrder.orderNumber}</Text>
+          <Text style={styles.clientTitle} numberOfLines={1} ellipsizeMode="tail">
+            Cliente: {activeOrder.clientName}
+          </Text>
         </View>
 
         <TouchableOpacity style={styles.releaseBtn} onPress={handleReleaseOrder}>

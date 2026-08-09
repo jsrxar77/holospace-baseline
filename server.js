@@ -687,6 +687,42 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 3.4 ASIGNAR PEDIDO DE LISTO A EN PROCESO EXCLUSIVO POR ADMIN CON SELECCIÓN DE OPERARIO
+      if ((req.url === '/api/assign-order-admin' || req.url === '/api/assign-order') && req.method === 'POST') {
+        const { orderId, orderNumber, operatorEmail, userEmail } = data;
+        const adminEmail = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
+
+        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(adminEmail);
+        if (callerUser && callerUser.role !== 'ADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Solo los usuarios Administradores pueden asignar pedidos a operarios.' }));
+          return;
+        }
+
+        const targetOperator = (operatorEmail || '').trim().toLowerCase();
+        if (!targetOperator) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Debes seleccionar un operario válido para asignar la orden.' }));
+          return;
+        }
+
+        const order = getFullOrderFromDb(orderId || orderNumber);
+        if (order) {
+          const now = new Date().toLocaleString('es-AR');
+          db.prepare("UPDATE orders SET status = 'DOING', operatorEmail = ? WHERE id = ?").run(targetOperator, order.id);
+          db.prepare(`
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
+            VALUES (?, ?, ?, ?, ?)
+          `).run(order.id, now, adminEmail, 'ASIGNAR_OPERARIO', `Pedido #${order.orderNumber} (ID: ${order.id}) asignado al operario ${targetOperator} por Admin (${adminEmail}). Estado -> En Proceso.`);
+
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) asignado a operario ${targetOperator} por ${adminEmail}.`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
       // 4. CONSULTA DE PEDIDOS DISPONIBLES EN LISTO PARA APP MÓVIL
       if (req.url === '/api/available-orders' && req.method === 'GET') {
         const readyOrders = db.prepare("SELECT id, uuid, orderNumber, clientName, totalItemsRequired as totalItems FROM orders WHERE status = 'READY'").all();
@@ -788,6 +824,12 @@ const server = http.createServer(async (req, res) => {
         const order = getFullOrderFromDb(orderId || orderNumber);
 
         if (order) {
+          if (order.status !== 'DOING' && order.status !== 'SCANNING') {
+            res.writeHead(409, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, releasedByAdmin: true, error: 'El Administrador ha desasignado o liberado este pedido a la columna LISTO.' }));
+            return;
+          }
+
           if (Array.isArray(items)) {
             const updateItemStmt = db.prepare(`
               UPDATE order_items

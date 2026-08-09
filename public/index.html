@@ -240,6 +240,27 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+      overflow-y: auto;
+      max-height: calc(100vh - 260px);
+      padding-right: 6px;
+    }
+
+    .cards-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .cards-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 4px;
+    }
+
+    .cards-list::-webkit-scrollbar-thumb {
+      background: #30363D;
+      border-radius: 4px;
+    }
+
+    .cards-list::-webkit-scrollbar-thumb:hover {
+      background: var(--emerald);
     }
 
     /* User Accordion Subgroup */
@@ -486,8 +507,8 @@
           <div id="readyList" class="cards-list"></div>
         </div>
 
-        <!-- DOING (Azul) -->
-        <div class="kanban-col">
+        <!-- EN PROCESO (Azul - Drop Target para asignación por Admin) -->
+        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToDoing(event)" style="border-style: dashed; border-color: rgba(59, 130, 246, 0.4);">
           <div class="col-header">
             <div class="col-title" style="color: var(--cobalt);">EN PROCESO <span id="doingCount" class="col-count">0</span></div>
           </div>
@@ -602,6 +623,26 @@
       <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
         <button id="dialogCancelBtn" class="btn-secondary" style="flex: 1;" onclick="closeCustomDialog(false)">Cancelar</button>
         <button id="dialogConfirmBtn" class="btn-primary" style="flex: 1;" onclick="closeCustomDialog(true)">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL ASIGNACIÓN DE OPERARIO POR ADMIN -->
+  <div id="assignOperatorModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 440px;">
+      <h3 style="font-size: 22px; font-weight: 900; color: var(--emerald);">Asignar Pedido a Operario</h3>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px; line-height: 20px;">
+        Selecciona el operario que realizará la auditoría de stock para el <strong id="assignOrderTitleText" style="color: #FFF;">Pedido</strong>:
+      </p>
+      <div style="margin-top: 16px;">
+        <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Operario Asignado</label>
+        <select id="operatorSelectModal" class="input-field" style="width: 100%;">
+          <!-- Opciones de operarios cargadas dinámicamente -->
+        </select>
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+        <button class="btn-secondary" style="flex: 1;" onclick="closeAssignOperatorModal()">Cancelar</button>
+        <button class="btn-primary" style="flex: 1; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="confirmAssignOperatorSubmit()">✓ Asignar Pedido</button>
       </div>
     </div>
   </div>
