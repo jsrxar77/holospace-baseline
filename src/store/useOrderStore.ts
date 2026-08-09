@@ -57,11 +57,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           await dbService.saveOrder(restoredActiveOrder);
         }
         console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} para ${currentUserEmail}.`);
+      } else {
+        // Si el servidor informa que ya no posee orden activa (reasignado por Admin a READY), desasignar localmente
+        const currentLocalActive = get().activeOrder;
+        if (currentLocalActive && currentLocalActive.status !== 'CLOSED' && currentLocalActive.status !== 'PARTIAL_DISPATCH') {
+          console.log(`[STORE] Pedido #${currentLocalActive.orderNumber} fue desasignado/reasignado por el Administrador.`);
+          restoredActiveOrder = null;
+        }
       }
 
       set({
         orders: savedOrders,
-        activeOrder: restoredActiveOrder || get().activeOrder,
+        activeOrder: restoredActiveOrder !== null ? restoredActiveOrder : (activeDoing.hasActive ? get().activeOrder : null),
         operatorId: currentUserEmail
       });
     } catch (e) {
