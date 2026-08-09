@@ -341,6 +341,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
+      // 0. RESETEO DE BASE DE DATOS EN VIVO (DEVOPS - SIN APAGAR PUERTO 3001)
+      if (req.url === '/api/reset-db' && req.method === 'POST') {
+        db.prepare('DELETE FROM audit_logs').run();
+        db.prepare('DELETE FROM order_items').run();
+        db.prepare('DELETE FROM orders').run();
+        db.prepare('DELETE FROM users').run();
+
+        initUsers();
+
+        console.log('[DEVOPS RESET] Base de datos SQLite reseteada en vivo sin apagar el puerto 3001.');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Base de datos reseteada en vivo sin apagar el servidor.' }));
+        return;
+      }
+
       // 1. ENDPOINT DE AUTENTICACIÓN / LOGIN
       if (req.url === '/api/login' && req.method === 'POST') {
         const { email, password } = data;
