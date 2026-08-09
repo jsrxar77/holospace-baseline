@@ -3,8 +3,8 @@ let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
 function populateSavedCredentials() {
-  const savedEmail = localStorage.getItem('hw_saved_email') || 'admin@drinklovers.com.ar';
-  const savedPassword = localStorage.getItem('hw_saved_password') || 'drinklovers2026!';
+  const savedEmail = localStorage.getItem('hw_saved_email') || '';
+  const savedPassword = localStorage.getItem('hw_saved_password') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 

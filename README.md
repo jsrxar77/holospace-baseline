@@ -10,7 +10,7 @@ HoloWare Baseline es una infraestructura modular que permite ejecutar múltiples
 
 | Rol | Email | Contraseña | Permisos |
 |---|---|---|---|
-| **SUPERADMIN** | `superadmin@holoware.io` | `HoloWare2026!` | Acceso total: Gestión de módulos, auditoría de plataforma y usuarios. |
+| **SUPERADMIN** | `superadmin@holoware.com.ar` | `BrunaSeRelambe22!` | Acceso total: Gestión de módulos, auditoría de plataforma y usuarios. |
 | **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | Gestión de módulos activos (Kanban, validación de PDFs, ABM usuarios). |
 | **OPERATOR** | `jsrxar@gmail.com` | `Asadito21!` | Acceso operativo a escáner móvil (auditoría de stock EAN-13). |
 

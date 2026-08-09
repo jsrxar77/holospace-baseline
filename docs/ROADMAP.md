@@ -69,7 +69,7 @@ holoware-baseline/
 | C-12 | Crear `modules/core/` (carpeta + README) | `modules/core/public/`, `routes/`, `README.md` |
 | C-13 | Tabla `modules` en DB + seed ScanBan | `server.js` — `initModules()` |
 | C-14 | Tabla `platform_audit_logs` en DB | `server.js` — core platform event auditing |
-| C-15 | Soporte rol `SUPERADMIN` + seed user | `server.js` — `superadmin@holoware.io` / `HoloWare2026!` |
+| C-15 | Soporte rol `SUPERADMIN` + seed user | `server.js` — `superadmin@holoware.com.ar` / `BrunaSeRelambe22!` |
 | C-16 | Crear `docs/ROADMAP.md` | Este archivo |
 | C-17 | P-05: Prefijar rutas ScanBan → `/api/scanban/...` | `server.js` — 21 rutas migradas |
 | C-18 | P-06: Actualizar `public/app.js` | Rutas `/api/scanban/...` + localStorage `pw_` → `hw_` |

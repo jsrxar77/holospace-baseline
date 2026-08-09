@@ -3,8 +3,8 @@ let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
 function populateSavedCredentials() {
-  const savedEmail = localStorage.getItem('hw_saved_email') || 'admin@drinklovers.com.ar';
-  const savedPassword = localStorage.getItem('hw_saved_password') || 'drinklovers2026!';
+  const savedEmail = localStorage.getItem('hw_saved_email') || '';
+  const savedPassword = localStorage.getItem('hw_saved_password') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
@@ -133,16 +133,30 @@ function applyRoleVisibility() {
   const platformTab = document.getElementById('tabPlatform');
   if (platformTab) platformTab.style.display = isSuperAdmin ? 'inline-flex' : 'none';
 
-  // Style the userBadge differently for SUPERADMIN
+  // If user is not SuperAdmin and is currently on viewPlatform, redirect to kanban
+  const platformView = document.getElementById('viewPlatform');
+  if (!isSuperAdmin && platformView && !platformView.classList.contains('hidden')) {
+    switchTab('kanban');
+  }
+
+  // Style the userBadge differently for SUPERADMIN vs ADMIN vs OPERATOR
   const badge = document.getElementById('userBadge');
-  if (badge && isSuperAdmin) {
-    badge.style.background = 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2))';
-    badge.style.color = '#A78BFA';
-    badge.style.borderColor = '#7C3AED';
+  if (badge) {
+    if (isSuperAdmin) {
+      badge.innerText = `⚡ SUPERADMIN: ${currentUser.email}`;
+      badge.style.background = 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2))';
+      badge.style.color = '#A78BFA';
+      badge.style.borderColor = '#7C3AED';
+    } else {
+      badge.innerText = `${currentUser.role}: ${currentUser.email}`;
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.color = 'var(--emerald)';
+      badge.style.borderColor = 'var(--emerald)';
+    }
   }
 }
 
-// NAVEGACIÓN POR PESTAÑAS
+// NAVEGACIÓN POR PESTAÑAS (MÓDULOS VS CORE)
 function switchTab(tabName) {
   ['tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform'].forEach(id => {
     const el = document.getElementById(id);
@@ -153,22 +167,48 @@ function switchTab(tabName) {
     if (el) el.classList.add('hidden');
   });
 
+  const badge = document.getElementById('activeContextBadge');
+
   if (tabName === 'kanban') {
     document.getElementById('tabKanban').classList.add('active');
     document.getElementById('viewKanban').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '📦 Módulo: ScanBan';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
+    }
     loadKanbanData();
-  } else if (tabName === 'users') {
-    document.getElementById('tabUsers').classList.add('active');
-    document.getElementById('viewUsers').classList.remove('hidden');
-    fetchUsers();
   } else if (tabName === 'orders') {
     document.getElementById('tabOrders').classList.add('active');
     document.getElementById('viewOrders').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '📦 Módulo: ScanBan';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
+    }
     fetchExplorerOrders();
+  } else if (tabName === 'users') {
+    document.getElementById('tabUsers').classList.add('active');
+    document.getElementById('viewUsers').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '🏛️ Core: Usuarios';
+      badge.style.color = '#3B82F6';
+      badge.style.background = 'rgba(59, 130, 246, 0.15)';
+      badge.style.borderColor = '#3B82F6';
+    }
+    fetchUsers();
   } else if (tabName === 'platform') {
     const platformTab = document.getElementById('tabPlatform');
     if (platformTab) platformTab.classList.add('active');
     document.getElementById('viewPlatform').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '🏛️ Core: Plataforma';
+      badge.style.color = '#A78BFA';
+      badge.style.background = 'rgba(124, 58, 237, 0.15)';
+      badge.style.borderColor = '#7C3AED';
+    }
     loadPlatformPanel();
   }
 }
@@ -737,31 +777,63 @@ async function fetchUsers() {
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
     const tbody = document.getElementById('usersTableBody');
+    const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
 
-    tbody.innerHTML = usersList.map(u => `
-      <tr>
-        <td><strong>${u.name}</strong></td>
-        <td>${u.email}</td>
-        <td><span class="badge-role">${u.role}</span></td>
-        <td style="font-family: monospace;">${u.operatorId || '-'}</td>
-        <td>
-          <span style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
-            ${u.active !== false ? '● Activo' : '○ Desactivado'}
-          </span>
-        </td>
-        <td>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUser('${u.id}', '${u.name}', '${u.email}', '${u.role}', ${u.active !== false})">Editar</button>
-            <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id}', ${u.active !== false})">
-              ${u.active !== false ? 'Desactivar' : 'Activar'}
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = usersList.map(u => {
+      const isTargetSuperAdmin = u.role === 'SUPERADMIN';
+      const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+
+      return `
+        <tr>
+          <td><strong>${u.name}</strong></td>
+          <td>${u.email}</td>
+          <td>
+            <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
+              ${u.role}
+            </span>
+          </td>
+          <td style="font-family: monospace;">${u.operatorId || '-'}</td>
+          <td>
+            <span style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
+              ${u.active !== false ? '● Activo' : '○ Desactivado'}
+            </span>
+          </td>
+          <td>
+            ${canEdit ? `
+              <div style="display: flex; gap: 8px;">
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUser('${u.id}', '${u.name}', '${u.email}', '${u.role}', ${u.active !== false})">Editar</button>
+                <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id}', ${u.active !== false})">
+                  ${u.active !== false ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
+            ` : `
+              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
+                🔒 Protegido (SuperAdmin)
+              </span>
+            `}
+          </td>
+        </tr>
+      `;
+    }).join('');
   } catch (e) {
     console.error('Error al cargar usuarios:', e);
   }
+}
+
+function updateRoleSelectOptions(selectedRole = 'OPERATOR') {
+  const select = document.getElementById('userRoleInput');
+  if (!select) return;
+  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+
+  let options = `
+    <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
+    <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
+  `;
+  if (isSuperAdmin) {
+    options += `<option value="SUPERADMIN">SUPERADMIN (Super Administrador de Plataforma)</option>`;
+  }
+  select.innerHTML = options;
+  select.value = selectedRole;
 }
 
 function openUserModal() {
@@ -770,7 +842,7 @@ function openUserModal() {
   document.getElementById('userNameInput').value = '';
   document.getElementById('userEmailInput').value = '';
   document.getElementById('userPasswordInput').value = '';
-  document.getElementById('userRoleInput').value = 'OPERATOR';
+  updateRoleSelectOptions('OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
 
@@ -784,7 +856,7 @@ function editUser(id, name, email, role, active) {
   document.getElementById('userNameInput').value = name;
   document.getElementById('userEmailInput').value = email;
   document.getElementById('userPasswordInput').value = '••••••••';
-  document.getElementById('userRoleInput').value = role;
+  updateRoleSelectOptions(role);
   document.getElementById('userModal').classList.remove('hidden');
 }
 

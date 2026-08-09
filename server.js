@@ -191,17 +191,17 @@ const initModules = () => {
 
 // Asegurar los usuarios autorizados por defecto en la base de datos
 const initUsers = () => {
-  const superAdminEmail = (processEnv.SUPERADMIN_EMAIL || 'superadmin@holoware.io').toLowerCase();
-  const superAdminPassword = processEnv.SUPERADMIN_PASSWORD || 'HoloWare2026!';
+  const superAdminEmail = (processEnv.SUPERADMIN_EMAIL || 'superadmin@holoware.com.ar').toLowerCase();
+  const superAdminPassword = processEnv.SUPERADMIN_PASSWORD || 'BrunaSeRelambe22!';
   const adminEmail = (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
   const adminPassword = processEnv.ADMIN_PASSWORD || 'drinklovers2026!';
 
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO users (email, password, name, role, active)
+    INSERT OR REPLACE INTO users (email, password, name, role, active)
     VALUES (?, ?, ?, ?, ?)
   `);
 
-  // Super Admin de plataforma (solo se inserta si no existe, nunca se sobreescribe)
+  // Super Admin de plataforma
   stmt.run(superAdminEmail, superAdminPassword, 'Super Administrador', 'SUPERADMIN', 1);
   // Admin de módulo ScanBan
   db.prepare(`INSERT OR REPLACE INTO users (email, password, name, role, active) VALUES (?, ?, ?, ?, ?)`)
@@ -1284,5 +1284,4 @@ const THEMES = {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Servidor HTTP Activo en http://0.0.0.0:${PORT}`);
   console.log(`🗄️ Base de Datos Relacional SQLite Activa en: ${DB_PATH}`);
-  console.log(`🔑 Admin Default: ${processEnv.ADMIN_EMAIL} / ${processEnv.ADMIN_PASSWORD}`);
 });

@@ -23,9 +23,6 @@ else
 fi
 
 echo ""
-echo "✅ ¡BASE DE DATOS SQLITE Y USUARIOS RESETEADOS CORRECTAMENTE!"
+echo "✅ ¡BASE DE DATOS SQLITE RESETEADA CORRECTAMENTE!"
 echo "📍 Archivo de DB: ./data/holoware.db"
-echo "👥 Usuarios Autorizados Creados:"
-echo "   1. Administrador Principal (admin@drinklovers.com.ar / drinklovers2026!)"
-echo "   2. Javier Rizzo (jsrxar@gmail.com / Asadito21!)"
 echo "======================================================"
