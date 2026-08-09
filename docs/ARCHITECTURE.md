@@ -45,7 +45,8 @@ holoware-baseline/
 ├── modules/                       ← Código fuente modularizado
 │   ├── core/                      ← Módulo Core (Autenticación, Usuarios, Temas, SuperAdmin)
 │   │   ├── public/                ← HTML, CSS y JS de plataforma
-│   │   └── routes/                ← Enrutador core.routes.js
+│   │   ├── routes/                ← Enrutador core.routes.js
+│   │   └── theme/                 ← Documentación y especificación de paletas
 │   ├── scanban/                   ← Módulo ScanBan (Kanban, PDF, App Expo)
 │   │   ├── public/                ← JS de ScanBan
 │   │   ├── routes/                ← Enrutador scanban.routes.js
