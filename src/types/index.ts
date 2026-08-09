@@ -29,6 +29,8 @@ export interface Order {
   items: OrderItem[];
   exceptionReason?: string;
   supervisorPin?: string;
+  auditStamp?: string;
+  operatorEmail?: string;
 }
 
 export interface ScanLog {

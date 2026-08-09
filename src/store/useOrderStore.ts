@@ -5,6 +5,7 @@ import { dbService } from '../db/client';
 import { hapticsService } from '../services/hapticsService';
 import { audioService } from '../services/audioService';
 import { fileWorkflowService } from '../services/fileWorkflowService';
+import { useAuthStore } from './useAuthStore';
 
 interface OrderState {
   orders: Order[];
@@ -34,32 +35,32 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   activeOrder: null,
   isScannerOpen: false,
-  operatorId: fileWorkflowService.getOperatorId(),
+  operatorId: useAuthStore.getState().user?.email || 'javier@drinklovers.com',
   lastScanToast: null,
   lastScanTimestamp: 0,
 
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
-      const opId = fileWorkflowService.getOperatorId();
+      const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
 
-      // Auto-detección de pedido activo asignado
-      const activeDoing = await fileWorkflowService.getActiveDoingOrder();
+      // Auto-detección de pedido activo asignado por email en el servidor
+      const activeDoing = await fileWorkflowService.getActiveDoingOrder(currentUserEmail);
       let restoredActiveOrder: Order | null = null;
 
       if (activeDoing.hasActive && activeDoing.orderNumber) {
-        const realOrder = await fileWorkflowService.getOrderDetails(activeDoing.orderNumber);
+        let realOrder = activeDoing.order || (await fileWorkflowService.getOrderDetails(activeDoing.orderNumber));
         if (realOrder) {
           restoredActiveOrder = realOrder;
           await dbService.saveOrder(restoredActiveOrder);
         }
-        console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} en proceso.`);
+        console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} para ${currentUserEmail}.`);
       }
 
       set({
         orders: savedOrders,
         activeOrder: restoredActiveOrder || get().activeOrder,
-        operatorId: opId
+        operatorId: currentUserEmail
       });
     } catch (e) {
       console.log('Error loading initial orders:', e);
@@ -78,13 +79,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     return order;
   },
 
-  // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor
+  // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando Email
   claimOrder: async (orderNumber: string) => {
+    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
     const { claimOrder: claimFile } = fileWorkflowService;
-    const { targetFileName, operatorId } = await claimFile(orderNumber);
+    const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
 
     // Obtener la orden real con sus ítems reales parsed del servidor
-    let realOrder = await fileWorkflowService.getOrderDetails(orderNumber);
+    let realOrder = serverOrder || (await fileWorkflowService.getOrderDetails(orderNumber));
 
     if (!realOrder) {
       const parsed = await parsePdfVoucher(targetFileName);
@@ -100,17 +102,18 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     set((state) => ({
       activeOrder: realOrder,
-      operatorId,
+      operatorId: currentUserEmail,
       orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
     }));
 
     return realOrder;
   },
 
-  // Acción: Liberar Pedido de /delivery/doing a /delivery/backlog
+  // Acción: Liberar Pedido de /delivery/doing a /delivery/ready
   releaseOrder: async (orderNumber: string) => {
+    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
     const { releaseOrder: releaseFile } = fileWorkflowService;
-    const { success } = await releaseFile(orderNumber);
+    const { success } = await releaseFile(orderNumber, currentUserEmail);
 
     if (success) {
       set((state) => ({
@@ -235,6 +238,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     await dbService.logScan(log);
     await dbService.saveOrder(updatedOrder);
 
+    // Enviar avance de escaneo al servidor en tiempo real para persistencia permanente
+    fileWorkflowService.updateScanProgress(activeOrder.orderNumber, updatedItems, newTotalScanned);
+
     set((state) => ({
       activeOrder: updatedOrder,
       orders: state.orders.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)),
@@ -252,6 +258,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const { activeOrder } = get();
     if (!activeOrder) return false;
 
+    const currentUserEmail = useAuthStore.getState().user?.email || 'javier@drinklovers.com';
     const isComplete = activeOrder.totalItemsScanned === activeOrder.totalItemsRequired;
     const isSupervisorOverride = !!supervisorPin && supervisorPin === '9999';
 
@@ -261,29 +268,26 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       return false;
     }
 
-    // Mover a /delivery/done con marca de agua digital
-    const { doneFileName, watermarkText } = await fileWorkflowService.completeOrderWithWatermark(
+    const { completeOrderWithWatermark } = fileWorkflowService;
+    const finalStatus = isComplete ? 'CLOSED' : 'PARTIAL_DISPATCH';
+    const { watermarkText } = await completeOrderWithWatermark(
       activeOrder.orderNumber,
       activeOrder.totalItemsScanned,
       activeOrder.totalItemsRequired,
+      currentUserEmail,
       supervisorPin
     );
 
-    const finalStatus = isComplete ? 'CLOSED' : 'PARTIAL_DISPATCH';
     const closedOrder: Order = {
       ...activeOrder,
-      pdfFileName: doneFileName,
       status: finalStatus,
-      closedAt: new Date().toISOString(),
-      supervisorPin: supervisorPin || undefined,
-      exceptionReason: exceptionReason || (watermarkText ? `MARCA DE AGUA: ${watermarkText}` : undefined)
+      auditStamp: watermarkText
     };
 
     await dbService.saveOrder(closedOrder);
-    await hapticsService.notifySuccess();
 
     set((state) => ({
-      activeOrder: closedOrder,
+      activeOrder: null,
       orders: state.orders.map((o) => (o.id === closedOrder.id ? closedOrder : o))
     }));
 

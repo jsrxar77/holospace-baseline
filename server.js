@@ -224,22 +224,23 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
 };
 
 
-// Base de usuarios predeterminada (Admin por defecto)
+// Base de usuarios predeterminada (Email como ID Único de Usuario)
 let users = [
   {
-    id: 'u-admin-1',
-    email: processEnv.ADMIN_EMAIL,
-    password: processEnv.ADMIN_PASSWORD,
+    id: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase(),
+    email: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase(),
+    password: processEnv.ADMIN_PASSWORD || 'drinklovers2026!',
     name: 'Administrador Principal',
-    role: 'ADMIN'
+    role: 'ADMIN',
+    active: true
   },
   {
-    id: 'u-op-1',
+    id: 'javier@drinklovers.com',
     email: 'javier@drinklovers.com',
     password: 'op123456',
     name: 'Javier Operario',
     role: 'OPERATOR',
-    operatorId: 'JAVIER-DEV82'
+    active: true
   }
 ];
 
@@ -247,7 +248,11 @@ if (fs.existsSync(USERS_FILE)) {
   try {
     const saved = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'));
     if (Array.isArray(saved) && saved.length > 0) {
-      users = saved;
+      users = saved.map((u) => ({
+        ...u,
+        id: (u.email || u.id).toLowerCase(),
+        email: (u.email || u.id).toLowerCase()
+      }));
     }
   } catch (e) {}
 } else {
@@ -260,7 +265,7 @@ const saveUsers = () => {
 
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') {
@@ -299,11 +304,12 @@ const server = http.createServer((req, res) => {
     try {
       const data = body ? JSON.parse(body) : {};
 
-      // 1. AUTH: LOGIN (Email + Password)
+      // 1. AUTH: LOGIN (Email como ID Único de Usuario)
       if (req.url === '/api/login' && req.method === 'POST') {
         const { email, password } = data;
+        const cleanEmail = (email || '').toLowerCase().trim();
         const user = users.find(
-          (u) => u.email.toLowerCase() === (email || '').toLowerCase() && u.password === password
+          (u) => u.email.toLowerCase() === cleanEmail && u.password === password && u.active !== false
         );
 
         if (user) {
@@ -313,17 +319,16 @@ const server = http.createServer((req, res) => {
             JSON.stringify({
               success: true,
               user: {
-                id: user.id,
+                id: user.email,
                 email: user.email,
                 name: user.name,
-                role: user.role,
-                operatorId: user.operatorId || `${user.name.split(' ')[0].toUpperCase()}-DEV82`
+                role: user.role
               },
-              token: `token_${user.id}_${Date.now()}`
+              token: `token_${user.email}_${Date.now()}`
             })
           );
         } else {
-          console.log(`[AUTH] Intento de login fallido para: ${email}`);
+          console.log(`[AUTH] Intento de login fallido para: ${cleanEmail}`);
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Email o contraseña incorrectos' }));
         }
@@ -333,7 +338,7 @@ const server = http.createServer((req, res) => {
       // 2. AUTH: LISTAR / CREAR / EDITAR / BORRADO LÓGICO DE USUARIOS
       if (req.url === '/api/users' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ users: users.map(({ password, ...u }) => ({ ...u, active: u.active !== false })) }));
+        res.end(JSON.stringify({ users: users.map(({ password, ...u }) => ({ ...u, id: u.email, active: u.active !== false })) }));
         return;
       }
 
@@ -345,13 +350,26 @@ const server = http.createServer((req, res) => {
           return;
         }
 
+        const cleanEmail = email.trim().toLowerCase();
+        const existing = users.find((u) => u.email.toLowerCase() === cleanEmail);
+
+        if (existing) {
+          existing.active = true;
+          existing.password = password.trim();
+          existing.name = name.trim();
+          existing.role = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
+          saveUsers();
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, user: existing }));
+          return;
+        }
+
         const newUser = {
-          id: `u-${Date.now()}`,
-          email: email.trim(),
+          id: cleanEmail,
+          email: cleanEmail,
           password: password.trim(),
           name: name.trim(),
           role: role === 'ADMIN' ? 'ADMIN' : 'OPERATOR',
-          operatorId: `${name.split(' ')[0].toUpperCase()}-${Math.floor(10 + Math.random() * 90)}`,
           active: true
         };
 
@@ -364,7 +382,8 @@ const server = http.createServer((req, res) => {
 
       if (req.url === '/api/users' && req.method === 'PUT') {
         const { id, email, password, name, role, active } = data;
-        const user = users.find((u) => u.id === id || u.email.toLowerCase() === (email || '').toLowerCase());
+        const targetEmail = (email || id || '').toLowerCase().trim();
+        const user = users.find((u) => u.email.toLowerCase() === targetEmail);
         if (!user) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
@@ -372,7 +391,6 @@ const server = http.createServer((req, res) => {
         }
 
         if (name) user.name = name.trim();
-        if (email) user.email = email.trim();
         if (password) user.password = password.trim();
         if (role) user.role = role === 'ADMIN' ? 'ADMIN' : 'OPERATOR';
         if (active !== undefined) user.active = !!active;
@@ -667,20 +685,24 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-      // 7. AUTO-DETECCIÓN DE PEDIDO ACTIVO EN DB
+      // 7. AUTO-DETECCIÓN DE PEDIDO ACTIVO EN DB (POR EMAIL DE USUARIO)
       if (req.url.startsWith('/api/active-order') || req.url === '/api/check-active-order') {
-        let operatorId = data.operatorId;
-        if (!operatorId && req.url.includes('operatorId=')) {
-          operatorId = req.url.split('operatorId=')[1].split('&')[0];
-        }
+        const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+        let email = data.userEmail || data.email || data.operatorId || urlParams.get('userEmail') || urlParams.get('email') || urlParams.get('operatorId') || '';
+        email = email.toLowerCase().trim();
 
         const activeOrder = Array.from(ordersDb.values()).find(
-          (o) => (o.status === 'DOING' || o.status === 'SCANNING') && (!operatorId || o.operatorId === operatorId)
+          (o) => (o.status === 'DOING' || o.status === 'SCANNING') && (!email || (o.operatorEmail || '').toLowerCase() === email)
         );
 
         if (activeOrder) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ hasActive: true, orderNumber: activeOrder.orderNumber, pdfFileName: activeOrder.pdfFileName }));
+          res.end(JSON.stringify({
+            hasActive: true,
+            orderNumber: activeOrder.orderNumber,
+            pdfFileName: activeOrder.pdfFileName,
+            order: activeOrder
+          }));
           return;
         }
 
@@ -689,50 +711,67 @@ const server = http.createServer((req, res) => {
         return;
       }
 
-
-      // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB CON LOG DE EMAIL)
+      // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN DB CON EMAIL DE USUARIO)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
-        const { orderNumber, operatorId, userEmail } = data;
+        const { orderNumber, userEmail, email } = data;
+        const operatorEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
+
         if (!ordersDb.has(orderNumber)) {
           registerOrderInDb(orderNumber, `${orderNumber}.pdf`);
         }
 
         const order = ordersDb.get(orderNumber);
         order.status = 'DOING';
-        order.operatorId = operatorId;
+        order.operatorEmail = operatorEmail;
+        order.operatorId = operatorEmail;
         const now = new Date().toLocaleString('es-AR');
-        const email = userEmail || 'javier@drinklovers.com';
 
         order.auditLogs.push({
           timestamp: now,
-          userEmail: email,
+          userEmail: operatorEmail,
           action: 'TOMAR_PEDIDO',
-          details: `Pedido #${orderNumber} tomado por operario ${email} (${operatorId}). Estado -> DOING`
+          details: `Pedido #${orderNumber} tomado por operario ${operatorEmail}. Estado -> DOING`
         });
 
-        console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${email}.`);
+        console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${operatorEmail}.`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, targetFileName: order.pdfFileName }));
+        res.end(JSON.stringify({ success: true, targetFileName: order.pdfFileName, order }));
+        return;
+      }
+
+      // 8.1 ACTUALIZAR PROGRESO DE ESCANEO EN DB DEL SERVIDOR
+      if (req.url === '/api/update-scan-progress' && req.method === 'POST') {
+        const { orderNumber, items, totalItemsScanned } = data;
+        if (ordersDb.has(orderNumber)) {
+          const order = ordersDb.get(orderNumber);
+          if (Array.isArray(items)) order.items = items;
+          if (typeof totalItemsScanned === 'number') order.totalItemsScanned = totalItemsScanned;
+          console.log(`[ESCÁNER DB] Avance de escaneo guardado en servidor para Pedido #${orderNumber}: ${totalItemsScanned} U.`);
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
         return;
       }
 
       // 9. LIBERAR PEDIDO (CAMBIO DE ESTADO EN DB CON LOG DE EMAIL)
       if (req.url === '/api/release-order' && req.method === 'POST') {
-        const { orderNumber, userEmail } = data;
+        const { orderNumber, userEmail, email } = data;
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const email = userEmail || 'javier@drinklovers.com';
+          const opEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'READY';
           order.auditLogs.push({
             timestamp: now,
-            userEmail: email,
+            userEmail: opEmail,
             action: 'LIBERAR_PEDIDO',
-            details: `Pedido #${orderNumber} liberado por ${email}. Devuelto a columna LISTO (READY).`
+            details: `Pedido #${orderNumber} liberado por ${opEmail}. Devuelto a columna LISTO (READY).`
           });
+          order.operatorEmail = null;
           order.operatorId = null;
-          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${email}.`);
+          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${opEmail}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -742,14 +781,17 @@ const server = http.createServer((req, res) => {
 
       // 10. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN DB CON MARCA DE AGUA Y LOG DE EMAIL)
       if (req.url === '/api/complete-order' && req.method === 'POST') {
-        const { orderNumber, operatorId, userEmail, watermarkText } = data;
+        const { orderNumber, userEmail, email, watermarkText } = data;
         if (ordersDb.has(orderNumber)) {
           const order = ordersDb.get(orderNumber);
-          const email = userEmail || 'javier@drinklovers.com';
+          const opEmail = (userEmail || email || 'javier@drinklovers.com').trim().toLowerCase();
           const now = new Date().toLocaleString('es-AR');
 
           order.status = 'DONE';
-          order.operatorId = operatorId;
+          order.operatorEmail = opEmail;
+          order.operatorId = opEmail;
+          order.auditStamp = watermarkText || `AUDITADO Y EXPEDIDO POR OPERARIO ${opEmail} | FECHA: ${now}`;
+          order.totalItemsScanned = order.totalItemsRequired;
           order.auditStamp = watermarkText;
           order.totalItemsScanned = order.totalItemsRequired;
 
