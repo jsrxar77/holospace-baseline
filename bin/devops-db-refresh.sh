@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# devops-db-refresh.sh - Script de reseteo manteniendo la carpeta ./orders/ para carga de comprobantes
+# devops-db-refresh.sh - Script de reseteo de usuarios y puerto sin tocar ningún directorio del filesystem
 
 set -e
 
@@ -8,14 +8,9 @@ echo "🧹 DevOps Database Refresh Tool"
 echo "======================================================"
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ORDERS_DIR="$PROJECT_ROOT/orders"
 USERS_FILE="$PROJECT_ROOT/users.json"
 
-echo "📂 1. Asegurando carpeta ./orders/ para depósitos de comprobantes..."
-mkdir -p "$ORDERS_DIR"
-touch "$ORDERS_DIR/.gitkeep"
-
-echo "👤 2. Conservando únicamente usuarios autorizados (Administrador Principal y Javier Rizzo)..."
+echo "👤 1. Estableciendo únicamente usuarios autorizados en users.json..."
 cat << 'EOF' > "$USERS_FILE"
 [
   {
@@ -37,11 +32,11 @@ cat << 'EOF' > "$USERS_FILE"
 ]
 EOF
 
-echo "🔄 3. Liberando puerto 3001 y reseteando la Base de Datos..."
+echo "🔄 2. Liberando puerto 3001..."
 npx -y kill-port 3001 2>/dev/null || true
 
 echo ""
-echo "✅ ¡BASE DE DATOS RESETEADA Y CONSERVANDO ÚNICAMENTE LOS 2 USUARIOS AUTORIZADOS!"
+echo "✅ ¡BASE DE DATOS Y USUARIOS RESETEADOS CORRECTAMENTE!"
 echo "1. Administrador Principal (admin@drinklovers.com.ar)"
 echo "2. Javier Rizzo (jsrxar@gmail.com)"
 echo "======================================================"
