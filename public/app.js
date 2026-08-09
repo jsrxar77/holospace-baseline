@@ -133,6 +133,10 @@ function applyRoleVisibility() {
   const platformTab = document.getElementById('tabPlatform');
   if (platformTab) platformTab.style.display = isSuperAdmin ? 'inline-flex' : 'none';
 
+  // Theme selector is EXCLUSIVE to SUPERADMIN
+  const themeContainer = document.getElementById('headerThemeContainer');
+  if (themeContainer) themeContainer.style.display = isSuperAdmin ? 'flex' : 'none';
+
   // If user is not SuperAdmin and is currently on viewPlatform, redirect to kanban
   const platformView = document.getElementById('viewPlatform');
   if (!isSuperAdmin && platformView && !platformView.classList.contains('hidden')) {

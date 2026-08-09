@@ -584,17 +584,15 @@ const THEMES = {
         return;
       }
 
-      // -1.1 CAMBIO DE TEMA DINÁMICO EXCLUSIVO POR ADMIN
+      // -1.1 CAMBIO DE TEMA DINÁMICO EXCLUSIVO POR SUPERADMIN
       if (req.url === '/api/theme' && req.method === 'POST') {
-        const { themeKey, userEmail } = data;
-        const adminEmail = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
-
-        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(adminEmail);
-        if (callerUser && callerUser.role !== 'ADMIN') {
+        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Solo los Administradores pueden cambiar el tema visual de la aplicación.' }));
+          res.end(JSON.stringify({ error: 'Solo el Super Administrador puede cambiar el tema visual de la plataforma.' }));
           return;
         }
+        const { themeKey } = data;
+        const adminEmail = currentUser.email;
 
         const targetKey = (themeKey || '').toLowerCase().trim();
         if (!THEMES[targetKey]) {

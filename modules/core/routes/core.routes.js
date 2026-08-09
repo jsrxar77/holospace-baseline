@@ -108,14 +108,14 @@ module.exports = function handleCoreRoutes(req, res, db, data, currentUser, proc
     return true;
   }
 
-  // 2. CAMBIO DE TEMA DINÁMICO DE PLATAFORMA (POST /api/theme - ADMIN & SUPERADMIN)
+  // 2. CAMBIO DE TEMA DINÁMICO DE PLATAFORMA (POST /api/theme - SUPERADMIN ONLY)
   if (url === '/api/theme' && method === 'POST') {
     const { themeKey, theme } = data;
     const targetKey = (themeKey || theme || '').toLowerCase().trim();
 
-    if (!currentUser || (currentUser.role !== 'ADMIN' && currentUser.role !== 'SUPERADMIN')) {
+    if (!currentUser || currentUser.role !== 'SUPERADMIN') {
       res.writeHead(403, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Solo Administradores pueden cambiar el tema de plataforma.' }));
+      res.end(JSON.stringify({ error: 'Solo el Super Administrador puede cambiar el tema visual de la plataforma.' }));
       return true;
     }
 
