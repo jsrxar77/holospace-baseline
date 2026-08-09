@@ -188,10 +188,11 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
     mergedLines.push(pendingDigits);
   }
 
-  // 4. Extraer todos los ítems de productos
+  // 4. Extraer todos los ítems de productos con múltiples patrones de tabla
   const items = [];
   for (let l of mergedLines) {
-    const rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)\s+/);
+    // Patrón 1: [EAN/Código] [Descripción] [Cantidad] [Precio]
+    let rowMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
     if (rowMatch) {
       const code = rowMatch[1];
       const description = rowMatch[2].trim();
@@ -199,37 +200,34 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
       const unitPriceStr = rowMatch[4].replace(/\./g, '').replace(',', '.');
       const unitPrice = parseFloat(unitPriceStr) || 0;
 
+      items.push({ code, description, quantityRequired, quantityScanned: 0, unitPrice, status: 'PENDING' });
+      continue;
+    }
+
+    // Patrón 2: [Descripción] [EAN/Código] [Cantidad] [Precio]
+    rowMatch = l.match(/^(.+?)\s+(\d{3,14})\s+(\d+)\s+\$?\s*([\d\.\,]+)/);
+    if (rowMatch) {
+      const description = rowMatch[1].trim();
+      const code = rowMatch[2];
+      const quantityRequired = parseInt(rowMatch[3], 10);
+      const unitPriceStr = rowMatch[4].replace(/\./g, '').replace(',', '.');
+      const unitPrice = parseFloat(unitPriceStr) || 0;
+
+      items.push({ code, description, quantityRequired, quantityScanned: 0, unitPrice, status: 'PENDING' });
+      continue;
+    }
+
+    // Patrón 3: [EAN/Código] [Descripción] [Cantidad]
+    const simpleMatch = l.match(/^(\d{3,14})\s+(.+?)\s+(\d+)$/);
+    if (simpleMatch) {
       items.push({
-        code,
-        description,
-        quantityRequired,
+        code: simpleMatch[1],
+        description: simpleMatch[2].trim(),
+        quantityRequired: parseInt(simpleMatch[3], 10),
         quantityScanned: 0,
-        unitPrice,
+        unitPrice: 0,
         status: 'PENDING'
       });
-    }
-  }
-
-  // Fallback si la estructura de tabla no fue detectada por completo
-  if (items.length === 0) {
-    if (orderNumber.includes('34409313') || text.includes('DIEGO POKE')) {
-      items.push(
-        { code: '7794450008275', description: 'Angelica Zapata Malbec', quantityRequired: 1, quantityScanned: 0, unitPrice: 19600.0, status: 'PENDING' },
-        { code: '1130', description: 'Kit Vino Estuche Cuero', quantityRequired: 1, quantityScanned: 0, unitPrice: 27000.0, status: 'PENDING' },
-        { code: '7798124010243', description: 'Piattelli Rsv Malbec SALTA', quantityRequired: 4, quantityScanned: 0, unitPrice: 9200.0, status: 'PENDING' },
-        { code: '7798074864873', description: 'Portillo Dulce', quantityRequired: 2, quantityScanned: 0, unitPrice: 4100.0, status: 'PENDING' },
-        { code: '7794450088581', description: 'Saint Felicien Malbec', quantityRequired: 6, quantityScanned: 0, unitPrice: 7100.0, status: 'PENDING' },
-        { code: '7790577001663', description: 'Rutini Cabernet-Malbec', quantityRequired: 6, quantityScanned: 0, unitPrice: 11300.0, status: 'PENDING' },
-        { code: '7794450000149', description: 'Nicasia Malbec', quantityRequired: 18, quantityScanned: 0, unitPrice: 5400.0, status: 'PENDING' },
-        { code: '7791203001231', description: 'Luigi Bosca Malbec', quantityRequired: 8, quantityScanned: 0, unitPrice: 10500.0, status: 'PENDING' },
-        { code: '7794450090492', description: 'Dv Catena Cabernet-Malbec', quantityRequired: 12, quantityScanned: 0, unitPrice: 9500.0, status: 'PENDING' },
-        { code: '7790517008165', description: 'Trumpeter Malbec', quantityRequired: 24, quantityScanned: 0, unitPrice: 6400.0, status: 'PENDING' },
-        { code: '7798353194653', description: 'Cordero con Piel de Lobo Malbec', quantityRequired: 24, quantityScanned: 0, unitPrice: 3600.0, status: 'PENDING' }
-      );
-    } else {
-      items.push(
-        { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
-      );
     }
   }
 
