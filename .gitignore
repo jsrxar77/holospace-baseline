@@ -36,8 +36,12 @@ yarn-error.log*
 # Database & SQLite
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite3
+data/
+data/*
 
 # Environment
 .env.local
