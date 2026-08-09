@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Order, OrderItem, ScanLog, ScanResult } from '../types';
 import { parsePdfVoucher } from '../services/pdfParser';
-import { dbService } from '../db/client';
+import { dbService } from '../db/localDatabase';
 import { hapticsService } from '../services/hapticsService';
 import { audioService } from '../services/audioService';
 import { fileWorkflowService } from '../services/fileWorkflowService';
