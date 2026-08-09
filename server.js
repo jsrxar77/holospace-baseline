@@ -450,7 +450,7 @@ const server = http.createServer(async (req, res) => {
       }
 
       // 3. CONSULTA DE TABLERO KANBAN DE 4 COLUMNAS DESDE SQLITE
-      if (req.url.startsWith('/api/orders') && req.method === 'GET') {
+      if ((req.url.startsWith('/api/orders') || req.url.startsWith('/api/kanban')) && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const search = (urlParams.get('search') || '').toLowerCase().trim();
         const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
@@ -461,6 +461,10 @@ const server = http.createServer(async (req, res) => {
         const formattedOrders = allOrdersInDb.map(o => {
           const items = db.prepare('SELECT * FROM order_items WHERE orderNumber = ?').all(o.orderNumber);
           const logs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderNumber = ? ORDER BY id ASC').all(o.orderNumber);
+
+          const scannedItems = o.totalItemsScanned || 0;
+          const totalItems = o.totalItemsRequired || 1;
+          const progressPercentage = Math.round((scannedItems / totalItems) * 100);
 
           return {
             id: `ord-${o.orderNumber}`,
@@ -474,6 +478,9 @@ const server = http.createServer(async (req, res) => {
             operatorId: o.operatorEmail || 'Sin asignar',
             totalItemsRequired: o.totalItemsRequired,
             totalItemsScanned: o.totalItemsScanned,
+            scannedItems,
+            totalItems,
+            progressPercentage,
             auditStamp: o.auditStamp,
             createdAt: o.createdAt,
             items,
