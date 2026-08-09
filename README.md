@@ -18,26 +18,24 @@ HoloWare Baseline es una infraestructura modular que permite ejecutar múltiples
 
 ## 🚀 Inicio Rápido
 
-### 1. Servidor Backend + Web Admin Panel
+### Levantar Todo el Entorno (Backend Server + Panel Web + App Móvil Expo)
 
 ```bash
-node server.js
+npm run dev
 ```
 
-- **Panel Web Admin:** `http://localhost:3001`
-- **Acceso en Red Local (Móvil):** `http://<TU-IP-LOCAL>:3001`
-- **Base de Datos SQLite:** `./data/holoware.db` (auto-creada y auto-migrada)
-- **Log de Errores:** `./data/errors.log`
+Un solo comando ejecuta en paralelo:
+- **Servidor Backend + Panel Web Admin (`node --watch server.js`):** `http://localhost:3001`
+- **App Móvil ScanBan Scanner (`npx expo start -c`):** Servidor Metro para Expo Go.
 
-### 2. App Móvil ScanBan Scanner (Expo Go)
+---
 
-```bash
-npx expo start -c
-```
+#### 📱 Conexión desde el Teléfono Móvil:
+1. Abrir **Expo Go** en Android o iOS.
+2. Escanear el código QR que aparece en la terminal (o hacer clic en **"Conectar Celular (QR)"** en el header del panel web).
+3. Iniciar sesión con credenciales de operario (`jsrxar@gmail.com`).
 
-1. Descarga **Expo Go** en tu dispositivo Android o iOS.
-2. Escanea el código QR desde la terminal o presiona el botón **"Conectar Celular (QR)"** en el header del panel web.
-3. Inicia sesión con el email de operario (`jsrxar@gmail.com`).
+*(Opcionalmente se pueden ejecutar por separado: `node server.js` para solo el backend, o `npx expo start -c` para solo el cliente móvil).*
 
 ---
 
@@ -85,11 +83,14 @@ holoware-baseline/
 │   ├── ROADMAP.md                 ← Estado de desarrollo y roadmap
 │   └── modules/                   ← Especificaciones por módulo (CORE, SCANBAN, STOCKFLOW)
 │
-├── modules/                       ← Código fuente de módulos aislados
-│   ├── core/                      ← Módulo Core (Auth, Usuarios, SuperAdmin, Temas, Audit)
-│   ├── scanban/                   ← Módulo ScanBan (Kanban, PDF Parser, App Móvil Expo)
-│   └── stockflow/                 ← Plantilla de 2º módulo de ejemplo
-│
+├── modules/
+│   ├── core/                      ← Módulo Core (Auth, Usuarios, SuperAdmin, Temas)
+│   │   ├── public/
+│   │   ├── routes/
+│   │   └── theme/                 ← Definición de paletas de temas dinámicos
+│   ├── scanban/                   ← Módulo ScanBan (src/, orders/)
+│   └── stockflow/                 ← Plantilla 2º módulo
+├── bin/                           ← Scripts DevOps
 ├── public/                        ← Entry point web estático (app.js + index.html)
 ├── data/
 │   └── holoware.db                ← Base de datos SQLite única
