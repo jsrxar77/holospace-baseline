@@ -26,13 +26,7 @@ if (fs.existsSync(envPath)) {
 }
 
 const PORT = parseInt(processEnv.PORT, 10) || 3001;
-const ORDERS_DIR = path.join(__dirname, 'orders');
 const USERS_FILE = path.join(__dirname, 'users.json');
-
-// Asegurar directorio ./orders/ para colocar y cargar comprobantes PDF
-if (!fs.existsSync(ORDERS_DIR)) {
-  fs.mkdirSync(ORDERS_DIR, { recursive: true });
-}
 
 // BASE DE DATOS EN MEMORIA / SQLITE (ALMACENAMIENTO CON PDF BLOBS)
 const ordersDb = new Map();
