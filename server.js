@@ -85,7 +85,9 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS orders (
-    orderNumber TEXT PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    uuid TEXT UNIQUE NOT NULL,
+    orderNumber TEXT NOT NULL,
     clientName TEXT NOT NULL,
     issueDate TEXT NOT NULL,
     pdfFileName TEXT NOT NULL,
@@ -99,25 +101,25 @@ db.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS order_items (
-    id TEXT PRIMARY KEY NOT NULL,
-    orderNumber TEXT NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    orderId INTEGER NOT NULL,
     code TEXT NOT NULL,
     description TEXT NOT NULL,
     unitPrice REAL DEFAULT 0.0,
     quantityRequired INTEGER NOT NULL,
     quantityScanned INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'PENDING',
-    FOREIGN KEY (orderNumber) REFERENCES orders(orderNumber) ON DELETE CASCADE
+    FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS audit_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    orderNumber TEXT NOT NULL,
+    orderId INTEGER NOT NULL,
     timestamp TEXT NOT NULL,
     userEmail TEXT NOT NULL,
     action TEXT NOT NULL,
     details TEXT NOT NULL,
-    FOREIGN KEY (orderNumber) REFERENCES orders(orderNumber) ON DELETE CASCADE
+    FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE CASCADE
   );
 `);
 
@@ -136,16 +138,28 @@ const initUsers = () => {
 };
 initUsers();
 
-// Helper para obtener una orden completa estructurada desde SQLite
-function getFullOrderFromDb(orderNumber) {
-  const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+// Helper para obtener una orden completa estructurada desde SQLite por ID, UUID o orderNumber
+function getFullOrderFromDb(identifier) {
+  if (!identifier) return null;
+  let order = null;
+
+  if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
+    order = db.prepare('SELECT * FROM orders WHERE id = ?').get(Number(identifier));
+  }
+  if (!order) {
+    order = db.prepare('SELECT * FROM orders WHERE uuid = ?').get(String(identifier));
+  }
+  if (!order) {
+    order = db.prepare('SELECT * FROM orders WHERE orderNumber = ? ORDER BY id DESC LIMIT 1').get(String(identifier));
+  }
   if (!order) return null;
 
-  const items = db.prepare('SELECT id, orderNumber as orderId, code, description, quantityRequired, quantityScanned, unitPrice, status FROM order_items WHERE orderNumber = ?').all(orderNumber);
-  const auditLogs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderNumber = ? ORDER BY id ASC').all(orderNumber);
+  const items = db.prepare('SELECT id, orderId, code, description, quantityRequired, quantityScanned, unitPrice, status FROM order_items WHERE orderId = ?').all(order.id);
+  const auditLogs = db.prepare('SELECT id, orderId, timestamp, userEmail, action, details FROM audit_logs WHERE orderId = ? ORDER BY id ASC').all(order.id);
 
   return {
-    id: `ord-${order.orderNumber}`,
+    id: order.id,
+    uuid: order.uuid,
     orderNumber: order.orderNumber,
     clientName: order.clientName,
     issueDate: order.issueDate,
@@ -504,15 +518,16 @@ const server = http.createServer(async (req, res) => {
         const allOrdersInDb = db.prepare('SELECT * FROM orders').all();
 
         const formattedOrders = allOrdersInDb.map(o => {
-          const items = db.prepare('SELECT * FROM order_items WHERE orderNumber = ?').all(o.orderNumber);
-          const logs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderNumber = ? ORDER BY id ASC').all(o.orderNumber);
+          const items = db.prepare('SELECT * FROM order_items WHERE orderId = ?').all(o.id);
+          const logs = db.prepare('SELECT timestamp, userEmail, action, details FROM audit_logs WHERE orderId = ? ORDER BY id ASC').all(o.id);
 
           const scannedItems = o.totalItemsScanned || 0;
           const totalItems = o.totalItemsRequired || 1;
           const progressPercentage = Math.round((scannedItems / totalItems) * 100);
 
           return {
-            id: `ord-${o.orderNumber}`,
+            id: o.id,
+            uuid: o.uuid,
             orderNumber: o.orderNumber,
             clientName: o.clientName,
             issueDate: o.issueDate,
@@ -561,7 +576,7 @@ const server = http.createServer(async (req, res) => {
 
       // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-ready' && req.method === 'POST') {
-        const { orderNumber, userEmail } = data;
+        const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
 
@@ -571,16 +586,16 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const order = getFullOrderFromDb(orderId || orderNumber);
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          db.prepare("UPDATE orders SET status = 'READY' WHERE orderNumber = ?").run(orderNumber);
+          db.prepare("UPDATE orders SET status = 'READY' WHERE id = ?").run(order.id);
           db.prepare(`
-            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(orderNumber, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${orderNumber} validado y pasado a LISTO por Admin (${email}).`);
+          `).run(order.id, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a LISTO por Admin (${email}).`);
 
-          console.log(`[ADMIN LOG] Pedido ${orderNumber} validado y pasado a READY por ${email}.`);
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) validado y pasado a READY por ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -590,7 +605,7 @@ const server = http.createServer(async (req, res) => {
 
       // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-backlog' && req.method === 'POST') {
-        const { orderNumber, userEmail } = data;
+        const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(email);
 
@@ -600,16 +615,16 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const order = getFullOrderFromDb(orderId || orderNumber);
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          db.prepare("UPDATE orders SET status = 'BACKLOG', operatorEmail = NULL WHERE orderNumber = ?").run(orderNumber);
+          db.prepare("UPDATE orders SET status = 'BACKLOG', operatorEmail = NULL WHERE id = ?").run(order.id);
           db.prepare(`
-            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(orderNumber, now, email, 'DEVOLVER_BACKLOG', `Pedido #${orderNumber} devuelto a BACKLOG por Admin (${email}).`);
+          `).run(order.id, now, email, 'DEVOLVER_BACKLOG', `Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a BACKLOG por Admin (${email}).`);
 
-          console.log(`[ADMIN LOG] Pedido ${orderNumber} devuelto a BACKLOG por ${email}.`);
+          console.log(`[ADMIN LOG] Pedido #${order.orderNumber} (ID: ${order.id}) devuelto a BACKLOG por ${email}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -619,7 +634,7 @@ const server = http.createServer(async (req, res) => {
 
       // 4. CONSULTA DE PEDIDOS DISPONIBLES EN LISTO PARA APP MÓVIL
       if (req.url === '/api/available-orders' && req.method === 'GET') {
-        const readyOrders = db.prepare("SELECT orderNumber, clientName, totalItemsRequired as totalItems FROM orders WHERE status = 'READY'").all();
+        const readyOrders = db.prepare("SELECT id, uuid, orderNumber, clientName, totalItemsRequired as totalItems FROM orders WHERE status = 'READY'").all();
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, orders: readyOrders }));
         return;
@@ -628,9 +643,9 @@ const server = http.createServer(async (req, res) => {
       // 5. DETALLE REAL DE UN PEDIDO CON PRODUCTOS PARSEADOS Y AUDITORÍA
       if (req.url.startsWith('/api/order-detail') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const orderNumber = urlParams.get('orderNumber') || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
+        const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber') || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
 
-        const fullOrder = getFullOrderFromDb(orderNumber);
+        const fullOrder = getFullOrderFromDb(identifier);
         if (fullOrder) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, order: fullOrder }));
@@ -644,18 +659,19 @@ const server = http.createServer(async (req, res) => {
 
       // 6. BORRAR COMPROBANTE EN SQLITE
       if ((req.url === '/api/delete-order' || req.url.startsWith('/api/delete-order')) && (req.method === 'DELETE' || req.method === 'POST')) {
-        const orderNumber = data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
-        if (!orderNumber) {
+        const identifier = data.id || data.orderId || data.orderNumber || (req.url.includes('orderNumber=') ? req.url.split('orderNumber=')[1].split('&')[0] : '');
+        const targetOrder = getFullOrderFromDb(identifier);
+        if (!targetOrder) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Falta orderNumber' }));
+          res.end(JSON.stringify({ error: 'Pedido no encontrado' }));
           return;
         }
 
-        db.prepare('DELETE FROM orders WHERE orderNumber = ?').run(orderNumber);
-        console.log(`[ADMIN] Comprobante ${orderNumber} eliminado de SQLite por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
+        db.prepare('DELETE FROM orders WHERE id = ?').run(targetOrder.id);
+        console.log(`[ADMIN] Comprobante #${targetOrder.orderNumber} (ID: ${targetOrder.id}) eliminado de SQLite por ${data.userEmail || processEnv.ADMIN_EMAIL}`);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, message: `Pedido ${orderNumber} eliminado.` }));
+        res.end(JSON.stringify({ success: true, message: `Pedido #${targetOrder.orderNumber} eliminado.` }));
         return;
       }
 
@@ -665,13 +681,14 @@ const server = http.createServer(async (req, res) => {
         let email = data.userEmail || data.email || data.operatorId || urlParams.get('userEmail') || urlParams.get('email') || urlParams.get('operatorId') || '';
         email = email.toLowerCase().trim();
 
-        const activeOrderRow = db.prepare("SELECT orderNumber FROM orders WHERE (status = 'DOING' OR status = 'SCANNING') AND LOWER(operatorEmail) = ?").get(email);
+        const activeOrderRow = db.prepare("SELECT id FROM orders WHERE (status = 'DOING' OR status = 'SCANNING') AND LOWER(operatorEmail) = ?").get(email);
 
         if (activeOrderRow) {
-          const fullOrder = getFullOrderFromDb(activeOrderRow.orderNumber);
+          const fullOrder = getFullOrderFromDb(activeOrderRow.id);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             hasActive: true,
+            orderId: fullOrder.id,
             orderNumber: fullOrder.orderNumber,
             pdfFileName: fullOrder.pdfFileName,
             order: fullOrder
@@ -686,20 +703,20 @@ const server = http.createServer(async (req, res) => {
 
       // 8. TOMAR PEDIDO (CAMBIO DE ESTADO EN SQLITE CON EMAIL DE USUARIO)
       if (req.url === '/api/claim-order' && req.method === 'POST') {
-        const { orderNumber, userEmail, email } = data;
+        const { orderId, orderNumber, userEmail, email } = data;
         const operatorEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
-        const existingOrder = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const existingOrder = getFullOrderFromDb(orderId || orderNumber);
         if (existingOrder) {
           const now = new Date().toLocaleString('es-AR');
-          db.prepare("UPDATE orders SET status = 'DOING', operatorEmail = ? WHERE orderNumber = ?").run(operatorEmail, orderNumber);
+          db.prepare("UPDATE orders SET status = 'DOING', operatorEmail = ? WHERE id = ?").run(operatorEmail, existingOrder.id);
           db.prepare(`
-            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(orderNumber, now, operatorEmail, 'TOMAR_PEDIDO', `Pedido #${orderNumber} tomado por operario ${operatorEmail}. Estado -> DOING`);
+          `).run(existingOrder.id, now, operatorEmail, 'TOMAR_PEDIDO', `Pedido #${existingOrder.orderNumber} (ID: ${existingOrder.id}) tomado por operario ${operatorEmail}. Estado -> DOING`);
 
-          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} tomado por ${operatorEmail}.`);
-          const updatedFull = getFullOrderFromDb(orderNumber);
+          console.log(`[LOG AUDITORÍA] Pedido #${existingOrder.orderNumber} (ID: ${existingOrder.id}) tomado por ${operatorEmail}.`);
+          const updatedFull = getFullOrderFromDb(existingOrder.id);
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, targetFileName: updatedFull.pdfFileName, order: updatedFull }));
           return;
@@ -712,28 +729,28 @@ const server = http.createServer(async (req, res) => {
 
       // 8.1 ACTUALIZAR PROGRESO DE ESCANEO EN SQLITE
       if (req.url === '/api/update-scan-progress' && req.method === 'POST') {
-        const { orderNumber, items, totalItemsScanned } = data;
-        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const { orderId, orderNumber, items, totalItemsScanned } = data;
+        const order = getFullOrderFromDb(orderId || orderNumber);
 
         if (order) {
           if (Array.isArray(items)) {
             const updateItemStmt = db.prepare(`
               UPDATE order_items
               SET quantityScanned = ?, status = ?
-              WHERE orderNumber = ? AND (id = ? OR code = ?)
+              WHERE orderId = ? AND (id = ? OR code = ?)
             `);
 
             for (const item of items) {
               const status = item.quantityScanned >= item.quantityRequired ? 'COMPLETED' : item.quantityScanned > 0 ? 'IN_PROGRESS' : 'PENDING';
-              updateItemStmt.run(item.quantityScanned, status, orderNumber, item.id || '', item.code || '');
+              updateItemStmt.run(item.quantityScanned, status, order.id, item.id || 0, item.code || '');
             }
           }
 
           if (typeof totalItemsScanned === 'number') {
-            db.prepare('UPDATE orders SET totalItemsScanned = ? WHERE orderNumber = ?').run(totalItemsScanned, orderNumber);
+            db.prepare('UPDATE orders SET totalItemsScanned = ? WHERE id = ?').run(totalItemsScanned, order.id);
           }
 
-          console.log(`[ESCÁNER SQLITE] Avance guardado para Pedido #${orderNumber}: ${totalItemsScanned} U.`);
+          console.log(`[ESCÁNER SQLITE] Avance guardado para Pedido #${order.orderNumber} (ID: ${order.id}): ${totalItemsScanned} U.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -743,19 +760,19 @@ const server = http.createServer(async (req, res) => {
 
       // 9. LIBERAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A READY)
       if (req.url === '/api/release-order' && req.method === 'POST') {
-        const { orderNumber, userEmail, email } = data;
+        const { orderId, orderNumber, userEmail, email } = data;
         const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
-        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const order = getFullOrderFromDb(orderId || orderNumber);
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          db.prepare("UPDATE orders SET status = 'READY', operatorEmail = NULL WHERE orderNumber = ?").run(orderNumber);
+          db.prepare("UPDATE orders SET status = 'READY', operatorEmail = NULL WHERE id = ?").run(order.id);
           db.prepare(`
-            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(orderNumber, now, opEmail, 'LIBERAR_PEDIDO', `Pedido #${orderNumber} liberado por ${opEmail}. Devuelto a columna LISTO (READY).`);
+          `).run(order.id, now, opEmail, 'LIBERAR_PEDIDO', `Pedido #${order.orderNumber} (ID: ${order.id}) liberado por ${opEmail}. Devuelto a columna LISTO (READY).`);
 
-          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} liberado por ${opEmail}.`);
+          console.log(`[LOG AUDITORÍA] Pedido #${order.orderNumber} liberado por ${opEmail}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -765,25 +782,25 @@ const server = http.createServer(async (req, res) => {
 
       // 10. FINALIZAR PEDIDO (CAMBIO DE ESTADO EN SQLITE A DONE CON MARCA DE AGUA)
       if (req.url === '/api/complete-order' && req.method === 'POST') {
-        const { orderNumber, userEmail, email, watermarkText } = data;
+        const { orderId, orderNumber, userEmail, email, watermarkText } = data;
         const opEmail = (userEmail || email || 'jsrxar@gmail.com').trim().toLowerCase();
 
-        const order = db.prepare('SELECT * FROM orders WHERE orderNumber = ?').get(orderNumber);
+        const order = getFullOrderFromDb(orderId || orderNumber);
         if (order) {
           const now = new Date().toLocaleString('es-AR');
           const auditStamp = watermarkText || `AUDITADO Y EXPEDIDO POR OPERARIO ${opEmail} | FECHA: ${now}`;
 
-          db.prepare("UPDATE orders SET status = 'DONE', operatorEmail = ?, auditStamp = ?, totalItemsScanned = totalItemsRequired WHERE orderNumber = ?").run(opEmail, auditStamp, orderNumber);
+          db.prepare("UPDATE orders SET status = 'DONE', operatorEmail = ?, auditStamp = ?, totalItemsScanned = totalItemsRequired WHERE id = ?").run(opEmail, auditStamp, order.id);
           db.prepare(`
-            INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+            INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
             VALUES (?, ?, ?, ?, ?)
-          `).run(orderNumber, now, opEmail, 'DESPACHAR_PEDIDO', `Pedido #${orderNumber} auditado y despachado por ${opEmail}. Marca de Agua: ${auditStamp}`);
+          `).run(order.id, now, opEmail, 'DESPACHAR_PEDIDO', `Pedido #${order.orderNumber} (ID: ${order.id}) auditado y despachado por ${opEmail}. Marca de Agua: ${auditStamp}`);
 
-          console.log(`[LOG AUDITORÍA] Pedido ${orderNumber} despachado por ${opEmail}.`);
+          console.log(`[LOG AUDITORÍA] Pedido #${order.orderNumber} despachado por ${opEmail}.`);
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, doneFileName: `${orderNumber}.pdf` }));
+        res.end(JSON.stringify({ success: true, doneFileName: `${order ? order.orderNumber : 'order'}.pdf` }));
         return;
       }
 
@@ -813,14 +830,16 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
+        const orderUuid = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         const now = new Date().toLocaleString('es-AR');
         const totalItemsRequired = parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0);
 
-        // Guardar Orden principal en SQLite con el Blob Base64
-        db.prepare(`
-          INSERT OR REPLACE INTO orders (orderNumber, clientName, issueDate, pdfFileName, pdfBlob, status, operatorEmail, totalItemsRequired, totalItemsScanned, auditStamp, createdAt)
-          VALUES (?, ?, ?, ?, ?, 'BACKLOG', NULL, ?, 0, NULL, ?)
+        // Guardar Orden principal en SQLite con Clave Primaria Autoincremental
+        const orderInsertRes = db.prepare(`
+          INSERT INTO orders (uuid, orderNumber, clientName, issueDate, pdfFileName, pdfBlob, status, operatorEmail, totalItemsRequired, totalItemsScanned, auditStamp, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, 'BACKLOG', NULL, ?, 0, NULL, ?)
         `).run(
+          orderUuid,
           parsed.orderNumber,
           parsed.clientName,
           new Date().toLocaleDateString('es-AR'),
@@ -830,26 +849,27 @@ const server = http.createServer(async (req, res) => {
           now
         );
 
-        // Limpiar e insertar ítems relacionales en order_items
-        db.prepare('DELETE FROM order_items WHERE orderNumber = ?').run(parsed.orderNumber);
+        const orderId = orderInsertRes.lastInsertRowid;
+
+        // Limpiar e insertar ítems relacionales en order_items vinculados por orderId
         const insertItemStmt = db.prepare(`
-          INSERT INTO order_items (id, orderNumber, code, description, unitPrice, quantityRequired, quantityScanned, status)
-          VALUES (?, ?, ?, ?, ?, ?, 0, 'PENDING')
+          INSERT INTO order_items (orderId, code, description, unitPrice, quantityRequired, quantityScanned, status)
+          VALUES (?, ?, ?, ?, ?, 0, 'PENDING')
         `);
 
-        parsed.items.forEach((item, idx) => {
-          insertItemStmt.run(`item_${parsed.orderNumber}_${idx}`, parsed.orderNumber, item.code, item.description, item.unitPrice || 0, item.quantityRequired);
+        parsed.items.forEach(item => {
+          insertItemStmt.run(orderId, item.code, item.description, item.unitPrice || 0, item.quantityRequired);
         });
 
         // Insertar log de auditoría
         db.prepare(`
-          INSERT INTO audit_logs (orderNumber, timestamp, userEmail, action, details)
+          INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
           VALUES (?, ?, ?, ?, ?)
-        `).run(parsed.orderNumber, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF parseado y Blob guardado en SQLite por ${email}.`);
+        `).run(orderId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF parseado y Blob guardado en SQLite por ${email}.`);
 
-        console.log(`[ADMIN LOG] Comprobante PDF ${parsed.orderNumber} (${parsed.clientName}) parseado y guardado en SQLite por ${email}`);
+        console.log(`[ADMIN LOG] Comprobante PDF ${parsed.orderNumber} (ID: ${orderId}, Cliente: ${parsed.clientName}) parseado y guardado en SQLite por ${email}`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante parseado y publicado en backlog en SQLite' }));
+        res.end(JSON.stringify({ success: true, id: orderId, uuid: orderUuid, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante parseado y publicado en backlog en SQLite' }));
         return;
       }
 
