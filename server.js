@@ -133,7 +133,21 @@ db.exec(`
     details TEXT NOT NULL,
     FOREIGN KEY (orderId) REFERENCES orders(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+// Inicializar el tema en app_settings usando .env si no fue configurado
+const initTheme = () => {
+  const defaultTheme = (processEnv.THEME || 'original').toLowerCase().trim();
+  const existing = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
+  if (!existing) {
+    db.prepare("INSERT INTO app_settings (key, value) VALUES ('active_theme', ?)").run(defaultTheme);
+  }
+};
 
 // Asegurar los 2 usuarios autorizados por defecto en la base de datos
 const initUsers = () => {
@@ -149,6 +163,7 @@ const initUsers = () => {
   stmt.run('jsrxar@gmail.com', 'Asadito21!', 'Javier Rizzo', 'OPERATOR', 1);
 };
 initUsers();
+initTheme();
 
 // Helper para obtener una orden completa estructurada desde SQLite por ID, UUID o orderNumber
 function getFullOrderFromDb(identifier) {
@@ -507,15 +522,55 @@ const THEMES = {
 };
 
     try {
-      // -1. CONSULTA DE TEMA DINÁMICO DESDE .ENV
+      // -1. CONSULTA DE TEMA DINÁMICO DESDE SQLITE APP_SETTINGS
       if (req.url === '/api/theme' && req.method === 'GET') {
-        const themeKey = (process.env.THEME || 'original').toLowerCase().trim();
+        const row = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
+        const themeKey = (row ? row.value : process.env.THEME || 'original').toLowerCase().trim();
         const activeTheme = THEMES[themeKey] || THEMES.original;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           activeThemeKey: themeKey in THEMES ? themeKey : 'original',
           theme: activeTheme
+        }));
+        return;
+      }
+
+      // -1.1 CAMBIO DE TEMA DINÁMICO EXCLUSIVO POR ADMIN
+      if (req.url === '/api/theme' && req.method === 'POST') {
+        const { themeKey, userEmail } = data;
+        const adminEmail = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
+
+        const callerUser = db.prepare('SELECT role FROM users WHERE LOWER(email) = ?').get(adminEmail);
+        if (callerUser && callerUser.role !== 'ADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Solo los Administradores pueden cambiar el tema visual de la aplicación.' }));
+          return;
+        }
+
+        const targetKey = (themeKey || '').toLowerCase().trim();
+        if (!THEMES[targetKey]) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Tema no válido.' }));
+          return;
+        }
+
+        db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('active_theme', ?)").run(targetKey);
+
+        const now = new Date().toLocaleString('es-AR');
+        const themeName = THEMES[targetKey].name;
+        db.prepare(`
+          INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
+          VALUES (1, ?, ?, ?, ?)
+        `).run(now, adminEmail, 'CAMBIO_TEMA', `Tema visual de la aplicación actualizado a '${themeName}' (${targetKey}) por Admin (${adminEmail}).`);
+
+        console.log(`[CONFIG] Tema de la aplicación actualizado a '${themeName}' (${targetKey}) por Admin ${adminEmail}.`);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          activeThemeKey: targetKey,
+          theme: THEMES[targetKey]
         }));
         return;
       }

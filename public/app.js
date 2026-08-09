@@ -42,9 +42,36 @@ async function loadActiveTheme() {
       if (t.red) root.style.setProperty('--red', t.red);
       if (t.textMain) root.style.setProperty('--text-main', t.textMain);
       if (t.textMuted) root.style.setProperty('--text-muted', t.textMuted);
+
+      const selectEl = document.getElementById('headerThemeSelect');
+      if (selectEl && data.activeThemeKey && selectEl.value !== data.activeThemeKey) {
+        selectEl.value = data.activeThemeKey;
+      }
     }
   } catch (e) {
     console.error('Error cargando tema dinámico:', e);
+  }
+}
+
+async function changeAppThemeSubmit(themeKey) {
+  try {
+    const res = await fetch('/api/theme', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        themeKey,
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      await loadActiveTheme();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No se pudo cambiar el tema visual.');
+    }
+  } catch (e) {
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
   }
 }
 
@@ -166,6 +193,7 @@ function toggleUserGroup(groupId) {
 // KANBAN EN TIEMPO REAL CON 4 COLUMNAS Y SUB-GRUPOS COLAPSABLES POR USUARIO
 async function loadKanbanData() {
   try {
+    loadActiveTheme();
     const res = await fetch('/api/kanban');
     const data = await res.json();
 
