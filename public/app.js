@@ -252,9 +252,11 @@ async function markOrderReady(orderNumber, event) {
     const data = await res.json();
     if (data.success) {
       loadKanbanData();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No fue posible validar el pedido.');
     }
   } catch (err) {
-    console.error(err);
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
   }
 }
 
@@ -273,9 +275,11 @@ async function markOrderBacklog(orderNumber, event) {
     const data = await res.json();
     if (data.success) {
       loadKanbanData();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No fue posible mover el pedido a Backlog.');
     }
   } catch (err) {
-    console.error(err);
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
   }
 }
 
