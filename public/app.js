@@ -782,12 +782,21 @@ async function renderOperatorPills() {
   try {
     const res = await fetch('/api/users');
     const data = await res.json();
-    allOperatorEmails = (data.users || []).map((u) => u.email);
+    const usersList = Array.isArray(data) ? data : (data.users || []);
+    allOperatorEmails = usersList.map((u) => u.email.toLowerCase());
 
     const container = document.getElementById('operatorPillsContainer');
     if (!container) return;
 
-    container.innerHTML = allOperatorEmails
+    const allPill = `
+      <button type="button" 
+        onclick="clearOperatorFilter()"
+        style="background: ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : '#21262D'}; color: ${selectedExplorerOperators.size === 0 ? '#000' : '#FFF'}; border: 1px solid ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer;">
+        ${selectedExplorerOperators.size === 0 ? '✓ ' : ''}Todos los Operarios
+      </button>
+    `;
+
+    const pillsHtml = allOperatorEmails
       .map((email) => {
         const isSelected = selectedExplorerOperators.has(email);
         return `
@@ -799,25 +808,34 @@ async function renderOperatorPills() {
       `;
       })
       .join('');
+
+    container.innerHTML = allPill + pillsHtml;
   } catch (e) {
     console.error('Error cargando operarios:', e);
   }
 }
 
+function clearOperatorFilter() {
+  selectedExplorerOperators.clear();
+  renderOperatorPills();
+  fetchExplorerOrders();
+}
+
 function toggleOperatorFilter(email) {
-  if (selectedExplorerOperators.has(email)) {
-    selectedExplorerOperators.delete(email);
+  const cleanEmail = email.toLowerCase().trim();
+  if (selectedExplorerOperators.has(cleanEmail)) {
+    selectedExplorerOperators.delete(cleanEmail);
   } else {
-    selectedExplorerOperators.add(email);
+    selectedExplorerOperators.add(cleanEmail);
   }
   renderOperatorPills();
   fetchExplorerOrders();
 }
 
 async function fetchExplorerOrders() {
-  const query = document.getElementById('orderSearchQuery').value;
-  const status = document.getElementById('orderStatusFilter').value;
-  const sortBy = document.getElementById('orderSortBy').value;
+  const query = document.getElementById('orderSearchQuery')?.value || '';
+  const status = document.getElementById('orderStatusFilter')?.value || '';
+  const sortBy = document.getElementById('orderSortBy')?.value || 'date_desc';
   const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
@@ -826,41 +844,67 @@ async function fetchExplorerOrders() {
     );
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');
+    if (!grid) return;
 
     let ordersList = data.orders || [];
 
-    if (sortBy === 'date-asc') {
+    // Multi-selección de operarios en cliente
+    if (selectedExplorerOperators.size > 0) {
+      ordersList = ordersList.filter(o => {
+        const op = (o.operatorEmail || '').toLowerCase().trim();
+        return selectedExplorerOperators.has(op);
+      });
+    }
+
+    // Ordenamiento dinámico
+    const cleanSort = (sortBy || 'date_desc').replace('-', '_');
+    if (cleanSort === 'date_asc') {
       ordersList.sort((a, b) => a.id - b.id);
-    } else if (sortBy === 'amount-desc') {
+    } else if (cleanSort === 'amount_desc') {
       ordersList.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
-    } else if (sortBy === 'items-desc') {
+    } else if (cleanSort === 'items_desc') {
       ordersList.sort((a, b) => (b.totalItemsRequired || 0) - (a.totalItemsRequired || 0));
     } else {
       ordersList.sort((a, b) => b.id - a.id);
     }
 
     if (ordersList.length === 0) {
-      grid.innerHTML =
-        '<div style="color: var(--text-muted); font-size: 15px; grid-column: 1/-1; text-align: center; padding: 40px;">No se encontraron pedidos que coincidan con la búsqueda y filtros seleccionados.</div>';
+      grid.innerHTML = `
+        <tr>
+          <td colspan="8" style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px;">
+            No se encontraron pedidos que coincidan con la búsqueda y filtros seleccionados.
+          </td>
+        </tr>
+      `;
       return;
     }
 
     grid.innerHTML = ordersList
-      .map(
-        (o) => `
-      <div class="kanban-card" onclick="openInvoiceModal('${o.orderNumber}')">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div class="card-order-no">Pedido #${o.orderNumber}</div>
-          <span class="badge-role" style="font-size: 11px; ${o.status === 'READY' ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;' : o.status === 'DOING' ? 'background: rgba(59, 130, 246, 0.2); color: #60A5FA;' : o.status === 'DONE' ? 'background: rgba(255, 215, 0, 0.2); color: #FFD700;' : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;'}">${o.status === 'READY' ? 'LISTO' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PROCESO' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'BACKLOG'}</span>
-        </div>
-        <div class="card-meta" style="color: #FFF; font-weight: 800;">Cliente: ${o.clientName}</div>
-        <div class="card-meta">Operario: ${o.operatorEmail || 'Sin Asignar'}</div>
-        <div class="card-meta">Fecha: ${o.issueDate || 'Hoy'}</div>
-        <div class="card-meta">Ítems: <strong>${o.totalItemsRequired} U</strong></div>
-        <div class="card-meta" style="color: var(--emerald); font-weight: 900; font-size: 15px;">Total: $${(o.totalAmount || 0).toLocaleString('es-AR')}</div>
-      </div>
-    `
-      )
+      .map((o) => {
+        const statusEs = o.status === 'READY' ? 'LISTO' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PROCESO' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'BACKLOG';
+        const badgeStyle = o.status === 'READY'
+          ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;'
+          : o.status === 'DOING' || o.status === 'SCANNING'
+          ? 'background: rgba(59, 130, 246, 0.2); color: #60A5FA;'
+          : o.status === 'DONE' || o.status === 'CLOSED'
+          ? 'background: rgba(255, 215, 0, 0.2); color: #FFD700;'
+          : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;';
+
+        return `
+          <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.orderNumber}')">
+            <td><strong style="color: var(--emerald);">#${o.orderNumber}</strong></td>
+            <td><strong>${o.clientName}</strong></td>
+            <td>👤 ${o.operatorEmail || 'Sin Asignar'}</td>
+            <td style="font-size: 13px; color: var(--text-muted);">${o.issueDate || 'Hoy'}</td>
+            <td style="text-align: center; font-weight: 800;">${o.totalItemsRequired} U</td>
+            <td style="text-align: right; color: var(--emerald); font-weight: 900; font-size: 15px;">$${(o.totalAmount || 0).toLocaleString('es-AR')}</td>
+            <td style="text-align: center;"><span class="badge-role" style="font-size: 11px; ${badgeStyle}">${statusEs}</span></td>
+            <td style="text-align: center;">
+              <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="event.stopPropagation(); openInvoiceModal('${o.orderNumber}')">👁️ Detalle</button>
+            </td>
+          </tr>
+        `;
+      })
       .join('');
   } catch (e) {
     console.error('Error al explorar pedidos:', e);

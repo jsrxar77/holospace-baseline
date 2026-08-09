@@ -571,11 +571,11 @@
             <option value="DONE">COMPLETADO</option>
           </select>
 
-          <select id="orderSortBy" class="input-field" style="flex: 1; min-width: 160px;" onchange="fetchExplorerOrders()">
+          <select id="orderSortBy" class="input-field" style="flex: 1; min-width: 180px;" onchange="fetchExplorerOrders()">
             <option value="date_desc">Fecha (Recientes primero)</option>
             <option value="date_asc">Fecha (Antiguos primero)</option>
             <option value="amount_desc">Importe ($ Mayor a Menor)</option>
-            <option value="items_desc">Ítems (Mayor a Menor)</option>
+            <option value="items_desc">Cantidad de Ítems (Mayor a Menor)</option>
           </select>
         </div>
 
@@ -586,7 +586,26 @@
         </div>
       </div>
 
-      <div id="ordersExplorerGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;"></div>
+      <!-- VISTA EN FORMATO LISTA / TABLA PARA CIENTOS DE ELEMENTOS CON SCROLL -->
+      <div style="background-color: var(--card-bg); border-radius: 20px; border: 1px solid var(--card-border); overflow: hidden; margin-top: 20px;">
+        <div style="max-height: calc(100vh - 340px); overflow-y: auto;">
+          <table class="data-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="position: sticky; top: 0; background-color: #161B22; z-index: 2;">
+                <th># Comprobante</th>
+                <th>Cliente / Razón Social</th>
+                <th>Operario Asignado</th>
+                <th>Fecha Emisión</th>
+                <th style="text-align: center;">Ítems</th>
+                <th style="text-align: right;">Importe Total ($)</th>
+                <th style="text-align: center;">Estado</th>
+                <th style="text-align: center;">Acción</th>
+              </tr>
+            </thead>
+            <tbody id="ordersExplorerGrid"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -594,7 +613,7 @@
   <!-- MODAL DE AUTENTICACIÓN / LOGIN -->
   <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
-      <h2 style="font-size: 28px; font-weight: 900; text-align: center; color: var(--emerald);">PHONEWARE BOARD</h2>
+      <h2 style="font-size: 28px; font-weight: 900; text-align: center; color: #FFFFFF; letter-spacing: -0.5px;">PHONEWARE <span style="color: var(--emerald);">BOARD</span></h2>
       <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Inicia sesión con tus credenciales de administrador u operario</p>
       
       <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
