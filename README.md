@@ -95,7 +95,7 @@ holoware-baseline/
 ├── data/
 │   └── holoware.db                ← Base de datos SQLite única
 ├── server.js                      ← Servidor Node.js principal
-├── .env                           ← Variables de entorno (HW_PORT=3001, HW_THEME=original)
+├── .env                           ← Variables de entorno (HW_PORT=3001, JWT_SECRET)
 └── README.md                      ← Este documento
 ```
 

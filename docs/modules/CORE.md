@@ -31,13 +31,12 @@ El módulo **Core** constituye el motor base de la plataforma HoloWare Baseline.
   - Switches interactivos para activar/desactivar módulos en tiempo real.
   - Registro inmutable de eventos en la tabla `platform_audit_logs`.
 
-### 2.4 Motor de Temas Visuales Global y Su Propagación a Módulos
-- **Servicio Centralizado del Core:** El tema visual es gestionado 100% por la plataforma Core (`/api/theme`).
+### 2.4 Motor de Temas Visuales Global (Única Fuente de Verdad: SQLite)
+- **Servicio Centralizado del Core:** El tema visual es gestionado 100% por la plataforma Core (`/api/theme`) mediante la tabla `app_settings` de SQLite (`active_theme`). No depende de variables de entorno `.env`.
 - **Propagación Automática a Módulos Web:** Al seleccionar un tema desde el selector del header (`changeAppThemeSubmit`), la plataforma actualiza las variables CSS globales (`--bg-black`, `--card-bg`, `--emerald`, `--cobalt`, etc.) en `:root`. Dado que todos los módulos (`ScanBan`, `StockFlow`, etc.) consumen `var(...)`, el nuevo tema se aplica instantáneamente a toda la suite.
 - **Propagación a Módulos Móviles:** Las aplicaciones móviles (Expo / React Native) realizan la consulta periódica a `GET /api/theme` recibiendo los tokens de color actualizados para adaptar su interfaz en tiempo real.
 - **7 Paletas Curadas:** `original`, `catppuccin_mocha`, `cyberpunk_neon`, `nordic_frost`, `dracula_pro`, `emerald_light`, `monochrome_minimal`.
-- **Persistencia en DB:** El tema elegido por un administrador se almacena en la tabla `app_settings` (clave `active_theme`).
-- **Prioridad:** El tema guardado en SQLite invalida y reemplaza la configuración por defecto de la variable de entorno `HW_THEME`.
+- **Persistencia en DB:** El tema elegido por un administrador se almacena en la tabla `app_settings` (clave `active_theme`), siendo la base de datos la única fuente de verdad.
 
 ### 2.5 Sistema Centralizado de Errores y Diagnóstico
 - **Ruta Backend:** `POST /api/log-client-error` / `GET /api/error-logs`.

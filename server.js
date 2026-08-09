@@ -164,12 +164,11 @@ db.exec(`
   );
 `);
 
-// Inicializar el tema en app_settings usando .env si no fue configurado
+// Inicializar el tema en SQLite (app_settings) como única fuente de verdad
 const initTheme = () => {
-  const defaultTheme = (processEnv.HW_THEME || processEnv.THEME || 'original').toLowerCase().trim();
   const existing = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
   if (!existing) {
-    db.prepare("INSERT INTO app_settings (key, value) VALUES ('active_theme', ?)").run(defaultTheme);
+    db.prepare("INSERT INTO app_settings (key, value) VALUES ('active_theme', ?)").run('original');
   }
 };
 
@@ -577,7 +576,7 @@ const THEMES = {
       // -1. CONSULTA DE TEMA DINÁMICO DESDE SQLITE APP_SETTINGS
       if (req.url === '/api/theme' && req.method === 'GET') {
         const row = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
-        const themeKey = (row ? row.value : process.env.THEME || 'original').toLowerCase().trim();
+        const themeKey = (row ? row.value : 'original').toLowerCase().trim();
         const activeTheme = THEMES[themeKey] || THEMES.original;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });

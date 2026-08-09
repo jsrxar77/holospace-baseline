@@ -97,7 +97,7 @@ module.exports = function handleCoreRoutes(req, res, db, data, currentUser, proc
   // 1. CONSULTA DE TEMA DINÁMICO DE PLATAFORMA (GET /api/theme)
   if (url === '/api/theme' && method === 'GET') {
     const row = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
-    const themeKey = (row ? row.value : processEnv.HW_THEME || processEnv.THEME || 'original').toLowerCase().trim();
+    const themeKey = (row ? row.value : 'original').toLowerCase().trim();
     const activeTheme = THEMES[themeKey] || THEMES.original;
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
