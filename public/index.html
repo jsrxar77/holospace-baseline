@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhoneWare Board</title>
+  <title>HoloWare Baseline</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
@@ -456,6 +456,128 @@
     .invoice-table th {
       color: var(--text-muted);
     }
+    /* Platform Panel - Super Admin */
+    .module-card {
+      background: linear-gradient(135deg, #161B22, #0F131A);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .module-card.active-module {
+      border-color: var(--emerald);
+      background: linear-gradient(135deg, rgba(0,230,118,0.06), #0F131A);
+    }
+
+    .module-card.inactive-module {
+      border-color: var(--card-border);
+      opacity: 0.7;
+    }
+
+    .module-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .module-name {
+      font-size: 20px;
+      font-weight: 900;
+      color: #FFF;
+    }
+
+    .module-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 20px;
+    }
+
+    .module-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background-color: #21262D;
+      border-radius: 28px;
+      transition: 0.3s;
+      border: 1px solid var(--card-border);
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: var(--text-muted);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background-color: rgba(0, 230, 118, 0.2);
+      border-color: var(--emerald);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+      background-color: var(--emerald);
+      transform: translateX(28px);
+    }
+
+    .superadmin-badge {
+      background: linear-gradient(135deg, #7C3AED, #4F46E5);
+      color: #FFF;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .platform-audit-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .platform-audit-row:last-child {
+      border-bottom: none;
+    }
+
+    .audit-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -468,6 +590,7 @@
       <button class="nav-tab active" id="tabKanban" onclick="switchTab('kanban')">Tablero Kanban</button>
       <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">Usuarios</button>
       <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')">Explorador de Pedidos</button>
+      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">🏛️ Plataforma</button>
     </div>
 
     <div class="user-profile">
@@ -617,6 +740,54 @@
             </thead>
             <tbody id="ordersExplorerGrid"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+    <!-- 4. PLATFORM ADMIN VIEW (SUPERADMIN ONLY) -->
+    <div id="viewPlatform" class="view-panel hidden">
+      <div class="actions-bar" style="margin-bottom: 8px;">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 12px;">
+            🏛️ Plataforma HoloWare
+            <span class="superadmin-badge">SUPER ADMIN</span>
+          </h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Gestión de módulos y auditoría de plataforma</p>
+        </div>
+      </div>
+
+      <!-- Modules Section -->
+      <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">📦 Módulos del Sistema</h3>
+        <div id="modulesGrid" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="color: var(--text-muted); font-size: 14px;">Cargando módulos...</div>
+        </div>
+      </div>
+
+      <!-- Platform Audit Log -->
+      <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">📋 Auditoría de Plataforma</h3>
+        <div id="platformAuditLog" style="max-height: 320px; overflow-y: auto;">
+          <div style="color: var(--text-muted); font-size: 14px;">Cargando eventos...</div>
+        </div>
+      </div>
+
+      <!-- Platform Info Cards -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+        <div style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(79,70,229,0.08)); border: 1px solid #7C3AED; border-radius: 20px; padding: 20px;">
+          <div style="font-size: 13px; color: #A78BFA; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Super Admin</div>
+          <div id="platformInfoAdmin" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
+        </div>
+        <div style="background: linear-gradient(135deg, rgba(0,230,118,0.08), rgba(0,230,118,0.02)); border: 1px solid rgba(0,230,118,0.3); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 13px; color: var(--emerald); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Módulos Activos</div>
+          <div id="platformInfoActiveModules" style="font-size: 32px; font-weight: 900; margin-top: 4px; color: var(--emerald);">—</div>
+        </div>
+        <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Tema Activo</div>
+          <div id="platformInfoTheme" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
+        </div>
+        <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB SQLite</div>
+          <div style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">./data/holoware.db</div>
         </div>
       </div>
     </div>

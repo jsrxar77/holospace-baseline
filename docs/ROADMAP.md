@@ -71,6 +71,10 @@ holoware-baseline/
 | C-14 | Tabla `platform_audit_logs` en DB | `server.js` — core platform event auditing |
 | C-15 | Soporte rol `SUPERADMIN` + seed user | `server.js` — `superadmin@holoware.io` / `HoloWare2026!` |
 | C-16 | Crear `docs/ROADMAP.md` | Este archivo |
+| C-17 | P-05: Prefijar rutas ScanBan → `/api/scanban/...` | `server.js` — 21 rutas migradas |
+| C-18 | P-06: Actualizar `public/app.js` | Rutas `/api/scanban/...` + localStorage `pw_` → `hw_` |
+| C-19 | P-07: Actualizar app móvil `modules/scanban/src/` | `HomeScreen.tsx`, `fileWorkflowService.ts` |
+| C-20 | P-08: Endpoint `GET/POST /api/modules` | SUPERADMIN toggle + log en `platform_audit_logs` |
 
 ---
 
@@ -78,11 +82,7 @@ holoware-baseline/
 
 | # | Ítem | Dónde | Descripción |
 |---|---|---|---|
-| P-05 | **Prefijar rutas ScanBan** | `server.js` (21 rutas) | `/api/kanban` → `/api/scanban/kanban`, etc. |
-| P-06 | **Actualizar `public/app.js`** | `public/app.js` | Nuevas rutas `/api/scanban/...` + prefijo `hw_` en localStorage |
-| P-07 | **Actualizar app móvil** | `modules/scanban/src/` | Nuevas rutas `/api/scanban/...` en stores/services |
-| P-08 | **Endpoint `GET/POST /api/modules`** | `server.js` | CRUD de módulos (activar/desactivar por Super Admin) |
-| P-09 | **Panel Super Admin (UI)** | `public/index.html` + `app.js` | Pestaña de gestión de módulos (activar/desactivar) |
+| P-09 | **Panel Super Admin (UI)** | `public/index.html` + `app.js` | Pestaña de gestión de módulos (activar/desactivar) visible solo para SUPERADMIN |
 | P-10 | **Separar `core.js` de `scanban.js`** | `modules/core/public/` y `modules/scanban/public/` | Partir el `app.js` monolítico en dos archivos por módulo |
 
 ---

@@ -682,6 +682,19 @@ const THEMES = {
         return;
       }
 
+      // CORE: PLATFORM AUDIT LOGS — GET lista eventos de auditoría de plataforma (solo SUPERADMIN)
+      if (req.url === '/api/platform-audit' && req.method === 'GET') {
+        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Acceso denegado.' }));
+          return;
+        }
+        const logs = db.prepare('SELECT id, timestamp, userEmail, action, details FROM platform_audit_logs ORDER BY id DESC LIMIT 100').all();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, logs }));
+        return;
+      }
+
       // 1. ENDPOINT DE AUTENTICACIÓN / LOGIN
       if (req.url === '/api/login' && req.method === 'POST') {
         const { email, password } = data;
