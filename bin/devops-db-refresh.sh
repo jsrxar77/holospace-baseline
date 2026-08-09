@@ -14,7 +14,7 @@ echo "📂 1. Asegurando carpeta ./orders/ para depósitos de comprobantes..."
 mkdir -p "$ORDERS_DIR"
 touch "$ORDERS_DIR/.gitkeep"
 
-echo "👤 2. Conservando únicamente usuario Administrador por defecto (admin@drinklovers.com)..."
+echo "👤 2. Conservando únicamente usuario Administrador por defecto (admin@drinklovers.com.ar)..."
 
 echo "🔄 3. Liberando puerto 3001 y reseteando la Base de Datos..."
 npx -y kill-port 3001 2>/dev/null || true

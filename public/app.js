@@ -246,7 +246,7 @@ async function markOrderReady(orderNumber, event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
       })
     });
     const data = await res.json();
@@ -267,7 +267,7 @@ async function markOrderBacklog(orderNumber, event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
       })
     });
     const data = await res.json();
@@ -436,7 +436,7 @@ async function handleFileUpload(event) {
         body: JSON.stringify({
           fileName: file.name,
           pdfBase64: base64,
-          userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+          userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
         })
       });
       const data = await res.json();
@@ -470,7 +470,7 @@ async function deleteBacklogOrder(orderNumber, event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com'
+        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
       })
     });
     const data = await res.json();

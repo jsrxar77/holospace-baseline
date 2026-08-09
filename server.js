@@ -6,7 +6,7 @@ const pdfjsLib = require('pdfjs-dist');
 // Leer variables de entorno desde .env
 let processEnv = {
   PORT: process.env.PORT || '3001',
-  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@drinklovers.com',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@drinklovers.com.ar',
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'drinklovers2026!'
 };
 
@@ -177,7 +177,7 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 
 
 // Helper para registrar un comprobante en la Base de Datos con su PDF Blob
-const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com') => {
+const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '', userEmail = 'admin@drinklovers.com.ar') => {
   let clientName = 'DISTRIBUIDORA BEBIDAS S.A.';
   let items = [
     { code: '7798135764531', description: 'Lunfa Torino Bianco 750 ml', quantityRequired: 3, quantityScanned: 0, unitPrice: 4250.0, status: 'PENDING' }
@@ -227,8 +227,8 @@ const registerOrderInDb = (orderNumber, pdfFileName, pdfText = '', pdfBase64 = '
 // Base de usuarios predeterminada (Email como ID Único de Usuario)
 let users = [
   {
-    id: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase(),
-    email: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase(),
+    id: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase(),
+    email: (processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase(),
     password: processEnv.ADMIN_PASSWORD || 'drinklovers2026!',
     name: 'Administrador Principal',
     role: 'ADMIN',
@@ -545,7 +545,7 @@ const server = http.createServer((req, res) => {
       // 3.1 PASAR COMPROBANTE DE BACKLOG A LISTO (READY) EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-ready' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
-        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase();
+        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = users.find((u) => u.email.toLowerCase() === email);
 
         if (callerUser && callerUser.role !== 'ADMIN') {
@@ -576,7 +576,7 @@ const server = http.createServer((req, res) => {
       // 3.2 DEVOLVER COMPROBANTE DE LISTO (READY) A BACKLOG EXCLUSIVO POR ADMIN
       if (req.url === '/api/mark-backlog' && req.method === 'POST') {
         const { orderNumber, userEmail } = data;
-        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com').toLowerCase();
+        const email = (userEmail || processEnv.ADMIN_EMAIL || 'admin@drinklovers.com.ar').toLowerCase();
         const callerUser = users.find((u) => u.email.toLowerCase() === email);
 
         if (callerUser && callerUser.role !== 'ADMIN') {

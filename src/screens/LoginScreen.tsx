@@ -91,7 +91,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
         <View style={styles.hintBox}>
           <Text style={styles.hintText}>
-            💡 Admin por defecto: admin@drinklovers.com / drinklovers2026!
+            💡 Admin por defecto: admin@drinklovers.com.ar / drinklovers2026!
           </Text>
         </View>
       </View>

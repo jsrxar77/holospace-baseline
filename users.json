@@ -1,26 +1,26 @@
 [
   {
-    "id": "u-admin-1",
-    "email": "admin@drinklovers.com",
+    "id": "admin@drinklovers.com.ar",
+    "email": "admin@drinklovers.com.ar",
     "password": "drinklovers2026!",
     "name": "Administrador Principal",
-    "role": "ADMIN"
+    "role": "ADMIN",
+    "active": true
   },
   {
-    "id": "u-op-1",
+    "id": "javier@drinklovers.com",
     "email": "javier@drinklovers.com",
     "password": "op123456",
     "name": "Javier Operario",
     "role": "OPERATOR",
-    "operatorId": "JAVIER-DEV82",
-    "active": false
+    "active": true
   },
   {
-    "id": "u-1786222650197",
+    "id": "jsrxar@gmail.com",
     "email": "jsrxar@gmail.com",
     "password": "Asadito21!",
     "name": "Javier Rizzo",
     "role": "OPERATOR",
-    "operatorId": "JAVIER-37"
+    "active": true
   }
 ]
