@@ -755,6 +755,17 @@ const server = http.createServer(async (req, res) => {
 
         // Parseo real del contenido del PDF
         const parsed = await parsePdfBuffer(buffer, cleanName);
+
+        if (!parsed.items || parsed.items.length === 0) {
+          console.log(`[PARSE ERROR] No se pudieron extraer ítems del PDF "${cleanName}"`);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: false,
+            error: `No se pudieron extraer productos ni ítems válidos del comprobante "${cleanName}". Asegúrate de subír un PDF de factura o comprobante que contenga texto de tabla con código, cantidad y precio.`
+          }));
+          return;
+        }
+
         const now = new Date().toLocaleString('es-AR');
         const totalItemsRequired = parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0);
 
