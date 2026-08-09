@@ -34,8 +34,8 @@ cat << 'EOF' > "$USERS_FILE"
 ]
 EOF
 
-# 2. Intentar reseteo en vivo vía API HTTP (sin apagar el puerto 3001)
-RESET_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:3001/api/reset-db 2>/dev/null || echo "000")
+# 2. Intentar reseteo en vivo vía API HTTP usando 127.0.0.1 (sin apagar el puerto 3001)
+RESET_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/reset-db 2>/dev/null || echo "000")
 
 if [ "$RESET_HTTP_CODE" = "200" ]; then
   echo "⚡ Reseteo en VIVO realizado con éxito vía API (Puerto 3001 se mantiene 100% ONLINE)."
@@ -48,7 +48,7 @@ fi
 echo ""
 echo "✅ ¡BASE DE DATOS SQLITE Y USUARIOS RESETEADOS CORRECTAMENTE!"
 echo "📍 Archivo de DB: ./data/phoneware.db"
-echo "🌐 Puerto 3001: Mantenido ONLINE sin caídas"
-echo "1. Administrador Principal (admin@drinklovers.com.ar)"
-echo "2. Javier Rizzo (jsrxar@gmail.com)"
+echo "👥 Usuarios Autorizados Creados:"
+echo "   1. Administrador Principal (admin@drinklovers.com.ar / drinklovers2026!)"
+echo "   2. Javier Rizzo (jsrxar@gmail.com / Asadito21!)"
 echo "======================================================"
