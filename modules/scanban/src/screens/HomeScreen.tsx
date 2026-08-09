@@ -172,7 +172,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           {readyOrders.length === 0 && !hasActiveDoingOrder && (
             <View style={{ padding: 16, alignItems: 'center' }}>
               <Text style={{ color: '#8B949E', fontSize: 13, textAlign: 'center' }}>
-                ⏳ Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde PhoneWare Board.
+                ⏳ Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde HoloWare ScanBan Board.
               </Text>
             </View>
           )}

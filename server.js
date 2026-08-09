@@ -170,20 +170,22 @@ const initTheme = () => {
   }
 };
 
-// Inicializar el registro de módulos con ScanBan pre-cargado (activo)
+// Inicializar el registro oficial de módulos del sistema
 const initModules = () => {
   const stmt = db.prepare(`
-    INSERT OR IGNORE INTO modules (key, name, description, active, activatedBy, activatedAt)
+    INSERT OR REPLACE INTO modules (key, name, description, active, activatedBy, activatedAt)
     VALUES (?, ?, ?, ?, ?, ?)
   `);
-  stmt.run(
-    'scanban',
-    'ScanBan',
-    'Módulo de logística: Kanban de pedidos, parseo de PDF y scanner móvil EAN-13.',
-    1,
-    'system',
-    new Date().toISOString()
-  );
+  const now = new Date().toISOString();
+
+  // 1. HoloWare Core (Web - Plataforma Base - SUPERADMIN)
+  stmt.run('core', 'HoloWare Core', 'Plataforma base: Gestión de usuarios, gobierno de módulos, auditoría y motor de temas.', 1, 'system', now);
+
+  // 2. HoloWare ScanBan Board (Web - Kanban & Facturación - ADMIN)
+  stmt.run('scanban-board', 'HoloWare ScanBan Board', 'Módulo Web de logística: Tablero Kanban 4 columnas, parseo PDF y explorador.', 1, 'system', now);
+
+  // 3. HoloWare ScanBan Scanner (Mobile - Escáner EAN-13 - OPERATOR)
+  stmt.run('scanban-scanner', 'HoloWare ScanBan Scanner', 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13 y auditoría de despacho.', 1, 'system', now);
 };
 
 // Inicialización de Usuarios: SuperAdmin desde .env + Usuarios de Semilla para Desarrollo

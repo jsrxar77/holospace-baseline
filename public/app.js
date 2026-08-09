@@ -127,35 +127,74 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Apply role-based UI visibility (show/hide SUPERADMIN-only elements)
+// Apply strict domain/module isolation based on role
 function applyRoleVisibility() {
-  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
-  const platformTab = document.getElementById('tabPlatform');
-  if (platformTab) platformTab.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+  if (!currentUser) return;
+  const isSuperAdmin = currentUser.role === 'SUPERADMIN';
 
-  // Theme selector is EXCLUSIVE to SUPERADMIN
+  const tabPlatform = document.getElementById('tabPlatform');
+  const tabUsers = document.getElementById('tabUsers');
+  const tabKanban = document.getElementById('tabKanban');
+  const tabOrders = document.getElementById('tabOrders');
   const themeContainer = document.getElementById('headerThemeContainer');
-  if (themeContainer) themeContainer.style.display = isSuperAdmin ? 'flex' : 'none';
+  const badge = document.getElementById('activeContextBadge');
+  const userBadge = document.getElementById('userBadge');
 
-  // If user is not SuperAdmin and is currently on viewPlatform, redirect to kanban
-  const platformView = document.getElementById('viewPlatform');
-  if (!isSuperAdmin && platformView && !platformView.classList.contains('hidden')) {
-    switchTab('kanban');
-  }
+  if (isSuperAdmin) {
+    // SUPERADMIN: Access strictly to HoloWare Core (Plataforma & Usuarios)
+    if (tabPlatform) tabPlatform.style.display = 'inline-flex';
+    if (tabUsers) tabUsers.style.display = 'inline-flex';
+    if (tabKanban) tabKanban.style.display = 'none';
+    if (tabOrders) tabOrders.style.display = 'none';
+    if (themeContainer) themeContainer.style.display = 'flex';
 
-  // Style the userBadge differently for SUPERADMIN vs ADMIN vs OPERATOR
-  const badge = document.getElementById('userBadge');
-  if (badge) {
-    if (isSuperAdmin) {
-      badge.innerText = `⚡ SUPERADMIN: ${currentUser.email}`;
-      badge.style.background = 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2))';
+    if (badge) {
+      badge.innerText = '🏛️ HoloWare Core';
       badge.style.color = '#A78BFA';
+      badge.style.background = 'rgba(124, 58, 237, 0.15)';
       badge.style.borderColor = '#7C3AED';
-    } else {
-      badge.innerText = `${currentUser.role}: ${currentUser.email}`;
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+    }
+
+    if (userBadge) {
+      userBadge.innerText = `⚡ SUPERADMIN: ${currentUser.email}`;
+      userBadge.style.background = 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2))';
+      userBadge.style.color = '#A78BFA';
+      userBadge.style.borderColor = '#7C3AED';
+    }
+
+    const platformView = document.getElementById('viewPlatform');
+    const usersView = document.getElementById('viewUsers');
+    if ((!platformView || platformView.classList.contains('hidden')) &&
+        (!usersView || usersView.classList.contains('hidden'))) {
+      switchTab('platform');
+    }
+  } else {
+    // ADMIN: Access strictly to HoloWare ScanBan Board (Kanban & Pedidos)
+    if (tabPlatform) tabPlatform.style.display = 'none';
+    if (tabUsers) tabUsers.style.display = 'none';
+    if (tabKanban) tabKanban.style.display = 'inline-flex';
+    if (tabOrders) tabOrders.style.display = 'inline-flex';
+    if (themeContainer) themeContainer.style.display = 'none';
+
+    if (badge) {
+      badge.innerText = '📦 ScanBan Board';
       badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
+    }
+
+    if (userBadge) {
+      userBadge.innerText = `${currentUser.role}: ${currentUser.email}`;
+      userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
+      userBadge.style.color = 'var(--emerald)';
+      userBadge.style.borderColor = 'var(--emerald)';
+    }
+
+    const kanbanView = document.getElementById('viewKanban');
+    const ordersView = document.getElementById('viewOrders');
+    if ((!kanbanView || kanbanView.classList.contains('hidden')) &&
+        (!ordersView || ordersView.classList.contains('hidden'))) {
+      switchTab('kanban');
     }
   }
 }
@@ -174,30 +213,33 @@ function switchTab(tabName) {
   const badge = document.getElementById('activeContextBadge');
 
   if (tabName === 'kanban') {
-    document.getElementById('tabKanban').classList.add('active');
+    const tab = document.getElementById('tabKanban');
+    if (tab) tab.classList.add('active');
     document.getElementById('viewKanban').classList.remove('hidden');
     if (badge) {
-      badge.innerText = '📦 Módulo: ScanBan';
+      badge.innerText = '📦 ScanBan Board';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
     }
     loadKanbanData();
   } else if (tabName === 'orders') {
-    document.getElementById('tabOrders').classList.add('active');
+    const tab = document.getElementById('tabOrders');
+    if (tab) tab.classList.add('active');
     document.getElementById('viewOrders').classList.remove('hidden');
     if (badge) {
-      badge.innerText = '📦 Módulo: ScanBan';
+      badge.innerText = '📦 ScanBan Board';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
     }
     fetchExplorerOrders();
   } else if (tabName === 'users') {
-    document.getElementById('tabUsers').classList.add('active');
+    const tab = document.getElementById('tabUsers');
+    if (tab) tab.classList.add('active');
     document.getElementById('viewUsers').classList.remove('hidden');
     if (badge) {
-      badge.innerText = '🏛️ Core: Usuarios';
+      badge.innerText = '🏛️ HoloWare Core';
       badge.style.color = '#3B82F6';
       badge.style.background = 'rgba(59, 130, 246, 0.15)';
       badge.style.borderColor = '#3B82F6';
@@ -208,7 +250,7 @@ function switchTab(tabName) {
     if (platformTab) platformTab.classList.add('active');
     document.getElementById('viewPlatform').classList.remove('hidden');
     if (badge) {
-      badge.innerText = '🏛️ Core: Plataforma';
+      badge.innerText = '🏛️ HoloWare Core';
       badge.style.color = '#A78BFA';
       badge.style.background = 'rgba(124, 58, 237, 0.15)';
       badge.style.borderColor = '#7C3AED';

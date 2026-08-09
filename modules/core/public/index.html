@@ -586,22 +586,19 @@
   <header>
     <div class="brand-title">
       HOLOWARE <span>BASELINE</span>
-      <span id="activeContextBadge" style="font-size: 13px; color: var(--emerald); margin-left: 10px; font-weight: 800; background: rgba(0,230,118,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald); transition: all 0.2s;">
-        📦 Módulo: ScanBan
+      <span id="activeContextBadge" style="font-size: 13px; color: #A78BFA; margin-left: 10px; font-weight: 800; background: rgba(124,58,237,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid #7C3AED; transition: all 0.2s;">
+        🏛️ HoloWare Core
       </span>
     </div>
     
     <div class="nav-tabs">
-      <!-- Módulo ScanBan -->
-      <button class="nav-tab active" id="tabKanban" onclick="switchTab('kanban')">📋 Tablero Kanban</button>
-      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')">🔍 Explorador de Pedidos</button>
-      
-      <!-- Separador Core -->
-      <span style="color: var(--card-border); font-size: 18px; margin: 0 4px;">|</span>
-      
-      <!-- Servicios Core Plataforma -->
-      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">👥 Usuarios Core</button>
+      <!-- HoloWare Core (SUPERADMIN) -->
       <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">🏛️ Plataforma</button>
+      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">👥 Usuarios Core</button>
+      
+      <!-- HoloWare ScanBan Board (ADMIN) -->
+      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">📋 Tablero Kanban</button>
+      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')" style="display:none;">🔍 Explorador de Pedidos</button>
     </div>
 
     <div class="user-profile">

@@ -2,36 +2,52 @@
 
 > **Plataforma contenedora:** HoloWare Baseline — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md).
 
-Las funcionalidades de la plataforma HoloWare Baseline se encuentran organizadas en módulos independientes:
+El sistema se organiza en 3 módulos oficiales:
 
 ---
 
-## 🏛️ Módulo Core (Plataforma Base)
+## 🏛️ 1. HoloWare Core (Web)
 
-- **Autenticación JWT:** Inicio de sesión y tokens `hw_token`.
-- **RBAC:** Roles `SUPERADMIN`, `ADMIN`, `OPERATOR`.
-- **Gestión de Usuarios:** Alta, modificación y borrado lógico (`active = 0`).
-- **Panel Super Admin:** Activación y desactivación dinámica de módulos desde la interfaz web.
-- **Motor de Temas:** 7 temas visuales con persistencia en SQLite (`app_settings`).
-- **Auditoría de Plataforma:** Registro inmutable en `platform_audit_logs`.
+- **Ámbito:** Gobierno de Plataforma (Exclusivo `SUPERADMIN`).
+- **Funcionalidades:**
+  - Autenticación JWT (`hw_token`).
+  - ABM de Usuarios Core y roles.
+  - Registro y activación/desactivación dinámica de módulos (`GET/POST /api/modules`).
+  - Motor de Temas Visuales Globales (`GET/POST /api/theme`).
+  - Auditoría de Plataforma (`platform_audit_logs`).
 
-👉 **Especificación completa del Core:** Ver [docs/modules/CORE.md](./modules/CORE.md).
-
----
-
-## 📦 Módulo ScanBan (Logística & Escáner Móvil)
-
-- **Tablero Kanban Web:** 4 columnas (`BACKLOG`, `LISTO`, `EN PROCESO`, `COMPLETADO`).
-- **Parser PDF:** Ingesta por coordenadas Y y guardado en SQLite Blob.
-- **ScanBan Scanner (App Móvil):** App React Native / Expo con escáner de códigos de barra EAN-13 y sincronización en tiempo real.
-- **Explorador de Pedidos:** Buscador universal, multi-selección por operarios y filtros por fecha/monto.
-
-👉 **Especificación completa de ScanBan:** Ver [docs/modules/SCANBAN.md](./modules/SCANBAN.md).
+👉 **Especificación completa:** Ver [docs/modules/CORE.md](./modules/CORE.md).
 
 ---
 
-## 📋 Módulo StockFlow (Ejemplo / Plantilla Módulo 2)
+## 📦 2. HoloWare ScanBan Board (Web)
 
-- **Control de Inventario:** Plantilla de módulo funcional secundario.
+- **Ámbito:** Logística y Facturación (Exclusivo `ADMIN`).
+- **Funcionalidades:**
+  - Tablero Kanban 4 columnas (`BACKLOG`, `LISTO`, `EN PROCESO`, `COMPLETADO`).
+  - Ingesta y parser de Facturas PDF por coordenadas Y.
+  - Almacenamiento Blob de comprobantes.
+  - Explorador Inteligente de Pedidos.
 
-👉 **Especificación completa de StockFlow:** Ver [docs/modules/STOCKFLOW.md](./modules/STOCKFLOW.md).
+👉 **Especificación completa:** Ver [docs/modules/SCANBAN_BOARD.md](./modules/SCANBAN_BOARD.md).
+
+---
+
+## 📱 3. HoloWare ScanBan Scanner (Mobile)
+
+- **Ámbito:** Auditoría Operativa de Depósito (Exclusivo `OPERATOR`).
+- **Funcionalidades:**
+  - App móvil Expo Go / React Native.
+  - Escáner de códigos de barra EAN-13.
+  - Asignación 1 a 1 de pedidos.
+  - Persistencia SQLite local y estampa digital de despacho.
+
+👉 **Especificación completa:** Ver [docs/modules/SCANBAN_SCANNER.md](./modules/SCANBAN_SCANNER.md).
+
+---
+
+## 📋 4. HoloWare StockFlow (Plantilla Futura)
+
+- **Ámbito:** Módulo de Control de Inventario (Ejemplo de 2º Módulo).
+
+👉 **Especificación completa:** Ver [docs/modules/STOCKFLOW.md](./modules/STOCKFLOW.md).
