@@ -582,20 +582,32 @@
 </head>
 <body>
 
-  <!-- Header -->
+  <!-- Header (HoloWare Baseline Core Shell) -->
   <header>
-    <div class="brand-title">HOLOWARE <span>BASELINE</span> <span style="font-size: 13px; color: var(--emerald); margin-left: 10px; font-weight: 800; background: rgba(0,230,118,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald);">Módulo: ScanBan</span></div>
+    <div class="brand-title">
+      HOLOWARE <span>BASELINE</span>
+      <span id="activeContextBadge" style="font-size: 13px; color: var(--emerald); margin-left: 10px; font-weight: 800; background: rgba(0,230,118,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald); transition: all 0.2s;">
+        📦 Módulo: ScanBan
+      </span>
+    </div>
     
     <div class="nav-tabs">
-      <button class="nav-tab active" id="tabKanban" onclick="switchTab('kanban')">Tablero Kanban</button>
-      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">Usuarios</button>
-      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')">Explorador de Pedidos</button>
+      <!-- Módulo ScanBan -->
+      <button class="nav-tab active" id="tabKanban" onclick="switchTab('kanban')">📋 Tablero Kanban</button>
+      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')">🔍 Explorador de Pedidos</button>
+      
+      <!-- Separador Core -->
+      <span style="color: var(--card-border); font-size: 18px; margin: 0 4px;">|</span>
+      
+      <!-- Servicios Core Plataforma -->
+      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')">👥 Usuarios Core</button>
       <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">🏛️ Plataforma</button>
     </div>
 
     <div class="user-profile">
-      <!-- Selector de Tema Visual (Persistente en SQLite y Sync en Tiempo Real) -->
-      <div id="headerThemeContainer">
+      <!-- Core Theme Engine Selector -->
+      <div id="headerThemeContainer" style="display: flex; align-items: center; gap: 6px;">
+        <span style="font-size: 12px; font-weight: 800; color: var(--text-muted);">🎨 Tema:</span>
         <select id="headerThemeSelect" class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeAppThemeSubmit(this.value)">
           <option value="original">Original Dark Glassmorphism</option>
           <option value="catppuccin_mocha">Catppuccin Mocha</option>
@@ -607,9 +619,9 @@
         </select>
       </div>
 
-      <button class="btn-secondary" onclick="openQrModal()">Conectar Celular (QR)</button>
-      <div id="userBadge" class="badge-role">ADMIN: admin@drinklovers.com.ar</div>
-      <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
+      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="openQrModal()">📱 Conectar Celular</button>
+      <div id="userBadge" class="badge-role">ADMIN</div>
+      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="logout()">Cerrar Sesión</button>
     </div>
   </header>
 

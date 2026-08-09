@@ -142,7 +142,7 @@ function applyRoleVisibility() {
   }
 }
 
-// NAVEGACIÓN POR PESTAÑAS
+// NAVEGACIÓN POR PESTAÑAS (MÓDULOS VS CORE)
 function switchTab(tabName) {
   ['tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform'].forEach(id => {
     const el = document.getElementById(id);
@@ -153,22 +153,48 @@ function switchTab(tabName) {
     if (el) el.classList.add('hidden');
   });
 
+  const badge = document.getElementById('activeContextBadge');
+
   if (tabName === 'kanban') {
     document.getElementById('tabKanban').classList.add('active');
     document.getElementById('viewKanban').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '📦 Módulo: ScanBan';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
+    }
     loadKanbanData();
-  } else if (tabName === 'users') {
-    document.getElementById('tabUsers').classList.add('active');
-    document.getElementById('viewUsers').classList.remove('hidden');
-    fetchUsers();
   } else if (tabName === 'orders') {
     document.getElementById('tabOrders').classList.add('active');
     document.getElementById('viewOrders').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '📦 Módulo: ScanBan';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
+    }
     fetchExplorerOrders();
+  } else if (tabName === 'users') {
+    document.getElementById('tabUsers').classList.add('active');
+    document.getElementById('viewUsers').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '🏛️ Core: Usuarios';
+      badge.style.color = '#3B82F6';
+      badge.style.background = 'rgba(59, 130, 246, 0.15)';
+      badge.style.borderColor = '#3B82F6';
+    }
+    fetchUsers();
   } else if (tabName === 'platform') {
     const platformTab = document.getElementById('tabPlatform');
     if (platformTab) platformTab.classList.add('active');
     document.getElementById('viewPlatform').classList.remove('hidden');
+    if (badge) {
+      badge.innerText = '🏛️ Core: Plataforma';
+      badge.style.color = '#A78BFA';
+      badge.style.background = 'rgba(124, 58, 237, 0.15)';
+      badge.style.borderColor = '#7C3AED';
+    }
     loadPlatformPanel();
   }
 }
