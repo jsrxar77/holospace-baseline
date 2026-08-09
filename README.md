@@ -1,25 +1,33 @@
 # 🌐 HoloWare Baseline
 
-Plataforma modular empresarial para gestión operativa en depósitos y centros de distribución. Contiene múltiples módulos que comparten una base tecnológica común (auth, usuarios, temas, DB).
+> **Plataforma Contenedora Multi-Módulo Enterprise para Gestión Operativa y Logística.**
 
-**Módulo activo:** ScanBan — Kanban de pedidos + Parser PDF + Escáner móvil EAN-13.
+HoloWare Baseline es una infraestructura modular que permite ejecutar múltiples aplicaciones de negocio (como **ScanBan** o **StockFlow**) compartiendo autenticación unificada, esquema relacional de usuarios en SQLite, motor de temas dinámicos y un panel de gestión para el **Super Administrador**.
 
 ---
 
-## 🚀 Levantar los Servicios
+## 🔑 Credenciales por Defecto (Entorno de Desarrollo)
 
-### 1. Servidor Backend + Panel Web Admin
+| Rol | Email | Contraseña | Permisos |
+|---|---|---|---|
+| **SUPERADMIN** | `superadmin@holoware.io` | `HoloWare2026!` | Acceso total: Gestión de módulos, auditoría de plataforma y usuarios. |
+| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | Gestión de módulos activos (Kanban, validación de PDFs, ABM usuarios). |
+| **OPERATOR** | `jsrxar@gmail.com` | `Asadito21!` | Acceso operativo a escáner móvil (auditoría de stock EAN-13). |
+
+---
+
+## 🚀 Inicio Rápido
+
+### 1. Servidor Backend + Web Admin Panel
 
 ```bash
 node server.js
 ```
 
-- **Panel Web**: `http://localhost:3001`
-- **Desde celular**: `http://<tu-ip-local>:3001`
-
-#### 🔑 Credenciales por defecto:
-- **Admin**: `admin@drinklovers.com.ar` / `drinklovers2026!`
-- **Operario**: `jsrxar@gmail.com` / `Asadito21!`
+- **Panel Web Admin:** `http://localhost:3001`
+- **Acceso en Red Local (Móvil):** `http://<TU-IP-LOCAL>:3001`
+- **Base de Datos SQLite:** `./data/holoware.db` (auto-creada y auto-migrada)
+- **Log de Errores:** `./data/errors.log`
 
 ### 2. App Móvil ScanBan Scanner (Expo Go)
 
@@ -27,29 +35,77 @@ node server.js
 npx expo start -c
 ```
 
-Escanea el QR con **Expo Go** (Android) o la Cámara (iOS).
+1. Descarga **Expo Go** en tu dispositivo Android o iOS.
+2. Escanea el código QR desde la terminal o presiona el botón **"Conectar Celular (QR)"** en el header del panel web.
+3. Inicia sesión con el email de operario (`jsrxar@gmail.com`).
 
 ---
 
-## 🗂 Estructura del Proyecto
+## 📖 Guía de Uso del Sistema Web
+
+### 1. Panel de Plataforma (`🏛️ Plataforma` — Solo SUPERADMIN)
+- **Gestión de Módulos:** Enciende o apaga módulos (ScanBan, StockFlow) mediante switches interactivos en tiempo real.
+- **Auditoría de Plataforma:** Historial inmutable de cambios de tema, accesos y estado de módulos.
+
+### 2. Tablero Kanban de Logística (`ScanBan`)
+- **Subir Factura PDF:** Arrastra un comprobante PDF a la zona de carga para registrar el pedido en `BACKLOG`.
+- **Validar Pedido:** Presiona `✓ Pasar a Listo` en las tarjetas de Backlog o desde el visor de factura para habilitar la orden a los celulares operarios.
+- **En Proceso:** Agrupado dinámicamente por operario asignado en acordeones interactivos colapsables.
+- **Completado:** Historial de expediciones al 100% con estampa digital inmutable.
+
+### 3. Selector de Tema Visual Global (Header)
+- Selector dropdown con **7 temas** (`Original Dark`, `Catppuccin Mocha`, `Cyberpunk Neon`, `Nordic Frost`, `Dracula Pro`, `Modern Light`, `Monochrome`).
+- **Persistente y Global:** El tema seleccionado se guarda en SQLite y se propaga automáticamente a todos los módulos web y móviles.
+
+### 4. Explorador de Pedidos (`🔍 Pedidos`)
+- Buscador universal instantáneo por pedido #, cliente, código EAN-13 o email de operario.
+- Filtros por estado, pills interactivas multi-operario y ordenamiento por fecha, monto o ítems.
+
+---
+
+## ⚙️ Operaciones DevOps y Mantenimiento
+
+### Reseteo en Vivo de Base de Datos (Sin apagar puerto 3001)
+
+```bash
+bash bin/devops-db-refresh.sh
+```
+O vía API: `POST /api/reset-db`
+
+---
+
+## 📂 Estructura del Proyecto
 
 ```
 holoware-baseline/
-├── docs/              ← Documentación de plataforma y módulos
-├── public/            ← Shell web (login, kanban, admin)
-├── modules/
-│   └── scanban/       ← Módulo ScanBan (src/, orders/)
-├── theme/             ← Paleta de colores y temas
-├── bin/               ← Scripts DevOps
+├── docs/                          ← Documentación general y por módulo
+│   ├── HOLOWARE_PLATFORM.md       ← Visión de plataforma contenedora
+│   ├── ARCHITECTURE.md            ← Arquitectura técnica general
+│   ├── MODULE_CREATION.md         ← Guía para desarrollar nuevos módulos
+│   ├── ROADMAP.md                 ← Estado de desarrollo y roadmap
+│   └── modules/                   ← Especificaciones por módulo (CORE, SCANBAN, STOCKFLOW)
+│
+├── modules/                       ← Código fuente de módulos aislados
+│   ├── core/                      ← Módulo Core (Auth, Usuarios, SuperAdmin, Temas, Audit)
+│   ├── scanban/                   ← Módulo ScanBan (Kanban, PDF Parser, App Móvil Expo)
+│   └── stockflow/                 ← Plantilla de 2º módulo de ejemplo
+│
+├── public/                        ← Entry point web estático (app.js + index.html)
 ├── data/
-│   └── holoware.db    ← Base de datos SQLite
-└── server.js          ← Servidor Express unificado
+│   └── holoware.db                ← Base de datos SQLite única
+├── server.js                      ← Servidor Node.js principal
+├── .env                           ← Variables de entorno (HW_PORT=3001, HW_THEME=original)
+└── README.md                      ← Este documento
 ```
 
 ---
 
-## 📚 Documentación
+## 📚 Documentación Detallada
 
-- [Visión de Plataforma](./docs/HOLOWARE_PLATFORM.md)
-- [Arquitectura Técnica](./docs/ARCHITECTURE.md)
-- [Funcionalidades](./docs/FEATURES.md)
+- 📘 [Visión de la Plataforma](./docs/HOLOWARE_PLATFORM.md)
+- 📐 [Arquitectura Técnica](./docs/ARCHITECTURE.md)
+- 🛠️ [Guía para Crear un Nuevo Módulo](./docs/MODULE_CREATION.md)
+- 🗺️ [Roadmap de la Plataforma](./docs/ROADMAP.md)
+- 🏛️ [Especificación Módulo Core](./docs/modules/CORE.md)
+- 📦 [Especificación Módulo ScanBan](./docs/modules/SCANBAN.md)
+- 📦 [Especificación Módulo StockFlow](./docs/modules/STOCKFLOW.md)
