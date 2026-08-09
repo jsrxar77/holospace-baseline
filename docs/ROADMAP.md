@@ -75,15 +75,14 @@ holoware-baseline/
 | C-18 | P-06: Actualizar `public/app.js` | Rutas `/api/scanban/...` + localStorage `pw_` → `hw_` |
 | C-19 | P-07: Actualizar app móvil `modules/scanban/src/` | `HomeScreen.tsx`, `fileWorkflowService.ts` |
 | C-20 | P-08: Endpoint `GET/POST /api/modules` | SUPERADMIN toggle + log en `platform_audit_logs` |
+| C-21 | P-09: Panel Super Admin (UI) | Pestaña `🏛️ Plataforma` (SUPERADMIN only) + gestión de módulos + logs |
+| C-22 | P-10: Modulos public JS (`core.js`, `scanban.js`) | `modules/core/public/core.js` y `modules/scanban/public/scanban.js` |
 
 ---
 
 ### 🔴 PENDIENTE — Alta Prioridad
 
-| # | Ítem | Dónde | Descripción |
-|---|---|---|---|
-| P-09 | **Panel Super Admin (UI)** | `public/index.html` + `app.js` | Pestaña de gestión de módulos (activar/desactivar) visible solo para SUPERADMIN |
-| P-10 | **Separar `core.js` de `scanban.js`** | `modules/core/public/` y `modules/scanban/public/` | Partir el `app.js` monolítico en dos archivos por módulo |
+*(¡Todos los ítems de alta prioridad han sido completados!)*
 
 ---
 
