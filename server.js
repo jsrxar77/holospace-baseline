@@ -609,12 +609,12 @@ const THEMES = {
 
         db.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('active_theme', ?)").run(targetKey);
 
-        const now = new Date().toLocaleString('es-AR');
+        const now = new Date().toISOString();
         const themeName = THEMES[targetKey].name;
         db.prepare(`
-          INSERT INTO audit_logs (orderId, timestamp, userEmail, action, details)
-          VALUES (1, ?, ?, ?, ?)
-        `).run(now, adminEmail, 'CAMBIO_TEMA', `Tema visual de la aplicación actualizado a '${themeName}' (${targetKey}) por Admin (${adminEmail}).`);
+          INSERT INTO platform_audit_logs (timestamp, userEmail, action, details)
+          VALUES (?, ?, ?, ?)
+        `).run(now, adminEmail, 'THEME_CHANGED', JSON.stringify({ themeKey: targetKey, themeName }));
 
         console.log(`[CONFIG] Tema de la aplicación actualizado a '${themeName}' (${targetKey}) por Admin ${adminEmail}.`);
 
