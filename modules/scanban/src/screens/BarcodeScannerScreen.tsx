@@ -13,7 +13,15 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
   const [isManualModalOpen, setManualModalOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
 
-  const { scanBarcode, lastScanToast, clearToast, unassignedOrderNotification } = useOrderStore();
+  const { scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
+
+  React.useEffect(() => {
+    loadInitialOrders();
+    const interval = setInterval(() => {
+      loadInitialOrders();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     if (unassignedOrderNotification) {
