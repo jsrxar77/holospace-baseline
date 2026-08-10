@@ -55,12 +55,16 @@ async function loadActiveTheme() {
 
 async function changeAppThemeSubmit(themeKey) {
   try {
+    const token = localStorage.getItem('hw_token') || (currentUser ? currentUser.email : '');
     const res = await fetch('/api/theme', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         themeKey,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        userEmail: currentUser ? currentUser.email : token
       })
     });
     const data = await res.json();

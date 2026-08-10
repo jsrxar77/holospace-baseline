@@ -484,6 +484,25 @@ const server = http.createServer(async (req, res) => {
       try { data = JSON.parse(body); } catch (e) {}
     }
 
+    // Extraer usuario autenticado de la petición (Headers o Body) para RBAC y Auditoría
+    let currentUser = null;
+    const authHeader = req.headers['authorization'] || '';
+    const userHeader = req.headers['x-user-email'] || '';
+    let emailToFind = '';
+
+    if (authHeader.startsWith('Bearer ')) {
+      emailToFind = authHeader.substring(7).trim();
+    } else if (userHeader) {
+      emailToFind = userHeader.trim();
+    } else if (data && (data.userEmail || data.email)) {
+      emailToFind = (data.userEmail || data.email).trim();
+    }
+
+    if (emailToFind) {
+      currentUser = db.prepare('SELECT email as id, email, password, name, role, active FROM users WHERE LOWER(email) = ? AND active = 1')
+        .get(emailToFind.toLowerCase()) || null;
+    }
+
 const THEMES = {
   original: {
     name: 'Original Dark Glassmorphism',
@@ -712,6 +731,7 @@ const THEMES = {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
+          token: user.email,
           user: { id: user.email, email: user.email, name: user.name, role: user.role }
         }));
         return;
