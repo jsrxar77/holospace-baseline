@@ -17,10 +17,28 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   onNavigateToDispatch,
   onBack
 }) => {
-  const { activeOrder, closeOrder } = useOrderStore();
+  const { activeOrder, closeOrder, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
   const { theme } = useThemeStore();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (unassignedOrderNotification) {
+      const orderNum = unassignedOrderNotification;
+      clearUnassignedNotification();
+      Alert.alert(
+        'Pedido Desasignado por Administrador',
+        `El Pedido #${orderNum} fue desasignado o liberado a la columna LISTO por el Administrador desde ScanBan Board.`,
+        [
+          {
+            text: 'Entendido',
+            onPress: () => onBack()
+          }
+        ],
+        { cancelable: false }
+      );
+    }
+  }, [unassignedOrderNotification]);
 
   if (!activeOrder) {
     return (

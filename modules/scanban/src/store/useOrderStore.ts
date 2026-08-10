@@ -14,6 +14,7 @@ interface OrderState {
   activeOrder: Order | null;
   isScannerOpen: boolean;
   operatorId: string;
+  unassignedOrderNotification: string | null;
   lastScanToast: {
     type: 'SUCCESS' | 'ERROR' | 'EXCESS';
     message: string;
@@ -28,6 +29,7 @@ interface OrderState {
   releaseOrder: (orderNumber: string) => Promise<boolean>;
   setActiveOrder: (order: Order | null) => void;
   setScannerOpen: (isOpen: boolean) => void;
+  clearUnassignedNotification: () => void;
   scanBarcode: (barcode: string) => Promise<ScanResult>;
   clearToast: () => void;
   closeOrder: (supervisorPin?: string, exceptionReason?: string) => Promise<boolean>;
@@ -38,8 +40,13 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   activeOrder: null,
   isScannerOpen: false,
   operatorId: useAuthStore.getState().user?.email || 'jsrxar@gmail.com',
+  unassignedOrderNotification: null,
   lastScanToast: null,
   lastScanTimestamp: 0,
+
+  clearUnassignedNotification: () => {
+    set({ unassignedOrderNotification: null });
+  },
 
   loadInitialOrders: async () => {
     try {
@@ -49,6 +56,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       // Auto-detección de pedido activo asignado por email en el servidor
       const activeDoing = await fileWorkflowService.getActiveDoingOrder(currentUserEmail);
       let restoredActiveOrder: Order | null = null;
+      const currentLocalActive = get().activeOrder;
+      let unassignedNum: string | null = null;
 
       if (activeDoing.hasActive && activeDoing.orderNumber) {
         let realOrder = activeDoing.order || (await fileWorkflowService.getOrderDetails(activeDoing.orderNumber));
@@ -58,17 +67,19 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         }
         console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} para ${currentUserEmail}.`);
       } else {
-        // Si el servidor informa que ya no posee orden activa (reasignado por Admin a READY), desasignar localmente
-        const currentLocalActive = get().activeOrder;
+        // Si el servidor informa que ya no posee orden activa (desasignado/liberado a LISTO por Admin)
         if (currentLocalActive && currentLocalActive.status !== 'CLOSED' && currentLocalActive.status !== 'PARTIAL_DISPATCH') {
-          console.log(`[STORE] Pedido #${currentLocalActive.orderNumber} fue desasignado/reasignado por el Administrador.`);
+          console.log(`[STORE] Pedido #${currentLocalActive.orderNumber} fue desasignado por el Administrador desde ScanBan Board.`);
+          unassignedNum = currentLocalActive.orderNumber;
           restoredActiveOrder = null;
         }
       }
 
       set({
         orders: savedOrders,
-        activeOrder: restoredActiveOrder !== null ? restoredActiveOrder : (activeDoing.hasActive ? get().activeOrder : null),
+        activeOrder: activeDoing.hasActive ? restoredActiveOrder : null,
+        isScannerOpen: unassignedNum ? false : get().isScannerOpen,
+        unassignedOrderNotification: unassignedNum || get().unassignedOrderNotification,
         operatorId: currentUserEmail
       });
     } catch (e) {
