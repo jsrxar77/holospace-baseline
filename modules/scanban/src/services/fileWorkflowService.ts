@@ -18,7 +18,6 @@ export const fileWorkflowService = {
       const response = await fetch(`${SERVER_URL}/api/scanban/active-order${emailParam}`);
       const data = await response.json();
       if (data && data.hasActive) {
-        console.log(`[AUTO-DETECCIÓN PROCESO] Encontrado pedido activo en DB: #${data.orderNumber} para ${userEmail}`);
         return {
           hasActive: true,
           orderNumber: data.orderNumber,

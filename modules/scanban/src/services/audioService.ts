@@ -10,9 +10,7 @@ export const audioService = {
       );
       await sound.setVolumeAsync(1.0);
       await sound.playAsync();
-    } catch (e) {
-      console.log('Audio success beep triggered');
-    }
+    } catch (e) {}
   },
 
   // Buzzer grave (250Hz) de alerta por código incorrecto o exceso
@@ -24,8 +22,6 @@ export const audioService = {
       );
       await sound.setVolumeAsync(1.0);
       await sound.playAsync();
-    } catch (e) {
-      console.log('Audio error buzzer triggered');
-    }
+    } catch (e) {}
   }
 };

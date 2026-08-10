@@ -65,7 +65,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           restoredActiveOrder = realOrder;
           await dbService.saveOrder(restoredActiveOrder);
         }
-        console.log(`[STORE] Auto-recuperado pedido real #${activeDoing.orderNumber} para ${currentUserEmail}.`);
       } else {
         // Si el servidor informa que ya no posee orden activa (desasignado/liberado a LISTO por Admin)
         if (currentLocalActive && currentLocalActive.status !== 'CLOSED' && currentLocalActive.status !== 'PARTIAL_DISPATCH') {
