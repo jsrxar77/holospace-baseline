@@ -166,10 +166,10 @@ function applyRoleVisibility() {
       userBadge.style.borderColor = 'var(--emerald)';
     }
 
-    const platformView = document.getElementById('viewPlatform');
     const usersView = document.getElementById('viewUsers');
-    if ((!platformView || platformView.classList.contains('hidden')) &&
-        (!usersView || usersView.classList.contains('hidden'))) {
+    if (usersView && !usersView.classList.contains('hidden')) {
+      switchTab('users');
+    } else {
       switchTab('platform');
     }
   } else {
@@ -194,10 +194,10 @@ function applyRoleVisibility() {
       userBadge.style.borderColor = 'var(--emerald)';
     }
 
-    const kanbanView = document.getElementById('viewKanban');
     const ordersView = document.getElementById('viewOrders');
-    if ((!kanbanView || kanbanView.classList.contains('hidden')) &&
-        (!ordersView || ordersView.classList.contains('hidden'))) {
+    if (ordersView && !ordersView.classList.contains('hidden')) {
+      switchTab('orders');
+    } else {
       switchTab('kanban');
     }
   }
