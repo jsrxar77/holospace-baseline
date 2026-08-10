@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface HeaderProps {
   title?: string;
@@ -13,6 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout
 }) => {
   const { user, logout } = useAuthStore();
+  const { theme } = useThemeStore();
   const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: jsrxar@gmail.com');
 
   const handleLogoutPress = () => {
@@ -21,22 +23,22 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder }]}>
       <View style={styles.brandGroup}>
         <View style={styles.titleRow}>
-          <Text style={styles.titleWhite} numberOfLines={1}>
-            HOLO<Text style={styles.titleGreen}>WARE</Text>
+          <Text style={[styles.titleWhite, { color: theme.textMain }]} numberOfLines={1}>
+            HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>WARE</Text>
           </Text>
-          <View style={styles.moduleBadge}>
-            <Text style={styles.moduleBadgeText}>ScanBan Scanner</Text>
+          <View style={[styles.moduleBadge, { borderColor: theme.emerald }]}>
+            <Text style={[styles.moduleBadgeText, { color: theme.emerald }]}>ScanBan Scanner</Text>
           </View>
         </View>
-        <Text style={styles.operatorText} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={[styles.operatorText, { color: theme.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
           {displayBadge}
         </Text>
       </View>
-      <TouchableOpacity style={styles.btnLogout} onPress={handleLogoutPress} activeOpacity={0.7}>
-        <Text style={styles.btnLogoutText}>CERRAR SESIÓN</Text>
+      <TouchableOpacity style={[styles.btnLogout, { borderColor: theme.red }]} onPress={handleLogoutPress} activeOpacity={0.7}>
+        <Text style={[styles.btnLogoutText, { color: theme.red }]}>CERRAR SESIÓN</Text>
       </TouchableOpacity>
     </View>
   );
@@ -47,9 +49,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 52,
     paddingBottom: 14,
-    backgroundColor: '#161B22',
     borderBottomWidth: 1,
-    borderBottomColor: '#30363D',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
@@ -65,18 +65,15 @@ const styles = StyleSheet.create({
     gap: 8
   },
   titleWhite: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '900',
     letterSpacing: 0.5
   },
   titleGreen: {
-    color: '#00E676',
     fontWeight: '900'
   },
   moduleBadge: {
     backgroundColor: 'rgba(0, 230, 118, 0.15)',
-    borderColor: '#00E676',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 8,
@@ -84,12 +81,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center'
   },
   moduleBadgeText: {
-    color: '#00E676',
     fontSize: 11,
     fontWeight: '800'
   },
   operatorText: {
-    color: '#8B949E',
     fontSize: 12,
     fontWeight: '700',
     marginTop: 4
@@ -100,11 +95,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FF5252',
     flexShrink: 0
   },
   btnLogoutText: {
-    color: '#FF5252',
     fontSize: 11,
     fontWeight: '900'
   }

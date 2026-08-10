@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useOrderStore } from '../store/useOrderStore';
+import { useThemeStore } from '../store/useThemeStore';
 import { ItemCard } from '../components/ItemCard';
 import { ProgressBar } from '../components/ProgressBar';
 import { SupervisorModal } from '../components/SupervisorModal';
@@ -17,14 +18,15 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   onBack
 }) => {
   const { activeOrder, closeOrder } = useOrderStore();
+  const { theme } = useThemeStore();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
 
   if (!activeOrder) {
     return (
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyTitle}>No hay pedido activo seleccionado.</Text>
-        <TouchableOpacity style={styles.btnBack} onPress={onBack}>
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.emptyTitle, { color: theme.textMain }]}>No hay pedido activo seleccionado.</Text>
+        <TouchableOpacity style={[styles.btnBack, { backgroundColor: theme.emerald }]} onPress={onBack}>
           <Text style={styles.btnBackText}>Volver al Inicio</Text>
         </TouchableOpacity>
       </View>
@@ -89,22 +91,22 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Top Header Row */}
-      <View style={styles.headerRow}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
-          <Text style={styles.backIcon}>←</Text>
+      <View style={[styles.headerRow, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder }]}>
+        <TouchableOpacity style={[styles.backBtn, { borderColor: theme.cardBorder }]} onPress={onBack}>
+          <Text style={[styles.backIcon, { color: theme.textMain }]}>←</Text>
         </TouchableOpacity>
 
         <View style={styles.headerTitles}>
-          <Text style={styles.orderTitle}>PEDIDO #{activeOrder.orderNumber}</Text>
-          <Text style={styles.clientTitle} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={[styles.orderTitle, { color: theme.textMain }]}>PEDIDO #{activeOrder.orderNumber}</Text>
+          <Text style={[styles.clientTitle, { color: theme.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
             Cliente: {activeOrder.clientName}
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.releaseBtn} onPress={handleReleaseOrder}>
-          <Text style={styles.releaseIcon}>🔓</Text>
+        <TouchableOpacity style={[styles.releaseBtn, { borderColor: theme.amber }]} onPress={handleReleaseOrder}>
+          <Text style={[styles.releaseIcon, { color: theme.amber }]}>LIBERAR</Text>
         </TouchableOpacity>
       </View>
 
@@ -119,28 +121,28 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       {/* Filter Tabs */}
       <View style={styles.tabsRow}>
         <TouchableOpacity
-          style={[styles.tab, filter === 'ALL' && styles.tabActive]}
+          style={[styles.tab, { borderColor: theme.cardBorder }, filter === 'ALL' && { backgroundColor: theme.emerald, borderColor: theme.emerald }]}
           onPress={() => setFilter('ALL')}
         >
-          <Text style={[styles.tabText, filter === 'ALL' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: theme.textMuted }, filter === 'ALL' && { color: '#000', fontWeight: '900' }]}>
             Todos ({activeOrder.items.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, filter === 'PENDING' && styles.tabActive]}
+          style={[styles.tab, { borderColor: theme.cardBorder }, filter === 'PENDING' && { backgroundColor: theme.emerald, borderColor: theme.emerald }]}
           onPress={() => setFilter('PENDING')}
         >
-          <Text style={[styles.tabText, filter === 'PENDING' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: theme.textMuted }, filter === 'PENDING' && { color: '#000', fontWeight: '900' }]}>
             Pendientes ({activeOrder.items.filter((i) => i.quantityScanned < i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tab, filter === 'COMPLETED' && styles.tabActive]}
+          style={[styles.tab, { borderColor: theme.cardBorder }, filter === 'COMPLETED' && { backgroundColor: theme.emerald, borderColor: theme.emerald }]}
           onPress={() => setFilter('COMPLETED')}
         >
-          <Text style={[styles.tabText, filter === 'COMPLETED' && styles.tabTextActive]}>
+          <Text style={[styles.tabText, { color: theme.textMuted }, filter === 'COMPLETED' && { color: '#000', fontWeight: '900' }]}>
             Verificados ({activeOrder.items.filter((i) => i.quantityScanned >= i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
@@ -154,17 +156,17 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       </ScrollView>
 
       {/* Bottom Sticky Action Buttons */}
-      <View style={styles.bottomBar}>
+      <View style={[styles.bottomBar, { backgroundColor: theme.cardBg, borderTopColor: theme.cardBorder }]}>
         {!isClosed && (
-          <TouchableOpacity style={styles.btnScan} onPress={onNavigateToScanner} activeOpacity={0.8}>
-            <Text style={styles.btnScanText}>📷 INICIAR ESCANEO</Text>
+          <TouchableOpacity style={[styles.btnScan, { backgroundColor: theme.emerald }]} onPress={onNavigateToScanner} activeOpacity={0.8}>
+            <Text style={styles.btnScanText}>INICIAR ESCANEO</Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
           style={[
             styles.btnDispatch,
-            is100Percent ? styles.btnDispatchActive : styles.btnDispatchDisabled
+            is100Percent ? { backgroundColor: theme.emerald, opacity: 1 } : { backgroundColor: theme.cardBorder, opacity: 0.6 }
           ]}
           onPress={handlePressDispatch}
           activeOpacity={0.8}
@@ -172,7 +174,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           <Text
             style={[
               styles.btnDispatchText,
-              is100Percent ? styles.textDispatchActive : styles.textDispatchDisabled
+              is100Percent ? { color: '#000', fontWeight: '900' } : { color: theme.textMuted }
             ]}
           >
             {isClosed ? 'VER RESUMEN DE DESPACHO' : 'CERRAR Y DESPACHAR PEDIDO'}
@@ -180,8 +182,8 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         </TouchableOpacity>
 
         {!isClosed && (
-          <TouchableOpacity style={styles.btnRelease} onPress={handleReleaseOrder} activeOpacity={0.8}>
-            <Text style={styles.btnReleaseText}>🔓 LIBERAR PEDIDO A BACKLOG</Text>
+          <TouchableOpacity style={[styles.btnRelease, { borderColor: theme.amber }]} onPress={handleReleaseOrder} activeOpacity={0.8}>
+            <Text style={[styles.btnReleaseText, { color: theme.amber }]}>LIBERAR PEDIDO A BACKLOG</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -198,24 +200,20 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0B0E14'
+    flex: 1
   },
   emptyContainer: {
     flex: 1,
-    backgroundColor: '#0B0E14',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20
   },
   emptyTitle: {
-    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 20
   },
   btnBack: {
-    backgroundColor: '#00E676',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 14
@@ -232,35 +230,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#161B22',
-    borderBottomWidth: 1,
-    borderBottomColor: '#30363D'
+    borderBottomWidth: 1
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#21262D',
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center'
   },
   backIcon: {
-    color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900'
   },
   headerTitles: {
     alignItems: 'center'
   },
   orderTitle: {
-    color: '#FFFFFF',
     fontSize: 17,
     fontWeight: '900'
   },
   clientTitle: {
-    color: '#8B949E',
-    fontSize: 13,
-    fontWeight: '700'
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2
+  },
+  releaseBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1
+  },
+  releaseIcon: {
+    fontSize: 11,
+    fontWeight: '800'
   },
   progressContainer: {
     paddingHorizontal: 20,
@@ -275,109 +279,54 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 10,
-    backgroundColor: '#161B22',
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#30363D',
     alignItems: 'center'
   },
-  tabActive: {
-    backgroundColor: '#00E676',
-    borderColor: '#00E676'
-  },
   tabText: {
-    color: '#8B949E',
     fontSize: 12,
-    fontWeight: '800',
-    textAlign: 'center'
-  },
-  tabTextActive: {
-    color: '#000000',
-    fontWeight: '900'
+    fontWeight: '700'
   },
   itemsList: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 140,
     gap: 12
   },
   bottomBar: {
-    padding: 20,
-    backgroundColor: '#161B22',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#30363D',
-    gap: 12
+    gap: 10
   },
   btnScan: {
-    minHeight: 64, // Ergonomía > 64px
-    backgroundColor: '#00E676',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    elevation: 6
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center'
   },
   btnScanText: {
-    color: '#000000',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '900'
   },
   btnDispatch: {
-    minHeight: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    borderWidth: 2
-  },
-  btnDispatchActive: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6'
-  },
-  btnDispatchDisabled: {
-    backgroundColor: '#21262D',
-    borderColor: '#30363D'
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center'
   },
   btnDispatchText: {
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
-  },
-  textDispatchActive: {
-    color: '#FFFFFF'
-  },
-  textDispatchDisabled: {
-    color: '#8B949E'
-  },
-  releaseBtn: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#21262D',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F59E0B'
-  },
-  releaseIcon: {
-    fontSize: 18
+    fontSize: 13
   },
   btnRelease: {
-    minHeight: 52,
-    backgroundColor: '#21262D',
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#F59E0B',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16
+    alignItems: 'center'
   },
   btnReleaseText: {
-    color: '#F59E0B',
-    fontSize: 15,
-    fontWeight: '900',
-    textAlign: 'center'
+    fontSize: 12,
+    fontWeight: '800'
   }
 });

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
 import { Header } from '../components/Header';
 import { useOrderStore } from '../store/useOrderStore';
+import { useThemeStore } from '../store/useThemeStore';
+import { SERVER_URL } from '../config';
 
 interface HomeScreenProps {
   onNavigateToSummary: () => void;
@@ -13,11 +15,9 @@ interface ReadyOrder {
   totalItems: number;
 }
 
-import { SERVER_URL } from '../config';
-import { fetchRemoteTheme } from '../theme/themeConfig';
-
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
   const { activeOrder, operatorId, loadInitialOrders, releaseOrder } = useOrderStore();
+  const { theme, fetchTheme } = useThemeStore();
   const [readyOrders, setReadyOrders] = useState<ReadyOrder[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -34,7 +34,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
   };
 
   const syncData = async () => {
-    await fetchRemoteTheme(SERVER_URL);
+    await fetchTheme();
     await loadInitialOrders();
     await fetchReadyOrders();
   };
@@ -58,42 +58,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
         `Ya tienes el Pedido #${activeOrder.orderNumber} en proceso.\n\nDebes finalizar la auditoría o liberarlo antes de tomar un pedido nuevo.`,
         [
           { text: 'Ir al Pedido Activo', onPress: onNavigateToSummary },
-          {
-            text: 'Liberar Actual',
-            style: 'destructive',
-            onPress: () => handleReleaseCurrentOrder()
-          }
+          { text: 'Entendido', style: 'cancel' }
         ]
       );
       return;
     }
 
-    try {
-      const { claimOrder } = useOrderStore.getState();
-      await claimOrder(orderNumber);
+    const { claimOrder } = useOrderStore.getState();
+    const success = await claimOrder(orderNumber);
+    if (success) {
       await fetchReadyOrders();
-      Alert.alert(
-        'Pedido Asignado',
-        `Has tomado el Pedido #${orderNumber}.\nEl pedido se ha asignado a tu dispositivo (${operatorId}).`,
-        [
-          {
-            text: 'Iniciar Escaneo',
-            onPress: () => {
-              onNavigateToSummary();
-            }
-          }
-        ]
-      );
-    } catch (e) {
-      Alert.alert('Error', 'No se pudo tomar el pedido.');
+      onNavigateToSummary();
+    } else {
+      Alert.alert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.');
     }
   };
 
   const handleReleaseCurrentOrder = async () => {
     if (!activeOrder) return;
     Alert.alert(
-      'Liberar Pedido',
-      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl pedido volverá a la columna LISTO (READY) para que otro operario lo tome.`,
+      'Liberar Pedido Activo',
+      `¿Deseas devolver el Pedido #${activeOrder.orderNumber} a la columna LISTO?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -112,27 +97,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
   const hasActiveDoingOrder = activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH';
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header title="HoloWare · ScanBan Scanner" badgeText={`OP: ${operatorId}`} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00E676" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.emerald} />}
       >
         {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
         {hasActiveDoingOrder ? (
-          <View style={styles.activeDoingCard}>
-            <Text style={styles.activeTitle}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
-            <Text style={styles.activeSubtitle}>
+          <View style={[styles.activeDoingCard, { backgroundColor: theme.cardBg, borderColor: theme.cobalt }]}>
+            <Text style={[styles.activeTitle, { color: theme.emerald }]}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
+            <Text style={[styles.activeSubtitle, { color: theme.textMain }]}>
               Cliente: {activeOrder.clientName}
             </Text>
-            <Text style={styles.activeProgressText}>
+            <Text style={[styles.activeProgressText, { color: theme.textMuted }]}>
               Verificado: {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
               {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
             </Text>
 
             <TouchableOpacity
-              style={styles.btnContinue}
+              style={[styles.btnContinue, { backgroundColor: theme.emerald }]}
               onPress={onNavigateToSummary}
               activeOpacity={0.8}
             >
@@ -140,19 +125,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.btnReleaseHome}
+              style={[styles.btnReleaseHome, { borderColor: theme.amber }]}
               onPress={handleReleaseCurrentOrder}
               activeOpacity={0.8}
             >
-              <Text style={styles.btnReleaseHomeText}>🔓 LIBERAR PEDIDO A LISTO (READY)</Text>
+              <Text style={[styles.btnReleaseHomeText, { color: theme.amber }]}>LIBERAR PEDIDO A LISTO (READY)</Text>
             </TouchableOpacity>
           </View>
         ) : null}
 
         {/* Sección de Pedidos Disponibles en LISTO (Verde) */}
-        <View style={styles.uploadCard}>
-          <Text style={styles.uploadTitle}>Pedidos Listos para Tomar</Text>
-          <Text style={styles.uploadSubtitle}>
+        <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+          <Text style={[styles.uploadTitle, { color: theme.emerald }]}>Pedidos Listos para Tomar</Text>
+          <Text style={[styles.uploadSubtitle, { color: theme.textMuted }]}>
             {hasActiveDoingOrder
               ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
               : readyOrders.length === 0
@@ -163,7 +148,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           {readyOrders.map((item) => (
             <TouchableOpacity
               key={item.orderNumber}
-              style={[styles.btnUpload, hasActiveDoingOrder && styles.btnDisabled]}
+              style={[styles.btnUpload, { backgroundColor: theme.emerald, borderColor: theme.emerald }, hasActiveDoingOrder && styles.btnDisabled]}
               onPress={() => handleClaimOrder(item.orderNumber)}
               activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
             >
@@ -175,7 +160,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
           {readyOrders.length === 0 && !hasActiveDoingOrder && (
             <View style={{ padding: 16, alignItems: 'center' }}>
-              <Text style={{ color: '#8B949E', fontSize: 13, textAlign: 'center' }}>
+              <Text style={{ color: theme.textMuted, fontSize: 13, textAlign: 'center' }}>
                 Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
               </Text>
             </View>
@@ -188,113 +173,77 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0B0E14'
+    flex: 1
   },
   scrollContent: {
     padding: 20,
     gap: 20
   },
   activeDoingCard: {
-    backgroundColor: '#161B22',
     borderWidth: 2,
-    borderColor: '#3B82F6',
-    borderRadius: 24,
-    padding: 24,
-    alignItems: 'center',
-    gap: 12
-  },
-  activeBadgeCircle: {
-    width: 56,
-    height: 56,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  activeBadgeText: {
-    fontSize: 24
+    borderRadius: 20,
+    padding: 20,
+    gap: 10
   },
   activeTitle: {
-    color: '#3B82F6',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
-    textAlign: 'center'
+    letterSpacing: 0.5
   },
   activeSubtitle: {
-    color: '#8B949E',
-    fontSize: 13,
-    textAlign: 'center'
+    fontSize: 15,
+    fontWeight: '700'
   },
   activeProgressText: {
-    color: '#00E676',
-    fontSize: 16,
-    fontWeight: '900'
-  },
-  btnContinue: {
-    width: '100%',
-    minHeight: 64,
-    backgroundColor: '#00E676',
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16
-  },
-  btnContinueText: {
-    color: '#000000',
-    fontSize: 17,
-    fontWeight: '900',
-    textAlign: 'center'
-  },
-  btnReleaseHome: {
-    marginTop: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#21262D',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#30363D'
-  },
-  btnReleaseHomeText: {
-    color: '#FF5252',
     fontSize: 13,
     fontWeight: '700'
   },
-  uploadCard: {
-    backgroundColor: '#161B22',
-    borderRadius: 24,
-    padding: 24,
+  btnContinue: {
+    paddingVertical: 14,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 12,
+    marginTop: 4
+  },
+  btnContinueText: {
+    color: '#000',
+    fontWeight: '900',
+    fontSize: 14
+  },
+  btnReleaseHome: {
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1
+  },
+  btnReleaseHomeText: {
+    fontWeight: '800',
+    fontSize: 12
+  },
+  uploadCard: {
     borderWidth: 1,
-    borderColor: '#30363D'
+    borderRadius: 20,
+    padding: 20,
+    gap: 14
   },
   uploadTitle: {
-    color: '#00E676',
     fontSize: 18,
-    fontWeight: '900',
-    textAlign: 'center'
+    fontWeight: '900'
   },
   uploadSubtitle: {
-    color: '#8B949E',
     fontSize: 13,
-    textAlign: 'center',
-    marginBottom: 8
+    lineHeight: 18
   },
   btnUpload: {
-    width: '100%',
-    minHeight: 56,
-    backgroundColor: '#00E676',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16
+    borderWidth: 1,
+    alignItems: 'center'
   },
   btnUploadText: {
     color: '#000000',
-    fontSize: 15,
     fontWeight: '900',
-    textAlign: 'center'
+    fontSize: 13
   },
   btnDisabled: {
     opacity: 0.4
