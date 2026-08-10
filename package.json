@@ -23,6 +23,7 @@
     "lucide-react-native": "^0.395.0",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^3.11.174",
+    "pdfkit": "^0.19.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

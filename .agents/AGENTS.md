@@ -15,6 +15,13 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ---
 
+## 🥇 Regla de Oro Obligatoria: Prohibido Inventar Datos
+
+1. **Cero Datos Ficticios:** Queda estrictamente prohibido asumir, hardcodear o inventar precios, valores, códigos o montos que no estén explícitamente presentes en el comprobante/PDF original o proporcionados literalmente por el usuario.
+2. **Lectura Estricta de PDF:** Todo proceso de ingesta, parser y lectura debe extraer y procesar de manera fidedigna los datos reales contenidos en el documento PDF original. Si un campo (como precio o importe) no existe en el comprobante o no fue especificado, debe dejarse nulo/cero ($0) o reflejar la ausencia real de datos sin inventar valores arbitrarios.
+
+---
+
 ## 🎯 Reglas de Arquitectura Modular Obligatorias
 
 1. **Aislamiento por Módulo (`modules/<nombre-modulo>/`):**
