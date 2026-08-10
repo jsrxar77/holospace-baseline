@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Platform } from 'react-native';
+import { SERVER_URL } from '../config';
 
 interface User {
   id: string;
@@ -17,9 +18,8 @@ interface AuthState {
   logout: () => void;
 }
 
-const SERVER_URL = 'http://192.168.100.247:3001';
-const CREDENTIALS_KEY_EMAIL = 'pw_saved_mobile_email';
-const CREDENTIALS_KEY_PASS = 'pw_saved_mobile_pass';
+const CREDENTIALS_KEY_EMAIL = 'hw_saved_mobile_email';
+const CREDENTIALS_KEY_PASS = 'hw_saved_mobile_pass';
 
 export const saveSavedCredentials = (email: string, pass: string) => {
   try {

@@ -9,12 +9,11 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  title,
   badgeText,
   onLogout
 }) => {
   const { user, logout } = useAuthStore();
-  const displayBadge = badgeText || (user ? user.email : 'OP: jsrxar@gmail.com');
+  const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: jsrxar@gmail.com');
 
   const handleLogoutPress = () => {
     logout();
@@ -24,10 +23,15 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.brandGroup}>
-        <Text style={styles.titleWhite} numberOfLines={1} ellipsizeMode="tail">
-          HOLO<Text style={styles.titleGreen}>WARE</Text>
-        </Text>
-        <Text style={styles.badgeText} numberOfLines={1} ellipsizeMode="tail">
+        <View style={styles.titleRow}>
+          <Text style={styles.titleWhite} numberOfLines={1}>
+            HOLO<Text style={styles.titleGreen}>WARE</Text>
+          </Text>
+          <View style={styles.moduleBadge}>
+            <Text style={styles.moduleBadgeText}>ScanBan Scanner</Text>
+          </View>
+        </View>
+        <Text style={styles.operatorText} numberOfLines={1} ellipsizeMode="tail">
           {displayBadge}
         </Text>
       </View>
@@ -55,6 +59,11 @@ const styles = StyleSheet.create({
     marginRight: 10,
     justifyContent: 'center'
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8
+  },
   titleWhite: {
     color: '#FFFFFF',
     fontSize: 16,
@@ -65,11 +74,25 @@ const styles = StyleSheet.create({
     color: '#00E676',
     fontWeight: '900'
   },
-  badgeText: {
+  moduleBadge: {
+    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    borderColor: '#00E676',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    alignSelf: 'center'
+  },
+  moduleBadgeText: {
     color: '#00E676',
+    fontSize: 11,
+    fontWeight: '800'
+  },
+  operatorText: {
+    color: '#8B949E',
     fontSize: 12,
     fontWeight: '700',
-    marginTop: 2
+    marginTop: 4
   },
   btnLogout: {
     backgroundColor: 'rgba(255, 82, 82, 0.12)',

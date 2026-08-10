@@ -674,8 +674,8 @@ async function openInvoiceModal(orderNumber) {
     const logsHtml = (order.auditLogs || []).map(log => `
       <div style="background: #161B22; border-left: 3px solid var(--cobalt); padding: 10px 14px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
         <div style="display: flex; justify-content: space-between; font-weight: 700;">
-          <span style="color: var(--emerald);">👤 ${log.userEmail}</span>
-          <span style="color: var(--text-muted); font-size: 11px;">⏱️ ${log.timestamp}</span>
+          <span style="color: var(--emerald);">${log.userEmail}</span>
+          <span style="color: var(--text-muted); font-size: 11px;">${log.timestamp}</span>
         </div>
         <div style="color: #FFF;">${log.details}</div>
       </div>
@@ -684,59 +684,78 @@ async function openInvoiceModal(orderNumber) {
     const statusLabelEs = order.status === 'READY' ? 'LISTO' : order.status === 'DOING' || order.status === 'SCANNING' ? 'EN PROCESO' : order.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG';
 
     const statusActionButton = order.status === 'BACKLOG'
-      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 10px 16px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id || order.orderNumber}')">✓ VALIDAR Y PASAR A LISTO</button>`
+      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id || order.orderNumber}')">VALIDAR Y PASAR A LISTO</button>`
       : order.status === 'READY'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id || order.orderNumber}')">↩️ DEVOLVER A BACKLOG</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id || order.orderNumber}')">DEVOLVER A BACKLOG</button>`
       : (order.status === 'DOING' || order.status === 'SCANNING') && currentUser && currentUser.role === 'ADMIN'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">↩️ REASIGNAR Y LIBERAR A LISTO</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">REASIGNAR Y LIBERAR A LISTO</button>`
       : '';
 
     const invoiceHtml = `
-      <div class="invoice-card">
-        <div class="invoice-header">
-          <div>
-            <div style="font-size: 12px; color: var(--text-muted);">EMISOR: <strong>${order.vendorName || 'WYPRA SA'}</strong> (CUIT: ${order.vendorCuit || '30-71828749-5'})</div>
-            <div style="font-size: 24px; font-weight: 900; color: var(--emerald);">COMPROBANTE #${order.orderNumber}</div>
-            <div style="font-size: 15px; margin-top: 4px;">Cliente: <strong>${order.clientName}</strong> ${order.contactPerson ? `(${order.contactPerson})` : ''}</div>
-          </div>
-          <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
-            <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate || order.issueDate}</div>
-            <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${statusLabelEs}</div>
-            <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">👤 Usuario Asignado: ${order.operatorEmail}</div>
-            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-              <button class="btn-secondary" style="font-size: 13px; padding: 8px 14px;" onclick="downloadPdf('${order.orderNumber}')">⬇️ Descargar PDF</button>
-              ${statusActionButton}
+      <div class="invoice-card" style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- Sección 1: Información del Comprobante y Emisor (Colapsable, cerrada por defecto) -->
+        <details style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 18px;">
+          <summary style="font-weight: 800; font-size: 14px; cursor: pointer; color: var(--text-main); display: flex; justify-content: space-between; align-items: center;">
+            <span>Información del Comprobante #${order.orderNumber}</span>
+            <span style="font-size: 12px; color: var(--emerald); font-weight: 800;">[ ${statusLabelEs} ]</span>
+          </summary>
+          <div style="margin-top: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--card-border); padding-top: 14px;">
+            <div>
+              <div style="font-size: 12px; color: var(--text-muted);">EMISOR: <strong>${order.vendorName || 'WYPRA SA'}</strong> (CUIT: ${order.vendorCuit || '30-71828749-5'})</div>
+              <div style="font-size: 18px; font-weight: 900; color: var(--emerald); margin-top: 4px;">COMPROBANTE #${order.orderNumber}</div>
+              <div style="font-size: 14px; margin-top: 4px;">Cliente: <strong>${order.clientName}</strong> ${order.contactPerson ? `(${order.contactPerson})` : ''}</div>
+            </div>
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+              <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate || '—'}</div>
+              <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${statusLabelEs}</div>
+              <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">Usuario Asignado: ${order.operatorEmail}</div>
+              <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
+                <button class="btn-secondary" style="font-size: 13px; padding: 6px 12px;" onclick="downloadPdf('${order.orderNumber}')">Descargar PDF</button>
+                ${statusActionButton}
+              </div>
             </div>
           </div>
-        </div>
+        </details>
 
-        <table class="invoice-table">
-          <thead>
-            <tr>
-              <th>Código EAN</th>
-              <th>Descripción del Producto</th>
-              <th style="text-align: center;">Precio Unitario</th>
-              <th style="text-align: center;">Progreso Escaneo</th>
-              <th style="text-align: right;">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemsHtml}
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="4" style="text-align: right; font-weight: 900; font-size: 16px;">TOTAL FACTURA:</td>
-              <td style="text-align: right; font-weight: 900; font-size: 18px; color: var(--emerald);">$${totalCalculated.toLocaleString('es-AR')}</td>
-            </tr>
-          </tfoot>
-        </table>
+        <!-- Sección 2: Artículos del Comprobante (Colapsable, ABIERTA POR DEFECTO) -->
+        <details open style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 18px;">
+          <summary style="font-weight: 800; font-size: 14px; cursor: pointer; color: var(--emerald); display: flex; justify-content: space-between; align-items: center;">
+            <span>Artículos del Comprobante (${order.items.length} Ítems)</span>
+            <span style="font-weight: 900; font-size: 14px; color: var(--emerald);">Total: $${totalCalculated.toLocaleString('es-AR')}</span>
+          </summary>
+          <div style="margin-top: 14px; border-top: 1px solid var(--card-border); padding-top: 14px; overflow-x: auto;">
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Código EAN</th>
+                  <th>Descripción del Producto</th>
+                  <th style="text-align: center;">Precio Unitario</th>
+                  <th style="text-align: center;">Progreso Escaneo</th>
+                  <th style="text-align: right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="4" style="text-align: right; font-weight: 900; font-size: 15px;">TOTAL FACTURA:</td>
+                  <td style="text-align: right; font-weight: 900; font-size: 17px; color: var(--emerald);">$${totalCalculated.toLocaleString('es-AR')}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </details>
 
-        <div style="margin-top: 10px;">
-          <h4 style="font-size: 15px; font-weight: 800; color: var(--cobalt); margin-bottom: 10px;">Línea de Tiempo y Auditoría por Usuario:</h4>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+        <!-- Sección 3: Historial de Auditoría y Línea de Tiempo (Colapsable, cerrada por defecto) -->
+        <details style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 18px;">
+          <summary style="font-weight: 800; font-size: 14px; cursor: pointer; color: var(--cobalt);">
+            Línea de Tiempo y Auditoría por Usuario (${(order.auditLogs || []).length} Eventos)
+          </summary>
+          <div style="margin-top: 14px; border-top: 1px solid var(--card-border); padding-top: 14px; display: flex; flex-direction: column; gap: 8px;">
             ${logsHtml}
           </div>
-        </div>
+        </details>
       </div>
     `;
 

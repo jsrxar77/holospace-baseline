@@ -1,3 +1,5 @@
+import { SERVER_URL } from '../config';
+
 export interface ThemeTokens {
   background: string;
   cardBg: string;
@@ -28,9 +30,9 @@ export const getThemeTokens = (): ThemeTokens => {
   return currentThemeTokens;
 };
 
-export const fetchRemoteTheme = async (serverUrl: string = 'http://localhost:3001'): Promise<ThemeTokens> => {
+export const fetchRemoteTheme = async (baseUrl: string = SERVER_URL): Promise<ThemeTokens> => {
   try {
-    const res = await fetch(`${serverUrl}/api/theme`);
+    const res = await fetch(`${baseUrl}/api/theme`);
     const data = await res.json();
     if (data && data.theme) {
       currentThemeTokens = {
@@ -46,7 +48,7 @@ export const fetchRemoteTheme = async (serverUrl: string = 'http://localhost:300
       };
     }
   } catch (e) {
-    console.log('[THEME SERVICE] Usando tema local por defecto (Original Dark Glassmorphism).');
+    console.log('[THEME SERVICE] Usando tema local por defecto.');
   }
   return currentThemeTokens;
 };

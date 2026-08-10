@@ -13,6 +13,9 @@ interface ReadyOrder {
   totalItems: number;
 }
 
+import { SERVER_URL } from '../config';
+import { fetchRemoteTheme } from '../theme/themeConfig';
+
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
   const { activeOrder, operatorId, loadInitialOrders, releaseOrder } = useOrderStore();
   const [readyOrders, setReadyOrders] = useState<ReadyOrder[]>([]);
@@ -20,7 +23,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   const fetchReadyOrders = async () => {
     try {
-      const res = await fetch('http://192.168.100.247:3001/api/scanban/available-orders');
+      const res = await fetch(`${SERVER_URL}/api/scanban/available-orders`);
       const data = await res.json();
       if (data && data.success && Array.isArray(data.orders)) {
         setReadyOrders(data.orders);
@@ -30,17 +33,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     }
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
+  const syncData = async () => {
+    await fetchRemoteTheme(SERVER_URL);
     await loadInitialOrders();
     await fetchReadyOrders();
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await syncData();
     setRefreshing(false);
   };
 
   useEffect(() => {
-    loadInitialOrders();
-    fetchReadyOrders();
-    const interval = setInterval(fetchReadyOrders, 3000);
+    syncData();
+    const interval = setInterval(syncData, 3000);
     return () => clearInterval(interval);
   }, []);
 
