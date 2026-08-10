@@ -154,16 +154,16 @@ function applyRoleVisibility() {
 
     if (badge) {
       badge.innerText = 'Core';
-      badge.style.color = '#A78BFA';
-      badge.style.background = 'rgba(124, 58, 237, 0.15)';
-      badge.style.borderColor = '#7C3AED';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
     }
 
     if (userBadge) {
       userBadge.innerText = `SUPERADMIN: ${currentUser.email}`;
-      userBadge.style.background = 'linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2))';
-      userBadge.style.color = '#A78BFA';
-      userBadge.style.borderColor = '#7C3AED';
+      userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
+      userBadge.style.color = 'var(--emerald)';
+      userBadge.style.borderColor = 'var(--emerald)';
     }
 
     const platformView = document.getElementById('viewPlatform');
@@ -244,9 +244,9 @@ function switchTab(tabName) {
     document.getElementById('viewUsers').classList.remove('hidden');
     if (badge) {
       badge.innerText = 'Core';
-      badge.style.color = '#3B82F6';
-      badge.style.background = 'rgba(59, 130, 246, 0.15)';
-      badge.style.borderColor = '#3B82F6';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
     }
     fetchUsers();
   } else if (tabName === 'platform') {
@@ -255,9 +255,9 @@ function switchTab(tabName) {
     document.getElementById('viewPlatform').classList.remove('hidden');
     if (badge) {
       badge.innerText = 'Core';
-      badge.style.color = '#A78BFA';
-      badge.style.background = 'rgba(124, 58, 237, 0.15)';
-      badge.style.borderColor = '#7C3AED';
+      badge.style.color = 'var(--emerald)';
+      badge.style.background = 'rgba(0, 230, 118, 0.15)';
+      badge.style.borderColor = 'var(--emerald)';
     }
     loadPlatformPanel();
   }

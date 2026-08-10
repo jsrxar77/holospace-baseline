@@ -595,14 +595,14 @@
   <header>
     <div class="brand-title" style="display: inline-flex; align-items: center; gap: 12px; height: 100%;">
       <span style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF;">Holo<span style="color: var(--emerald);">Ware</span></span>
-      <span id="activeContextBadge" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #7C3AED; background: rgba(124,58,237,0.15); color: #A78BFA; transition: all 0.2s;">
+      <span id="activeContextBadge" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald); background: rgba(0, 230, 118, 0.15); color: var(--emerald); transition: all 0.2s;">
         Core
       </span>
     </div>
     
     <div class="nav-tabs">
       <!-- HoloWare Core (SUPERADMIN) -->
-      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">Plataforma</button>
+      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma</button>
       <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios Core</button>
       
       <!-- HoloWare ScanBan Board (ADMIN) -->
@@ -791,7 +791,7 @@
 
       <!-- Platform Info Cards -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
-        <div style="background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(79,70,229,0.08)); border: 1px solid #7C3AED; border-radius: 20px; padding: 20px;">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: #A78BFA; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Super Admin</div>
           <div id="platformInfoAdmin" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
         </div>
