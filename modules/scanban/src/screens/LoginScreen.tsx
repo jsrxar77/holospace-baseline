@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useAuthStore, getSavedCredentials } from '../store/useAuthStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface LoginScreenProps {
   onLoginSuccess: () => void;
@@ -14,11 +15,16 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const { login } = useAuthStore();
+  const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
+    fetchTheme();
+    const interval = setInterval(fetchTheme, 3000);
     const creds = getSavedCredentials();
     if (creds.email) setEmail(creds.email);
     if (creds.pass) setPassword(creds.pass);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleLogin = async () => {
@@ -40,25 +46,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.brandTitleWhite}>
-          HOLO<Text style={styles.brandTitleGreen}>WARE</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+        <Text style={[styles.brandTitleWhite, { color: theme.textMain }]}>
+          HOLO<Text style={[styles.brandTitleGreen, { color: theme.emerald }]}>WARE</Text>
         </Text>
-        <Text style={styles.subtitle}>ScanBan Scanner · Operativa de Depósito</Text>
+        <Text style={[styles.subtitle, { color: theme.textMuted }]}>ScanBan Scanner · Operativa de Depósito</Text>
 
         {!!errorMessage && (
-          <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
+          <View style={[styles.errorContainer, { borderColor: theme.red }]}>
+            <Text style={[styles.errorText, { color: theme.red }]}>{errorMessage}</Text>
           </View>
         )}
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Email del Operario</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Email del Operario</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain }]}
             placeholder="ej: jsrxar@gmail.com"
-            placeholderTextColor="#8B949E"
+            placeholderTextColor={theme.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -70,12 +76,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Contraseña</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Contraseña</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={[styles.input, { flex: 1, paddingRight: 44 }]}
+              style={[styles.input, { flex: 1, paddingRight: 70, backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain }]}
               placeholder="••••••••"
-              placeholderTextColor="#8B949E"
+              placeholderTextColor={theme.textMuted}
               secureTextEntry={!showPassword}
               value={password}
               onChangeText={(txt) => {
@@ -88,13 +94,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
               onPress={() => setShowPassword(!showPassword)}
               activeOpacity={0.7}
             >
-              <Text style={styles.eyeText}>{showPassword ? '🙈' : '👁️'}</Text>
+              <Text style={[styles.eyeText, { color: theme.emerald }]}>{showPassword ? 'OCULTAR' : 'VER'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <TouchableOpacity
-          style={[styles.btnSubmit, loading && styles.btnDisabled]}
+          style={[styles.btnSubmit, { backgroundColor: theme.emerald }, loading && styles.btnDisabled]}
           onPress={handleLogin}
           disabled={loading}
           activeOpacity={0.8}
@@ -106,9 +112,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           )}
         </TouchableOpacity>
 
-        <View style={styles.hintBox}>
-          <Text style={styles.hintText}>
-            💡 Operario por defecto: jsrxar@gmail.com / Asadito21!
+        <View style={[styles.hintBox, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}>
+          <Text style={[styles.hintText, { color: theme.textMuted }]}>
+            Operario por defecto: jsrxar@gmail.com / Asadito21!
           </Text>
         </View>
       </View>
@@ -119,22 +125,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0B0E14',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24
   },
   card: {
     width: '100%',
-    backgroundColor: '#161B22',
     borderRadius: 24,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#30363D',
     alignItems: 'center'
   },
   brandTitleWhite: {
-    color: '#FFFFFF',
     fontSize: 26,
     fontWeight: '900',
     letterSpacing: 0.5,
@@ -142,11 +144,9 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
   brandTitleGreen: {
-    color: '#00E676',
     fontWeight: '900'
   },
   subtitle: {
-    color: '#8B949E',
     fontSize: 13,
     marginBottom: 24,
     textAlign: 'center'
@@ -154,14 +154,12 @@ const styles = StyleSheet.create({
   errorContainer: {
     backgroundColor: 'rgba(255, 82, 82, 0.15)',
     borderWidth: 1,
-    borderColor: '#FF5252',
     borderRadius: 12,
     padding: 12,
     width: '100%',
     marginBottom: 16
   },
   errorText: {
-    color: '#FF5252',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center'
@@ -171,19 +169,15 @@ const styles = StyleSheet.create({
     marginBottom: 16
   },
   label: {
-    color: '#8B949E',
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 6
   },
   input: {
-    backgroundColor: '#0B0E14',
     borderWidth: 1,
-    borderColor: '#30363D',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    color: '#FFFFFF',
     fontSize: 15
   },
   passwordContainer: {
@@ -200,10 +194,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6
   },
   eyeText: {
-    fontSize: 18
+    fontSize: 11,
+    fontWeight: '800'
   },
   btnSubmit: {
-    backgroundColor: '#00E676',
     borderRadius: 14,
     paddingVertical: 16,
     width: '100%',
@@ -221,14 +215,11 @@ const styles = StyleSheet.create({
   hintBox: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: '#0B0E14',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#30363D',
     width: '100%'
   },
   hintText: {
-    color: '#8B949E',
     fontSize: 11,
     textAlign: 'center'
   }
