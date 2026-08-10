@@ -43,12 +43,12 @@ function logDetailedError(context, err, payload = {}) {
 
   const logEntry = `
 ======================================================
-🚨 [ERROR DETALLADO - ${timestamp}]
-📌 Contexto / Ruta: ${context}
-👤 Usuario: ${payload.userEmail || payload.email || 'No especificado'}
-❌ Error: ${errorMessage}
-📦 Payload Contexto: ${JSON.stringify(payload, null, 2)}
-📜 Stack Trace:
+[ERROR DETALLADO - ${timestamp}]
+Contexto / Ruta: ${context}
+Usuario: ${payload.userEmail || payload.email || 'No especificado'}
+Error: ${errorMessage}
+Payload Contexto: ${JSON.stringify(payload, null, 2)}
+Stack Trace:
 ${stackTrace}
 ======================================================
 `;

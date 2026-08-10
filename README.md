@@ -1,32 +1,32 @@
-# 🌐 HoloWare Baseline
+# HoloWare
 
 > **Plataforma Contenedora Multi-Módulo Enterprise para Gestión Operativa y Logística.**
 
-HoloWare Baseline es una infraestructura modular que permite ejecutar múltiples aplicaciones de negocio compartiendo autenticación unificada, esquema relacional de usuarios en SQLite, motor de temas dinámicos y un panel de gestión para el **Super Administrador**.
+HoloWare es una infraestructura modular que permite ejecutar múltiples aplicaciones de negocio compartiendo autenticación unificada, esquema relacional de usuarios en SQLite, motor de temas dinámicos y un panel de gestión para el **Super Administrador**.
 
 ---
 
-## 🏛️ Módulos Oficiales del Sistema
+## Módulos Oficiales del Sistema
 
 | Módulo | Entorno | Rol Acceso | Descripción |
 |---|---|---|---|
 | **HoloWare Core** | Web | `SUPERADMIN` | Gobierno de plataforma, administración de módulos instalados, ABM de usuarios y motor de temas. |
-| **HoloWare ScanBan Board** | Web | `ADMIN` | Tablero Kanban interactivo 4 columnas, ingesta/parser PDF y explorador de pedidos. |
-| **HoloWare ScanBan Scanner** | Mobile (Expo) | `OPERATOR` | App móvil para operarios de depósito con escáner de código de barras EAN-13 y estampa digital. |
+| **ScanBan Board** | Web | `ADMIN` | Tablero Kanban interactivo 4 columnas, ingesta/parser PDF y explorador de pedidos. |
+| **ScanBan Scanner** | Mobile (Expo) | `OPERATOR` | App móvil para operarios de depósito con escáner de código de barras EAN-13 y estampa digital. |
 
 ---
 
-## 🔑 Credenciales por Defecto (Entorno de Desarrollo)
+## Credenciales por Defecto (Entorno de Desarrollo)
 
 | Rol | Email | Contraseña | Permisos / Acceso |
 |---|---|---|---|
 | **SUPERADMIN** | `superadmin@hologrowth.com.ar` | `BrunaSeRelambe22!` | Bootstrap desde `.env`: Acceso a **HoloWare Core (Web)**. |
-| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | Semilla de desarrollo: Acceso a **HoloWare ScanBan Board (Web)**. |
-| **OPERATOR** | `jsrxar@gmail.com` | `Asadito21!` | Semilla de desarrollo: Acceso a **HoloWare ScanBan Scanner (Mobile)**. |
+| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | Semilla de desarrollo: Acceso a **ScanBan Board (Web)**. |
+| **OPERATOR** | `jsrxar@gmail.com` | `Asadito21!` | Semilla de desarrollo: Acceso a **ScanBan Scanner (Mobile)**. |
 
 ---
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Levantar Todo el Entorno (Backend Server + Web Shell + App Móvil Expo)
 
@@ -82,13 +82,13 @@ holoware-baseline/
 
 ---
 
-## 📚 Documentación Detallada
+## Documentación Detallada
 
-- 📘 [Visión de la Plataforma](./docs/HOLOWARE_PLATFORM.md)
-- 📐 [Arquitectura Técnica](./docs/ARCHITECTURE.md)
-- 🛠️ [Guía para Crear un Nuevo Módulo](./docs/MODULE_CREATION.md)
-- 🗺️ [Roadmap de la Plataforma](./docs/ROADMAP.md)
-- 🏛️ [Especificación HoloWare Core (Web)](./docs/modules/CORE.md)
-- 📦 [Especificación HoloWare ScanBan Board (Web)](./docs/modules/SCANBAN_BOARD.md)
-- 📱 [Especificación HoloWare ScanBan Scanner (Mobile)](./docs/modules/SCANBAN_SCANNER.md)
-- 📦 [Especificación HoloWare StockFlow (Plantilla)](./docs/modules/STOCKFLOW.md)
+- [Visión de la Plataforma](./docs/HOLOWARE_PLATFORM.md)
+- [Arquitectura Técnica](./docs/ARCHITECTURE.md)
+- [Guía para Crear un Nuevo Módulo](./docs/MODULE_CREATION.md)
+- [Roadmap de la Plataforma](./docs/ROADMAP.md)
+- [Especificación HoloWare Core (Web)](./docs/modules/CORE.md)
+- [Especificación ScanBan Board (Web)](./docs/modules/SCANBAN_BOARD.md)
+- [Especificación ScanBan Scanner (Mobile)](./docs/modules/SCANBAN_SCANNER.md)
+- [Especificación StockFlow (Plantilla)](./docs/modules/STOCKFLOW.md)

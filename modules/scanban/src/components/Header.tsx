@@ -25,10 +25,10 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={styles.container}>
       <View style={styles.brandGroup}>
         <Text style={styles.titleWhite} numberOfLines={1} ellipsizeMode="tail">
-          PHONEWARE <Text style={styles.titleGreen}>SCANNER</Text>
+          HOLO<Text style={styles.titleGreen}>WARE</Text>
         </Text>
         <Text style={styles.badgeText} numberOfLines={1} ellipsizeMode="tail">
-          👤 {displayBadge}
+          {displayBadge}
         </Text>
       </View>
       <TouchableOpacity style={styles.btnLogout} onPress={handleLogoutPress} activeOpacity={0.7}>

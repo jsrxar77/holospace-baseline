@@ -582,29 +582,29 @@
 </head>
 <body>
 
-  <!-- Header (HoloWare Baseline Core Shell) -->
+  <!-- Header (HoloWare Core Shell) -->
   <header>
-    <div class="brand-title">
-      HOLOWARE <span>BASELINE</span>
-      <span id="activeContextBadge" style="font-size: 13px; color: #A78BFA; margin-left: 10px; font-weight: 800; background: rgba(124,58,237,0.15); padding: 4px 10px; border-radius: 8px; border: 1px solid #7C3AED; transition: all 0.2s;">
-        🏛️ HoloWare Core
+    <div class="brand-title" style="display: inline-flex; align-items: center; gap: 12px; height: 100%;">
+      <span style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF;">Holo<span style="color: var(--emerald);">Ware</span></span>
+      <span id="activeContextBadge" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid #7C3AED; background: rgba(124,58,237,0.15); color: #A78BFA; transition: all 0.2s;">
+        Core
       </span>
     </div>
     
     <div class="nav-tabs">
       <!-- HoloWare Core (SUPERADMIN) -->
-      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">🏛️ Plataforma</button>
-      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">👥 Usuarios Core</button>
+      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(79,70,229,0.2)); border-color: #7C3AED; color: #A78BFA;">Plataforma</button>
+      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios Core</button>
       
       <!-- HoloWare ScanBan Board (ADMIN) -->
-      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">📋 Tablero Kanban</button>
-      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')" style="display:none;">🔍 Explorador de Pedidos</button>
+      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
+      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
     </div>
 
     <div class="user-profile">
       <!-- Core Theme Engine Selector -->
       <div id="headerThemeContainer" style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 12px; font-weight: 800; color: var(--text-muted);">🎨 Tema:</span>
+        <span style="font-size: 12px; font-weight: 800; color: var(--text-muted);">Tema:</span>
         <select id="headerThemeSelect" class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeAppThemeSubmit(this.value)">
           <option value="original">Original Dark Glassmorphism</option>
           <option value="catppuccin_mocha">Catppuccin Mocha</option>
@@ -616,7 +616,7 @@
         </select>
       </div>
 
-      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="openQrModal()">📱 Conectar Celular</button>
+      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="openQrModal()">Conectar Celular</button>
       <div id="userBadge" class="badge-role">ADMIN</div>
       <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="logout()">Cerrar Sesión</button>
     </div>
@@ -757,7 +757,7 @@
       <div class="actions-bar" style="margin-bottom: 8px;">
         <div>
           <h2 style="font-size: 24px; font-weight: 900; display: flex; align-items: center; gap: 12px;">
-            🏛️ Plataforma HoloWare
+            Plataforma HoloWare
             <span class="superadmin-badge">SUPER ADMIN</span>
           </h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Gestión de módulos y auditoría de plataforma</p>
@@ -766,7 +766,7 @@
 
       <!-- Modules Section -->
       <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
-        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">📦 Módulos del Sistema</h3>
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">Módulos del Sistema</h3>
         <div id="modulesGrid" style="display: flex; flex-direction: column; gap: 16px;">
           <div style="color: var(--text-muted); font-size: 14px;">Cargando módulos...</div>
         </div>
@@ -774,7 +774,7 @@
 
       <!-- Platform Audit Log -->
       <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
-        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">📋 Auditoría de Plataforma</h3>
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">Auditoría de Plataforma</h3>
         <div id="platformAuditLog" style="max-height: 320px; overflow-y: auto;">
           <div style="color: var(--text-muted); font-size: 14px;">Cargando eventos...</div>
         </div>

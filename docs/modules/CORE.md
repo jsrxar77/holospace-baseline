@@ -25,7 +25,7 @@ El módulo **Core** constituye el motor base de la plataforma HoloWare Baseline.
 
 ### 2.3 Panel de Gestión de Plataforma (Super Admin)
 - **Ruta Backend:** `GET/POST /api/modules`.
-- **Vista Web:** Pestaña `🏛️ Plataforma` exclusiva para usuarios con rol `SUPERADMIN`.
+- **Vista Web:** Pestaña `Plataforma` exclusiva para usuarios con rol `SUPERADMIN`.
 - **Funcionalidades:**
   - Visualización del catálogo de módulos instalados.
   - Switches interactivos para activar/desactivar módulos en tiempo real.

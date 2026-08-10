@@ -43,9 +43,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.brandTitleWhite}>
-          PHONEWARE <Text style={styles.brandTitleGreen}>SCANNER</Text>
+          HOLO<Text style={styles.brandTitleGreen}>WARE</Text>
         </Text>
-        <Text style={styles.subtitle}>Ingreso obligatorio para operarios de logística</Text>
+        <Text style={styles.subtitle}>ScanBan Scanner · Operativa de Depósito</Text>
 
         {!!errorMessage && (
           <View style={styles.errorContainer}>

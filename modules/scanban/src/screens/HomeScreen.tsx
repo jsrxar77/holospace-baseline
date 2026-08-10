@@ -106,7 +106,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   return (
     <View style={styles.container}>
-      <Header title="PHONEWARE SCANNER" badgeText={`OP: ${operatorId}`} />
+      <Header title="HoloWare · ScanBan Scanner" badgeText={`OP: ${operatorId}`} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -115,9 +115,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
         {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
         {hasActiveDoingOrder ? (
           <View style={styles.activeDoingCard}>
-            <View style={styles.activeBadgeCircle}>
-              <Text style={styles.activeBadgeText}>⚡</Text>
-            </View>
             <Text style={styles.activeTitle}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
             <Text style={styles.activeSubtitle}>
               Cliente: {activeOrder.clientName}
@@ -172,7 +169,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           {readyOrders.length === 0 && !hasActiveDoingOrder && (
             <View style={{ padding: 16, alignItems: 'center' }}>
               <Text style={{ color: '#8B949E', fontSize: 13, textAlign: 'center' }}>
-                ⏳ Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde HoloWare ScanBan Board.
+                Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
               </Text>
             </View>
           )}

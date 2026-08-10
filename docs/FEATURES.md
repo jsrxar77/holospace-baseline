@@ -1,12 +1,12 @@
-# Índice de Funcionalidades — HoloWare Baseline
+# Índice de Funcionalidades — HoloWare
 
-> **Plataforma contenedora:** HoloWare Baseline — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md).
+> **Plataforma contenedora:** HoloWare — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md).
 
 El sistema se organiza en 3 módulos oficiales:
 
 ---
 
-## 🏛️ 1. HoloWare Core (Web)
+## 1. HoloWare Core (Web)
 
 - **Ámbito:** Gobierno de Plataforma (Exclusivo `SUPERADMIN`).
 - **Funcionalidades:**
@@ -16,11 +16,11 @@ El sistema se organiza en 3 módulos oficiales:
   - Motor de Temas Visuales Globales (`GET/POST /api/theme`).
   - Auditoría de Plataforma (`platform_audit_logs`).
 
-👉 **Especificación completa:** Ver [docs/modules/CORE.md](./modules/CORE.md).
+**Especificación completa:** Ver [docs/modules/CORE.md](./modules/CORE.md).
 
 ---
 
-## 📦 2. HoloWare ScanBan Board (Web)
+## 2. ScanBan Board (Web)
 
 - **Ámbito:** Logística y Facturación (Exclusivo `ADMIN`).
 - **Funcionalidades:**
@@ -29,11 +29,11 @@ El sistema se organiza en 3 módulos oficiales:
   - Almacenamiento Blob de comprobantes.
   - Explorador Inteligente de Pedidos.
 
-👉 **Especificación completa:** Ver [docs/modules/SCANBAN_BOARD.md](./modules/SCANBAN_BOARD.md).
+**Especificación completa:** Ver [docs/modules/SCANBAN_BOARD.md](./modules/SCANBAN_BOARD.md).
 
 ---
 
-## 📱 3. HoloWare ScanBan Scanner (Mobile)
+## 3. ScanBan Scanner (Mobile)
 
 - **Ámbito:** Auditoría Operativa de Depósito (Exclusivo `OPERATOR`).
 - **Funcionalidades:**
@@ -42,7 +42,7 @@ El sistema se organiza en 3 módulos oficiales:
   - Asignación 1 a 1 de pedidos.
   - Persistencia SQLite local y estampa digital de despacho.
 
-👉 **Especificación completa:** Ver [docs/modules/SCANBAN_SCANNER.md](./modules/SCANBAN_SCANNER.md).
+**Especificación completa:** Ver [docs/modules/SCANBAN_SCANNER.md](./modules/SCANBAN_SCANNER.md).
 
 ---
 

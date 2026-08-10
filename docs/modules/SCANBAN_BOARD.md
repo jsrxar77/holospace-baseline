@@ -26,7 +26,7 @@
 - Guarda el archivo PDF original como Blob Base64 en SQLite.
 - Permite la descarga del comprobante original vía `/api/scanban/download-pdf`.
 
-### 2.3 Explorador Inteligente de Pedidos (`🔍 Explorador de Pedidos`)
+### 2.3 Explorador Inteligente de Pedidos (`Explorador de Pedidos`)
 - Buscador universal en tiempo real (nº pedido, cliente, código EAN-13, operario).
 - Filtros por estado, pills interactivas de operarios y ordenamiento multicriterio.
 
