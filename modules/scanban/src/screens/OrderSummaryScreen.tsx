@@ -17,10 +17,18 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   onNavigateToDispatch,
   onBack
 }) => {
-  const { activeOrder, closeOrder, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
+  const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
   const { theme } = useThemeStore();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    loadInitialOrders();
+    const interval = setInterval(() => {
+      loadInitialOrders();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     if (unassignedOrderNotification) {
