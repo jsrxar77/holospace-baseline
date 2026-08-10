@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 
@@ -22,11 +22,13 @@ export const Header: React.FC<HeaderProps> = ({
     if (onLogout) onLogout();
   };
 
+  const paddingTopVal = Platform.OS === 'android' ? (StatusBar.currentHeight || 36) + 8 : 48;
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder }]}>
+    <View style={[styles.container, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder, paddingTop: paddingTopVal }]}>
       <View style={styles.brandGroup}>
         <View style={styles.titleRow}>
-          <Text style={[styles.titleWhite, { color: theme.textMain }]} numberOfLines={1}>
+          <Text style={[styles.titleWhite, { color: theme.textMain }]}>
             HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>WARE</Text>
           </Text>
           <View style={[styles.moduleBadge, { borderColor: theme.emerald }]}>
@@ -47,8 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingTop: 52,
-    paddingBottom: 14,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -62,10 +63,11 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8
+    gap: 6,
+    flexWrap: 'wrap'
   },
   titleWhite: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
     letterSpacing: 0.5
   },
@@ -76,29 +78,29 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 230, 118, 0.15)',
     borderWidth: 1,
     borderRadius: 6,
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     alignSelf: 'center'
   },
   moduleBadgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800'
   },
   operatorText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-    marginTop: 4
+    marginTop: 2
   },
   btnLogout: {
     backgroundColor: 'rgba(255, 82, 82, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
     borderWidth: 1,
     flexShrink: 0
   },
   btnLogoutText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900'
   }
 });

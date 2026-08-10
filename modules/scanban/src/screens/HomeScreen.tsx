@@ -137,13 +137,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
         {/* Sección de Pedidos Disponibles en LISTO (Verde) */}
         <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
           <Text style={[styles.uploadTitle, { color: theme.emerald }]}>Pedidos Listos para Tomar</Text>
-          <Text style={[styles.uploadSubtitle, { color: theme.textMuted }]}>
-            {hasActiveDoingOrder
-              ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
-              : readyOrders.length === 0
-              ? 'No hay pedidos en estado LISTO. Espera a que el Administrador valide un comprobante.'
-              : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
-          </Text>
+
+          {readyOrders.length > 0 && (
+            <Text style={[styles.uploadSubtitle, { color: theme.textMuted }]}>
+              {hasActiveDoingOrder
+                ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
+                : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
+            </Text>
+          )}
 
           {readyOrders.map((item) => (
             <TouchableOpacity
@@ -159,9 +160,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           ))}
 
           {readyOrders.length === 0 && !hasActiveDoingOrder && (
-            <View style={{ padding: 16, alignItems: 'center' }}>
-              <Text style={{ color: theme.textMuted, fontSize: 13, textAlign: 'center' }}>
-                Sin pedidos en columna LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
+            <View style={styles.emptyBox}>
+              <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                No hay pedidos en estado LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
               </Text>
             </View>
           )}
@@ -250,5 +251,16 @@ const styles = StyleSheet.create({
   },
   textDisabled: {
     color: '#8B949E'
+  },
+  emptyBox: {
+    paddingVertical: 24,
+    paddingHorizontal: 12,
+    alignItems: 'center'
+  },
+  emptyText: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontWeight: '500'
   }
 });
