@@ -40,6 +40,12 @@
 | `order_items` | Detalle de artículos EAN-13, cantidades requeridas vs. escaneadas y estado. |
 | `audit_logs` | Historial inmutable de acciones en cada pedido. |
 
+### 3.1 Convenciones de Claves e Identificación Única de Pedidos
+- **`id` (`INTEGER PRIMARY KEY AUTOINCREMENT`):** Clave primaria relacional única de la tabla `orders`. **Es el identificador obligatorio** utilizado para el seguimiento unívoco de pedidos, cambios de estado, transiciones entre lanes/columnas del Kanban y referencias en la API.
+- **`uuid` (`TEXT UNIQUE NOT NULL`):** Identificador único universal (UUID v4) de cada comprobante.
+- **`orderNumber` (`TEXT NOT NULL`):** Número de comprobante o comprobante comercial extraído de la factura PDF ingresada. **REGLA DE ARQUITECTURA CRÍTICA:** `orderNumber` es únicamente una propiedad visible de negocio y **NO ES UNA CLAVE ÚNICA** (pudiendo repetirse en facturas de distintos clientes o proveedores externos). Queda **estrictamente prohibido** utilizar `orderNumber` como clave primaria o identificador de transición entre los lanes del Kanban.
+
+
 ---
 
 ## 4. Rutas API (`/api/scanban/*`)

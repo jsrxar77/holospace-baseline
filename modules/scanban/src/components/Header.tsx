@@ -15,7 +15,10 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
-  const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: jsrxar@gmail.com');
+  const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: Desconectado');
+
+  const isOmarchy = theme.borderRadius === 4;
+  const isSoftMinimal = theme.borderRadius === 12;
 
   const handleLogoutPress = () => {
     logout();
@@ -28,10 +31,20 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={[styles.container, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder, paddingTop: paddingTopVal }]}>
       <View style={styles.brandGroup}>
         <View style={styles.titleRow}>
-          <Text style={[styles.titleWhite, { color: theme.textMain }]}>
+          <Text
+            style={[
+              styles.titleWhite,
+              {
+                color: theme.textMain,
+                fontFamily: isOmarchy ? 'Press Start 2P' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit'),
+                fontSize: isOmarchy ? 13 : 20,
+                letterSpacing: isOmarchy ? 1 : -0.5
+              }
+            ]}
+          >
             HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>WARE</Text>
           </Text>
-          <View style={[styles.moduleBadge, { borderColor: theme.emerald }]}>
+          <View style={[styles.moduleBadge, { borderColor: theme.emerald, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 20 : 6) }]}>
             <Text style={[styles.moduleBadgeText, { color: theme.emerald }]}>ScanBan Scanner</Text>
           </View>
         </View>
@@ -39,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
           {displayBadge}
         </Text>
       </View>
-      <TouchableOpacity style={[styles.btnLogout, { borderColor: theme.red }]} onPress={handleLogoutPress} activeOpacity={0.7}>
+      <TouchableOpacity style={[styles.btnLogout, { borderColor: theme.red, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 20 : 8) }]} onPress={handleLogoutPress} activeOpacity={0.7}>
         <Text style={[styles.btnLogoutText, { color: theme.red }]}>CERRAR SESIÓN</Text>
       </TouchableOpacity>
     </View>

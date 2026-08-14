@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { OrderItem } from '../types';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface ItemCardProps {
   item: OrderItem;
@@ -8,40 +9,51 @@ interface ItemCardProps {
 }
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
+  const { theme } = useThemeStore();
   const isCompleted = item.quantityScanned >= item.quantityRequired;
   const isPending = item.quantityScanned === 0;
+
+  const cardRadius = theme.radiusCard || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 32));
+  const badgeRadius = theme.radiusBadge || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 14));
 
   return (
     <TouchableOpacity
       style={[
         styles.card,
-        isCompleted && styles.cardCompleted,
-        !isCompleted && !isPending && styles.cardInProgress
+        {
+          backgroundColor: theme.cardBg,
+          borderColor: isCompleted ? theme.emerald : (isPending ? theme.cardBorder : theme.cobalt),
+          borderRadius: cardRadius
+        }
       ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
       <View style={styles.details}>
-        <Text style={styles.skuText}>EAN: {item.code}</Text>
-        <Text style={styles.descriptionText} numberOfLines={2}>
+        <Text style={[styles.skuText, { color: theme.textMuted }]}>EAN: {item.code}</Text>
+        <Text style={[styles.descriptionText, { color: theme.textMain }]} numberOfLines={2}>
           {item.description}
         </Text>
       </View>
 
       <View style={styles.rightGroup}>
-        <Text style={[styles.countText, isCompleted ? styles.textCompleted : styles.textPending]}>
+        <Text style={[styles.countText, { color: isCompleted ? theme.emerald : theme.textMain }]}>
           {item.quantityScanned} / {item.quantityRequired}
         </Text>
         <View
           style={[
             styles.badge,
-            isCompleted ? styles.badgeCompleted : styles.badgePending
+            {
+              borderRadius: theme.borderRadius === 4 ? 4 : 8,
+              borderColor: isCompleted ? theme.emerald : theme.cardBorder,
+              backgroundColor: isCompleted ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 255, 255, 0.05)'
+            }
           ]}
         >
           <Text
             style={[
               styles.badgeText,
-              isCompleted ? styles.badgeTextCompleted : styles.badgeTextPending
+              { color: isCompleted ? theme.emerald : theme.textMuted }
             ]}
           >
             {isCompleted ? 'COMPLETADO' : 'PENDIENTE'}

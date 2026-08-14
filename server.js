@@ -452,6 +452,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  if (req.url === '/css/holoware-theme.css' || req.url.startsWith('/css/')) {
+    let cssPath = path.join(__dirname, 'modules', 'core', 'public', req.url);
+    if (!fs.existsSync(cssPath)) {
+      cssPath = path.join(__dirname, 'public', req.url);
+    }
+    if (fs.existsSync(cssPath)) {
+      fs.readFile(cssPath, (err, content) => {
+        if (err) {
+          res.writeHead(500, { 'Content-Type': 'text/plain' });
+          res.end('Error cargando archivo CSS');
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/css' });
+        res.end(content);
+      });
+      return;
+    }
+  }
+
   // DESCARGA DE COMPROBANTE PDF DESDE LA BASE DE DATOS SQLITE (BLOB)
   if (req.url.startsWith('/api/scanban/download-pdf')) {
     const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
@@ -518,90 +537,93 @@ const server = http.createServer(async (req, res) => {
     }
 
 const THEMES = {
-  original: {
-    name: 'Original Dark Glassmorphism',
+  dark_glassmorphism: {
+    name: 'Dark Glassmorphism',
     background: '#0B0E14',
-    cardBg: '#161B22',
-    cardBorder: '#30363D',
+    cardBg: 'rgba(18, 24, 38, 0.45)',
+    cardBorder: 'rgba(255, 255, 255, 0.12)',
     emerald: '#00E676',
     cobalt: '#3B82F6',
     amber: '#F59E0B',
     red: '#FF5252',
     textMain: '#FFFFFF',
-    textMuted: '#8B949E'
+    textMuted: '#8B949E',
+    borderRadius: 32,
+    radiusCard: 32,
+    radiusBtn: 20,
+    radiusBadge: 14,
+    borderWidth: 1,
+    fontFamily: "'Outfit', 'Inter', sans-serif",
+    logoFontFamily: "'Outfit', 'Inter', sans-serif"
   },
-  cyberpunk_neon: {
-    name: 'Cyberpunk Neon',
+  cyberpunk_glassmorphism: {
+    name: 'Cyberpunk Glassmorphism',
     background: '#0A0A12',
-    cardBg: '#121224',
-    cardBorder: '#2D2B55',
+    cardBg: 'rgba(22, 18, 42, 0.45)',
+    cardBorder: 'rgba(168, 85, 247, 0.3)',
     emerald: '#00F0FF',
     cobalt: '#A855F7',
     amber: '#FF007F',
     red: '#FF3366',
     textMain: '#FFFFFF',
-    textMuted: '#A594F9'
+    textMuted: '#A594F9',
+    borderRadius: 32,
+    radiusCard: 32,
+    radiusBtn: 20,
+    radiusBadge: 14,
+    borderWidth: 1,
+    fontFamily: "'Outfit', 'Inter', sans-serif",
+    logoFontFamily: "'Outfit', 'Inter', sans-serif"
   },
-  nordic_frost: {
-    name: 'Nordic Frost',
-    background: '#0F172A',
-    cardBg: '#1E293B',
-    cardBorder: '#334155',
-    emerald: '#38BDF8',
-    cobalt: '#14B8A6',
-    amber: '#F59E0B',
-    red: '#F43F5E',
-    textMain: '#F8FAFC',
-    textMuted: '#94A3B8'
+  omarchy_tiling: {
+    name: 'Omarchy Tiling WM',
+    background: '#1E1E2E',
+    cardBg: '#181825',
+    cardBorder: '#313244',
+    emerald: '#A6E3A1',
+    cobalt: '#CBA6F7',
+    amber: '#F9E2AF',
+    red: '#F38BA8',
+    textMain: '#CDD6F4',
+    textMuted: '#A6ADC8',
+    borderRadius: 4,
+    radiusCard: 4,
+    radiusBtn: 4,
+    radiusBadge: 4,
+    borderWidth: 2,
+    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    logoFontFamily: "'Press Start 2P', 'Silkscreen', monospace"
   },
-  dracula_pro: {
-    name: 'Dracula Pro',
-    background: '#282A36',
-    cardBg: '#44475A',
-    cardBorder: '#6272A4',
-    emerald: '#50FA7B',
-    cobalt: '#BD93F9',
-    amber: '#FFB86C',
-    red: '#FF5555',
-    textMain: '#F8F8F2',
-    textMuted: '#8BE9FD'
-  },
-  emerald_light: {
-    name: 'Modern Light Corporate',
-    background: '#F8FAFC',
-    cardBg: '#FFFFFF',
-    cardBorder: '#E2E8F0',
-    emerald: '#059669',
-    cobalt: '#2563EB',
-    amber: '#D97706',
-    red: '#DC2626',
-    textMain: '#0F172A',
-    textMuted: '#64748B'
-  },
-  monochrome_minimal: {
-    name: 'Monochrome Minimal',
-    background: '#000000',
-    cardBg: '#111111',
-    cardBorder: '#222222',
-    emerald: '#FFFFFF',
-    cobalt: '#CCCCCC',
-    amber: '#888888',
-    red: '#FF4444',
-    textMain: '#FFFFFF',
-    textMuted: '#777777'
-  },
-  catppuccin_mocha: {
-    name: 'Catppuccin Mocha',
+  soft_minimal_pastel: {
+    name: 'Soft Minimal Pastel',
     background: '#1E1E2E',
     cardBg: '#181825',
     cardBorder: '#313244',
     emerald: '#A6E3A1',
     cobalt: '#89B4FA',
-    amber: '#F9E2AF',
+    amber: '#FAB387',
     red: '#F38BA8',
     textMain: '#CDD6F4',
-    textMuted: '#A6ADC8'
+    textMuted: '#A6ADC8',
+    borderRadius: 12,
+    radiusCard: 12,
+    radiusBtn: 20,
+    radiusBadge: 20,
+    borderWidth: 1,
+    fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
+    logoFontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif"
   }
+};
+
+const THEME_LEGACY_MAP = {
+  'original': 'dark_glassmorphism',
+  'cyberpunk_neon': 'cyberpunk_glassmorphism',
+  'omarchy_catppuccin': 'omarchy_tiling',
+  'catppuccin_mocha': 'soft_minimal_pastel',
+  'nordic_frost': 'dark_glassmorphism',
+  'dracula_pro': 'dark_glassmorphism',
+  'emerald_light': 'dark_glassmorphism',
+  'monochrome_minimal': 'dark_glassmorphism'
 };
 
     try {
@@ -623,28 +645,35 @@ const THEMES = {
       // -1. CONSULTA DE TEMA DINÁMICO DESDE SQLITE APP_SETTINGS
       if (req.url === '/api/theme' && req.method === 'GET') {
         const row = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();
-        const themeKey = (row ? row.value : 'original').toLowerCase().trim();
-        const activeTheme = THEMES[themeKey] || THEMES.original;
+        let rawKey = (row ? row.value : 'dark_glassmorphism').toLowerCase().trim();
+        if (THEME_LEGACY_MAP[rawKey]) {
+          rawKey = THEME_LEGACY_MAP[rawKey];
+        }
+        const themeKey = (rawKey in THEMES) ? rawKey : 'dark_glassmorphism';
+        const activeTheme = THEMES[themeKey];
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
-          activeThemeKey: themeKey in THEMES ? themeKey : 'original',
+          activeThemeKey: themeKey,
           theme: activeTheme
         }));
         return;
       }
 
-      // -1.1 CAMBIO DE TEMA DINÁMICO EXCLUSIVO POR SUPERADMIN
+      // -1.1 CAMBIO DE TEMA DINÁMICO POR ADMIN O SUPERADMIN
       if (req.url === '/api/theme' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
+        if (!currentUser || (currentUser.role !== 'SUPERADMIN' && currentUser.role !== 'ADMIN')) {
           res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Solo el Super Administrador puede cambiar el tema visual de la plataforma.' }));
+          res.end(JSON.stringify({ error: 'Solo Administradores pueden cambiar el tema visual de la plataforma.' }));
           return;
         }
         const { themeKey } = data;
         const adminEmail = currentUser.email;
 
-        const targetKey = (themeKey || '').toLowerCase().trim();
+        let targetKey = (themeKey || '').toLowerCase().trim();
+        if (THEME_LEGACY_MAP[targetKey]) {
+          targetKey = THEME_LEGACY_MAP[targetKey];
+        }
         if (!THEMES[targetKey]) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Tema no válido.' }));

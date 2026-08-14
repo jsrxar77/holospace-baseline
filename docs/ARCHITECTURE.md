@@ -66,3 +66,11 @@ holoware-baseline/
 - **HoloWare ScanBan Scanner (Mobile):** Ver [docs/modules/SCANBAN_SCANNER.md](./modules/SCANBAN_SCANNER.md).
 - **HoloWare StockFlow (Plantilla):** Ver [docs/modules/STOCKFLOW.md](./modules/STOCKFLOW.md).
 - **Guía de Creación de Módulos:** Ver [MODULE_CREATION.md](./MODULE_CREATION.md).
+
+---
+
+## 4. Convenciones de Identificación de Entidades y Claves Relacionales
+
+1. **Clave Primaria Interna (`id` / `uuid`):** Todas las entidades relacionales en SQLite (`holoware.db`) deben tener una clave primaria técnica (`id INTEGER PRIMARY KEY AUTOINCREMENT`) y/o `uuid` único. **Todas las transiciones de estado, operaciones entre lanes del Kanban y consultas API deben utilizar exclusivamente esta clave primaria.**
+2. **Campos Externos No Únicos (`orderNumber`):** Los identificadores procedentes de sistemas externos o comprobantes físicos (como `orderNumber` de facturas PDF) son datos de negocio visibles pero **NO SON CLAVES ÚNICAS** (pueden repetirse entre proveedores o clientes distintos). Nunca deben ser utilizados como claves primarias o para el ruteo/paso de tarjetas en la interfaz.
+

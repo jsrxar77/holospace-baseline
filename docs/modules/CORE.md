@@ -35,7 +35,7 @@ El módulo **Core** constituye el motor base de la plataforma HoloWare Baseline.
 - **Facultad Exclusiva del SuperAdmin:** La selección del tema de plataforma es una funcionalidad del Core disponible únicamente para el `SUPERADMIN` (`POST /api/theme` valida rol `SUPERADMIN`). Para usuarios `ADMIN` u `OPERATOR`, el selector de temas permanece oculto en la interfaz.
 - **Propagación Automática a Módulos Web:** Al cambiar el tema, la plataforma actualiza las variables CSS globales (`--bg-black`, `--card-bg`, `--emerald`, `--cobalt`, etc.) en `:root` sobre la tabla `app_settings` de SQLite (`active_theme`). Todos los módulos (`ScanBan`, `StockFlow`, etc.) consumen `var(...)` aplicando el nuevo tema instantáneamente.
 - **Propagación a Módulos Móviles:** Las aplicaciones móviles (Expo / React Native) realizan la consulta a `GET /api/theme` recibiendo los tokens de color actualizados para adaptar su interfaz nativa en tiempo real.
-- **7 Paletas Curadas:** `original`, `catppuccin_mocha`, `cyberpunk_neon`, `nordic_frost`, `dracula_pro`, `emerald_light`, `monochrome_minimal`.
+- **4 Paletas Curadas Oficiales:** `original`, `catppuccin_mocha`, `cyberpunk_neon`, `omarchy_catppuccin`.
 
 ### 2.5 Sistema Centralizado de Errores y Diagnóstico
 - **Ruta Backend:** `POST /api/log-client-error` / `GET /api/error-logs`.

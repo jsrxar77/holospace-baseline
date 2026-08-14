@@ -4,12 +4,11 @@ let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/
 
 function populateSavedCredentials() {
   const savedEmail = localStorage.getItem('hw_saved_email') || '';
-  const savedPassword = localStorage.getItem('hw_saved_password') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
   if (emailInput) emailInput.value = savedEmail;
-  if (passwordInput) passwordInput.value = savedPassword;
+  if (passwordInput) passwordInput.value = '';
 }
 
 function toggleLoginPasswordVisibility() {
@@ -31,9 +30,15 @@ async function loadActiveTheme() {
     const res = await fetch('/api/theme');
     const data = await res.json();
     if (data && data.theme) {
+      const activeKey = data.activeThemeKey || 'dark_glassmorphism';
+      document.body.className = 'theme-' + activeKey;
       const root = document.documentElement;
       const t = data.theme;
-      if (t.background) root.style.setProperty('--bg-dark', t.background);
+
+      if (t.background) {
+        root.style.setProperty('--bg-dark', t.background);
+        root.style.setProperty('--bg-black', t.background);
+      }
       if (t.cardBg) root.style.setProperty('--card-bg', t.cardBg);
       if (t.cardBorder) root.style.setProperty('--card-border', t.cardBorder);
       if (t.emerald) root.style.setProperty('--emerald', t.emerald);
@@ -43,13 +48,20 @@ async function loadActiveTheme() {
       if (t.textMain) root.style.setProperty('--text-main', t.textMain);
       if (t.textMuted) root.style.setProperty('--text-muted', t.textMuted);
 
+      if (t.fontFamily) root.style.setProperty('--hw-font-family', t.fontFamily);
+      if (t.logoFontFamily) root.style.setProperty('--hw-font-logo', t.logoFontFamily);
+      if (t.radiusCard) root.style.setProperty('--hw-radius-card', t.radiusCard + 'px');
+      if (t.radiusBtn) root.style.setProperty('--hw-radius-btn', t.radiusBtn + 'px');
+      if (t.radiusBadge) root.style.setProperty('--hw-radius-badge', t.radiusBadge + 'px');
+      if (t.borderWidth) root.style.setProperty('--hw-border-width', t.borderWidth + 'px');
+
       const selectEl = document.getElementById('headerThemeSelect');
       if (selectEl && data.activeThemeKey && selectEl.value !== data.activeThemeKey) {
         selectEl.value = data.activeThemeKey;
       }
     }
   } catch (e) {
-    console.error('Error cargando tema dinámico:', e);
+    console.error('Error cargando tema activo:', e);
   }
 }
 
@@ -71,6 +83,9 @@ async function changeAppThemeSubmit(themeKey) {
 
     if (data.success) {
       await loadActiveTheme();
+      if (currentUser && currentUser.role === 'SUPERADMIN' && typeof loadPlatformPanel === 'function') {
+        await loadPlatformPanel();
+      }
     } else {
       await showCustomAlert('Acción Denegada', data.error || 'No se pudo cambiar el tema visual.');
     }
@@ -113,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('hw_token', data.token);
         localStorage.setItem('hw_user', JSON.stringify(data.user));
         localStorage.setItem('hw_saved_email', email);
-        localStorage.setItem('hw_saved_password', password);
 
         document.getElementById('loginModal').classList.add('hidden');
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email}`;
@@ -316,10 +330,10 @@ async function loadKanbanData() {
     backlogList.innerHTML = (!data.backlog || data.backlog.length === 0)
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin comprobantes pendientes</div>'
       : data.backlog.map(item => `
-        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
+        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
-            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.orderNumber}', event)">✓ Pasar a Listo</button>
-            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.orderNumber}', event)">🗑️</button>
+            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">✓ Pasar a Listo</button>
+            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.id}', event)">🗑️</button>
           </div>
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
@@ -334,8 +348,8 @@ async function loadKanbanData() {
     readyList.innerHTML = (!data.ready || data.ready.length === 0)
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
       : data.ready.map(item => `
-        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
-          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.orderNumber}', event)">↩️ A Backlog</button>
+        <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
+          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">↩️ A Backlog</button>
           <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
@@ -368,7 +382,7 @@ async function loadKanbanData() {
         const userOrders = doingGroups[email];
 
         const cardsHtml = userOrders.map(item => `
-          <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.orderNumber}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.orderNumber}')">
+          <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
             <div class="card-order-no" style="color: var(--cobalt);">Pedido #${item.orderNumber}</div>
             <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
@@ -416,7 +430,7 @@ async function loadKanbanData() {
         const userOrders = doneGroups[email];
 
         const cardsHtml = userOrders.map(item => `
-          <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.orderNumber}')">
+          <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.id}')">
             <div class="card-order-no" style="color: var(--amber);">Pedido #${item.orderNumber}</div>
             <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
             <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
@@ -441,7 +455,7 @@ async function loadKanbanData() {
 }
 
 // FUNCIONES PARA PASAR ENTRE BACKLOG Y LISTO (READY)
-async function markOrderReady(orderNumber, event) {
+async function markOrderReady(orderId, event) {
   if (event) event.stopPropagation();
 
   try {
@@ -449,8 +463,8 @@ async function markOrderReady(orderNumber, event) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        orderId,
+        userEmail: currentUser ? currentUser.email : ''
       })
     });
     const data = await res.json();
@@ -464,7 +478,7 @@ async function markOrderReady(orderNumber, event) {
   }
 }
 
-async function markOrderBacklog(orderNumber, event) {
+async function markOrderBacklog(orderId, event) {
   if (event) event.stopPropagation();
 
   try {
@@ -472,8 +486,8 @@ async function markOrderBacklog(orderNumber, event) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        orderId,
+        userEmail: currentUser ? currentUser.email : ''
       })
     });
     const data = await res.json();
@@ -498,7 +512,7 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
       body: JSON.stringify({
         orderId,
         orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        userEmail: currentUser ? currentUser.email : ''
       })
     });
     const data = await res.json();
@@ -537,7 +551,7 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
       const res = await fetch('/api/users');
       const data = await res.json();
       const userList = Array.isArray(data) ? data : (data.users || []);
-      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false);
+      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && u.role === 'OPERATOR');
       if (activeUsers.length > 0) {
         selectEl.innerHTML = activeUsers.map(u => `
           <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>
@@ -577,7 +591,7 @@ async function confirmAssignOperatorSubmit() {
         orderId: pendingAssignOrderId,
         orderNumber: pendingAssignOrderNumber,
         operatorEmail: selectedOperator,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        userEmail: currentUser ? currentUser.email : ''
       })
     });
     const data = await res.json();
@@ -596,8 +610,8 @@ async function confirmAssignOperatorSubmit() {
 }
 
 // MANEJADORES DE DRAG AND DROP (ARRASTRAR DE BACKLOG A LISTO Y EN PROCESO)
-function handleDragStart(event, orderNumber) {
-  event.dataTransfer.setData('text/plain', orderNumber);
+function handleDragStart(event, orderId) {
+  event.dataTransfer.setData('text/plain', String(orderId));
   event.dataTransfer.effectAllowed = 'move';
 }
 
@@ -608,52 +622,58 @@ function allowDrop(event) {
 
 async function handleDropToListo(event) {
   event.preventDefault();
-  const orderNumber = event.dataTransfer.getData('text/plain');
-  if (orderNumber) {
+  const orderId = event.dataTransfer.getData('text/plain');
+  if (orderId) {
     try {
-      const res = await fetch(`/api/scanban/order-detail?orderNumber=${orderNumber}`);
+      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
       const data = await res.json();
       if (data.success && data.order && (data.order.status === 'DOING' || data.order.status === 'SCANNING')) {
-        await resetOrderDoingToReady(data.order.id, orderNumber, event);
+        await resetOrderDoingToReady(data.order.id, data.order.orderNumber, event);
         return;
       }
     } catch (e) {}
 
-    await markOrderReady(orderNumber, event);
+    await markOrderReady(orderId, event);
   }
 }
 
 async function handleDropToBacklog(event) {
   event.preventDefault();
-  const orderNumber = event.dataTransfer.getData('text/plain');
-  if (orderNumber) {
-    await markOrderBacklog(orderNumber, event);
+  const orderId = event.dataTransfer.getData('text/plain');
+  if (orderId) {
+    await markOrderBacklog(orderId, event);
   }
 }
 
 async function handleDropToDoing(event) {
   event.preventDefault();
-  const orderNumber = event.dataTransfer.getData('text/plain');
-  if (orderNumber) {
-    await openAssignOperatorModal(null, orderNumber, event);
+  const orderId = event.dataTransfer.getData('text/plain');
+  if (orderId) {
+    try {
+      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
+      const data = await res.json();
+      if (data.success && data.order) {
+        await openAssignOperatorModal(data.order.id, data.order.orderNumber, event);
+      }
+    } catch (e) {}
   }
 }
 
-async function markOrderReadyAndCloseModal(orderNumber) {
+async function markOrderReadyAndCloseModal(orderId) {
   closeInvoiceModal();
-  await markOrderReady(orderNumber);
+  await markOrderReady(orderId);
 }
 
-async function markOrderBacklogAndCloseModal(orderNumber) {
+async function markOrderBacklogAndCloseModal(orderId) {
   closeInvoiceModal();
-  await markOrderBacklog(orderNumber);
+  await markOrderBacklog(orderId);
 }
 
 
 // DETALLE COMPLETO DE COMPROBANTE Y MARCA DE AGUA
-async function openInvoiceModal(orderNumber) {
+async function openInvoiceModal(orderId) {
   try {
-    const res = await fetch(`/api/scanban/order-detail?orderNumber=${orderNumber}`);
+    const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
     const data = await res.json();
     if (!data.success || !data.order) {
       await showCustomAlert('Error', 'No se pudo cargar el detalle del comprobante.');
@@ -686,9 +706,9 @@ async function openInvoiceModal(orderNumber) {
     const statusLabelEs = order.status === 'READY' ? 'LISTO' : order.status === 'DOING' || order.status === 'SCANNING' ? 'EN PROCESO' : order.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG';
 
     const statusActionButton = order.status === 'BACKLOG'
-      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id || order.orderNumber}')">VALIDAR Y PASAR A LISTO</button>`
+      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id}')">VALIDAR Y PASAR A LISTO</button>`
       : order.status === 'READY'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id || order.orderNumber}')">DEVOLVER A BACKLOG</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id}')">DEVOLVER A BACKLOG</button>`
       : (order.status === 'DOING' || order.status === 'SCANNING') && currentUser && currentUser.role === 'ADMIN'
       ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">REASIGNAR Y LIBERAR A LISTO</button>`
       : '';
@@ -712,7 +732,7 @@ async function openInvoiceModal(orderNumber) {
               <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${statusLabelEs}</div>
               <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">Usuario Asignado: ${order.operatorEmail}</div>
               <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
-                <button class="btn-secondary" style="font-size: 13px; padding: 6px 12px;" onclick="downloadPdf('${order.orderNumber}')">Descargar PDF</button>
+                <button class="btn-secondary" style="font-size: 13px; padding: 6px 12px;" onclick="downloadPdf('${order.id}')">Descargar PDF</button>
                 ${statusActionButton}
               </div>
             </div>
@@ -772,8 +792,8 @@ function closeInvoiceModal() {
   document.getElementById('invoiceModal').classList.add('hidden');
 }
 
-function downloadPdf(orderNumber) {
-  window.open(`/api/scanban/download-pdf?orderNumber=${orderNumber}`, '_blank');
+function downloadPdf(orderId) {
+  window.open(`/api/scanban/download-pdf?id=${orderId}`, '_blank');
 }
 
 // SUBIDA DE COMPROBANTES PDF
@@ -791,7 +811,7 @@ async function handleFileUpload(event) {
         body: JSON.stringify({
           fileName: file.name,
           pdfBase64: base64,
-          userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+          userEmail: currentUser ? currentUser.email : ''
         })
       });
       const data = await res.json();
@@ -809,12 +829,12 @@ async function handleFileUpload(event) {
 }
 
 // ELIMINACIÓN DE COMPROBANTES EN BACKLOG (MODAL PERSONALIZADO)
-async function deleteBacklogOrder(orderNumber, event) {
+async function deleteBacklogOrder(orderId, event) {
   if (event) event.stopPropagation();
 
   const confirmed = await showCustomConfirm(
     'Eliminar Comprobante',
-    `¿Estás seguro de eliminar el pedido #${orderNumber} del Backlog? Se quitará de la Base de Datos.`
+    '¿Estás seguro de eliminar este comprobante del Backlog? Se quitará de la Base de Datos.'
   );
 
   if (!confirmed) return;
@@ -824,8 +844,8 @@ async function deleteBacklogOrder(orderNumber, event) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        orderNumber,
-        userEmail: currentUser ? currentUser.email : 'admin@drinklovers.com.ar'
+        orderId,
+        userEmail: currentUser ? currentUser.email : ''
       })
     });
     const data = await res.json();
@@ -1139,7 +1159,7 @@ switchTab = function (tabName) {
 
 async function openQrModal() {
   let host = window.location.hostname;
-  if (!host || host === 'localhost' || host === '127.0.0.1') {
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
     try {
       const res = await fetch('/api/config');
       const data = await res.json();
@@ -1188,7 +1208,20 @@ async function loadPlatformPanel() {
   try {
     const themeRes = await fetch('/api/theme');
     const themeData = await themeRes.json();
-    document.getElementById('platformInfoTheme').innerText = themeData.activeTheme || '—';
+    const activeThemeEl = document.getElementById('platformInfoTheme');
+    if (activeThemeEl) {
+      activeThemeEl.innerText = (themeData.theme && themeData.theme.name) ? themeData.theme.name : (themeData.activeThemeKey || '—');
+    }
+  } catch {}
+
+  // Load config / db info
+  try {
+    const configRes = await fetch('/api/config');
+    const configData = await configRes.json();
+    const dbEl = document.getElementById('platformInfoDb');
+    if (dbEl && configData && configData.dbPath) {
+      dbEl.innerText = configData.dbPath;
+    }
   } catch {}
 
   // Load modules

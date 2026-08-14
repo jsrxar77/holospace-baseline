@@ -1,0 +1,364 @@
+/* ============================================================ */
+/* HOLOWARE BASELINE — CENTRALIZED DESIGN SYSTEM (HW-DS)        */
+/* Authoritative Theme System & Token Injection                 */
+/* ============================================================ */
+
+/* ============================================================ */
+/* 1. OMARCHY TILING WM THEME (HYPRLAND PURE 4PX SQUARE TILING) */
+/* ============================================================ */
+html.theme-omarchy_tiling,
+body.theme-omarchy_tiling {
+  font-family: 'JetBrains Mono', monospace !important;
+  background-color: #1E1E2E !important;
+  background-image: none !important;
+}
+
+/* Universal Wildcard Enforcement: ALL elements in Omarchy MUST be 4px square tiling */
+body.theme-omarchy_tiling,
+body.theme-omarchy_tiling *,
+body.theme-omarchy_tiling *:before,
+body.theme-omarchy_tiling *:after {
+  font-family: 'JetBrains Mono', monospace !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling header {
+  background: #11111B !important;
+  border-bottom: 2px solid #313244 !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-omarchy_tiling #brandLogoText,
+body.theme-omarchy_tiling #brandLogoText *,
+body.theme-omarchy_tiling .brand-title,
+body.theme-omarchy_tiling .brand-title * {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 13px !important;
+  letter-spacing: 1px !important;
+  line-height: 1 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-omarchy_tiling .kanban-col,
+body.theme-omarchy_tiling .upload-dropzone,
+body.theme-omarchy_tiling .upload-zone,
+body.theme-omarchy_tiling .operator-group,
+body.theme-omarchy_tiling .kanban-card,
+body.theme-omarchy_tiling .module-card,
+body.theme-omarchy_tiling .invoice-card,
+body.theme-omarchy_tiling .user-group,
+body.theme-omarchy_tiling .modal-content,
+body.theme-omarchy_tiling .data-table,
+body.theme-omarchy_tiling section,
+body.theme-omarchy_tiling article {
+  background: #181825 !important;
+  border: 2px solid #313244 !important;
+  border-radius: 4px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+body.theme-omarchy_tiling .kanban-card:hover,
+body.theme-omarchy_tiling .module-card:hover {
+  border-color: #CBA6F7 !important;
+  box-shadow: 0 0 12px rgba(203, 166, 247, 0.3) !important;
+}
+
+body.theme-omarchy_tiling .btn-primary,
+body.theme-omarchy_tiling .btn-action {
+  border: 1px solid #A6E3A1 !important;
+  background: #A6E3A1 !important;
+  color: #11111B !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling .btn-secondary,
+body.theme-omarchy_tiling .btn-danger,
+body.theme-omarchy_tiling .btn-delete,
+body.theme-omarchy_tiling .nav-tab {
+  border: 1px solid #313244 !important;
+  background: #181825 !important;
+  color: #CDD6F4 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling .nav-tab.active {
+  background: #CBA6F7 !important;
+  color: #11111B !important;
+  border-color: #CBA6F7 !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling .badge-role,
+body.theme-omarchy_tiling .superadmin-badge,
+body.theme-omarchy_tiling .badge-admin,
+body.theme-omarchy_tiling .badge-operator,
+body.theme-omarchy_tiling .badge-superadmin,
+body.theme-omarchy_tiling #activeContextBadge {
+  border-radius: 4px !important;
+  border: 1px solid #CBA6F7 !important;
+  background: rgba(203, 166, 247, 0.15) !important;
+  color: #CBA6F7 !important;
+}
+
+body.theme-omarchy_tiling input,
+body.theme-omarchy_tiling select {
+  border-radius: 4px !important;
+  border: 1px solid #313244 !important;
+  background: #181825 !important;
+  color: #CDD6F4 !important;
+}
+
+/* ============================================================ */
+/* 2. SOFT MINIMAL PASTEL THEME (EDITORIAL 12PX & 20PX PILLS)   */
+/* ============================================================ */
+html.theme-soft_minimal_pastel,
+body.theme-soft_minimal_pastel {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  background-color: #1E1E2E !important;
+  background-image: none !important;
+}
+
+body.theme-soft_minimal_pastel * {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+body.theme-soft_minimal_pastel header {
+  background: #181825 !important;
+  border-bottom: 1px solid #313244 !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-soft_minimal_pastel #brandLogoText,
+body.theme-soft_minimal_pastel #brandLogoText *,
+body.theme-soft_minimal_pastel .brand-title,
+body.theme-soft_minimal_pastel .brand-title * {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 20px !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 800 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-soft_minimal_pastel .kanban-col,
+body.theme-soft_minimal_pastel .upload-dropzone,
+body.theme-soft_minimal_pastel .upload-zone,
+body.theme-soft_minimal_pastel .operator-group,
+body.theme-soft_minimal_pastel .module-card,
+body.theme-soft_minimal_pastel .kanban-card,
+body.theme-soft_minimal_pastel .invoice-card,
+body.theme-soft_minimal_pastel .user-group,
+body.theme-soft_minimal_pastel .modal-content,
+body.theme-soft_minimal_pastel .data-table,
+body.theme-soft_minimal_pastel section,
+body.theme-soft_minimal_pastel article {
+  border-radius: 12px !important;
+  border: 1px solid #313244 !important;
+  background: #181825 !important;
+  box-shadow: 0 4px 12px rgba(17, 17, 27, 0.3) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-soft_minimal_pastel .btn-primary,
+body.theme-soft_minimal_pastel .btn-secondary,
+body.theme-soft_minimal_pastel .btn-action,
+body.theme-soft_minimal_pastel .btn-danger,
+body.theme-soft_minimal_pastel .btn-delete,
+body.theme-soft_minimal_pastel .nav-tab,
+body.theme-soft_minimal_pastel .toggle-slider,
+body.theme-soft_minimal_pastel .badge-role,
+body.theme-soft_minimal_pastel .superadmin-badge,
+body.theme-soft_minimal_pastel .badge-admin,
+body.theme-soft_minimal_pastel .badge-operator,
+body.theme-soft_minimal_pastel .badge-superadmin,
+body.theme-soft_minimal_pastel #activeContextBadge {
+  border-radius: 20px !important;
+}
+
+body.theme-soft_minimal_pastel .nav-tab.active {
+  background: #89B4FA !important;
+  color: #11111B !important;
+  border-color: #89B4FA !important;
+  font-weight: 800 !important;
+  box-shadow: 0 4px 12px rgba(137, 180, 250, 0.25) !important;
+}
+
+body.theme-soft_minimal_pastel input,
+body.theme-soft_minimal_pastel select {
+  border-radius: 12px !important;
+  border: 1px solid #313244 !important;
+  background: #181825 !important;
+  color: #CDD6F4 !important;
+}
+
+/* ============================================================ */
+/* 3. DARK GLASSMORPHISM THEME                                  */
+/* ============================================================ */
+html.theme-dark_glassmorphism,
+body.theme-dark_glassmorphism {
+  font-family: 'Outfit', sans-serif !important;
+  background-color: #06080D !important;
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.35) 0%, transparent 45%),
+    radial-gradient(circle at 90% 80%, rgba(0, 230, 118, 0.3) 0%, transparent 45%),
+    radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 80% 15%, rgba(245, 158, 11, 0.2) 0%, transparent 35%) !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
+body.theme-dark_glassmorphism * {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+body.theme-dark_glassmorphism header {
+  background: rgba(11, 14, 20, 0.65) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+body.theme-dark_glassmorphism #brandLogoText,
+body.theme-dark_glassmorphism #brandLogoText *,
+body.theme-dark_glassmorphism .brand-title,
+body.theme-dark_glassmorphism .brand-title * {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 20px !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 900 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-dark_glassmorphism .kanban-col,
+body.theme-dark_glassmorphism .upload-dropzone,
+body.theme-dark_glassmorphism .upload-zone,
+body.theme-dark_glassmorphism .operator-group,
+body.theme-dark_glassmorphism .kanban-card,
+body.theme-dark_glassmorphism .module-card,
+body.theme-dark_glassmorphism .invoice-card,
+body.theme-dark_glassmorphism .user-group,
+body.theme-dark_glassmorphism .modal-content,
+body.theme-dark_glassmorphism .data-table,
+body.theme-dark_glassmorphism section,
+body.theme-dark_glassmorphism article {
+  background: rgba(18, 24, 38, 0.45) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  border-radius: 32px !important;
+}
+
+body.theme-dark_glassmorphism .btn-primary,
+body.theme-dark_glassmorphism .btn-secondary,
+body.theme-dark_glassmorphism .btn-action,
+body.theme-dark_glassmorphism .btn-danger,
+body.theme-dark_glassmorphism .btn-delete,
+body.theme-dark_glassmorphism .nav-tab {
+  border-radius: 20px !important;
+}
+
+body.theme-dark_glassmorphism .badge-role,
+body.theme-dark_glassmorphism .superadmin-badge,
+body.theme-dark_glassmorphism .badge-admin,
+body.theme-dark_glassmorphism .badge-operator,
+body.theme-dark_glassmorphism .badge-superadmin,
+body.theme-dark_glassmorphism #activeContextBadge {
+  border-radius: 14px !important;
+}
+
+body.theme-dark_glassmorphism input,
+body.theme-dark_glassmorphism select {
+  border-radius: 20px !important;
+}
+
+/* ============================================================ */
+/* 4. CYBERPUNK GLASSMORPHISM THEME                             */
+/* ============================================================ */
+html.theme-cyberpunk_glassmorphism,
+body.theme-cyberpunk_glassmorphism {
+  font-family: 'Outfit', sans-serif !important;
+  background-color: #05050A !important;
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(255, 0, 127, 0.4) 0%, transparent 50%),
+    radial-gradient(circle at 85% 85%, rgba(0, 240, 255, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 50% 30%, rgba(168, 85, 247, 0.35) 0%, transparent 50%),
+    radial-gradient(circle at 75% 10%, rgba(255, 51, 102, 0.25) 0%, transparent 40%) !important;
+  background-attachment: fixed !important;
+  background-size: cover !important;
+}
+
+body.theme-cyberpunk_glassmorphism * {
+  font-family: 'Outfit', sans-serif !important;
+}
+
+body.theme-cyberpunk_glassmorphism header {
+  background: rgba(10, 10, 18, 0.65) !important;
+  border-bottom: 1px solid rgba(168, 85, 247, 0.3) !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+body.theme-cyberpunk_glassmorphism #brandLogoText,
+body.theme-cyberpunk_glassmorphism #brandLogoText *,
+body.theme-cyberpunk_glassmorphism .brand-title,
+body.theme-cyberpunk_glassmorphism .brand-title * {
+  font-family: 'Outfit', sans-serif !important;
+  font-size: 20px !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 900 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-cyberpunk_glassmorphism .kanban-col,
+body.theme-cyberpunk_glassmorphism .upload-dropzone,
+body.theme-cyberpunk_glassmorphism .upload-zone,
+body.theme-cyberpunk_glassmorphism .operator-group,
+body.theme-cyberpunk_glassmorphism .kanban-card,
+body.theme-cyberpunk_glassmorphism .module-card,
+body.theme-cyberpunk_glassmorphism .invoice-card,
+body.theme-cyberpunk_glassmorphism .user-group,
+body.theme-cyberpunk_glassmorphism .modal-content,
+body.theme-cyberpunk_glassmorphism .data-table,
+body.theme-cyberpunk_glassmorphism section,
+body.theme-cyberpunk_glassmorphism article {
+  background: rgba(22, 18, 42, 0.45) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3) !important;
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  border-radius: 32px !important;
+}
+
+body.theme-cyberpunk_glassmorphism .btn-primary,
+body.theme-cyberpunk_glassmorphism .btn-secondary,
+body.theme-cyberpunk_glassmorphism .btn-action,
+body.theme-cyberpunk_glassmorphism .btn-danger,
+body.theme-cyberpunk_glassmorphism .btn-delete,
+body.theme-cyberpunk_glassmorphism .nav-tab {
+  border-radius: 20px !important;
+}
+
+body.theme-cyberpunk_glassmorphism .badge-role,
+body.theme-cyberpunk_glassmorphism .superadmin-badge,
+body.theme-cyberpunk_glassmorphism .badge-admin,
+body.theme-cyberpunk_glassmorphism .badge-operator,
+body.theme-cyberpunk_glassmorphism .badge-superadmin,
+body.theme-cyberpunk_glassmorphism #activeContextBadge {
+  border-radius: 14px !important;
+}
+
+body.theme-cyberpunk_glassmorphism input,
+body.theme-cyberpunk_glassmorphism select {
+  border-radius: 20px !important;
+}

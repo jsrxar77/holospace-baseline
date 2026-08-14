@@ -136,4 +136,5 @@ holoware-baseline/
 |---|---|---|
 | 2026-08-09 | 0.1 | Creación inicial del roadmap |
 | 2026-08-10 | 0.2 | Rename completo + modules/scanban/ creado |
+| 2026-08-14 | 1.1.0 | Sistema de Diseño Centralizado (HW-DS), Motor 4 Temas y Reglas de Seguridad Cero Mocks |
 

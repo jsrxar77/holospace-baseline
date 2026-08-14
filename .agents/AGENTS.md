@@ -22,6 +22,15 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ---
 
+## 🔒 Regla de Oro Obligatoria: Cero Credenciales Hardcodeadas y Cero Contraseñas en Pantalla
+
+1. **Prohibido Hardcodear Credenciales:** Queda estrictamente prohibido pre-llenar inputs de inicio de sesión con usuarios o contraseñas por defecto, así como renderizar textos explicativos o cajas de sugerencia con credenciales hardcodeadas (ej. "Operario por defecto: user / pass") en cualquier pantalla Web o Móvil.
+2. **Campos de Login Limpios por Defecto:** Todos los formularios de autenticación (Web y Mobile) deben iniciarse vacíos (`""`), obligando al usuario a ingresar sus credenciales reales de forma segura.
+3. **Almacenamiento Seguro:** Queda prohibido guardar contraseñas en texto plano en `localStorage`, estado global o renderizarlas visibles en interfaz.
+
+
+---
+
 ## 🎯 Reglas de Arquitectura Modular Obligatorias
 
 1. **Aislamiento por Módulo (`modules/<nombre-modulo>/`):**

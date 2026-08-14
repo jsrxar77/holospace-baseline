@@ -11,6 +11,7 @@ export interface ThemeTokens {
   red: string;
   textMain: string;
   textMuted: string;
+  borderRadius: number;
 }
 
 export const DEFAULT_THEME: ThemeTokens = {
@@ -22,7 +23,8 @@ export const DEFAULT_THEME: ThemeTokens = {
   amber: '#F59E0B',
   red: '#FF5252',
   textMain: '#FFFFFF',
-  textMuted: '#8B949E'
+  textMuted: '#8B949E',
+  borderRadius: 16
 };
 
 interface ThemeState {
@@ -47,7 +49,8 @@ export const useThemeStore = create<ThemeState>((set) => ({
             amber: data.theme.amber || DEFAULT_THEME.amber,
             red: data.theme.red || DEFAULT_THEME.red,
             textMain: data.theme.textMain || DEFAULT_THEME.textMain,
-            textMuted: data.theme.textMuted || DEFAULT_THEME.textMuted
+            textMuted: data.theme.textMuted || DEFAULT_THEME.textMuted,
+            borderRadius: typeof data.theme.borderRadius === 'number' ? data.theme.borderRadius : DEFAULT_THEME.borderRadius
           }
         });
       }

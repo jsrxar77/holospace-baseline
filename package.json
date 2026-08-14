@@ -1,9 +1,9 @@
 {
   "name": "holoware-baseline",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo/AppEntry.js",
   "scripts": {
-    "dev": "npx -y kill-port 3001 && npx -y concurrently \"node --watch server.js\" \"npx expo start --host lan -c\"",
+    "dev": "npx -y kill-port 3001 8081 && npx -y concurrently \"node --watch server.js\" \"npx expo start --host lan -c\"",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

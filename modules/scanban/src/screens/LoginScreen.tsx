@@ -9,8 +9,8 @@ interface LoginScreenProps {
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const initialCreds = getSavedCredentials();
-  const [email, setEmail] = useState(initialCreds.email || 'jsrxar@gmail.com');
-  const [password, setPassword] = useState(initialCreds.pass || 'Asadito21!');
+  const [email, setEmail] = useState(initialCreds.email || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -22,7 +22,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     const interval = setInterval(fetchTheme, 3000);
     const creds = getSavedCredentials();
     if (creds.email) setEmail(creds.email);
-    if (creds.pass) setPassword(creds.pass);
 
     return () => clearInterval(interval);
   }, []);
@@ -45,16 +44,29 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }
   };
 
+  const isOmarchy = theme.borderRadius === 4;
+  const isSoftMinimal = theme.borderRadius === 12;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
-        <Text style={[styles.brandTitleWhite, { color: theme.textMain }]}>
+      <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 12 : 24), borderWidth: isOmarchy ? 2 : 1 }]}>
+        <Text
+          style={[
+            styles.brandTitleWhite,
+            {
+              color: theme.textMain,
+              fontFamily: isOmarchy ? 'Press Start 2P' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit'),
+              fontSize: isOmarchy ? 16 : 26,
+              letterSpacing: isOmarchy ? 1 : -0.5
+            }
+          ]}
+        >
           HOLO<Text style={[styles.brandTitleGreen, { color: theme.emerald }]}>WARE</Text>
         </Text>
-        <Text style={[styles.subtitle, { color: theme.textMuted }]}>ScanBan Scanner · Operativa de Depósito</Text>
+        <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: isOmarchy ? 'JetBrains Mono' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit') }]}>ScanBan Scanner · Operativa de Depósito</Text>
 
         {!!errorMessage && (
-          <View style={[styles.errorContainer, { borderColor: theme.red }]}>
+          <View style={[styles.errorContainer, { borderColor: theme.red, borderRadius: isOmarchy ? 4 : 8 }]}>
             <Text style={[styles.errorText, { color: theme.red }]}>{errorMessage}</Text>
           </View>
         )}
@@ -62,8 +74,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: theme.textMuted }]}>Email del Operario</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain }]}
-            placeholder="ej: jsrxar@gmail.com"
+            style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain, borderRadius: isOmarchy ? 4 : 12 }]}
+            placeholder="ej: operario@empresa.com"
             placeholderTextColor={theme.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -79,7 +91,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           <Text style={[styles.label, { color: theme.textMuted }]}>Contraseña</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={[styles.input, { flex: 1, paddingRight: 70, backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain }]}
+              style={[styles.input, { flex: 1, paddingRight: 70, backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain, borderRadius: isOmarchy ? 4 : 12 }]}
               placeholder="••••••••"
               placeholderTextColor={theme.textMuted}
               secureTextEntry={!showPassword}
@@ -100,7 +112,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         </View>
 
         <TouchableOpacity
-          style={[styles.btnSubmit, { backgroundColor: theme.emerald }, loading && styles.btnDisabled]}
+          style={[styles.btnSubmit, { backgroundColor: theme.emerald, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 20 : 14) }, loading && styles.btnDisabled]}
           onPress={handleLogin}
           disabled={loading}
           activeOpacity={0.8}
@@ -111,12 +123,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <Text style={styles.btnSubmitText}>INICIAR SESIÓN EN ESCÁNER</Text>
           )}
         </TouchableOpacity>
-
-        <View style={[styles.hintBox, { backgroundColor: theme.background, borderColor: theme.cardBorder }]}>
-          <Text style={[styles.hintText, { color: theme.textMuted }]}>
-            Operario por defecto: jsrxar@gmail.com / Asadito21!
-          </Text>
-        </View>
       </View>
     </View>
   );

@@ -6,7 +6,8 @@
   <title>HoloWare Baseline</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/holoware-theme.css">
   <style>
     :root {
       --bg-black: #0B0E14;
@@ -28,7 +29,6 @@
     }
 
     body {
-      background-color: var(--bg-black);
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
@@ -587,14 +587,16 @@
       flex-shrink: 0;
       margin-top: 5px;
     }
+
   </style>
+  <link rel="stylesheet" href="/css/holoware-theme.css">
 </head>
 <body>
 
   <!-- Header (HoloWare Core Shell) -->
   <header>
     <div class="brand-title" style="display: inline-flex; align-items: center; gap: 12px; height: 100%;">
-      <span style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF;">Holo<span style="color: var(--emerald);">Ware</span></span>
+      <span id="brandLogoText" style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF; display: inline-flex; align-items: center; line-height: 1;">Holo<span style="color: var(--emerald);">Ware</span></span>
       <span id="activeContextBadge" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald); background: rgba(0, 230, 118, 0.15); color: var(--emerald); transition: all 0.2s;">
         Core
       </span>
@@ -615,13 +617,10 @@
       <div id="headerThemeContainer" style="display: flex; align-items: center; gap: 6px;">
         <span style="font-size: 12px; font-weight: 800; color: var(--text-muted);">Tema:</span>
         <select id="headerThemeSelect" class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeAppThemeSubmit(this.value)">
-          <option value="original">Original Dark Glassmorphism</option>
-          <option value="catppuccin_mocha">Catppuccin Mocha</option>
-          <option value="cyberpunk_neon">Cyberpunk Neon</option>
-          <option value="nordic_frost">Nordic Frost</option>
-          <option value="dracula_pro">Dracula Pro</option>
-          <option value="emerald_light">Modern Light Corporate</option>
-          <option value="monochrome_minimal">Monochrome Minimal</option>
+          <option value="dark_glassmorphism">Dark Glassmorphism</option>
+          <option value="cyberpunk_glassmorphism">Cyberpunk Glassmorphism</option>
+          <option value="omarchy_tiling">Omarchy Tiling WM</option>
+          <option value="soft_minimal_pastel">Soft Minimal Pastel</option>
         </select>
       </div>
 
@@ -805,7 +804,7 @@
         </div>
         <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB SQLite</div>
-          <div style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">./data/holoware.db</div>
+          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">./data/holoware.db</div>
         </div>
       </div>
     </div>
@@ -815,7 +814,7 @@
   <!-- MODAL DE AUTENTICACIÓN / LOGIN -->
   <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
-      <h2 style="font-size: 28px; font-weight: 900; text-align: center; color: #FFFFFF; letter-spacing: -0.5px;">HOLOWARE <span style="color: var(--emerald);">BASELINE</span></h2>
+      <h2 class="brand-title" style="font-size: 28px; text-align: center; color: #FFFFFF;">HOLOWARE <span style="color: var(--emerald);">BASELINE</span></h2>
       <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Plataforma Enterprise • Inicie Sesión en HoloWare</p>
       
       <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">

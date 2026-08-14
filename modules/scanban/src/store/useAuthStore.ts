@@ -19,13 +19,11 @@ interface AuthState {
 }
 
 const CREDENTIALS_KEY_EMAIL = 'hw_saved_mobile_email';
-const CREDENTIALS_KEY_PASS = 'hw_saved_mobile_pass';
 
-export const saveSavedCredentials = (email: string, pass: string) => {
+export const saveSavedCredentials = (email: string) => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem(CREDENTIALS_KEY_EMAIL, email);
-      window.localStorage.setItem(CREDENTIALS_KEY_PASS, pass);
     }
   } catch (e) {}
 };
@@ -33,12 +31,11 @@ export const saveSavedCredentials = (email: string, pass: string) => {
 export const getSavedCredentials = () => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      const email = window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) || 'jsrxar@gmail.com';
-      const pass = window.localStorage.getItem(CREDENTIALS_KEY_PASS) || 'Asadito21!';
-      return { email, pass };
+      const email = window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) || '';
+      return { email, pass: '' };
     }
   } catch (e) {}
-  return { email: 'jsrxar@gmail.com', pass: 'Asadito21!' };
+  return { email: '', pass: '' };
 };
 
 export const useAuthStore = create<AuthState>((set) => ({

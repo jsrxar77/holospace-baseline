@@ -96,6 +96,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   const hasActiveDoingOrder = activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH';
 
+  const cardRadius = theme.radiusCard || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 32));
+  const btnRadius = theme.radiusBtn || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 16));
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <Header title="HoloWare · ScanBan Scanner" badgeText={`OP: ${operatorId}`} />
@@ -106,7 +109,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
       >
         {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
         {hasActiveDoingOrder ? (
-          <View style={[styles.activeDoingCard, { backgroundColor: theme.cardBg, borderColor: theme.cobalt }]}>
+          <View style={[styles.activeDoingCard, { backgroundColor: theme.cardBg, borderColor: theme.cobalt, borderRadius: cardRadius }]}>
             <Text style={[styles.activeTitle, { color: theme.emerald }]}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
             <Text style={[styles.activeSubtitle, { color: theme.textMain }]}>
               Cliente: {activeOrder.clientName}
@@ -117,7 +120,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             </Text>
 
             <TouchableOpacity
-              style={[styles.btnContinue, { backgroundColor: theme.emerald }]}
+              style={[styles.btnContinue, { backgroundColor: theme.emerald, borderRadius: btnRadius }]}
               onPress={onNavigateToSummary}
               activeOpacity={0.8}
             >
@@ -125,7 +128,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.btnReleaseHome, { borderColor: theme.amber }]}
+              style={[styles.btnReleaseHome, { borderColor: theme.amber, borderRadius: btnRadius }]}
               onPress={handleReleaseCurrentOrder}
               activeOpacity={0.8}
             >
@@ -135,7 +138,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
         ) : null}
 
         {/* Sección de Pedidos Disponibles en LISTO (Verde) */}
-        <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder }]}>
+        <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: cardRadius }]}>
           <Text style={[styles.uploadTitle, { color: theme.emerald }]}>Pedidos Listos para Tomar</Text>
 
           {readyOrders.length > 0 && (
@@ -149,7 +152,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           {readyOrders.map((item) => (
             <TouchableOpacity
               key={item.orderNumber}
-              style={[styles.btnUpload, { backgroundColor: theme.emerald, borderColor: theme.emerald }, hasActiveDoingOrder && styles.btnDisabled]}
+              style={[styles.btnUpload, { backgroundColor: theme.emerald, borderColor: theme.emerald, borderRadius: btnRadius }, hasActiveDoingOrder && styles.btnDisabled]}
               onPress={() => handleClaimOrder(item.orderNumber)}
               activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
             >

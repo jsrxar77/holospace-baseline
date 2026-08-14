@@ -10,6 +10,7 @@ export interface ThemeTokens {
   red: string;
   textMain: string;
   textMuted: string;
+  borderRadius: number;
 }
 
 export const ORIGINAL_THEME: ThemeTokens = {
@@ -21,7 +22,8 @@ export const ORIGINAL_THEME: ThemeTokens = {
   amber: '#F59E0B',
   red: '#FF5252',
   textMain: '#FFFFFF',
-  textMuted: '#8B949E'
+  textMuted: '#8B949E',
+  borderRadius: 16
 };
 
 let currentThemeTokens: ThemeTokens = { ...ORIGINAL_THEME };
@@ -44,7 +46,8 @@ export const fetchRemoteTheme = async (baseUrl: string = SERVER_URL): Promise<Th
         amber: data.theme.amber || ORIGINAL_THEME.amber,
         red: data.theme.red || ORIGINAL_THEME.red,
         textMain: data.theme.textMain || ORIGINAL_THEME.textMain,
-        textMuted: data.theme.textMuted || ORIGINAL_THEME.textMuted
+        textMuted: data.theme.textMuted || ORIGINAL_THEME.textMuted,
+        borderRadius: typeof data.theme.borderRadius === 'number' ? data.theme.borderRadius : ORIGINAL_THEME.borderRadius
       };
     }
   } catch (e) {
