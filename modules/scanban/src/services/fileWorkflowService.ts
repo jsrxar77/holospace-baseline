@@ -7,8 +7,7 @@ export interface WorkflowFile {
   operatorEmail?: string;
 }
 
-// URL del Servidor de Archivos y Base de Datos (Mac Host)
-const SERVER_URL = 'http://192.168.100.247:3001';
+import { SERVER_URL } from '../config';
 
 export const fileWorkflowService = {
   // Auto-detectar si el operario (por email) tiene un pedido activo en DB

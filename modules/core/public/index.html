@@ -908,10 +908,10 @@
       <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;">Escanea este código QR desde la cámara de tu teléfono para abrir PhoneWare Scanner</p>
       
       <div style="background: #FFF; padding: 20px; border-radius: 20px; display: inline-block; margin: 20px auto;">
-        <img id="qrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=exp://192.168.100.247:8081" alt="Expo Go QR Code" style="width: 220px; height: 220px; display: block;">
+        <img id="qrImage" src="" alt="Expo Go QR Code" style="width: 220px; height: 220px; display: block;">
       </div>
 
-      <p style="font-size: 13px; font-weight: 700; color: var(--emerald); font-family: monospace;">exp://192.168.100.247:8081</p>
+      <p id="qrText" style="font-size: 13px; font-weight: 700; color: var(--emerald); font-family: monospace;">Obteniendo enlace Expo...</p>
       <button class="btn-secondary" style="margin-top: 20px;" onclick="closeQrModal()">Cerrar</button>
     </div>
   </div>

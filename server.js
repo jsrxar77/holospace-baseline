@@ -1,8 +1,22 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const pdfjsLib = require('pdfjs-dist');
 const Database = require('better-sqlite3');
+
+function getPrimaryLocalIp() {
+  const interfaces = os.networkInterfaces();
+  // Priorizar interfaces Wi-Fi o Ethernet reales
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        return net.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
 
 // Leer variables de entorno desde .env
 let processEnv = {
@@ -591,6 +605,21 @@ const THEMES = {
 };
 
     try {
+      // -0.9 CONSULTA DE CONFIGURACIÓN Y IP DINÁMICA DE LA RED
+      if (req.url === '/api/config' && req.method === 'GET') {
+        const hostIp = getPrimaryLocalIp();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          hostIp,
+          port: PORT,
+          metroPort: 8081,
+          expoUrl: `exp://${hostIp}:8081`,
+          serverUrl: `http://${hostIp}:${PORT}`
+        }));
+        return;
+      }
+
       // -1. CONSULTA DE TEMA DINÁMICO DESDE SQLITE APP_SETTINGS
       if (req.url === '/api/theme' && req.method === 'GET') {
         const row = db.prepare("SELECT value FROM app_settings WHERE key = 'active_theme'").get();

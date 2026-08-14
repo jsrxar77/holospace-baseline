@@ -1,6 +1,5 @@
 // Servicio de Registro Unificado de Errores Móviles hacia el Servidor (errors.log / http://localhost:3001/api/error-logs)
-
-const SERVER_URL = 'http://192.168.100.247:3001';
+import { SERVER_URL } from '../config';
 
 export const loggerService = {
   logError: async (context: string, error: any, extra?: any): Promise<void> => {

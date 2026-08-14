@@ -536,16 +536,18 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
     try {
       const res = await fetch('/api/users');
       const data = await res.json();
-      if (data.users && Array.isArray(data.users)) {
-        const activeUsers = data.users.filter(u => u.active !== 0 && u.active !== false);
+      const userList = Array.isArray(data) ? data : (data.users || []);
+      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false);
+      if (activeUsers.length > 0) {
         selectEl.innerHTML = activeUsers.map(u => `
           <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>
         `).join('');
       } else {
-        selectEl.innerHTML = '<option value="jsrxar@gmail.com">Javier Rizzo (jsrxar@gmail.com)</option>';
+        selectEl.innerHTML = '<option value="">No hay operarios activos registrados</option>';
       }
     } catch (e) {
-      selectEl.innerHTML = '<option value="jsrxar@gmail.com">Javier Rizzo (jsrxar@gmail.com)</option>';
+      console.error('Error cargando operarios para asignación:', e);
+      selectEl.innerHTML = '<option value="">Error cargando operarios</option>';
     }
   }
 
@@ -1135,7 +1137,28 @@ switchTab = function (tabName) {
   }
 };
 
-function openQrModal() {
+async function openQrModal() {
+  let host = window.location.hostname;
+  if (!host || host === 'localhost' || host === '127.0.0.1') {
+    try {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      if (data && data.hostIp) {
+        host = data.hostIp;
+      }
+    } catch (e) {
+      console.log('Error obteniendo IP dinámica:', e);
+    }
+  }
+  const expoUrl = `exp://${host || '127.0.0.1'}:8081`;
+  const qrImg = document.getElementById('qrImage');
+  const qrText = document.getElementById('qrText') || document.querySelector('#qrModal p[style*="font-family: monospace"]');
+  if (qrImg) {
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(expoUrl)}`;
+  }
+  if (qrText) {
+    qrText.textContent = expoUrl;
+  }
   document.getElementById('qrModal').classList.remove('hidden');
 }
 
