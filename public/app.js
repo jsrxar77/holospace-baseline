@@ -960,7 +960,10 @@ async function handleFileUpload(event) {
     try {
       const res = await fetch('/api/scanban/upload-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}`
+        },
         body: JSON.stringify({
           fileName: file.name,
           pdfBase64: base64,

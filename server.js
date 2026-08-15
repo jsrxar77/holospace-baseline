@@ -1277,31 +1277,38 @@ const server = http.createServer(async (req, res) => {
         const orderUuid = crypto.randomUUID();
         const totalItemsRequired = parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0);
 
-        const orderRes = await execute(
-          'INSERT INTO orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
-          [orderUuid, tenantId, orderUuid, parsed.orderNumber, parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired],
-          { tenantId }
-        );
-
-        for (const item of parsed.items) {
-          const itemId = crypto.randomUUID();
-          await execute(
-            'INSERT INTO order_items (id, tenant_id, order_id, code, description, unit_price, quantity_required, quantity_scanned, status) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)',
-            [itemId, tenantId, orderUuid, item.code, item.description, item.unitPrice || 0, item.quantityRequired, 'PENDING'],
+        try {
+          const orderRes = await execute(
+            'INSERT INTO orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+            [orderUuid, tenantId, orderUuid, parsed.orderNumber, parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired, totalItemsRequired],
             { tenantId }
           );
+
+          for (const item of parsed.items) {
+            const itemId = crypto.randomUUID();
+            await execute(
+              'INSERT INTO order_items (id, tenant_id, order_id, code, description, unit_price, quantity_required, quantity_scanned, status) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)',
+              [itemId, tenantId, orderUuid, item.code, item.description, item.unitPrice || 0, item.quantityRequired, 'PENDING'],
+              { tenantId }
+            );
+          }
+
+          const now = new Date().toLocaleString('es-AR');
+          await execute(
+            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            [orderUuid, tenantId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF parseado y guardado en PostgreSQL por ${email}.`],
+            { tenantId }
+          );
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, id: orderUuid, uuid: orderUuid, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante guardado en PostgreSQL.' }));
+          return;
+        } catch (dbErr) {
+          console.error('Error guardando pedido PDF en PostgreSQL:', dbErr);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: `Error en Base de Datos: ${dbErr.message}` }));
+          return;
         }
-
-        const now = new Date().toLocaleString('es-AR');
-        await execute(
-          'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
-          [orderUuid, tenantId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF parseado y guardado en PostgreSQL por ${email}.`],
-          { tenantId }
-        );
-
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: true, id: orderUuid, uuid: orderUuid, fileName: cleanName, orderNumber: parsed.orderNumber, message: 'Comprobante guardado en PostgreSQL.' }));
-        return;
       }
 
       // 10.5 APP MÓVIL: PEDIDOS DISPONIBLES & DETALLE
