@@ -10,7 +10,6 @@ interface LoginScreenProps {
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [tenantSlug, setTenantSlug] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -22,6 +21,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     const interval = setInterval(fetchTheme, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  const isOmarchy = theme.borderRadius === 4;
+  const isSoftMinimal = theme.borderRadius === 12;
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -40,9 +42,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       setErrorMessage('Credenciales incorrectas. Verifica tu email y contraseña.');
     }
   };
-
-  const isOmarchy = theme.borderRadius === 4;
-  const isSoftMinimal = theme.borderRadius === 12;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>

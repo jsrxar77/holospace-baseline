@@ -25,7 +25,7 @@ interface AuthState {
   entitlements: string[];
   token: string | null;
   isAuthenticated: boolean;
-  login: (email: string, pass: string, tenantSlug?: string) => Promise<boolean>;
+  login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -38,7 +38,7 @@ export const saveSavedCredentials = (email: string, tenantSlug: string = '') => 
       window.localStorage.setItem(CREDENTIALS_KEY_EMAIL, email);
       if (tenantSlug) window.localStorage.setItem(CREDENTIALS_KEY_TENANT, tenantSlug);
     }
-  } catch (e) {}
+  } catch (e) { }
 };
 
 export const getSavedCredentials = () => {
@@ -48,7 +48,7 @@ export const getSavedCredentials = () => {
       const tenantSlug = window.localStorage.getItem(CREDENTIALS_KEY_TENANT) || 'drinklovers';
       return { email, tenantSlug };
     }
-  } catch (e) {}
+  } catch (e) { }
   return { email: '', tenantSlug: 'drinklovers' };
 };
 
@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const response = await fetch(`${SERVER_URL}/api/login`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ email, password: pass })
