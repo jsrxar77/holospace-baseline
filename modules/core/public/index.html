@@ -35,16 +35,32 @@
       flex-direction: column;
     }
 
-    /* Header */
-    header {
+    /* Header Shell (2 Líneas Horizontales) */
+    .app-header-shell {
       background-color: #161B22;
       border-bottom: 1px solid var(--card-border);
-      padding: 14px 28px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top-line {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 20px;
-      min-height: 64px;
+      gap: 16px;
+      padding: 12px 28px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      min-height: 54px;
+    }
+
+    .top-line-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
     }
 
     .brand-group {
@@ -58,30 +74,142 @@
       font-size: 24px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      color: #FFFFFF;
-      text-transform: uppercase;
+      line-height: 1;
+      display: flex;
+      align-items: center;
     }
 
-    .brand-title span {
+    .brand-title .logo-holo {
+      color: #FFFFFF;
+    }
+
+    .brand-title .logo-ware {
       color: var(--emerald);
     }
 
-    .nav-tabs {
+    .context-badge {
+      font-size: 11px;
+      font-weight: 800;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--emerald);
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--emerald);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      line-height: 1;
+      transition: all 0.2s;
+    }
+
+    .top-line-right {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .theme-selector-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-label {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    .theme-select {
+      height: 34px !important;
+      padding: 0 10px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background-color: #21262D;
+      color: #FFF;
+      outline: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      width: auto;
+      transition: all 0.2s;
+    }
+
+    .theme-select:hover {
+      border-color: var(--emerald);
+    }
+
+    .btn-header-ctrl {
+      height: 34px !important;
+      padding: 0 14px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background-color: #21262D;
+      color: #FFF;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-header-ctrl:hover {
+      border-color: var(--emerald);
+    }
+
+    .badge-header-ctrl {
+      height: 34px !important;
+      padding: 0 14px !important;
+      font-size: 12px !important;
+      font-weight: 700 !important;
+      border-radius: 8px;
+      border: 1px solid var(--emerald);
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--emerald);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    /* Línea 2: Barra de Pestañas de Navegación */
+    .header-nav-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 28px;
+      background-color: rgba(0, 0, 0, 0.15);
+      min-height: 44px;
+      overflow-x: auto;
     }
 
     .nav-tab {
       background: transparent;
       color: var(--text-muted);
       border: 1px solid transparent;
-      padding: 10px 18px;
+      padding: 8px 16px;
       border-radius: 12px;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
       transition: all 0.2s;
+      white-space: nowrap;
     }
 
     .nav-tab:hover {
@@ -95,12 +223,24 @@
       font-weight: 900;
     }
 
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-left: auto;
-      flex-shrink: 0;
+    .btn-hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 22px;
+      height: 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .btn-hamburger span {
+      display: block;
+      width: 100%;
+      height: 2px;
+      background-color: var(--text-main);
+      border-radius: 2px;
     }
 
     .badge-role {
@@ -111,6 +251,139 @@
       border-radius: 20px;
       font-size: 13px;
       font-weight: 700;
+    }
+
+    /* Status Bar Footer */
+    .app-status-bar {
+      height: 32px;
+      background-color: #161B22;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      font-size: 11px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 90;
+    }
+
+    .status-bar-left, .status-bar-center, .status-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-indicator-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--emerald);
+      box-shadow: 0 0 6px var(--emerald);
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Mobile Drawer */
+    .mobile-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+    }
+
+    .mobile-nav-drawer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      background-color: #161B22;
+      border-right: 1px solid var(--card-border);
+      z-index: 310;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+    }
+
+    .mobile-nav-drawer.open {
+      transform: translateX(0);
+    }
+
+    .mobile-drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .btn-close-drawer {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .mobile-drawer-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .mobile-nav-tab {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid transparent;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .mobile-nav-tab.active {
+      color: #000;
+      background-color: var(--emerald);
+      font-weight: 900;
+    }
+
+    @media (max-width: 1023px) {
+      .header-nav-line {
+        display: none !important;
+      }
+      .btn-hamburger {
+        display: flex;
+      }
+      .theme-label {
+        display: none;
+      }
+    }
+
+    @media (max-width: 767px) {
+      .header-top-line {
+        padding: 10px 16px;
+      }
+      .btn-connect-cell {
+        display: none;
+      }
+      .status-bar-center {
+        display: none;
+      }
     }
 
     .btn-secondary {
@@ -593,45 +866,136 @@
 </head>
 <body>
 
-  <!-- Header (HoloWare Core Shell) -->
-  <header>
-    <div class="brand-title" style="display: inline-flex; align-items: center; gap: 12px; height: 100%;">
-      <span id="brandLogoText" style="font-size: 20px; font-weight: 900; letter-spacing: -0.5px; color: #FFFFFF; display: inline-flex; align-items: center; line-height: 1;">Holo<span style="color: var(--emerald);">Ware</span></span>
-      <span id="activeContextBadge" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--emerald); background: rgba(0, 230, 118, 0.15); color: var(--emerald); transition: all 0.2s;">
-        Core
-      </span>
+  <!-- Header (HoloWare Core Shell - 2 Líneas Horizontales) -->
+  <header class="app-header-shell">
+    <!-- Línea 1: Top Bar (Logo, Contexto, Tema, Conexión y Usuario) -->
+    <div class="header-top-line">
+      <div class="top-line-left">
+        <button id="mobileMenuBtn" class="btn-hamburger" onclick="toggleMobileDrawer()" aria-label="Menú de Navegación">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="brand-group">
+          <div class="brand-title" id="brandTitleContainer">
+            <span id="brandLogoText"><span class="logo-holo">Holo</span><span class="logo-ware">Ware</span></span>
+          </div>
+          <span id="activeContextBadge" class="context-badge">
+            TENANTS
+          </span>
+        </div>
+      </div>
+
+      <div class="top-line-right">
+        <!-- Core Theme Engine Selector -->
+        <div id="headerThemeContainer" class="theme-selector-group">
+          <span class="theme-label">Tema:</span>
+          <select id="headerThemeSelect" class="theme-select" onchange="changeAppThemeSubmit(this.value)">
+            <option value="omarchy_tiling">Omarchy Tiling WM</option>
+            <option value="dark_glassmorphism">Dark Glassmorphism</option>
+            <option value="cyberpunk_glassmorphism">Cyberpunk Glassmorphism</option>
+            <option value="soft_minimal_pastel">Soft Minimal Pastel</option>
+          </select>
+        </div>
+
+        <button class="btn-secondary btn-header-ctrl btn-connect-cell" onclick="openQrModal()">Conectar Celular</button>
+        <div id="userBadge" class="badge-role badge-header-ctrl">ADMIN</div>
+        <button class="btn-secondary btn-header-ctrl btn-logout-header" onclick="logout()">Cerrar Sesión</button>
+      </div>
     </div>
-    
-    <div class="nav-tabs">
-      <!-- HoloWare Core (SUPERADMIN) -->
+
+    <!-- Línea 2: Barra de Pestañas de Navegación Dedicada -->
+    <nav class="header-nav-line" id="desktopNavTabs">
+      <!-- 1. MÓDULO TENANTS (SUPERADMIN ONLY) -->
+      <button class="nav-tab" id="tabTenants" onclick="switchTab('tenants')" style="display:none;">Tenants</button>
+
+      <!-- 2. MÓDULO CORE (SUPERADMIN) -->
       <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma</button>
       <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios Core</button>
       
-      <!-- HoloWare ScanBan Board (ADMIN) -->
-      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
+      <!-- 3. MÓDULO SCANBAN BOARD (ADMIN & OPERATOR) -->
+      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">ScanBan Board</button>
       <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
-    </div>
 
-    <div class="user-profile">
-      <!-- Core Theme Engine Selector -->
-      <div id="headerThemeContainer" style="display: flex; align-items: center; gap: 6px;">
-        <span style="font-size: 12px; font-weight: 800; color: var(--text-muted);">Tema:</span>
-        <select id="headerThemeSelect" class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeAppThemeSubmit(this.value)">
-          <option value="dark_glassmorphism">Dark Glassmorphism</option>
-          <option value="cyberpunk_glassmorphism">Cyberpunk Glassmorphism</option>
-          <option value="omarchy_tiling">Omarchy Tiling WM</option>
-          <option value="soft_minimal_pastel">Soft Minimal Pastel</option>
-        </select>
-      </div>
-
-      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="openQrModal()">Conectar Celular</button>
-      <div id="userBadge" class="badge-role">ADMIN</div>
-      <button class="btn-secondary" style="font-size: 12px; padding: 6px 12px;" onclick="logout()">Cerrar Sesión</button>
-    </div>
+      <!-- 4. MÓDULO SCANFLOW (STOCK & INVENTARIO) -->
+      <button class="nav-tab" id="tabScanFlow" onclick="switchTab('scanflow')" style="display:none;">ScanFlow</button>
+    </nav>
   </header>
+
+  <!-- Mobile Drawer Overlay & Lateral Menu -->
+  <div id="mobileDrawerOverlay" class="mobile-drawer-overlay hidden" onclick="closeMobileDrawer()"></div>
+  <aside id="mobileNavDrawer" class="mobile-nav-drawer">
+    <div class="mobile-drawer-header">
+      <div class="brand-title">
+        <span id="mobileBrandLogoText"><span class="logo-holo">Holo</span><span class="logo-ware">Ware</span></span>
+      </div>
+      <button class="btn-close-drawer" onclick="closeMobileDrawer()">✕</button>
+    </div>
+    <div class="mobile-drawer-body">
+      <div class="mobile-context-info" style="margin-bottom: 12px;">
+        <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Contexto Activo</span>
+        <div id="mobileActiveContext" style="font-size: 13px; font-weight: 800; color: var(--emerald); margin-top: 2px;">TENANTS</div>
+      </div>
+      <nav class="mobile-drawer-nav">
+        <button class="mobile-nav-tab" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Tenants</button>
+        <button class="mobile-nav-tab" id="mobTabPlatform" onclick="switchTabMobile('platform')" style="display:none;">Plataforma</button>
+        <button class="mobile-nav-tab" id="mobTabUsers" onclick="switchTabMobile('users')" style="display:none;">Usuarios Core</button>
+        <button class="mobile-nav-tab" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">ScanBan Board</button>
+        <button class="mobile-nav-tab" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
+        <button class="mobile-nav-tab" id="mobTabScanFlow" onclick="switchTabMobile('scanflow')" style="display:none;">ScanFlow</button>
+      </nav>
+    </div>
+    <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
+      <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="openQrModal(); closeMobileDrawer();">Conectar Celular</button>
+      <button class="btn-secondary" style="width: 100%; color: var(--red);" onclick="logout()">Cerrar Sesión</button>
+    </div>
+  </aside>
 
   <!-- Main View Area -->
   <main>
+
+    <!-- 0. MÓDULO TENANTS VIEW (SUPERADMIN SAAS MANAGEMENT) -->
+    <div id="viewTenants" class="view-panel">
+      <!-- Tenants Header Banner -->
+      <div style="background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(0, 0, 0, 0.4)); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 28px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden;">
+        <div style="max-width: 720px; position: relative; z-index: 2;">
+          <h2 style="font-size: 28px; font-weight: 900; color: #FFF; letter-spacing: -0.5px;">Gobierno de Organizaciones SaaS (Tenants)</h2>
+          <p style="color: var(--text-muted); font-size: 15px; margin-top: 8px; line-height: 22px;">
+            Panel exclusivo del SuperAdmin para crear empresas, gestionar planes, asignar usuarios y licenciar módulos en vivo.
+          </p>
+          <div style="display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap;">
+            <button class="btn-primary" onclick="openCreateTenantModal()">+ Nueva Organización</button>
+            <button class="btn-secondary" onclick="openAssignUserModal()">Asignar Usuario</button>
+            <button class="btn-secondary" onclick="loadTenantsManagementData()">Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tenants KPIs -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Organizaciones</div>
+          <div id="kpiTenantsCount" style="font-size: 32px; font-weight: 900; color: #FFF; margin-top: 4px;">0</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.5px;">Tenants Activos</div>
+          <div id="kpiTenantsActive" style="font-size: 32px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 11px; font-weight: 800; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">Usuarios Globales</div>
+          <div id="kpiTenantsUsers" style="font-size: 32px; font-weight: 900; color: #A78BFA; margin-top: 4px;">0</div>
+        </div>
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+          <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Aislamiento de Datos</div>
+          <div style="font-size: 18px; font-weight: 900; color: #FFF; margin-top: 10px;">PostgreSQL RLS</div>
+        </div>
+      </div>
+
+      <!-- Tenants Cards Grid -->
+      <div id="tenantsListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 24px;">
+        <div style="color: var(--text-muted); padding: 40px; text-align: center;">Cargando organizaciones...</div>
+      </div>
+    </div>
 
     <!-- 1. KANBAN BOARD VIEW -->
     <div id="viewKanban" class="view-panel">
@@ -803,13 +1167,97 @@
           <div id="platformInfoTheme" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
         </div>
         <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
-          <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB SQLite</div>
-          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">./data/holoware.db</div>
+          <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB PostgreSQL 16</div>
+          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">PostgreSQL (RLS Multi-Tenant)</div>
         </div>
       </div>
     </div>
 
+    <!-- 5. SCANFLOW (STOCK & INVENTARIO) VIEW -->
+    <div id="viewScanFlow" class="view-panel hidden">
+      <div class="actions-bar" style="margin-bottom: 24px;">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900; color: #FFF; display: flex; align-items: center; gap: 10px;">
+            ScanFlow Stock & Inventario
+            <span style="font-size: 11px; padding: 4px 8px; border-radius: 6px; background: rgba(0,212,255,0.15); color: var(--accent); border: 1px solid var(--accent);">PRO</span>
+          </h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Control de existencias y sincronización en vivo con pedidos escaneados</p>
+        </div>
+      </div>
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 32px; text-align: center;">
+        <h3 style="font-size: 18px; font-weight: 800; color: #FFF;">Módulo Operativo ScanFlow Activo</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;">Conectado a la base de datos PostgreSQL 16 de la organización.</p>
+      </div>
+    </div>
+
   </main>
+
+  <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
+  <div id="createTenantModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Crear Nueva Organización</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateTenantModal()">✕</button>
+      </div>
+      <form id="createTenantForm" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre de la Empresa</label>
+          <input type="text" id="tenantNameInput" class="input-field" placeholder="Ej: Distribuidora Central" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Identificador Único (Slug)</label>
+          <input type="text" id="tenantSlugInput" class="input-field" placeholder="distribuidora-central" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Plan SaaS</label>
+          <select id="tenantPlanSelect" class="input-field">
+            <option value="starter">Starter (ScanBan Básico)</option>
+            <option value="pro" selected>Pro (ScanBan + StockFlow)</option>
+            <option value="enterprise">Enterprise (Módulos Ilimitados)</option>
+          </select>
+        </div>
+        <div id="createTenantError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Crear Organización</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ASIGNAR USUARIO A TENANT -->
+  <div id="assignUserModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Asignar / Crear Usuario en Organización</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAssignUserModal()">✕</button>
+      </div>
+      <form id="assignUserForm" style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Organización Destino</label>
+          <select id="userTenantSelect" class="input-field" required></select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre Completo</label>
+          <input type="text" id="userNameInput" class="input-field" placeholder="Ej: Carlos López" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Correo Electrónico</label>
+          <input type="email" id="userEmailInput" class="input-field" placeholder="carlos@empresa.com" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Contraseña Inicial</label>
+          <input type="password" id="userPasswordInput" class="input-field" placeholder="••••••••" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Rol en la Organización</label>
+          <select id="userRoleSelect" class="input-field">
+            <option value="OPERATOR" selected>Operario (Scanner Móvil / Lectura)</option>
+            <option value="ADMIN">Administrador de Tenant</option>
+          </select>
+        </div>
+        <div id="assignUserError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar Usuario</button>
+      </form>
+    </div>
+  </div>
 
   <!-- MODAL DE AUTENTICACIÓN / LOGIN -->
   <div id="loginModal" class="modal-overlay">
@@ -825,8 +1273,8 @@
         <div>
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña</label>
           <div style="position: relative; display: flex; align-items: center;">
-            <input type="password" id="loginPassword" class="input-field" placeholder="••••••••" style="padding-right: 44px; width: 100%;" required>
-            <button type="button" id="togglePasswordBtn" onclick="toggleLoginPasswordVisibility()" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--emerald); cursor: pointer; font-size: 18px; padding: 4px; display: flex; align-items: center; justify-content: center;" title="Mostrar / Ocultar Contraseña">👁️</button>
+            <input type="password" id="loginPassword" class="input-field" placeholder="••••••••" style="padding-right: 64px; width: 100%;" required>
+            <button type="button" id="togglePasswordBtn" onclick="toggleLoginPasswordVisibility()" style="position: absolute; right: 8px; background: transparent; border: 1px solid var(--card-border); color: var(--text-muted); cursor: pointer; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 6px;" title="Mostrar / Ocultar Contraseña">Ver</button>
           </div>
         </div>
         <div id="loginError" style="color: var(--red); font-size: 13px; display: none; text-align: center;"></div>
@@ -926,6 +1374,20 @@
       <div id="invoiceModalBody"></div>
     </div>
   </div>
+
+  <!-- Fixed Operational Status Bar (Footer) -->
+  <footer class="app-status-bar">
+    <div class="status-bar-left">
+      <span class="status-indicator-dot"></span>
+      <span id="footerDbStatus" class="font-mono">PostgreSQL 16 (RLS Conectado)</span>
+    </div>
+    <div class="status-bar-center">
+      <span id="footerTenantStatus">Organización: HoloWare Cloud Platform</span>
+    </div>
+    <div class="status-bar-right">
+      <span id="footerAppVersion" class="font-mono">HoloWare SaaS v1.2.0</span>
+    </div>
+  </footer>
 
   <script src="/app.js"></script>
 </body>

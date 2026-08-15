@@ -31,6 +31,13 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ---
 
+## 🚫 Regla de Oro Obligatoria: Prohibido Absolutamente el Uso de Emoticones y Emojis en Código, UI y Documentación
+
+1. **Cero Emojis en la Plataforma:** Queda terminantemente prohibido incorporar emojis o emoticones (ej. 🏢, 📦, 📋, 📱, 🎨, 🍷, 🍣, 👑, ➕, 👤, ⚡, ⚙️, 👥, etc.) en textos de la interfaz gráfica, menús de navegación, botones, badges, modales, nombres de módulos, logs de consola, base de datos o documentación técnica del proyecto.
+2. **Estética Sobria y Tokens CSS:** Toda la experiencia visual debe construirse estrictamente mediante tipografía limpia (Outfit, JetBrains Mono, Plus Jakarta Sans), jerarquía visual sobria y el sistema central de temas/tokens CSS (`var(--emerald)`, `var(--card-bg)`, `var(--text-main)`, etc.) sin adornos informales.
+
+---
+
 ## 🎯 Reglas de Arquitectura Modular Obligatorias
 
 1. **Aislamiento por Módulo (`modules/<nombre-modulo>/`):**
@@ -51,3 +58,27 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 5. **Roles y Seguridad (RBAC):**
    - Respetar la jerarquía de roles en endpoints: `SUPERADMIN` (gestión total de plataforma/módulos), `ADMIN` (gestión de módulo), `OPERATOR` (operativo móvil/escáner).
+
+---
+
+## 📝 Regla de Oro Obligatoria: Actualización Continua del Roadmap de Tareas
+
+1. **Checklist Siempre al Día:** Cada vez que el agente complete una tarea, hito o fase de ejecución, **DEBE actualizar de inmediato el archivo de seguimiento en `roadmap/SAAS_MULTITENANT_ROADMAP.md`** (o `docs/ROADMAP.md`), marcando la casilla correspondiente como completada `[x]` y registrando los archivos/entregables generados.
+2. **Prohibido Dejar Tareas Realizadas sin Marcar:** Ninguna funcionalidad puede considerarse terminada si no está reflejada como hecha en el roadmap maestro.
+
+---
+
+## 🌐 Regla de Oro Obligatoria: Análisis de Impacto Integral 360° (Código + Tests + Documentación + Infraestructura)
+
+Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE analizar, ejecutar y sincronizar el impacto en los 4 pilares sin excepción:
+
+1. **Pilar 1 — Código Fuente & Configuración:**
+   - Mantener coherencia estricta en Backend (`server.js`, `lib/`), Frontend Web (`public/`, `modules/*/public/`), App Móvil (`modules/*/src/`), y Configuración Docker (`Dockerfile`, `docker-compose.yml`, `nginx/`).
+2. **Pilar 2 — Batería de Pruebas & Tests:**
+   - Cada nueva funcionalidad o modificación debe contar con su suite de pruebas automatizada en `bin/` o verificar que los tests existentes pasen al 100% (`bin/verify-db-integrity.js`, `bin/test-auth-jwt.js`, `bin/test-entitlement.js`, `bin/test-billing-onboarding.js`).
+3. **Pilar 3 — Documentación & Manuales de Usuario (Sincronización Mandatoria de README.md):**
+   - **Obligación Estricta:** Ante **CADA cambio**, nueva característica, comando, endpoint o ajuste de infraestructura/Docker, el [`README.md`](file:///Users/javier/Projects/holoware-baseline/README.md) y los archivos en `/docs/` **DEBEN ser actualizados inmediatamente**.
+   - El [`README.md`](file:///Users/javier/Projects/holoware-baseline/README.md) debe contener siempre las instrucciones precisas de acceso a cada módulo Web y Mobile, comandos de Docker y credenciales vigentes sin dejar instrucciones contradictorias o desactualizadas.
+4. **Pilar 4 — Trazabilidad & Roadmap:**
+   - Sincronizar el estado en `roadmap/SAAS_MULTITENANT_ROADMAP.md` y documentar en `walkthrough.md`.
+

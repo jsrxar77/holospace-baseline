@@ -17,20 +17,22 @@ function toggleLoginPasswordVisibility() {
   if (passwordInput) {
     if (passwordInput.type === 'password') {
       passwordInput.type = 'text';
-      if (toggleBtn) toggleBtn.innerText = '🙈';
+      if (toggleBtn) toggleBtn.innerText = 'Ocultar';
     } else {
       passwordInput.type = 'password';
-      if (toggleBtn) toggleBtn.innerText = '👁️';
+      if (toggleBtn) toggleBtn.innerText = 'Ver';
     }
   }
 }
 
 async function loadActiveTheme() {
   try {
-    const res = await fetch('/api/theme');
+    const token = localStorage.getItem('hw_token') || (currentUser ? currentUser.email : '');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    const res = await fetch('/api/theme', { headers });
     const data = await res.json();
     if (data && data.theme) {
-      const activeKey = data.activeThemeKey || 'dark_glassmorphism';
+      const activeKey = data.themeKey || 'omarchy_tiling';
       document.body.className = 'theme-' + activeKey;
       const root = document.documentElement;
       const t = data.theme;
@@ -56,8 +58,8 @@ async function loadActiveTheme() {
       if (t.borderWidth) root.style.setProperty('--hw-border-width', t.borderWidth + 'px');
 
       const selectEl = document.getElementById('headerThemeSelect');
-      if (selectEl && data.activeThemeKey && selectEl.value !== data.activeThemeKey) {
-        selectEl.value = data.activeThemeKey;
+      if (selectEl && activeKey && selectEl.value !== activeKey) {
+        selectEl.value = activeKey;
       }
     }
   } catch (e) {
@@ -76,6 +78,7 @@ async function changeAppThemeSubmit(themeKey) {
       },
       body: JSON.stringify({
         themeKey,
+        scope: 'user',
         userEmail: currentUser ? currentUser.email : token
       })
     });
@@ -94,16 +97,45 @@ async function changeAppThemeSubmit(themeKey) {
   }
 }
 
+async function changeTenantDefaultTheme(tenantId, themeKey) {
+  try {
+    const token = localStorage.getItem('hw_token') || '';
+    const res = await fetch('/api/theme', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        themeKey,
+        scope: 'tenant',
+        targetTenantId: tenantId
+      })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      await loadTenantsManagementData();
+    } else {
+      await showCustomAlert('Acción Denegada', data.error || 'No se pudo cambiar el tema del Tenant.');
+    }
+  } catch (e) {
+    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadActiveTheme();
   populateSavedCredentials();
 
   const token = localStorage.getItem('hw_token');
   const userJson = localStorage.getItem('hw_user');
+  const tenantJson = localStorage.getItem('hw_tenant');
   if (token && userJson) {
     currentUser = JSON.parse(userJson);
+    const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'Drink Lovers Argentina' };
     document.getElementById('loginModal').classList.add('hidden');
-    document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email}`;
+    document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${tenant.name || 'Drink Lovers'})`;
     applyRoleVisibility();
     loadKanbanData();
     setInterval(loadKanbanData, 3000);
@@ -127,10 +159,16 @@ document.addEventListener('DOMContentLoaded', () => {
         currentUser = data.user;
         localStorage.setItem('hw_token', data.token);
         localStorage.setItem('hw_user', JSON.stringify(data.user));
+        if (data.tenant) {
+          localStorage.setItem('hw_tenant', JSON.stringify(data.tenant));
+          localStorage.setItem('hw_tenant_id', data.tenant.id);
+          localStorage.setItem('hw_tenant_slug', data.tenant.slug);
+        }
         localStorage.setItem('hw_saved_email', email);
 
         document.getElementById('loginModal').classList.add('hidden');
-        document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email}`;
+        const orgName = data.tenant ? data.tenant.name : 'Drink Lovers';
+        document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${orgName})`;
         applyRoleVisibility();
         loadKanbanData();
         setInterval(loadKanbanData, 3000);
@@ -157,55 +195,98 @@ function applyRoleVisibility() {
   const themeContainer = document.getElementById('headerThemeContainer');
   const badge = document.getElementById('activeContextBadge');
   const userBadge = document.getElementById('userBadge');
+  const mobActiveCtx = document.getElementById('mobileActiveContext');
+  const footerTenant = document.getElementById('footerTenantStatus');
+
+  const mobTabTenants = document.getElementById('mobTabTenants');
+  const mobTabPlatform = document.getElementById('mobTabPlatform');
+  const mobTabUsers = document.getElementById('mobTabUsers');
+  const mobTabKanban = document.getElementById('mobTabKanban');
+  const mobTabOrders = document.getElementById('mobTabOrders');
+  const mobTabScanFlow = document.getElementById('mobTabScanFlow');
 
   if (isSuperAdmin) {
-    // SUPERADMIN: Access strictly to HoloWare Core (Plataforma & Usuarios)
+    // SUPERADMIN: Access strictly to HoloWare Tenants & Core Platform
+    const tabTenants = document.getElementById('tabTenants');
+    const tabScanFlow = document.getElementById('tabScanFlow');
+    if (tabTenants) tabTenants.style.display = 'inline-flex';
     if (tabPlatform) tabPlatform.style.display = 'inline-flex';
     if (tabUsers) tabUsers.style.display = 'inline-flex';
     if (tabKanban) tabKanban.style.display = 'none';
     if (tabOrders) tabOrders.style.display = 'none';
+    if (tabScanFlow) tabScanFlow.style.display = 'none';
     if (themeContainer) themeContainer.style.display = 'flex';
 
+    if (mobTabTenants) mobTabTenants.style.display = 'block';
+    if (mobTabPlatform) mobTabPlatform.style.display = 'block';
+    if (mobTabUsers) mobTabUsers.style.display = 'block';
+    if (mobTabKanban) mobTabKanban.style.display = 'none';
+    if (mobTabOrders) mobTabOrders.style.display = 'none';
+    if (mobTabScanFlow) mobTabScanFlow.style.display = 'none';
+
     if (badge) {
-      badge.innerText = 'Core';
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
+      badge.innerText = 'TENANTS';
+      badge.style.color = '#A78BFA';
+      badge.style.background = 'rgba(167, 139, 250, 0.15)';
+      badge.style.borderColor = '#A78BFA';
     }
+    if (mobActiveCtx) mobActiveCtx.innerText = 'TENANTS';
 
     if (userBadge) {
       userBadge.innerText = `SUPERADMIN: ${currentUser.email}`;
-      userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
-      userBadge.style.color = 'var(--emerald)';
-      userBadge.style.borderColor = 'var(--emerald)';
+      userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
+      userBadge.style.color = '#A78BFA';
+      userBadge.style.borderColor = '#A78BFA';
     }
 
-    const usersView = document.getElementById('viewUsers');
-    if (usersView && !usersView.classList.contains('hidden')) {
-      switchTab('users');
+    if (footerTenant) {
+      footerTenant.innerText = 'Organización: HoloWare Cloud Platform';
+    }
+
+    const tenantsView = document.getElementById('viewTenants');
+    if (tenantsView && !tenantsView.classList.contains('hidden')) {
+      switchTab('tenants');
     } else {
-      switchTab('platform');
+      switchTab('tenants');
     }
   } else {
-    // ADMIN: Access strictly to ScanBan Board (Kanban & Pedidos)
+    // ADMIN / OPERATOR: Access to licensed operational modules (ScanBan Board, ScanFlow)
+    const tabTenants = document.getElementById('tabTenants');
+    const tabScanFlow = document.getElementById('tabScanFlow');
+    if (tabTenants) tabTenants.style.display = 'none';
     if (tabPlatform) tabPlatform.style.display = 'none';
     if (tabUsers) tabUsers.style.display = 'none';
     if (tabKanban) tabKanban.style.display = 'inline-flex';
     if (tabOrders) tabOrders.style.display = 'inline-flex';
+    if (tabScanFlow) tabScanFlow.style.display = 'inline-flex';
     if (themeContainer) themeContainer.style.display = 'none';
 
+    if (mobTabTenants) mobTabTenants.style.display = 'none';
+    if (mobTabPlatform) mobTabPlatform.style.display = 'none';
+    if (mobTabUsers) mobTabUsers.style.display = 'none';
+    if (mobTabKanban) mobTabKanban.style.display = 'block';
+    if (mobTabOrders) mobTabOrders.style.display = 'block';
+    if (mobTabScanFlow) mobTabScanFlow.style.display = 'block';
+
+    const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
+
     if (badge) {
-      badge.innerText = 'ScanBan Board';
+      badge.innerText = orgName;
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
     }
+    if (mobActiveCtx) mobActiveCtx.innerText = orgName;
 
     if (userBadge) {
       userBadge.innerText = `${currentUser.role}: ${currentUser.email}`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
+    }
+
+    if (footerTenant) {
+      footerTenant.innerText = `Organización: ${currentUser.tenantName || orgName}`;
     }
 
     const ordersView = document.getElementById('viewOrders');
@@ -217,25 +298,71 @@ function applyRoleVisibility() {
   }
 }
 
+// CONTROL DEL MENÚ LATERAL MÓVIL (DRAWER)
+function toggleMobileDrawer() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  const overlay = document.getElementById('mobileDrawerOverlay');
+  if (drawer && overlay) {
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+      drawer.classList.remove('open');
+      overlay.classList.add('hidden');
+    } else {
+      drawer.classList.add('open');
+      overlay.classList.remove('hidden');
+    }
+  }
+}
+
+function closeMobileDrawer() {
+  const drawer = document.getElementById('mobileNavDrawer');
+  const overlay = document.getElementById('mobileDrawerOverlay');
+  if (drawer) drawer.classList.remove('open');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function switchTabMobile(tabName) {
+  closeMobileDrawer();
+  switchTab(tabName);
+}
+
 // NAVEGACIÓN POR PESTAÑAS (MÓDULOS VS CORE)
 function switchTab(tabName) {
-  ['tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanFlow',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanFlow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
-  ['viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'viewScanFlow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
 
   const badge = document.getElementById('activeContextBadge');
 
-  if (tabName === 'kanban') {
+  if (tabName === 'tenants') {
+    const tab = document.getElementById('tabTenants');
+    if (tab) tab.classList.add('active');
+    const mobTab = document.getElementById('mobTabTenants');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewTenants');
+    if (view) view.classList.remove('hidden');
+    if (badge) {
+      badge.innerText = 'TENANTS';
+      badge.style.color = '#A78BFA';
+      badge.style.background = 'rgba(167, 139, 250, 0.15)';
+      badge.style.borderColor = '#A78BFA';
+    }
+    loadTenantsManagementData();
+  } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
-    document.getElementById('viewKanban').classList.remove('hidden');
+    const mobTab = document.getElementById('mobTabKanban');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewKanban');
+    if (view) view.classList.remove('hidden');
     if (badge) {
-      badge.innerText = 'ScanBan Board';
+      badge.innerText = currentUser && currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
@@ -244,20 +371,39 @@ function switchTab(tabName) {
   } else if (tabName === 'orders') {
     const tab = document.getElementById('tabOrders');
     if (tab) tab.classList.add('active');
-    document.getElementById('viewOrders').classList.remove('hidden');
+    const mobTab = document.getElementById('mobTabOrders');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewOrders');
+    if (view) view.classList.remove('hidden');
     if (badge) {
-      badge.innerText = 'ScanBan Board';
+      badge.innerText = currentUser && currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
     }
     fetchExplorerOrders();
+  } else if (tabName === 'scanflow') {
+    const tab = document.getElementById('tabScanFlow');
+    if (tab) tab.classList.add('active');
+    const mobTab = document.getElementById('mobTabScanFlow');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewScanFlow');
+    if (view) view.classList.remove('hidden');
+    if (badge) {
+      badge.innerText = 'SCANFLOW';
+      badge.style.color = 'var(--accent)';
+      badge.style.background = 'rgba(0, 212, 255, 0.15)';
+      badge.style.borderColor = 'var(--accent)';
+    }
   } else if (tabName === 'users') {
     const tab = document.getElementById('tabUsers');
     if (tab) tab.classList.add('active');
-    document.getElementById('viewUsers').classList.remove('hidden');
+    const mobTab = document.getElementById('mobTabUsers');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewUsers');
+    if (view) view.classList.remove('hidden');
     if (badge) {
-      badge.innerText = 'Core';
+      badge.innerText = 'CORE';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
@@ -266,9 +412,12 @@ function switchTab(tabName) {
   } else if (tabName === 'platform') {
     const platformTab = document.getElementById('tabPlatform');
     if (platformTab) platformTab.classList.add('active');
-    document.getElementById('viewPlatform').classList.remove('hidden');
+    const mobTab = document.getElementById('mobTabPlatform');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewPlatform');
+    if (view) view.classList.remove('hidden');
     if (badge) {
-      badge.innerText = 'Core';
+      badge.innerText = 'CORE';
       badge.style.color = 'var(--emerald)';
       badge.style.background = 'rgba(0, 230, 118, 0.15)';
       badge.style.borderColor = 'var(--emerald)';
@@ -862,11 +1011,16 @@ async function deleteBacklogOrder(orderId, event) {
 // ----------------------------------------------------
 // GESTIÓN DE USUARIOS (ABM + BORRADO LÓGICO)
 // ----------------------------------------------------
+let currentFetchedUsers = [];
+
 async function fetchUsers() {
   try {
-    const res = await fetch('/api/users');
+    const res = await fetch('/api/users', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}` }
+    });
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
+    currentFetchedUsers = usersList;
     const tbody = document.getElementById('usersTableBody');
     const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
 
@@ -892,8 +1046,8 @@ async function fetchUsers() {
           <td>
             ${canEdit ? `
               <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUser('${u.id}', '${u.name}', '${u.email}', '${u.role}', ${u.active !== false})">Editar</button>
-                <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id}', ${u.active !== false})">
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
+                <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
                   ${u.active !== false ? 'Desactivar' : 'Activar'}
                 </button>
               </div>
@@ -933,6 +1087,7 @@ function openUserModal() {
   document.getElementById('userNameInput').value = '';
   document.getElementById('userEmailInput').value = '';
   document.getElementById('userPasswordInput').value = '';
+  document.getElementById('userPasswordInput').placeholder = 'Contraseña';
   updateRoleSelectOptions('OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
@@ -941,14 +1096,21 @@ function closeUserModal() {
   document.getElementById('userModal').classList.add('hidden');
 }
 
-function editUser(id, name, email, role, active) {
-  document.getElementById('userId').value = id;
+function editUserById(userIdOrEmail) {
+  const user = currentFetchedUsers.find(u => String(u.id) === String(userIdOrEmail) || String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase());
+  if (!user) return;
+  document.getElementById('userId').value = user.id || user.email;
   document.getElementById('userModalTitle').innerText = 'Editar Usuario';
-  document.getElementById('userNameInput').value = name;
-  document.getElementById('userEmailInput').value = email;
-  document.getElementById('userPasswordInput').value = '••••••••';
-  updateRoleSelectOptions(role);
+  document.getElementById('userNameInput').value = user.name || '';
+  document.getElementById('userEmailInput').value = user.email || '';
+  document.getElementById('userPasswordInput').value = '';
+  document.getElementById('userPasswordInput').placeholder = 'Dejar en blanco para mantener contraseña';
+  updateRoleSelectOptions(user.role || 'OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
+}
+
+function editUser(id, name, email, role, active) {
+  editUserById(id || email);
 }
 
 async function saveUserSubmit(e) {
@@ -966,7 +1128,10 @@ async function saveUserSubmit(e) {
   try {
     const res = await fetch(url, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}`
+      },
       body: JSON.stringify(payload)
     });
     const data = await res.json();
@@ -1159,16 +1324,18 @@ switchTab = function (tabName) {
 
 async function openQrModal() {
   let host = window.location.hostname;
-  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
-    try {
-      const res = await fetch('/api/config');
-      const data = await res.json();
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
+    if (data && data.hostIp && data.hostIp !== '127.0.0.1' && data.hostIp !== 'localhost') {
+      host = data.hostIp;
+    } else if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
       if (data && data.hostIp) {
         host = data.hostIp;
       }
-    } catch (e) {
-      console.log('Error obteniendo IP dinámica:', e);
     }
+  } catch (e) {
+    console.log('Error obteniendo IP dinámica:', e);
   }
   const expoUrl = `exp://${host || '127.0.0.1'}:8081`;
   const qrImg = document.getElementById('qrImage');
@@ -1232,7 +1399,7 @@ async function loadPlatformPanel() {
     const data = await res.json();
     if (data.success) {
       renderModulesGrid(data.modules);
-      const activeCount = data.modules.filter(m => m.active).length;
+      const activeCount = data.modules.filter(m => m.is_active === true || m.is_active === 1 || m.active === 1 || m.active === true).length;
       document.getElementById('platformInfoActiveModules').innerText = activeCount;
     }
   } catch (e) {
@@ -1267,9 +1434,11 @@ function renderModulesGrid(modules) {
 
   grid.innerHTML = modules.map(mod => {
     const isCore = mod.key === 'core';
-    const isActive = mod.active === 1;
-    const activatedAt = mod.activatedAt ? new Date(mod.activatedAt).toLocaleString('es-AR') : '—';
+    const isActive = mod.is_active === true || mod.is_active === 1 || mod.active === 1 || mod.active === true;
+    const rawDate = mod.activated_at || mod.activatedAt;
+    const activatedAt = rawDate ? new Date(rawDate).toLocaleString('es-AR') : '—';
     const statusColor = isActive ? 'var(--emerald)' : 'var(--text-muted)';
+    const activatedBy = mod.activated_by || mod.activatedBy || '—';
 
     return `
       <div class="module-card ${isActive ? 'active-module' : 'inactive-module'}" id="moduleCard-${mod.key}">
@@ -1285,7 +1454,7 @@ function renderModulesGrid(modules) {
           </div>
           <div class="module-desc">${mod.description || '—'}</div>
           <div class="module-meta">
-            Activado por: <strong style="color:#FFF;">${mod.activatedBy || '—'}</strong>
+            Activado por: <strong style="color:#FFF;">${activatedBy}</strong>
             · Fecha: ${activatedAt}
           </div>
         </div>
@@ -1336,29 +1505,320 @@ function renderPlatformAuditLog(logs) {
     'MODULE_ACTIVATED':   '#00E676',
     'MODULE_DEACTIVATED': '#FF5252',
     'THEME_CHANGED':      '#3B82F6',
+    'TENANT_THEME_CHANGED':'#A78BFA'
   };
   const actionLabels = {
     'MODULE_ACTIVATED':   'Módulo activado',
     'MODULE_DEACTIVATED': 'Módulo desactivado',
     'THEME_CHANGED':      'Tema cambiado',
+    'TENANT_THEME_CHANGED':'Tema del Tenant cambiado'
   };
 
-  container.innerHTML = [...logs].reverse().slice(0, 50).map(log => {
+  container.innerHTML = [...logs].slice(0, 50).map(log => {
     const color = actionColors[log.action] || '#8B949E';
     const label = actionLabels[log.action] || log.action;
     const ts = new Date(log.timestamp).toLocaleString('es-AR');
-    let details = '';
-    try { details = JSON.stringify(JSON.parse(log.details), null, 0); } catch { details = log.details; }
+    let detailsText = '';
+    if (typeof log.details === 'object' && log.details !== null) {
+      detailsText = log.details.description || log.details.message || JSON.stringify(log.details);
+    } else if (typeof log.details === 'string') {
+      try {
+        const parsed = JSON.parse(log.details);
+        detailsText = parsed.description || parsed.message || log.details;
+      } catch {
+        detailsText = log.details;
+      }
+    }
 
     return `
       <div class="platform-audit-row">
         <div class="audit-dot" style="background-color:${color};"></div>
         <div style="flex:1;">
           <div style="font-size:13px; font-weight:800; color:#FFF;">${label}</div>
-          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${log.userEmail} · ${ts}</div>
-          <div style="font-size:11px; color:${color}; margin-top:2px; font-family:monospace;">${details}</div>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${log.userEmail || log.user_email || 'Sistema'} · ${ts}</div>
+          ${detailsText ? `<div style="font-size:11px; color:${color}; margin-top:2px; font-family:monospace;">${detailsText}</div>` : ''}
         </div>
       </div>
     `;
   }).join('');
+}
+
+// ============================================================================
+// MÓDULO TENANTS (SUPERADMIN SAAS MANAGEMENT)
+// ============================================================================
+
+let cachedTenantsList = [];
+
+async function loadTenantsManagementData() {
+  const container = document.getElementById('tenantsListContainer');
+  if (!container) return;
+
+  try {
+    const res = await fetch('/api/tenants', {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token')}` }
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      container.innerHTML = `<div style="color:var(--red); padding:20px;">${data.error || 'Error cargando organizaciones'}</div>`;
+      return;
+    }
+
+    cachedTenantsList = data.tenants || [];
+
+    // Actualizar KPIs
+    const totalTenants = cachedTenantsList.length;
+    const activeTenants = cachedTenantsList.filter(t => t.status === 'active').length;
+    const totalUsers = cachedTenantsList.reduce((acc, t) => acc + (t.users ? t.users.length : 0), 0);
+
+    const kpiCount = document.getElementById('kpiTenantsCount');
+    const kpiActive = document.getElementById('kpiTenantsActive');
+    const kpiUsers = document.getElementById('kpiTenantsUsers');
+
+    if (kpiCount) kpiCount.innerText = totalTenants;
+    if (kpiActive) kpiActive.innerText = activeTenants;
+    if (kpiUsers) kpiUsers.innerText = totalUsers;
+
+    // Actualizar Select del Modal Asignar Usuario
+    const userTenantSelect = document.getElementById('userTenantSelect');
+    if (userTenantSelect) {
+      userTenantSelect.innerHTML = cachedTenantsList.map(t => `<option value="${t.id}">${t.name} (${t.slug})</option>`).join('');
+    }
+
+    // Renderizar Cards de Organizaciones
+    container.innerHTML = cachedTenantsList.map(t => {
+      const isPlatform = t.slug === 'holoware';
+      const planCode = t.plan_code || 'starter';
+      const planBadgeColors = {
+        starter: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', border: '#3B82F6' },
+        pro: { bg: 'rgba(0, 230, 118, 0.15)', color: 'var(--emerald)', border: 'var(--emerald)' },
+        enterprise: { bg: 'rgba(167, 139, 250, 0.15)', color: '#A78BFA', border: '#A78BFA' }
+      }[planCode] || { bg: 'rgba(255,255,255,0.1)', color: '#FFF', border: '#888' };
+
+      const modules = t.modules || [];
+      const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'scanban-board' && m.module_code === 'scanban') || (code === 'scanflow' && m.module_code === 'stockflow')) && m.is_enabled);
+
+      const isScanBanBoardActive = hasModule('scanban-board');
+      const isScanBanScannerActive = hasModule('scanban-scanner');
+      const isScanFlowActive = hasModule('scanflow');
+
+      const users = t.users || [];
+
+      return `
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+          <!-- Tenant Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <h3 style="font-size: 18px; font-weight: 900; color: #FFF;">${t.name}</h3>
+                <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,0.08); color: var(--text-muted); font-family: monospace;">
+                  ${t.slug}
+                </span>
+                ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA;">PLATAFORMA</span>' : ''}
+              </div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                Usuarios: <strong style="color: #FFF;">${users.length}</strong> activos en la empresa
+              </div>
+            </div>
+            <span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border: 1px solid ${planBadgeColors.border};">
+              Plan ${planCode}
+            </span>
+          </div>
+
+          <!-- Tema Base por Defecto del Tenant -->
+          <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+            <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
+            <select class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeTenantDefaultTheme('${t.id}', this.value)">
+              <option value="omarchy_tiling" ${t.active_theme === 'omarchy_tiling' || !t.active_theme ? 'selected' : ''}>Omarchy Tiling WM</option>
+              <option value="dark_glassmorphism" ${t.active_theme === 'dark_glassmorphism' ? 'selected' : ''}>Dark Glassmorphism</option>
+              <option value="cyberpunk_glassmorphism" ${t.active_theme === 'cyberpunk_glassmorphism' ? 'selected' : ''}>Cyberpunk Glassmorphism</option>
+              <option value="soft_minimal_pastel" ${t.active_theme === 'soft_minimal_pastel' ? 'selected' : ''}>Soft Minimal Pastel</option>
+            </select>
+          </div>
+
+          <!-- Módulos Licenciados Toggles -->
+          <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos Licenciados en Vivo</div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
+              <!-- ScanBan Board -->
+              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+                <span style="font-size: 12px; font-weight: 700; color: ${isScanBanBoardActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Board</span>
+                <input type="checkbox" ${isScanBanBoardActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanban-board', this.checked)" style="cursor: pointer;">
+              </label>
+
+              <!-- ScanBan Scanner -->
+              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+                <span style="font-size: 12px; font-weight: 700; color: ${isScanBanScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Scanner</span>
+                <input type="checkbox" ${isScanBanScannerActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanban-scanner', this.checked)" style="cursor: pointer;">
+              </label>
+
+              <!-- ScanFlow -->
+              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+                <span style="font-size: 12px; font-weight: 700; color: ${isScanFlowActive ? 'var(--accent)' : 'var(--text-muted)'};">ScanFlow</span>
+                <input type="checkbox" ${isScanFlowActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanflow', this.checked)" style="cursor: pointer;">
+              </label>
+            </div>
+          </div>
+
+          <!-- Usuarios de la Organización -->
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Usuarios (${users.length})</span>
+              <button class="btn-secondary" onclick="openNewTenantUserModal('${t.id}')" style="font-size: 11px; padding: 3px 8px;">+ Asignar</button>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
+              ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Sin usuarios asignados</div>' : users.map(u => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                  <div>
+                    <div style="font-size: 12px; font-weight: 700; color: #FFF;">${u.name}</div>
+                    <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
+                  </div>
+                  <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: rgba(255,255,255,0.05);">
+                    ${u.role}
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    container.innerHTML = `<div style="color:var(--red); padding:20px;">Error conectando con la API de Tenants: ${err.message}</div>`;
+  }
+}
+
+async function toggleTenantModuleState(tenantId, moduleCode, isEnabled) {
+  try {
+    const res = await fetch('/api/tenants/modules', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+      },
+      body: JSON.stringify({ tenantId, moduleCode, isEnabled })
+    });
+    const data = await res.json();
+    if (data.success) {
+      loadTenantsManagementData();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo cambiar el estado del módulo');
+      loadTenantsManagementData();
+    }
+  } catch (e) {
+    await showCustomAlert('Error', `Error de red: ${e.message}`);
+    loadTenantsManagementData();
+  }
+}
+
+function openNewTenantModal() {
+  const modal = document.getElementById('modalNewTenant');
+  const err = document.getElementById('tenantNewError');
+  if (err) err.style.display = 'none';
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeNewTenantModal() {
+  const modal = document.getElementById('modalNewTenant');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateTenantSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('tenantNewName').value.trim();
+  const slug = document.getElementById('tenantNewSlug').value.trim();
+  const planCode = document.getElementById('tenantNewPlan').value;
+  const adminName = document.getElementById('tenantNewAdminName').value.trim();
+  const adminEmail = document.getElementById('tenantNewAdminEmail').value.trim();
+  const adminPassword = document.getElementById('tenantNewAdminPassword').value;
+
+  const errEl = document.getElementById('tenantNewError');
+
+  try {
+    const res = await fetch('/api/tenants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+      },
+      body: JSON.stringify({ name, slug, planCode, adminName, adminEmail, adminPassword })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      closeNewTenantModal();
+      await showCustomAlert('Éxito', `Organización '${name}' creada exitosamente.`);
+      loadTenantsManagementData();
+    } else {
+      if (errEl) {
+        errEl.innerText = data.error || 'Error al crear la organización.';
+        errEl.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.innerText = `Error de red: ${err.message}`;
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+function openNewTenantUserModal(preselectedTenantId) {
+  const modal = document.getElementById('modalNewTenantUser');
+  const err = document.getElementById('userNewError');
+  if (err) err.style.display = 'none';
+
+  if (preselectedTenantId) {
+    const select = document.getElementById('userTenantSelect');
+    if (select) select.value = preselectedTenantId;
+  }
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeNewTenantUserModal() {
+  const modal = document.getElementById('modalNewTenantUser');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateTenantUserSubmit(e) {
+  e.preventDefault();
+  const tenantId = document.getElementById('userTenantSelect').value;
+  const name = document.getElementById('userNewName').value.trim();
+  const email = document.getElementById('userNewEmail').value.trim();
+  const role = document.getElementById('userNewRole').value;
+  const password = document.getElementById('userNewPassword').value;
+
+  const errEl = document.getElementById('userNewError');
+
+  try {
+    const res = await fetch('/api/tenants/users', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+      },
+      body: JSON.stringify({ tenantId, name, email, role, password })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      closeNewTenantUserModal();
+      await showCustomAlert('Éxito', `Usuario '${name}' asignado exitosamente.`);
+      loadTenantsManagementData();
+    } else {
+      if (errEl) {
+        errEl.innerText = data.error || 'Error al crear el usuario.';
+        errEl.style.display = 'block';
+      }
+    }
+  } catch (err) {
+    if (errEl) {
+      errEl.innerText = `Error de red: ${err.message}`;
+      errEl.style.display = 'block';
+    }
+  }
 }

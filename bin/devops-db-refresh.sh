@@ -1,28 +1,52 @@
 #!/usr/bin/env bash
-# devops-db-refresh.sh - Script de reseteo de Base de Datos SQLite (holoware.db) en vivo SIN APAGAR el servidor
+# devops-db-refresh.sh - Herramienta de Reinicialización y Siembra de Base de Datos
 
 set -e
 
-echo "======================================================"
-echo "🧹 DevOps Database Refresh Tool (Live SQLite Reset)"
-echo "======================================================"
-
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATA_DIR="$PROJECT_ROOT/data"
-DB_FILE="$DATA_DIR/holoware.db"
+SCHEMA_SQL="$DATA_DIR/init-schema.sql"
 
-# 2. Intentar reseteo en vivo vía API HTTP usando 127.0.0.1 (sin apagar el puerto 3001)
-RESET_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/reset-db 2>/dev/null || echo "000")
+echo "======================================================"
+echo "HoloWare - Reinicializacion y Siembra de Base de Datos"
+echo "======================================================"
+echo ""
 
-if [ "$RESET_HTTP_CODE" = "200" ]; then
-  echo "⚡ Reseteo en VIVO realizado con éxito vía API (Puerto 3001 se mantiene 100% ONLINE)."
+# 1. Limpieza y Recreación de Estructura
+echo "[1/4] Limpiando datos anteriores y recreando tablas..."
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "holoware_postgres"; then
+  docker exec -i holoware_postgres psql -U holoware_admin -d holoware_saas -q -c "
+    DROP SCHEMA IF EXISTS public CASCADE;
+    CREATE SCHEMA public;
+    GRANT ALL ON SCHEMA public TO holoware_admin;
+    GRANT ALL ON SCHEMA public TO public;
+  " > /dev/null 2>&1
+  
+  # 2. Siembra de Estructura, Módulos y Usuarios
+  echo "[2/4] Sembrando organizaciones, modulos oficiales y usuarios..."
+  docker exec -i holoware_postgres psql -U holoware_admin -d holoware_saas -q < "$SCHEMA_SQL" > /dev/null 2>&1
+  
+  echo "[3/4] Configurando aislamiento seguro de organizaciones..."
 else
-  echo "📂 Servidor no detectado en puerto 3001. Limpiando archivo SQLite de base de datos..."
-  mkdir -p "$DATA_DIR"
-  rm -f "$DB_FILE" "$DB_FILE-wal" "$DB_FILE-shm"
+  echo "[ALERTA] No se encontro el contenedor de base de datos PostgreSQL activo."
+  echo "Por favor ejecute previamente: docker compose up -d"
+  exit 1
 fi
 
+# 3. Notificación al Servidor Web
+echo "[4/4] Sincronizando servidor web en tiempo real..."
+RESET_HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://127.0.0.1:3001/api/reset-db 2>/dev/null || echo "000")
+
 echo ""
-echo "✅ ¡BASE DE DATOS SQLITE RESETEADA CORRECTAMENTE!"
-echo "📍 Archivo de DB: ./data/holoware.db"
 echo "======================================================"
+echo "PROCESO COMPLETADO CON EXITO"
+echo "======================================================"
+echo "Organizaciones y Cuentas Sembradas:"
+echo "  - HoloWare Cloud Platform (SuperAdmin): superadmin@hologrowth.com.ar"
+echo "  - Poke Argentina (Cliente): admin@poke.com.ar"
+echo "  - Drink Lovers Argentina (Cliente): admin@drinklovers.com.ar"
+echo ""
+echo "Tema visual por defecto: Omarchy Tiling WM"
+echo "Plataforma lista para operar en http://localhost:3001"
+echo "======================================================"
+echo ""

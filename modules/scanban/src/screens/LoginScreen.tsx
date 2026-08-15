@@ -11,6 +11,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const initialCreds = getSavedCredentials();
   const [email, setEmail] = useState(initialCreds.email || '');
   const [password, setPassword] = useState('');
+  const [tenantSlug, setTenantSlug] = useState(initialCreds.tenantSlug || 'drinklovers');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -22,6 +23,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     const interval = setInterval(fetchTheme, 3000);
     const creds = getSavedCredentials();
     if (creds.email) setEmail(creds.email);
+    if (creds.tenantSlug) setTenantSlug(creds.tenantSlug);
 
     return () => clearInterval(interval);
   }, []);
@@ -34,13 +36,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
     setErrorMessage('');
     setLoading(true);
-    const success = await login(email.trim(), password.trim());
+    const success = await login(email.trim(), password.trim(), (tenantSlug.trim() || 'drinklovers'));
     setLoading(false);
 
     if (success) {
       onLoginSuccess();
     } else {
-      setErrorMessage('Email o contraseña incorrectos. Verifica con el administrador.');
+      setErrorMessage('Credenciales u organización incorrectas. Verifica con el administrador.');
     }
   };
 
@@ -70,6 +72,21 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <Text style={[styles.errorText, { color: theme.red }]}>{errorMessage}</Text>
           </View>
         )}
+
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Organización / Empresa</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain, borderRadius: isOmarchy ? 4 : 12 }]}
+            placeholder="ej: drinklovers"
+            placeholderTextColor={theme.textMuted}
+            autoCapitalize="none"
+            value={tenantSlug}
+            onChangeText={(txt) => {
+              setTenantSlug(txt);
+              setErrorMessage('');
+            }}
+          />
+        </View>
 
         <View style={styles.formGroup}>
           <Text style={[styles.label, { color: theme.textMuted }]}>Email del Operario</Text>

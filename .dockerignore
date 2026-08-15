@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.local
+.agents
+.gemini
+backups
+data/*.log
+data/*.db-shm
+data/*.db-wal
+.expo
+.expo-shared
+dist
+web-build

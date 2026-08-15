@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
-    "better-sqlite3": "^13.0.3",
+    "@types/react": "~19.1.10",
     "expo": "~54.0.0",
     "expo-av": "~16.0.8",
     "expo-camera": "~17.0.10",
@@ -25,17 +25,17 @@
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "^3.11.174",
     "pdfkit": "^0.19.1",
+    "pg": "^8.23.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0",
+    "typescript": "^5.3.3",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.25.2",
-    "@types/react": "~19.1.10",
-    "typescript": "^5.3.3"
+    "@babel/core": "^7.25.2"
   },
   "private": true
 }
