@@ -491,13 +491,13 @@ async function loadKanbanData() {
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
-            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">✓ Pasar a Listo</button>
-            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.id}', event)">🗑️</button>
+            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">Pasar a Listo</button>
+            <button class="btn-delete-card" style="position: static; font-size: 11px; padding: 4px 8px;" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           </div>
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes hacer clic o arrastrar esta tarjeta a LISTO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Haz clic o arrastra esta tarjeta a LISTO</div>
         </div>
       `).join('');
 
@@ -508,16 +508,16 @@ async function loadKanbanData() {
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
       : data.ready.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">↩️ A Backlog</button>
+          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">A Backlog</button>
           <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
-          <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
+          <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">Listo para tomar en celular</div>
           ${currentUser && currentUser.role === 'ADMIN' ? `
             <button class="btn-primary" style="background: var(--emerald); color: #000; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 900; cursor: pointer;" onclick="openAssignOperatorModal('${item.id}', '${item.orderNumber}', event)">
-              👤 Asignar a Operario
+              Asignar a Operario
             </button>
           ` : ''}
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a BACKLOG o EN PROCESO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastrar a BACKLOG o EN PROCESO</div>
         </div>
       `).join('');
 
@@ -550,18 +550,18 @@ async function loadKanbanData() {
             </div>
             ${currentUser && currentUser.role === 'ADMIN' ? `
               <button class="btn-action" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #3B82F6; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 700; cursor: pointer;" onclick="resetOrderDoingToReady('${item.id}', '${item.orderNumber}', event)">
-                ↩️ Reasignar / Liberar a Listo
+                Reasignar / Liberar a Listo
               </button>
             ` : ''}
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a LISTO para liberar</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastrar a LISTO para liberar</div>
           </div>
         `).join('');
 
         return `
           <div class="user-group">
             <div class="user-group-header" onclick="toggleUserGroup('${groupId}')">
-              <span>👤 Operario: ${email} (${userOrders.length})</span>
-              <span>${isCollapsed ? '►' : '▼'}</span>
+              <span>Operario: ${email} (${userOrders.length})</span>
+              <span>${isCollapsed ? '[+]' : '[-]'}</span>
             </div>
             ${!isCollapsed ? `<div class="user-group-body">${cardsHtml}</div>` : ''}
           </div>
@@ -599,8 +599,8 @@ async function loadKanbanData() {
         return `
           <div class="user-group">
             <div class="user-group-header" onclick="toggleUserGroup('${groupId}')">
-              <span>👤 Auditado por: ${email} (${userOrders.length})</span>
-              <span>${isCollapsed ? '►' : '▼'}</span>
+              <span>Auditado por: ${email} (${userOrders.length})</span>
+              <span>${isCollapsed ? '[+]' : '[-]'}</span>
             </div>
             ${!isCollapsed ? `<div class="user-group-body">${cardsHtml}</div>` : ''}
           </div>
@@ -1352,7 +1352,7 @@ async function renderOperatorPills() {
       <button type="button" 
         onclick="clearOperatorFilter()"
         style="background: ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : '#21262D'}; color: ${selectedExplorerOperators.size === 0 ? '#000' : '#FFF'}; border: 1px solid ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer;">
-        ${selectedExplorerOperators.size === 0 ? '✓ ' : ''}Todos los Operarios
+        Todos los Operarios
       </button>
     `;
 
@@ -1364,7 +1364,7 @@ async function renderOperatorPills() {
         <button type="button" 
           onclick="toggleOperatorFilter('${email}')"
           style="background: ${isSelected ? 'var(--emerald)' : '#21262D'}; color: ${isSelected ? '#000' : '#FFF'}; border: 1px solid ${isSelected ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-          ${isSelected ? '✓ ' : ''}${u.name} (@${u.username || email.split('@')[0]})
+          ${u.name} (@${u.username || email.split('@')[0]})
         </button>
       `;
       })
@@ -1461,13 +1461,17 @@ async function fetchExplorerOrders() {
           <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.orderNumber}')">
             <td><strong style="color: var(--emerald);">#${o.orderNumber}</strong></td>
             <td><strong>${o.clientName}</strong></td>
-            <td>👤 ${o.operatorEmail || 'Sin Asignar'}</td>
+            <td>${o.operatorEmail || 'Sin Asignar'}</td>
             <td style="font-size: 13px; color: var(--text-muted);">${o.issueDate || 'Hoy'}</td>
             <td style="text-align: center; font-weight: 800;">${o.totalItemsRequired} U</td>
             <td style="text-align: right; color: var(--emerald); font-weight: 900; font-size: 15px;">$${(o.totalAmount || 0).toLocaleString('es-AR')}</td>
-            <td style="text-align: center;"><span class="badge-role" style="font-size: 11px; ${badgeStyle}">${statusEs}</span></td>
             <td style="text-align: center;">
-              <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="event.stopPropagation(); openInvoiceModal('${o.orderNumber}')">👁️ Detalle</button>
+              <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; ${badgeStyle}">
+                ${statusEs}
+              </span>
+            </td>
+            <td style="text-align: center;">
+              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.orderNumber}')">Detalle</button>
             </td>
           </tr>
         `;
