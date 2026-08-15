@@ -31,13 +31,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
     setErrorMessage('');
     setLoading(true);
-    const success = await login(email.trim(), password.trim(), (tenantSlug.trim() || 'drinklovers'));
+    const success = await login(email.trim(), password.trim());
     setLoading(false);
 
     if (success) {
       onLoginSuccess();
     } else {
-      setErrorMessage('Credenciales u organización incorrectas. Verifica con el administrador.');
+      setErrorMessage('Credenciales incorrectas. Verifica tu email y contraseña.');
     }
   };
 
@@ -69,25 +69,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         )}
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: theme.textMuted }]}>Organización / Empresa</Text>
+          <Text style={[styles.label, { color: theme.textMuted }]}>Email de Usuario</Text>
           <TextInput
             style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain, borderRadius: isOmarchy ? 4 : 12 }]}
-            placeholder="ej: drinklovers"
-            placeholderTextColor={theme.textMuted}
-            autoCapitalize="none"
-            value={tenantSlug}
-            onChangeText={(txt) => {
-              setTenantSlug(txt);
-              setErrorMessage('');
-            }}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: theme.textMuted }]}>Email del Operario</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, color: theme.textMain, borderRadius: isOmarchy ? 4 : 12 }]}
-            placeholder="ej: operario@empresa.com"
+            placeholder="usuario@empresa.com"
             placeholderTextColor={theme.textMuted}
             keyboardType="email-address"
             autoCapitalize="none"

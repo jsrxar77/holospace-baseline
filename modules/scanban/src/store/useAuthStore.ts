@@ -59,19 +59,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   isAuthenticated: false,
 
-  login: async (email: string, pass: string, tenantSlug: string = 'drinklovers') => {
+  login: async (email: string, pass: string) => {
     try {
       const response = await fetch(`${SERVER_URL}/api/login`, {
         method: 'POST',
         headers: { 
-          'Content-Type': 'application/json',
-          'X-Tenant-Slug': tenantSlug
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ email, password: pass, tenantSlug })
+        body: JSON.stringify({ email, password: pass })
       });
       const data = await response.json();
       if (data.success && data.user) {
-        saveSavedCredentials(email, tenantSlug);
+        saveSavedCredentials(email);
         set({
           user: data.user,
           tenant: data.tenant || null,

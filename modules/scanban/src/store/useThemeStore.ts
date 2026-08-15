@@ -36,7 +36,12 @@ export const useThemeStore = create<ThemeState>((set) => ({
   theme: DEFAULT_THEME,
   fetchTheme: async () => {
     try {
-      const res = await fetch(`${SERVER_URL}/api/theme`);
+      const token = useAuthStore.getState().token;
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${SERVER_URL}/api/theme`, { headers });
       const data = await res.json();
       if (data && data.theme) {
         set({
