@@ -1094,19 +1094,79 @@ function updateRoleSelectOptions(selectedRole = 'OPERATOR') {
   select.value = selectedRole;
 }
 
+function toggleUserPasswordVisibility() {
+  const passInput = document.getElementById('userPasswordInput');
+  const btn = document.getElementById('toggleUserPasswordBtn');
+  if (!passInput || !btn) return;
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    btn.innerText = 'Ocultar';
+  } else {
+    passInput.type = 'password';
+    btn.innerText = 'Ver';
+  }
+}
+
+async function populateUserModalTenants(selectedTenantId = '') {
+  const select = document.getElementById('userTenantSelect');
+  const staticInput = document.getElementById('userTenantStatic');
+  if (!select || !staticInput) return;
+
+  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+
+  if (isSuperAdmin) {
+    select.style.display = 'block';
+    staticInput.style.display = 'none';
+    select.required = true;
+
+    try {
+      const res = await fetch('/api/tenants', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}` }
+      });
+      const data = await res.json();
+      const tenants = data.tenants || [];
+      
+      select.innerHTML = tenants.map(t => `
+        <option value="${t.id}" ${t.id === selectedTenantId ? 'selected' : ''}>
+          ${t.name} (${t.slug ? t.slug.toUpperCase() : 'TENANT'})
+        </option>
+      `).join('');
+
+      if (!selectedTenantId && tenants.length > 0) {
+        select.value = tenants[0].id;
+      }
+    } catch (e) {
+      console.error('Error cargando tenants en modal de usuario:', e);
+    }
+  } else {
+    select.style.display = 'none';
+    select.required = false;
+    staticInput.style.display = 'block';
+    const myTenantName = currentUser.tenantName || (currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'Mi Organización');
+    staticInput.value = myTenantName;
+    select.innerHTML = `<option value="${currentUser.tenantId || currentUser.tenant_id}" selected>${myTenantName}</option>`;
+  }
+}
+
 function openUserModal() {
   document.getElementById('userId').value = '';
   document.getElementById('userModalTitle').innerText = 'Crear Nuevo Usuario';
+  
   const nickInput = document.getElementById('userNickInput');
   if (nickInput) nickInput.value = '';
   document.getElementById('userNameInput').value = '';
   document.getElementById('userEmailInput').value = '';
   
   const passInput = document.getElementById('userPasswordInput');
+  passInput.type = 'password';
   passInput.value = '';
   passInput.placeholder = 'Contraseña requerida';
   passInput.required = true;
 
+  const toggleBtn = document.getElementById('toggleUserPasswordBtn');
+  if (toggleBtn) toggleBtn.innerText = 'Ver';
+
+  populateUserModalTenants(currentUser.tenantId || currentUser.tenant_id || '');
   updateRoleSelectOptions('OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
@@ -1116,20 +1176,32 @@ function closeUserModal() {
 }
 
 function editUserById(userIdOrEmail) {
-  const user = currentFetchedUsers.find(u => String(u.id) === String(userIdOrEmail) || String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase() || String(u.username).toLowerCase() === String(userIdOrEmail).toLowerCase());
+  const user = currentFetchedUsers.find(u => 
+    String(u.id) === String(userIdOrEmail) || 
+    String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase() || 
+    (u.username && String(u.username).toLowerCase() === String(userIdOrEmail).toLowerCase())
+  );
   if (!user) return;
-  document.getElementById('userId').value = user.id || user.email;
+
+  document.getElementById('userId').value = user.id;
   document.getElementById('userModalTitle').innerText = 'Editar Usuario';
+  
   const nickInput = document.getElementById('userNickInput');
   if (nickInput) nickInput.value = user.username || (user.email ? user.email.split('@')[0] : '');
+  
   document.getElementById('userNameInput').value = user.name || '';
   document.getElementById('userEmailInput').value = user.email || '';
   
   const passInput = document.getElementById('userPasswordInput');
-  passInput.value = '';
-  passInput.placeholder = 'Dejar en blanco para mantener contraseña';
-  passInput.required = false;
+  passInput.type = 'password';
+  passInput.value = '••••••••';
+  passInput.placeholder = 'Contraseña obligatoria';
+  passInput.required = true;
 
+  const toggleBtn = document.getElementById('toggleUserPasswordBtn');
+  if (toggleBtn) toggleBtn.innerText = 'Ver';
+
+  populateUserModalTenants(user.tenant_id || user.tenantId || '');
   updateRoleSelectOptions(user.role || 'OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
@@ -1147,15 +1219,32 @@ async function saveUserSubmit(e) {
   const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
   const password = document.getElementById('userPasswordInput').value;
   const role = document.getElementById('userRoleInput').value;
+  
+  const tenantSelect = document.getElementById('userTenantSelect');
+  const targetTenantId = (tenantSelect && tenantSelect.value) ? tenantSelect.value : (currentUser.tenantId || currentUser.tenant_id);
 
   if (!username) {
-    await showCustomAlert('Campo Obligatorio', 'El Nick / Username es obligatorio.');
+    await showCustomAlert('Campo Obligatorio', 'El Username (Nick) es obligatorio.');
+    return;
+  }
+  if (!name) {
+    await showCustomAlert('Campo Obligatorio', 'El Nombre Completo es obligatorio.');
+    return;
+  }
+  if (!email) {
+    await showCustomAlert('Campo Obligatorio', 'El Email es obligatorio.');
+    return;
+  }
+  if (!password) {
+    await showCustomAlert('Campo Obligatorio', 'La Contraseña es obligatoria.');
     return;
   }
 
   const url = '/api/users';
   const method = id ? 'PUT' : 'POST';
-  const payload = id ? { id, username, name, email, password, role } : { username, name, email, password, role };
+  const payload = id ? 
+    { id, tenantId: targetTenantId, username, name, email, password, role } : 
+    { tenantId: targetTenantId, username, name, email, password, role };
 
   try {
     const res = await fetch(url, {
@@ -1170,7 +1259,7 @@ async function saveUserSubmit(e) {
 
     if (data.success) {
       closeUserModal();
-      await showCustomAlert('¡Guardado!', `Usuario @${username} (${email}) guardado correctamente.`);
+      await showCustomAlert('¡Guardado!', `Usuario @${username} (${name}) guardado correctamente.`);
       fetchUsers();
     } else {
       await showCustomAlert('Error', data.error || 'No se pudo guardar el usuario.');

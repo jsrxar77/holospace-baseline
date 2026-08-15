@@ -1394,29 +1394,44 @@
       <h3 id="userModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Crear Nuevo Usuario</h3>
       <form id="userForm" style="display: flex; flex-direction: column; gap: 16px;" onsubmit="saveUserSubmit(event)">
         <input type="hidden" id="userId">
+        
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Username (Nick)</label>
-          <input type="text" id="userNickInput" class="input-field" required>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Organización <span style="color: var(--red);">*</span></label>
+          <select id="userTenantSelect" class="input-field" required></select>
+          <input type="text" id="userTenantStatic" class="input-field" style="display: none; background: rgba(255,255,255,0.04); cursor: not-allowed;" readonly>
         </div>
+
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre Completo</label>
-          <input type="text" id="userNameInput" class="input-field" required>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Username (Nick) <span style="color: var(--red);">*</span></label>
+          <input type="text" id="userNickInput" class="input-field" placeholder="ej: juan_perez" required autocomplete="off">
         </div>
+        
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Email</label>
-          <input type="email" id="userEmailInput" class="input-field" required>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre Completo <span style="color: var(--red);">*</span></label>
+          <input type="text" id="userNameInput" class="input-field" placeholder="ej: Juan Pérez" required>
         </div>
+        
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña</label>
-          <input type="password" id="userPasswordInput" class="input-field" required>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Email <span style="color: var(--red);">*</span></label>
+          <input type="email" id="userEmailInput" class="input-field" placeholder="ej: juan@empresa.com" required>
         </div>
+        
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Rol de Sistema</label>
-          <select id="userRoleInput" class="input-field">
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña <span style="color: var(--red);">*</span></label>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="password" id="userPasswordInput" class="input-field" style="flex: 1;" placeholder="Contraseña" required>
+            <button type="button" id="toggleUserPasswordBtn" class="btn-secondary" style="padding: 10px 14px; font-size: 12px; white-space: nowrap;" onclick="toggleUserPasswordVisibility()">Ver</button>
+          </div>
+        </div>
+        
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Rol de Sistema <span style="color: var(--red);">*</span></label>
+          <select id="userRoleInput" class="input-field" required>
             <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
             <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
           </select>
         </div>
+        
         <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 16px;">
           <button type="button" class="btn-secondary" onclick="closeUserModal()">Cancelar</button>
           <button type="submit" class="btn-primary">Guardar Usuario</button>
@@ -1466,6 +1481,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=2.2"></script>
+  <script src="/app.js?v=2.3"></script>
 </body>
 </html>

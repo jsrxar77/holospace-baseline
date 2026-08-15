@@ -990,7 +990,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'POST') {
-          const { username, email, password, name, role } = data || {};
+          const { tenantId: reqTenantId, username, email, password, name, role } = data || {};
           if (!username || !email || !password || !name) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Nick (Username), nombre, email y contraseña son obligatorios.' }));
@@ -999,13 +999,14 @@ const server = http.createServer(async (req, res) => {
           const cleanUsername = username.toLowerCase().trim();
           const cleanEmail = email.toLowerCase().trim();
           const targetRole = role || 'OPERATOR';
+          const targetTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : tenantId;
           const userId = crypto.randomUUID();
 
           // Validar username único dentro del tenant
           const existing = await getOne(
             'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(username) = ? OR LOWER(email) = ?)',
-            [tenantId, cleanUsername, cleanEmail],
-            { tenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
+            [targetTenantId, cleanUsername, cleanEmail],
+            { tenantId: targetTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
           if (existing) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1015,8 +1016,8 @@ const server = http.createServer(async (req, res) => {
 
           await execute(
             'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
-            [userId, tenantId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
-            { tenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
+            [userId, targetTenantId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
+            { tenantId: targetTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1025,7 +1026,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'PUT') {
-          const { id, username, email, name, password, role, active } = data || {};
+          const { id, tenantId: reqTenantId, username, email, name, password, role, active } = data || {};
           if (!id && !email && !username) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Se requiere ID, username o email de usuario.' }));
@@ -1034,7 +1035,7 @@ const server = http.createServer(async (req, res) => {
 
           let targetUser = null;
           if (id) {
-            targetUser = await getOne('SELECT * FROM users WHERE id = ? OR email = ? OR username = ?', [id, id, id], { isSuperAdmin: true });
+            targetUser = await getOne('SELECT * FROM users WHERE id::text = ? OR email = ? OR username = ?', [String(id), String(id), String(id)], { isSuperAdmin: true });
           } else if (email) {
             targetUser = await getOne('SELECT * FROM users WHERE LOWER(email) = ?', [email.toLowerCase().trim()], { isSuperAdmin: true });
           }
@@ -1050,14 +1051,16 @@ const server = http.createServer(async (req, res) => {
           const updatedEmail = email !== undefined ? email.toLowerCase().trim() : targetUser.email;
           const updatedRole = role !== undefined ? role : targetUser.role;
           const updatedActive = active !== undefined ? Boolean(active) : targetUser.is_active;
+          const updatedTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : targetUser.tenant_id;
+          
           let updatedHash = targetUser.password_hash;
           if (password && password.trim() && password !== '••••••••') {
             updatedHash = hashPassword(password);
           }
 
           await execute(
-            'UPDATE users SET username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
+            'UPDATE users SET tenant_id = ?, username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [updatedTenantId, updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
             { isSuperAdmin: true }
           );
 
