@@ -474,7 +474,12 @@ function toggleUserGroup(groupId) {
 async function loadKanbanData() {
   try {
     loadActiveTheme();
-    const res = await fetch('/api/scanban/kanban');
+    const token = localStorage.getItem('hw_token') || '';
+    const res = await fetch('/api/scanban/kanban', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const data = await res.json();
 
     // 1. Render Backlog (Gris - Draggable hacia LISTO)
