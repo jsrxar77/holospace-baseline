@@ -1303,23 +1303,23 @@
       <form id="assignUserForm" style="display: flex; flex-direction: column; gap: 14px;">
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Organización Destino</label>
-          <select id="userTenantSelect" class="input-field" required></select>
+          <select id="assignUserTenantSelect" class="input-field" required></select>
         </div>
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre Completo</label>
-          <input type="text" id="userNameInput" class="input-field" placeholder="Ej: Carlos López" required>
+          <input type="text" id="assignUserNameInput" class="input-field" placeholder="Ej: Carlos López" required>
         </div>
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Correo Electrónico</label>
-          <input type="email" id="userEmailInput" class="input-field" placeholder="carlos@empresa.com" required>
+          <input type="email" id="assignUserEmailInput" class="input-field" placeholder="carlos@empresa.com" required>
         </div>
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Contraseña Inicial</label>
-          <input type="password" id="userPasswordInput" class="input-field" placeholder="••••••••" required>
+          <input type="password" id="assignUserPasswordInput" class="input-field" placeholder="••••••••" required>
         </div>
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Rol en la Organización</label>
-          <select id="userRoleSelect" class="input-field">
+          <select id="assignUserRoleSelect" class="input-field">
             <option value="OPERATOR" selected>Operario (Scanner Móvil / Lectura)</option>
             <option value="ADMIN">Administrador de Tenant</option>
           </select>
@@ -1481,6 +1481,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=2.4"></script>
+  <script src="/app.js?v=2.5"></script>
 </body>
 </html>
