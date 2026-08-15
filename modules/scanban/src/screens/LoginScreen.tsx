@@ -8,10 +8,9 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const initialCreds = getSavedCredentials();
-  const [email, setEmail] = useState(initialCreds.email || '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [tenantSlug, setTenantSlug] = useState(initialCreds.tenantSlug || 'drinklovers');
+  const [tenantSlug, setTenantSlug] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -21,10 +20,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   useEffect(() => {
     fetchTheme();
     const interval = setInterval(fetchTheme, 3000);
-    const creds = getSavedCredentials();
-    if (creds.email) setEmail(creds.email);
-    if (creds.tenantSlug) setTenantSlug(creds.tenantSlug);
-
     return () => clearInterval(interval);
   }, []);
 

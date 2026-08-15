@@ -27,7 +27,7 @@ const getDynamicHostIp = (): string => {
   } catch (e) {
     console.log('Error auto-detectando IP desde Expo Constants:', e);
   }
-  return '192.168.1.100'; // IP simulada por defecto (evitar localhost en Android)
+  return '192.168.100.247'; // IP LAN de la máquina host en la red local
 };
 
 export const HOST_IP = getDynamicHostIp();
