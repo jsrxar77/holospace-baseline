@@ -1701,7 +1701,7 @@ async function loadTenantsManagementData() {
 
     // Actualizar KPIs
     const totalTenants = cachedTenantsList.length;
-    const activeTenants = cachedTenantsList.filter(t => t.status === 'active').length;
+    const activeTenants = cachedTenantsList.filter(t => t.status === 'active' || !t.status).length;
     const totalUsers = cachedTenantsList.reduce((acc, t) => acc + (t.users ? t.users.length : 0), 0);
 
     const kpiCount = document.getElementById('kpiTenantsCount');
@@ -1713,14 +1713,15 @@ async function loadTenantsManagementData() {
     if (kpiUsers) kpiUsers.innerText = totalUsers;
 
     // Actualizar Select del Modal Asignar Usuario
-    const userTenantSelect = document.getElementById('userTenantSelect');
-    if (userTenantSelect) {
-      userTenantSelect.innerHTML = cachedTenantsList.map(t => `<option value="${t.id}">${t.name} (${t.slug})</option>`).join('');
+    const assignTenantSelect = document.getElementById('assignUserTenantSelect');
+    if (assignTenantSelect) {
+      assignTenantSelect.innerHTML = cachedTenantsList.map(t => `<option value="${t.id}">${t.name} (${t.slug})</option>`).join('');
     }
 
     // Renderizar Cards de Organizaciones
     container.innerHTML = cachedTenantsList.map(t => {
       const isPlatform = t.slug === 'holoware';
+      const isSuspended = t.status === 'suspended';
       const planCode = t.plan_code || 'starter';
       const planBadgeColors = {
         starter: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', border: '#3B82F6' },
@@ -1738,7 +1739,7 @@ async function loadTenantsManagementData() {
       const users = t.users || [];
 
       return `
-        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+        <div style="background: var(--card-bg); border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--card-border)'}; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2); opacity: ${isSuspended ? '0.75' : '1'};">
           <!-- Tenant Header -->
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
             <div>
@@ -1748,14 +1749,24 @@ async function loadTenantsManagementData() {
                   ${t.slug}
                 </span>
                 ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA;">PLATAFORMA</span>' : ''}
+                <span style="font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; background: ${isSuspended ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'};">
+                  ${isSuspended ? '○ Suspendido' : '● Activo'}
+                </span>
               </div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
                 Usuarios: <strong style="color: #FFF;">${users.length}</strong> activos en la empresa
               </div>
             </div>
-            <span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border: 1px solid ${planBadgeColors.border};">
-              Plan ${planCode}
-            </span>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border: 1px solid ${planBadgeColors.border};">
+                Plan ${planCode}
+              </span>
+              ${!isPlatform ? `
+                <button class="${isSuspended ? 'btn-primary' : 'btn-danger'}" style="padding: 4px 8px; font-size: 11px; border-radius: 8px;" onclick="toggleTenantStatus('${t.id}', '${t.name}', '${t.status || 'active'}')" title="${isSuspended ? 'Reactivar Organización' : 'Suspender Organización'}">
+                  ${isSuspended ? 'Reactivar' : 'Suspender'}
+                </button>
+              ` : ''}
+            </div>
           </div>
 
           <!-- Tema Base por Defecto del Tenant -->
@@ -1798,14 +1809,14 @@ async function loadTenantsManagementData() {
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Usuarios (${users.length})</span>
-              <button class="btn-secondary" onclick="openNewTenantUserModal('${t.id}')" style="font-size: 11px; padding: 3px 8px;">+ Asignar</button>
+              <button class="btn-secondary" onclick="openAssignUserModal('${t.id}')" style="font-size: 11px; padding: 3px 8px;">+ Asignar</button>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
               ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Sin usuarios asignados</div>' : users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
                   <div>
-                    <div style="font-size: 12px; font-weight: 700; color: #FFF;">${u.name}</div>
+                    <div style="font-size: 12px; font-weight: 700; color: #FFF;">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family:monospace;">(@${u.username})</span>` : ''}</div>
                     <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
                   </div>
                   <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: rgba(255,255,255,0.05);">
@@ -1821,6 +1832,39 @@ async function loadTenantsManagementData() {
 
   } catch (err) {
     container.innerHTML = `<div style="color:var(--red); padding:20px;">Error conectando con la API de Tenants: ${err.message}</div>`;
+  }
+}
+
+async function toggleTenantStatus(tenantId, tenantName, currentStatus) {
+  const isCurrentlySuspended = currentStatus === 'suspended';
+  const newStatus = isCurrentlySuspended ? 'active' : 'suspended';
+  const actionText = isCurrentlySuspended ? 'reactivar' : 'suspender (bloqueo lógico)';
+
+  const confirmed = await showCustomConfirm(
+    'Confirmar Estado de Organización',
+    `¿Estás seguro de que deseas ${actionText} la organización '${tenantName}'?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch('/api/tenants/status', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+      },
+      body: JSON.stringify({ tenantId, status: newStatus })
+    });
+    const data = await res.json();
+    if (data.success) {
+      await showCustomAlert('Éxito', data.message || `Organización actualizada.`);
+      loadTenantsManagementData();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo modificar el estado de la organización.');
+    }
+  } catch (e) {
+    await showCustomAlert('Error', `Error de conexión: ${e.message}`);
   }
 }
 
@@ -1847,28 +1891,31 @@ async function toggleTenantModuleState(tenantId, moduleCode, isEnabled) {
   }
 }
 
-function openNewTenantModal() {
-  const modal = document.getElementById('modalNewTenant');
-  const err = document.getElementById('tenantNewError');
+function openCreateTenantModal() {
+  const modal = document.getElementById('createTenantModal');
+  const err = document.getElementById('createTenantError');
   if (err) err.style.display = 'none';
+  const form = document.getElementById('createTenantForm');
+  if (form) form.reset();
   if (modal) modal.classList.remove('hidden');
 }
 
-function closeNewTenantModal() {
-  const modal = document.getElementById('modalNewTenant');
+function closeCreateTenantModal() {
+  const modal = document.getElementById('createTenantModal');
   if (modal) modal.classList.add('hidden');
 }
 
 async function handleCreateTenantSubmit(e) {
   e.preventDefault();
-  const name = document.getElementById('tenantNewName').value.trim();
-  const slug = document.getElementById('tenantNewSlug').value.trim();
-  const planCode = document.getElementById('tenantNewPlan').value;
-  const adminName = document.getElementById('tenantNewAdminName').value.trim();
-  const adminEmail = document.getElementById('tenantNewAdminEmail').value.trim();
-  const adminPassword = document.getElementById('tenantNewAdminPassword').value;
+  const name = document.getElementById('tenantNameInput').value.trim();
+  const slug = document.getElementById('tenantSlugInput').value.trim().toLowerCase();
+  const planCode = document.getElementById('tenantPlanSelect').value;
+  const adminName = document.getElementById('tenantAdminNameInput').value.trim();
+  const adminUsername = document.getElementById('tenantAdminUsernameInput').value.trim().toLowerCase();
+  const adminEmail = document.getElementById('tenantAdminEmailInput').value.trim().toLowerCase();
+  const adminPassword = document.getElementById('tenantAdminPasswordInput').value;
 
-  const errEl = document.getElementById('tenantNewError');
+  const errEl = document.getElementById('createTenantError');
 
   try {
     const res = await fetch('/api/tenants', {
@@ -1877,12 +1924,12 @@ async function handleCreateTenantSubmit(e) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
       },
-      body: JSON.stringify({ name, slug, planCode, adminName, adminEmail, adminPassword })
+      body: JSON.stringify({ name, slug, planCode, adminName, adminUsername, adminEmail, adminPassword })
     });
     const data = await res.json();
 
     if (data.success) {
-      closeNewTenantModal();
+      closeCreateTenantModal();
       await showCustomAlert('Éxito', `Organización '${name}' creada exitosamente.`);
       loadTenantsManagementData();
     } else {
@@ -1899,33 +1946,54 @@ async function handleCreateTenantSubmit(e) {
   }
 }
 
-function openNewTenantUserModal(preselectedTenantId) {
-  const modal = document.getElementById('modalNewTenantUser');
-  const err = document.getElementById('userNewError');
+function openAssignUserModal(preselectedTenantId) {
+  const modal = document.getElementById('assignUserModal');
+  const err = document.getElementById('assignUserError');
   if (err) err.style.display = 'none';
 
-  if (preselectedTenantId) {
-    const select = document.getElementById('userTenantSelect');
-    if (select) select.value = preselectedTenantId;
+  const select = document.getElementById('assignUserTenantSelect');
+  if (select && cachedTenantsList && cachedTenantsList.length > 0) {
+    select.innerHTML = cachedTenantsList.map(t => `<option value="${t.id}">${t.name} (${t.slug})</option>`).join('');
+  }
+
+  if (preselectedTenantId && select) {
+    select.value = preselectedTenantId;
+  }
+
+  const form = document.getElementById('assignUserForm');
+  if (form) {
+    document.getElementById('assignUserNickInput').value = '';
+    document.getElementById('assignUserNameInput').value = '';
+    document.getElementById('assignUserEmailInput').value = '';
+    document.getElementById('assignUserPasswordInput').value = '';
   }
 
   if (modal) modal.classList.remove('hidden');
 }
 
-function closeNewTenantUserModal() {
-  const modal = document.getElementById('modalNewTenantUser');
+function closeAssignUserModal() {
+  const modal = document.getElementById('assignUserModal');
   if (modal) modal.classList.add('hidden');
 }
 
-async function handleCreateTenantUserSubmit(e) {
+async function handleAssignUserSubmit(e) {
   e.preventDefault();
-  const tenantId = document.getElementById('userTenantSelect').value;
-  const name = document.getElementById('userNewName').value.trim();
-  const email = document.getElementById('userNewEmail').value.trim();
-  const role = document.getElementById('userNewRole').value;
-  const password = document.getElementById('userNewPassword').value;
+  const tenantId = document.getElementById('assignUserTenantSelect').value;
+  const username = document.getElementById('assignUserNickInput').value.trim().toLowerCase();
+  const name = document.getElementById('assignUserNameInput').value.trim();
+  const email = document.getElementById('assignUserEmailInput').value.trim().toLowerCase();
+  const role = document.getElementById('assignUserRoleSelect').value;
+  const password = document.getElementById('assignUserPasswordInput').value;
 
-  const errEl = document.getElementById('userNewError');
+  const errEl = document.getElementById('assignUserError');
+
+  if (!username) {
+    if (errEl) {
+      errEl.innerText = 'El Nick (Username) es obligatorio.';
+      errEl.style.display = 'block';
+    }
+    return;
+  }
 
   try {
     const res = await fetch('/api/tenants/users', {
@@ -1934,13 +2002,13 @@ async function handleCreateTenantUserSubmit(e) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
       },
-      body: JSON.stringify({ tenantId, name, email, role, password })
+      body: JSON.stringify({ tenantId, username, name, email, role, password })
     });
     const data = await res.json();
 
     if (data.success) {
-      closeNewTenantUserModal();
-      await showCustomAlert('Éxito', `Usuario '${name}' asignado exitosamente.`);
+      closeAssignUserModal();
+      await showCustomAlert('Éxito', `Usuario @${username} (${name}) asignado exitosamente.`);
       loadTenantsManagementData();
     } else {
       if (errEl) {

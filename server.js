@@ -790,9 +790,10 @@ const server = http.createServer(async (req, res) => {
 
         if (adminEmail && adminPassword && adminName) {
           const userId = crypto.randomUUID();
+          const adminUsername = (data && data.adminUsername) ? data.adminUsername.toLowerCase().trim() : adminEmail.split('@')[0].toLowerCase();
           await execute(
-            'INSERT INTO users (id, tenant_id, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, true)',
-            [userId, newTenantId, adminEmail.toLowerCase().trim(), hashPassword(adminPassword), adminName.trim(), 'ADMIN'],
+            'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+            [userId, newTenantId, adminUsername, adminEmail.toLowerCase().trim(), hashPassword(adminPassword), adminName.trim(), 'ADMIN'],
             { isSuperAdmin: true }
           );
         }
@@ -808,29 +809,85 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede crear usuarios en tenants.' }));
           return;
         }
-        const { tenantId: targetTenantId, email, name, password, role = 'OPERATOR' } = data || {};
+        const { tenantId: targetTenantId, username, email, name, password, role = 'OPERATOR' } = data || {};
         if (!targetTenantId || !email || !password || !name) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Todos los campos son obligatorios (tenantId, email, name, password).' }));
           return;
         }
         const cleanEmail = email.toLowerCase().trim();
-        const existingUser = await getOne('SELECT id FROM users WHERE tenant_id = ? AND LOWER(email) = ?', [targetTenantId, cleanEmail], { isSuperAdmin: true });
+        const cleanUsername = username ? username.toLowerCase().trim() : cleanEmail.split('@')[0];
+
+        const existingUser = await getOne(
+          'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(email) = ? OR LOWER(username) = ?)', 
+          [targetTenantId, cleanEmail, cleanUsername], 
+          { isSuperAdmin: true }
+        );
         if (existingUser) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: `El usuario '${cleanEmail}' ya existe en esta organización.` }));
+          res.end(JSON.stringify({ success: false, error: `El usuario o nick ya existe en esta organización.` }));
           return;
         }
 
         const userId = crypto.randomUUID();
         await execute(
-          'INSERT INTO users (id, tenant_id, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, true)',
-          [userId, targetTenantId, cleanEmail, hashPassword(password), name.trim(), role.toUpperCase()],
+          'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+          [userId, targetTenantId, cleanUsername, cleanEmail, hashPassword(password), name.trim(), role.toUpperCase()],
           { isSuperAdmin: true }
         );
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `Usuario '${name}' asignado con éxito.`, userId, email: cleanEmail }));
+        return;
+      }
+
+      // 6.1 SUSPENSIÓN LÓGICA DE ORGANIZACIÓN (TENANT)
+      if (req.url === '/api/tenants/status' && req.method === 'POST') {
+        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede modificar el estado de organizaciones.' }));
+          return;
+        }
+        const { tenantId: targetTenantId, status } = data || {};
+        if (!targetTenantId || !status) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Se requiere tenantId y status (active | suspended).' }));
+          return;
+        }
+
+        const targetTenant = await getOne('SELECT * FROM tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
+        if (!targetTenant) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Organización no encontrada.' }));
+          return;
+        }
+
+        if (targetTenant.slug === 'holoware' || targetTenant.id === 'a0000000-0000-0000-0000-000000000001') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'La Organización de Plataforma HoloWare no puede ser suspendida.' }));
+          return;
+        }
+
+        const newStatus = status === 'suspended' ? 'suspended' : 'active';
+        await execute(
+          'UPDATE tenants SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [newStatus, targetTenant.id],
+          { isSuperAdmin: true }
+        );
+
+        // Registrar en auditoría de plataforma
+        await execute(
+          'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
+          [targetTenant.id, currentUser.email, newStatus === 'suspended' ? 'TENANT_SUSPENDED' : 'TENANT_ACTIVATED', JSON.stringify({ tenantName: targetTenant.name, slug: targetTenant.slug, status: newStatus })],
+          { isSuperAdmin: true }
+        );
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ 
+          success: true, 
+          message: `Organización '${targetTenant.name}' ${newStatus === 'suspended' ? 'suspendida' : 'reactivada'} con éxito.`,
+          status: newStatus 
+        }));
         return;
       }
 

@@ -1270,22 +1270,38 @@
         <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Crear Nueva Organización</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateTenantModal()">✕</button>
       </div>
-      <form id="createTenantForm" style="display: flex; flex-direction: column; gap: 14px;">
+      <form id="createTenantForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateTenantSubmit(event)">
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre de la Empresa</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre de la Empresa <span style="color: var(--red);">*</span></label>
           <input type="text" id="tenantNameInput" class="input-field" placeholder="Ej: Distribuidora Central" required>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Identificador Único (Slug)</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Identificador Único (Slug) <span style="color: var(--red);">*</span></label>
           <input type="text" id="tenantSlugInput" class="input-field" placeholder="distribuidora-central" required>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Plan SaaS</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Plan SaaS <span style="color: var(--red);">*</span></label>
           <select id="tenantPlanSelect" class="input-field">
             <option value="starter">Starter (ScanBan Básico)</option>
             <option value="pro" selected>Pro (ScanBan + StockFlow)</option>
             <option value="enterprise">Enterprise (Módulos Ilimitados)</option>
           </select>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del Administrador <span style="color: var(--red);">*</span></label>
+          <input type="text" id="tenantAdminNameInput" class="input-field" placeholder="Ej: Administrador" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Username (Nick) Admin <span style="color: var(--red);">*</span></label>
+          <input type="text" id="tenantAdminUsernameInput" class="input-field" placeholder="ej: admin_central" required autocomplete="off">
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Email del Administrador <span style="color: var(--red);">*</span></label>
+          <input type="email" id="tenantAdminEmailInput" class="input-field" placeholder="admin@distribuidora.com.ar" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Contraseña Inicial <span style="color: var(--red);">*</span></label>
+          <input type="password" id="tenantAdminPasswordInput" class="input-field" placeholder="••••••••" required>
         </div>
         <div id="createTenantError" style="color: var(--red); font-size: 13px; display: none;"></div>
         <button type="submit" class="btn-primary" style="margin-top: 8px;">Crear Organización</button>
@@ -1300,28 +1316,32 @@
         <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Asignar / Crear Usuario en Organización</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAssignUserModal()">✕</button>
       </div>
-      <form id="assignUserForm" style="display: flex; flex-direction: column; gap: 14px;">
+      <form id="assignUserForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleAssignUserSubmit(event)">
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Organización Destino</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Organización Destino <span style="color: var(--red);">*</span></label>
           <select id="assignUserTenantSelect" class="input-field" required></select>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre Completo</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Username (Nick) <span style="color: var(--red);">*</span></label>
+          <input type="text" id="assignUserNickInput" class="input-field" placeholder="ej: carlos_lopez" required autocomplete="off">
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre Completo <span style="color: var(--red);">*</span></label>
           <input type="text" id="assignUserNameInput" class="input-field" placeholder="Ej: Carlos López" required>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Correo Electrónico</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Correo Electrónico <span style="color: var(--red);">*</span></label>
           <input type="email" id="assignUserEmailInput" class="input-field" placeholder="carlos@empresa.com" required>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Contraseña Inicial</label>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Contraseña Inicial <span style="color: var(--red);">*</span></label>
           <input type="password" id="assignUserPasswordInput" class="input-field" placeholder="••••••••" required>
         </div>
         <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Rol en la Organización</label>
-          <select id="assignUserRoleSelect" class="input-field">
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Rol en la Organización <span style="color: var(--red);">*</span></label>
+          <select id="assignUserRoleSelect" class="input-field" required>
             <option value="OPERATOR" selected>Operario (Scanner Móvil / Lectura)</option>
-            <option value="ADMIN">Administrador de Tenant</option>
+            <option value="ADMIN">Administrador de Organización</option>
           </select>
         </div>
         <div id="assignUserError" style="color: var(--red); font-size: 13px; display: none;"></div>
@@ -1481,6 +1501,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=2.6"></script>
+  <script src="/app.js?v=2.7"></script>
 </body>
 </html>
