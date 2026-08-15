@@ -1492,34 +1492,56 @@ switchTab = function (tabName) {
   originalSwitchTab(tabName);
   if (tabName === 'orders') {
     renderOperatorPills();
-  }
-};
-
 async function openQrModal() {
   let host = window.location.hostname;
-  try {
-    const res = await fetch('/api/config');
-    const data = await res.json();
-    if (data && data.hostIp && data.hostIp !== '127.0.0.1' && data.hostIp !== 'localhost') {
-      host = data.hostIp;
-    } else if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
-      if (data && data.hostIp) {
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
+    try {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      if (data && data.hostIp && !data.hostIp.startsWith('172.') && data.hostIp !== '127.0.0.1') {
         host = data.hostIp;
       }
+    } catch (e) {
+      console.log('Error obteniendo IP dinámica:', e);
     }
-  } catch (e) {
-    console.log('Error obteniendo IP dinámica:', e);
   }
-  const expoUrl = `exp://${host || '127.0.0.1'}:8081`;
+
+  // Fallback si corre en Docker y hostname es localhost
+  const savedHost = localStorage.getItem('hw_expo_host_ip');
+  if (savedHost) {
+    host = savedHost;
+  } else if (!host || host === 'localhost' || host === '127.0.0.1' || host.startsWith('172.')) {
+    // Si la IP devuelta es la interna del bridge Docker 172.x o localhost, sugerir la IP LAN real
+    host = '192.168.100.247';
+  }
+
+  updateQrDisplay(host);
+  document.getElementById('qrModal').classList.remove('hidden');
+}
+
+function updateQrDisplay(host) {
+  const cleanHost = (host || '192.168.100.247').trim();
+  localStorage.setItem('hw_expo_host_ip', cleanHost);
+  const expoUrl = `exp://${cleanHost}:8081`;
   const qrImg = document.getElementById('qrImage');
-  const qrText = document.getElementById('qrText') || document.querySelector('#qrModal p[style*="font-family: monospace"]');
+  const qrText = document.getElementById('qrText');
+  const ipInput = document.getElementById('qrCustomIpInput');
+
   if (qrImg) {
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(expoUrl)}`;
   }
   if (qrText) {
     qrText.textContent = expoUrl;
   }
-  document.getElementById('qrModal').classList.remove('hidden');
+  if (ipInput) {
+    ipInput.value = cleanHost;
+  }
+}
+
+function handleCustomIpChange(newIp) {
+  if (newIp && newIp.trim()) {
+    updateQrDisplay(newIp.trim());
+  }
 }
 
 function closeQrModal() {
