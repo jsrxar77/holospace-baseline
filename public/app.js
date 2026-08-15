@@ -706,13 +706,18 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
   if (selectEl) {
     selectEl.innerHTML = '<option value="">Cargando operarios...</option>';
     try {
-      const res = await fetch('/api/users');
+      const token = localStorage.getItem('hw_token') || '';
+      const res = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await res.json();
       const userList = Array.isArray(data) ? data : (data.users || []);
       const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && u.role === 'OPERATOR');
       if (activeUsers.length > 0) {
         selectEl.innerHTML = activeUsers.map(u => `
-          <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>
+          <option value="${u.email}">${u.name} (@${u.username || u.email.split('@')[0]})</option>
         `).join('');
       } else {
         selectEl.innerHTML = '<option value="">No hay operarios activos registrados</option>';
@@ -742,9 +747,13 @@ async function confirmAssignOperatorSubmit() {
   }
 
   try {
+    const token = localStorage.getItem('hw_token') || '';
     const res = await fetch('/api/scanban/assign-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         orderId: pendingAssignOrderId,
         orderNumber: pendingAssignOrderNumber,
