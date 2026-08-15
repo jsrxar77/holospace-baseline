@@ -1395,7 +1395,7 @@
         </div>
         
         <div>
-          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña <span style="color: var(--red);">*</span></label>
+          <label id="userPasswordLabel" style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Contraseña <span id="userPasswordRequiredAsterisk" style="color: var(--red);">*</span></label>
           <div style="display: flex; gap: 8px; align-items: center;">
             <input type="password" id="userPasswordInput" class="input-field" style="flex: 1;" placeholder="Contraseña" required>
             <button type="button" id="toggleUserPasswordBtn" class="btn-secondary" style="padding: 10px 14px; font-size: 12px; white-space: nowrap;" onclick="toggleUserPasswordVisibility()">Ver</button>
@@ -1465,6 +1465,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=3.7"></script>
+  <script src="/app.js?v=3.8"></script>
 </body>
 </html>

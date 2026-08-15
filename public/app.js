@@ -1180,6 +1180,9 @@ function openUserModal() {
   document.getElementById('userNameInput').value = '';
   document.getElementById('userEmailInput').value = '';
   
+  const passAsterisk = document.getElementById('userPasswordRequiredAsterisk');
+  if (passAsterisk) passAsterisk.style.display = 'inline';
+
   const passInput = document.getElementById('userPasswordInput');
   passInput.type = 'password';
   passInput.value = '';
@@ -1212,11 +1215,14 @@ function fillUserModal(user) {
   const emailInput = document.getElementById('userEmailInput');
   if (emailInput) emailInput.value = user.email || '';
   
+  const passAsterisk = document.getElementById('userPasswordRequiredAsterisk');
+  if (passAsterisk) passAsterisk.style.display = 'none';
+
   const passInput = document.getElementById('userPasswordInput');
   passInput.type = 'password';
-  passInput.value = '••••••••';
-  passInput.placeholder = 'Contraseña obligatoria';
-  passInput.required = true;
+  passInput.value = '';
+  passInput.placeholder = 'Dejar en blanco para mantener actual';
+  passInput.required = false;
 
   const toggleBtn = document.getElementById('toggleUserPasswordBtn');
   if (toggleBtn) toggleBtn.innerText = 'Ver';
@@ -1269,15 +1275,15 @@ async function saveUserSubmit(e) {
     await showCustomAlert('Campo Obligatorio', 'El Email es obligatorio.');
     return;
   }
-  if (!password) {
-    await showCustomAlert('Campo Obligatorio', 'La Contraseña es obligatoria.');
+  if (!id && !password) {
+    await showCustomAlert('Campo Obligatorio', 'La Contraseña es obligatoria para nuevos usuarios.');
     return;
   }
 
   const url = '/api/users';
   const method = id ? 'PUT' : 'POST';
   const payload = id ? 
-    { id, tenantId: targetTenantId, username, name, email, password, role } : 
+    { id, tenantId: targetTenantId, username, name, email, password: password || '', role } : 
     { tenantId: targetTenantId, username, name, email, password, role };
 
   try {
