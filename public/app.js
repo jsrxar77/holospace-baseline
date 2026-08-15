@@ -1030,7 +1030,7 @@ async function fetchUsers() {
     const tbody = document.getElementById('usersTableBody');
     const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
 
-    tbody.innerHTML = usersList.map(u => {
+    tbody.innerHTML = usersList.map((u, idx) => {
       const isTargetSuperAdmin = u.role === 'SUPERADMIN';
       const canEdit = isSuperAdmin || !isTargetSuperAdmin;
       const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloWare Cloud Platform' : 'Organización');
@@ -1059,7 +1059,7 @@ async function fetchUsers() {
           <td>
             ${canEdit ? `
               <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserByIndex(${idx})">Editar</button>
                 <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
                   ${u.active !== false ? 'Desactivar' : 'Activar'}
                 </button>
@@ -1175,22 +1175,19 @@ function closeUserModal() {
   document.getElementById('userModal').classList.add('hidden');
 }
 
-function editUserById(userIdOrEmail) {
-  const user = currentFetchedUsers.find(u => 
-    String(u.id) === String(userIdOrEmail) || 
-    String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase() || 
-    (u.username && String(u.username).toLowerCase() === String(userIdOrEmail).toLowerCase())
-  );
+function fillUserModal(user) {
   if (!user) return;
-
   document.getElementById('userId').value = user.id;
   document.getElementById('userModalTitle').innerText = 'Editar Usuario';
   
   const nickInput = document.getElementById('userNickInput');
   if (nickInput) nickInput.value = user.username || (user.email ? user.email.split('@')[0] : '');
   
-  document.getElementById('userNameInput').value = user.name || '';
-  document.getElementById('userEmailInput').value = user.email || '';
+  const nameInput = document.getElementById('userNameInput');
+  if (nameInput) nameInput.value = user.name || '';
+  
+  const emailInput = document.getElementById('userEmailInput');
+  if (emailInput) emailInput.value = user.email || '';
   
   const passInput = document.getElementById('userPasswordInput');
   passInput.type = 'password';
@@ -1204,6 +1201,20 @@ function editUserById(userIdOrEmail) {
   populateUserModalTenants(user.tenant_id || user.tenantId || '');
   updateRoleSelectOptions(user.role || 'OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
+}
+
+function editUserByIndex(index) {
+  const user = currentFetchedUsers[index];
+  if (user) fillUserModal(user);
+}
+
+function editUserById(userIdOrEmail) {
+  const user = currentFetchedUsers.find(u => 
+    String(u.id) === String(userIdOrEmail) || 
+    String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase() || 
+    (u.username && String(u.username).toLowerCase() === String(userIdOrEmail).toLowerCase())
+  );
+  if (user) fillUserModal(user);
 }
 
 function editUser(id, name, email, role, active) {
