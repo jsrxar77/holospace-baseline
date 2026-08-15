@@ -1125,11 +1125,11 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th>Usuario (Nick)</th>
             <th>Nombre</th>
             <th>Email</th>
             <th>Organización</th>
             <th>Rol</th>
-            <th>ID Operario</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -1395,6 +1395,10 @@
       <form id="userForm" style="display: flex; flex-direction: column; gap: 16px;" onsubmit="saveUserSubmit(event)">
         <input type="hidden" id="userId">
         <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Username (Nick)</label>
+          <input type="text" id="userNickInput" class="input-field" required>
+        </div>
+        <div>
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre Completo</label>
           <input type="text" id="userNameInput" class="input-field" required>
         </div>
@@ -1462,6 +1466,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=2.1"></script>
+  <script src="/app.js?v=2.2"></script>
 </body>
 </html>

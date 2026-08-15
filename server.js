@@ -903,8 +903,8 @@ const server = http.createServer(async (req, res) => {
         const normalizedEmail = (email || '').toLowerCase().trim();
 
         const user = await getOne(
-          'SELECT email as id, email, password_hash as password, name, role, is_active as active, tenant_id FROM users WHERE LOWER(email) = ? AND is_active = true',
-          [normalizedEmail],
+          'SELECT email as id, email, username, password_hash as password, name, role, is_active as active, tenant_id FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
+          [normalizedEmail, normalizedEmail],
           { isSuperAdmin: true }
         );
 
@@ -935,6 +935,7 @@ const server = http.createServer(async (req, res) => {
         const jwtPayload = {
           sub: user.email,
           email: user.email,
+          username: user.username || user.email.split('@')[0],
           name: user.name,
           role: user.role,
           tenantId: tenant.id,
@@ -943,36 +944,34 @@ const server = http.createServer(async (req, res) => {
         };
         const token = signJwt(jwtPayload, 86400 * 7);
 
-        console.log(`[AUTH] Login JWT exitoso: ${user.email} (${user.role}) [Tenant: ${tenant.slug}]`);
+        console.log(`[AUTH] Login JWT exitoso: ${user.username || user.email} (${user.role}) [Tenant: ${tenant.slug}]`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
           token,
           user: {
-            id: user.email,
+            id: user.id,
             email: user.email,
+            username: user.username || user.email.split('@')[0],
             name: user.name,
             role: user.role,
             tenantId: tenant.id,
             tenantSlug: tenant.slug,
-            entitlements
+            tenantName: tenant.name
           },
-          tenant: {
-            id: tenant.id,
-            slug: tenant.slug,
-            name: tenant.name
-          }
+          tenant,
+          entitlements
         }));
         return;
       }
 
-      // 9. ENDPOINTS ABM DE USUARIOS
+      // 9. GESTIÓN DE USUARIOS
       if (req.url.startsWith('/api/users')) {
         if (req.method === 'GET') {
           let userList;
           if (currentUser && currentUser.role === 'SUPERADMIN') {
             userList = await query(`
-              SELECT u.id, u.email, u.name, u.role, u.is_active as active, u.tenant_id,
+              SELECT u.id, u.username, u.email, u.name, u.role, u.is_active as active, u.tenant_id,
                      t.name as tenant_name, t.slug as tenant_slug
               FROM users u
               LEFT JOIN tenants t ON u.tenant_id = t.id
@@ -980,7 +979,7 @@ const server = http.createServer(async (req, res) => {
             `, [], { isSuperAdmin: true });
           } else {
             userList = await query(
-              'SELECT id, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ? ORDER BY name',
+              'SELECT id, username, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ? ORDER BY name',
               [tenantId],
               { tenantId }
             );
@@ -991,19 +990,32 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'POST') {
-          const { email, password, name, role } = data || {};
-          if (!email || !password || !name) {
+          const { username, email, password, name, role } = data || {};
+          if (!username || !email || !password || !name) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Datos incompletos' }));
+            res.end(JSON.stringify({ success: false, error: 'Nick (Username), nombre, email y contraseña son obligatorios.' }));
             return;
           }
+          const cleanUsername = username.toLowerCase().trim();
           const cleanEmail = email.toLowerCase().trim();
           const targetRole = role || 'OPERATOR';
           const userId = crypto.randomUUID();
 
+          // Validar username único dentro del tenant
+          const existing = await getOne(
+            'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(username) = ? OR LOWER(email) = ?)',
+            [tenantId, cleanUsername, cleanEmail],
+            { tenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
+          );
+          if (existing) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: 'El Nick (Username) o Email ya están en uso en esta organización.' }));
+            return;
+          }
+
           await execute(
-            'INSERT INTO users (id, tenant_id, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, true) ON CONFLICT (tenant_id, email) DO UPDATE SET name = EXCLUDED.name, password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, is_active = true',
-            [userId, tenantId, cleanEmail, hashPassword(password), name, targetRole],
+            'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+            [userId, tenantId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
             { tenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
 
@@ -1013,16 +1025,16 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'PUT') {
-          const { id, email, name, password, role, active } = data || {};
-          if (!id && !email) {
+          const { id, username, email, name, password, role, active } = data || {};
+          if (!id && !email && !username) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: 'Se requiere ID o email de usuario.' }));
+            res.end(JSON.stringify({ success: false, error: 'Se requiere ID, username o email de usuario.' }));
             return;
           }
 
           let targetUser = null;
           if (id) {
-            targetUser = await getOne('SELECT * FROM users WHERE id = ? OR email = ?', [id, id], { isSuperAdmin: true });
+            targetUser = await getOne('SELECT * FROM users WHERE id = ? OR email = ? OR username = ?', [id, id, id], { isSuperAdmin: true });
           } else if (email) {
             targetUser = await getOne('SELECT * FROM users WHERE LOWER(email) = ?', [email.toLowerCase().trim()], { isSuperAdmin: true });
           }
@@ -1033,6 +1045,7 @@ const server = http.createServer(async (req, res) => {
             return;
           }
 
+          const updatedUsername = username !== undefined ? username.toLowerCase().trim() : (targetUser.username || targetUser.email.split('@')[0]);
           const updatedName = name !== undefined ? name : targetUser.name;
           const updatedEmail = email !== undefined ? email.toLowerCase().trim() : targetUser.email;
           const updatedRole = role !== undefined ? role : targetUser.role;
@@ -1043,8 +1056,8 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'UPDATE users SET name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
+            'UPDATE users SET username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
             { isSuperAdmin: true }
           );
 

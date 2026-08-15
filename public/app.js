@@ -221,9 +221,10 @@ function applyRoleVisibility() {
     if (mobModScanBan) mobModScanBan.style.display = 'none';
     if (mobModScanFlow) mobModScanFlow.style.display = 'none';
 
+    const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
-      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displaySuperUser}</span>`;
+      userBadge.title = `${currentUser.role}: ${displaySuperUser} (${currentUser.email || ''})`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
@@ -253,10 +254,11 @@ function applyRoleVisibility() {
     if (mobModScanFlow) mobModScanFlow.style.display = 'block';
 
     const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
+    const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
 
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
-      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displayUser}</span>`;
+      userBadge.title = `${currentUser.role}: ${displayUser} (${currentUser.email || ''})`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
@@ -1032,9 +1034,11 @@ async function fetchUsers() {
       const isTargetSuperAdmin = u.role === 'SUPERADMIN';
       const canEdit = isSuperAdmin || !isTargetSuperAdmin;
       const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloWare Cloud Platform' : 'Organización');
+      const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
 
       return `
         <tr>
+          <td><strong style="color: var(--emerald); font-family: monospace;">@${displayNick}</strong></td>
           <td><strong>${u.name}</strong></td>
           <td>${u.email}</td>
           <td>
@@ -1047,7 +1051,6 @@ async function fetchUsers() {
               ${u.role}
             </span>
           </td>
-          <td style="font-family: monospace;">${u.operatorId || '-'}</td>
           <td>
             <span style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
               ${u.active !== false ? '● Activo' : '○ Desactivado'}
@@ -1063,7 +1066,7 @@ async function fetchUsers() {
               </div>
             ` : `
               <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
-                🔒 Protegido (SuperAdmin)
+                Protegido (SuperAdmin)
               </span>
             `}
           </td>
@@ -1094,10 +1097,16 @@ function updateRoleSelectOptions(selectedRole = 'OPERATOR') {
 function openUserModal() {
   document.getElementById('userId').value = '';
   document.getElementById('userModalTitle').innerText = 'Crear Nuevo Usuario';
+  const nickInput = document.getElementById('userNickInput');
+  if (nickInput) nickInput.value = '';
   document.getElementById('userNameInput').value = '';
   document.getElementById('userEmailInput').value = '';
-  document.getElementById('userPasswordInput').value = '';
-  document.getElementById('userPasswordInput').placeholder = 'Contraseña';
+  
+  const passInput = document.getElementById('userPasswordInput');
+  passInput.value = '';
+  passInput.placeholder = 'Contraseña requerida';
+  passInput.required = true;
+
   updateRoleSelectOptions('OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
@@ -1107,14 +1116,20 @@ function closeUserModal() {
 }
 
 function editUserById(userIdOrEmail) {
-  const user = currentFetchedUsers.find(u => String(u.id) === String(userIdOrEmail) || String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase());
+  const user = currentFetchedUsers.find(u => String(u.id) === String(userIdOrEmail) || String(u.email).toLowerCase() === String(userIdOrEmail).toLowerCase() || String(u.username).toLowerCase() === String(userIdOrEmail).toLowerCase());
   if (!user) return;
   document.getElementById('userId').value = user.id || user.email;
   document.getElementById('userModalTitle').innerText = 'Editar Usuario';
+  const nickInput = document.getElementById('userNickInput');
+  if (nickInput) nickInput.value = user.username || (user.email ? user.email.split('@')[0] : '');
   document.getElementById('userNameInput').value = user.name || '';
   document.getElementById('userEmailInput').value = user.email || '';
-  document.getElementById('userPasswordInput').value = '';
-  document.getElementById('userPasswordInput').placeholder = 'Dejar en blanco para mantener contraseña';
+  
+  const passInput = document.getElementById('userPasswordInput');
+  passInput.value = '';
+  passInput.placeholder = 'Dejar en blanco para mantener contraseña';
+  passInput.required = false;
+
   updateRoleSelectOptions(user.role || 'OPERATOR');
   document.getElementById('userModal').classList.remove('hidden');
 }
@@ -1126,14 +1141,21 @@ function editUser(id, name, email, role, active) {
 async function saveUserSubmit(e) {
   e.preventDefault();
   const id = document.getElementById('userId').value;
-  const name = document.getElementById('userNameInput').value;
-  const email = document.getElementById('userEmailInput').value;
+  const nickInput = document.getElementById('userNickInput');
+  const username = nickInput ? nickInput.value.trim().toLowerCase() : '';
+  const name = document.getElementById('userNameInput').value.trim();
+  const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
   const password = document.getElementById('userPasswordInput').value;
   const role = document.getElementById('userRoleInput').value;
 
+  if (!username) {
+    await showCustomAlert('Campo Obligatorio', 'El Nick / Username es obligatorio.');
+    return;
+  }
+
   const url = '/api/users';
   const method = id ? 'PUT' : 'POST';
-  const payload = id ? { id, name, email, password, role } : { name, email, password, role };
+  const payload = id ? { id, username, name, email, password, role } : { username, name, email, password, role };
 
   try {
     const res = await fetch(url, {
@@ -1148,7 +1170,7 @@ async function saveUserSubmit(e) {
 
     if (data.success) {
       closeUserModal();
-      await showCustomAlert('¡Guardado!', `Usuario ${email} guardado correctamente.`);
+      await showCustomAlert('¡Guardado!', `Usuario @${username} (${email}) guardado correctamente.`);
       fetchUsers();
     } else {
       await showCustomAlert('Error', data.error || 'No se pudo guardar el usuario.');

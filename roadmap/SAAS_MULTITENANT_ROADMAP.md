@@ -173,3 +173,7 @@
 - [x] Corrección de autodescubrimiento de IP en Expo Mobile (inyección de EXPO_PUBLIC_SERVER_IP).
 - [x] Corrección de Modal de Login (Logo HoloWare sin términos Enterprise).
 - [x] Reestructuración del Header (Jerarquía Módulos vs Features).
+- [x] Campo obligatorio Nick / Username en PostgreSQL 16 y plataforma Web/Mobile.
+- [x] Corrección de modal de creación/edición de usuarios (password opcional en edición).
+- [x] Incorporación en `.agents/AGENTS.md` de la Regla de Oro: Prohibido usar Chrome / Browser subagents sin solicitud explícita.
+

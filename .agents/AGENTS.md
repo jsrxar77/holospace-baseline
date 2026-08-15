@@ -38,6 +38,13 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ---
 
+## ⚡ Regla de Oro Obligatoria: Prohibido Usar Chrome / Browser Subagents sin Solicitud Explícita y Enfoque Quirúrgico
+
+1. **Cero Uso No Solicitado de Navegador/Chrome:** Queda terminantemente prohibido iniciar agentes de navegación o herramientas de browser (`browser_subagent`) a menos que el usuario lo pida explícitamente. No gastar tiempo ni tokens en automatizaciones visuales lentas cuando los cambios son de código o verificables por terminal/inspección directa.
+2. **Precisión Quirúrgica y Preguntas Claras:** Si un requerimiento, comportamiento o contexto no se comprende con total certeza, el agente DEBE preguntar puntualmente al usuario qué se busca antes de asumir o realizar cambios masivos innecesarios.
+
+---
+
 ## 🎯 Reglas de Arquitectura Modular Obligatorias
 
 1. **Aislamiento por Módulo (`modules/<nombre-modulo>/`):**

@@ -15,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
-  const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: Desconectado');
+  const displayBadge = badgeText || (user ? `OP: ${(user as any).username || user.email}` : 'OP: Desconectado');
   const orgName = user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'SUPERADMIN';
 
   const isOmarchy = theme.borderRadius === 4;
