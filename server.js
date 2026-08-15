@@ -1235,16 +1235,37 @@ const server = http.createServer(async (req, res) => {
       // 10.3 ASIGNAR OPERARIO
       if (req.url === '/api/scanban/assign-order' && req.method === 'POST') {
         const { orderId, orderNumber, operatorEmail, userEmail } = data;
-        const adminEmail = (userEmail || 'admin@drinklovers.com.ar').toLowerCase();
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
         const targetOperator = (operatorEmail || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ? WHERE id = ?", [targetOperator, order.id], { tenantId });
+          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ?", [targetOperator, targetOperator, order.id], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, adminEmail, 'ASIGNAR_OPERARIO', `Pedido #${order.orderNumber} asignado a ${targetOperator}.`],
+            { tenantId }
+          );
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
+      // 10.3.1 REASIGNAR Y LIBERAR A LISTO (DOING -> READY)
+      if (req.url === '/api/scanban/release-order-admin' && req.method === 'POST') {
+        const { orderId, orderNumber, userEmail } = data;
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
+
+        const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
+        if (order) {
+          const now = new Date().toLocaleString('es-AR');
+          await execute("UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ?", [order.id], { tenantId });
+          await execute(
+            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            [order.id, tenantId, now, adminEmail, 'LIBERAR_PEDIDO', `Pedido #${order.orderNumber} liberado a Listo por Administrador (${adminEmail}).`],
             { tenantId }
           );
         }

@@ -665,9 +665,13 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
+    const token = localStorage.getItem('hw_token') || '';
     const res = await fetch('/api/scanban/release-order-admin', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         orderId,
         orderNumber,
