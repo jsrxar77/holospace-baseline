@@ -320,7 +320,7 @@ async function getFullOrderFromDb(identifier, context = {}) {
     issueDate: order.issue_date,
     pdfFileName: order.pdf_file_name,
     status: order.status,
-    operatorEmail: order.operator_email,
+    operatorEmail: order.operator_email || order.assigned_operator_email || null,
     totalItemsRequired: order.total_items_required,
     totalItemsScanned: order.total_items_scanned,
     auditStamp: order.audit_stamp,

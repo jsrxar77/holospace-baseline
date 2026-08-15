@@ -888,7 +888,7 @@ async function openInvoiceModal(orderId) {
             <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
               <div style="font-size: 13px; color: var(--text-muted);">Fecha de Emisión: ${order.issueDate || '—'}</div>
               <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; margin-top: 4px;">ESTADO: ${statusLabelEs}</div>
-              <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">Usuario Asignado: ${order.operatorEmail}</div>
+              <div style="font-size: 12px; color: var(--amber); margin-top: 2px;">Usuario Asignado: ${(order.operatorEmail && order.operatorEmail !== 'null') ? order.operatorEmail : 'Ninguno'}</div>
               <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;">
                 <button class="btn-secondary" style="font-size: 13px; padding: 6px 12px;" onclick="downloadPdf('${order.id}')">Descargar PDF</button>
                 ${statusActionButton}
