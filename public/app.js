@@ -1097,13 +1097,14 @@ function updateRoleSelectOptions(selectedRole = 'OPERATOR') {
 function toggleUserPasswordVisibility() {
   const passInput = document.getElementById('userPasswordInput');
   const btn = document.getElementById('toggleUserPasswordBtn');
-  if (!passInput || !btn) return;
+  if (!passInput) return;
+  
   if (passInput.type === 'password') {
-    passInput.type = 'text';
-    btn.innerText = 'Ocultar';
+    passInput.setAttribute('type', 'text');
+    if (btn) btn.innerText = 'Ocultar';
   } else {
-    passInput.type = 'password';
-    btn.innerText = 'Ver';
+    passInput.setAttribute('type', 'password');
+    if (btn) btn.innerText = 'Ver';
   }
 }
 
