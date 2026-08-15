@@ -188,52 +188,42 @@ function applyRoleVisibility() {
   if (!currentUser) return;
   const isSuperAdmin = currentUser.role === 'SUPERADMIN';
 
-  const tabPlatform = document.getElementById('tabPlatform');
-  const tabUsers = document.getElementById('tabUsers');
-  const tabKanban = document.getElementById('tabKanban');
-  const tabOrders = document.getElementById('tabOrders');
   const themeContainer = document.getElementById('headerThemeContainer');
   const badge = document.getElementById('activeContextBadge');
   const userBadge = document.getElementById('userBadge');
   const mobActiveCtx = document.getElementById('mobileActiveContext');
   const footerTenant = document.getElementById('footerTenantStatus');
 
-  const mobTabTenants = document.getElementById('mobTabTenants');
-  const mobTabPlatform = document.getElementById('mobTabPlatform');
-  const mobTabUsers = document.getElementById('mobTabUsers');
-  const mobTabKanban = document.getElementById('mobTabKanban');
-  const mobTabOrders = document.getElementById('mobTabOrders');
-  const mobTabScanFlow = document.getElementById('mobTabScanFlow');
+  const orgName = currentUser.tenantName || currentUser.tenantSlug || 'SUPERADMIN';
+  if (badge) badge.innerText = orgName.toUpperCase();
+  if (mobActiveCtx) mobActiveCtx.innerText = orgName.toUpperCase();
+
+  const modTenants = document.getElementById('modTenants');
+  const modCore = document.getElementById('modCore');
+  const modScanBan = document.getElementById('modScanBan');
+  const modScanFlow = document.getElementById('modScanFlow');
+  
+  const mobModTenants = document.getElementById('mobModTenants');
+  const mobModCore = document.getElementById('mobModCore');
+  const mobModScanBan = document.getElementById('mobModScanBan');
+  const mobModScanFlow = document.getElementById('mobModScanFlow');
 
   if (isSuperAdmin) {
     // SUPERADMIN: Access strictly to HoloWare Tenants & Core Platform
-    const tabTenants = document.getElementById('tabTenants');
-    const tabScanFlow = document.getElementById('tabScanFlow');
-    if (tabTenants) tabTenants.style.display = 'inline-flex';
-    if (tabPlatform) tabPlatform.style.display = 'inline-flex';
-    if (tabUsers) tabUsers.style.display = 'inline-flex';
-    if (tabKanban) tabKanban.style.display = 'none';
-    if (tabOrders) tabOrders.style.display = 'none';
-    if (tabScanFlow) tabScanFlow.style.display = 'none';
+    if (modTenants) modTenants.style.display = 'inline-flex';
+    if (modCore) modCore.style.display = 'inline-flex';
+    if (modScanBan) modScanBan.style.display = 'none';
+    if (modScanFlow) modScanFlow.style.display = 'none';
     if (themeContainer) themeContainer.style.display = 'flex';
 
-    if (mobTabTenants) mobTabTenants.style.display = 'block';
-    if (mobTabPlatform) mobTabPlatform.style.display = 'block';
-    if (mobTabUsers) mobTabUsers.style.display = 'block';
-    if (mobTabKanban) mobTabKanban.style.display = 'none';
-    if (mobTabOrders) mobTabOrders.style.display = 'none';
-    if (mobTabScanFlow) mobTabScanFlow.style.display = 'none';
-
-    if (badge) {
-      badge.innerText = 'TENANTS';
-      badge.style.color = '#A78BFA';
-      badge.style.background = 'rgba(167, 139, 250, 0.15)';
-      badge.style.borderColor = '#A78BFA';
-    }
-    if (mobActiveCtx) mobActiveCtx.innerText = 'TENANTS';
+    if (mobModTenants) mobModTenants.style.display = 'block';
+    if (mobModCore) mobModCore.style.display = 'block';
+    if (mobModScanBan) mobModScanBan.style.display = 'none';
+    if (mobModScanFlow) mobModScanFlow.style.display = 'none';
 
     if (userBadge) {
-      userBadge.innerText = `SUPERADMIN: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
+      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
@@ -245,41 +235,28 @@ function applyRoleVisibility() {
 
     const tenantsView = document.getElementById('viewTenants');
     if (tenantsView && !tenantsView.classList.contains('hidden')) {
-      switchTab('tenants');
+      switchModule('tenants');
     } else {
-      switchTab('tenants');
+      switchModule('tenants');
     }
   } else {
     // ADMIN / OPERATOR: Access to licensed operational modules (ScanBan Board, ScanFlow)
-    const tabTenants = document.getElementById('tabTenants');
-    const tabScanFlow = document.getElementById('tabScanFlow');
-    if (tabTenants) tabTenants.style.display = 'none';
-    if (tabPlatform) tabPlatform.style.display = 'none';
-    if (tabUsers) tabUsers.style.display = 'none';
-    if (tabKanban) tabKanban.style.display = 'inline-flex';
-    if (tabOrders) tabOrders.style.display = 'inline-flex';
-    if (tabScanFlow) tabScanFlow.style.display = 'inline-flex';
+    if (modTenants) modTenants.style.display = 'none';
+    if (modCore) modCore.style.display = 'none';
+    if (modScanBan) modScanBan.style.display = 'inline-flex';
+    if (modScanFlow) modScanFlow.style.display = 'inline-flex';
     if (themeContainer) themeContainer.style.display = 'none';
 
-    if (mobTabTenants) mobTabTenants.style.display = 'none';
-    if (mobTabPlatform) mobTabPlatform.style.display = 'none';
-    if (mobTabUsers) mobTabUsers.style.display = 'none';
-    if (mobTabKanban) mobTabKanban.style.display = 'block';
-    if (mobTabOrders) mobTabOrders.style.display = 'block';
-    if (mobTabScanFlow) mobTabScanFlow.style.display = 'block';
+    if (mobModTenants) mobModTenants.style.display = 'none';
+    if (mobModCore) mobModCore.style.display = 'none';
+    if (mobModScanBan) mobModScanBan.style.display = 'block';
+    if (mobModScanFlow) mobModScanFlow.style.display = 'block';
 
     const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
 
-    if (badge) {
-      badge.innerText = orgName;
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
-    }
-    if (mobActiveCtx) mobActiveCtx.innerText = orgName;
-
     if (userBadge) {
-      userBadge.innerText = `${currentUser.role}: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
+      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
@@ -291,12 +268,47 @@ function applyRoleVisibility() {
 
     const ordersView = document.getElementById('viewOrders');
     if (ordersView && !ordersView.classList.contains('hidden')) {
+      switchModule('scanban');
       switchTab('orders');
     } else {
+      switchModule('scanban');
       switchTab('kanban');
     }
   }
 }
+
+function switchModule(moduleName) {
+  // 1. Ocultar todas las features (Tabs)
+  document.querySelectorAll('.feature-tenants, .feature-core, .feature-scanban, .feature-scanflow').forEach(el => {
+    el.style.display = 'none';
+  });
+
+  // 2. Mostrar las features del módulo seleccionado
+  document.querySelectorAll('.nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'inline-flex');
+  document.querySelectorAll('.mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
+
+  // 3. Marcar módulo activo con mapeo exacto de IDs
+  const desktopModMap = { tenants: 'modTenants', core: 'modCore', scanban: 'modScanBan', scanflow: 'modScanFlow' };
+  const mobileModMap = { tenants: 'mobModTenants', core: 'mobModCore', scanban: 'mobModScanBan', scanflow: 'mobModScanFlow' };
+
+  document.querySelectorAll('.module-tab').forEach(el => el.classList.remove('active'));
+  const dMod = document.getElementById(desktopModMap[moduleName]);
+  const mMod = document.getElementById(mobileModMap[moduleName]);
+  if (dMod) dMod.classList.add('active');
+  if (mMod) mMod.classList.add('active');
+
+  // 4. Seleccionar la feature por defecto
+  if (moduleName === 'tenants') {
+    switchTab('tenants');
+  } else if (moduleName === 'core') {
+    switchTab('platform');
+  } else if (moduleName === 'scanban') {
+    switchTab('kanban');
+  } else if (moduleName === 'scanflow') {
+    switchTab('scanflow');
+  }
+}
+
 
 // CONTROL DEL MENÚ LATERAL MÓVIL (DRAWER)
 function toggleMobileDrawer() {
@@ -326,19 +338,45 @@ function switchTabMobile(tabName) {
   switchTab(tabName);
 }
 
-// NAVEGACIÓN POR PESTAÑAS (MÓDULOS VS CORE)
+// NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
+  // Limpiar clase activa de todos los feature tabs
   ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanFlow',
    'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanFlow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
+
+  // Activar tab seleccionado
+  const tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+  const mobTabId = 'mobTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+  const el = document.getElementById(tabId);
+  const mobEl = document.getElementById(mobTabId);
+  if (el) el.classList.add('active');
+  if (mobEl) mobEl.classList.add('active');
+
+  // Asegurarnos de que el módulo padre también esté activo
+  let parentModule = '';
+  if (tabName === 'tenants') parentModule = 'tenants';
+  if (tabName === 'platform' || tabName === 'users') parentModule = 'core';
+  if (tabName === 'kanban' || tabName === 'orders') parentModule = 'scanban';
+  if (tabName === 'scanflow') parentModule = 'scanflow';
+  
+  if (parentModule) {
+    const desktopModMap = { tenants: 'modTenants', core: 'modCore', scanban: 'modScanBan', scanflow: 'modScanFlow' };
+    const mobileModMap = { tenants: 'mobModTenants', core: 'mobModCore', scanban: 'mobModScanBan', scanflow: 'mobModScanFlow' };
+
+    document.querySelectorAll('.module-tab').forEach(m => m.classList.remove('active'));
+    const dMod = document.getElementById(desktopModMap[parentModule]);
+    const mMod = document.getElementById(mobileModMap[parentModule]);
+    if (dMod) dMod.classList.add('active');
+    if (mMod) mMod.classList.add('active');
+  }
+
   ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'viewScanFlow'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
-
-  const badge = document.getElementById('activeContextBadge');
 
   if (tabName === 'tenants') {
     const tab = document.getElementById('tabTenants');
@@ -347,12 +385,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewTenants');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = 'TENANTS';
-      badge.style.color = '#A78BFA';
-      badge.style.background = 'rgba(167, 139, 250, 0.15)';
-      badge.style.borderColor = '#A78BFA';
-    }
     loadTenantsManagementData();
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
@@ -361,12 +393,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewKanban');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = currentUser && currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
-    }
     loadKanbanData();
   } else if (tabName === 'orders') {
     const tab = document.getElementById('tabOrders');
@@ -375,12 +401,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewOrders');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = currentUser && currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
-    }
     fetchExplorerOrders();
   } else if (tabName === 'scanflow') {
     const tab = document.getElementById('tabScanFlow');
@@ -389,12 +409,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewScanFlow');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = 'SCANFLOW';
-      badge.style.color = 'var(--accent)';
-      badge.style.background = 'rgba(0, 212, 255, 0.15)';
-      badge.style.borderColor = 'var(--accent)';
-    }
   } else if (tabName === 'users') {
     const tab = document.getElementById('tabUsers');
     if (tab) tab.classList.add('active');
@@ -402,12 +416,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewUsers');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = 'CORE';
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
-    }
     fetchUsers();
   } else if (tabName === 'platform') {
     const platformTab = document.getElementById('tabPlatform');
@@ -416,12 +424,6 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewPlatform');
     if (view) view.classList.remove('hidden');
-    if (badge) {
-      badge.innerText = 'CORE';
-      badge.style.color = 'var(--emerald)';
-      badge.style.background = 'rgba(0, 230, 118, 0.15)';
-      badge.style.borderColor = 'var(--emerald)';
-    }
     loadPlatformPanel();
   }
 }
@@ -972,6 +974,8 @@ async function handleFileUpload(event) {
       }
     } catch (err) {
       await showCustomAlert('Error', 'Error de conexión al subir comprobante.');
+    } finally {
+      event.target.value = '';
     }
   };
   reader.readAsDataURL(file);
@@ -1027,11 +1031,17 @@ async function fetchUsers() {
     tbody.innerHTML = usersList.map(u => {
       const isTargetSuperAdmin = u.role === 'SUPERADMIN';
       const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloWare Cloud Platform' : 'Organización');
 
       return `
         <tr>
           <td><strong>${u.name}</strong></td>
           <td>${u.email}</td>
+          <td>
+            <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
+              ${orgName}
+            </span>
+          </td>
           <td>
             <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
               ${u.role}

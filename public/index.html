@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/holoware-theme.css">
+  <link rel="stylesheet" href="/css/holoware-theme.css?v=2.0">
   <style>
     :root {
       --bg-black: #0B0E14;
@@ -50,17 +50,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 12px 28px;
+      gap: 12px;
+      padding: 10px 24px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       min-height: 54px;
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
     }
 
     .top-line-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex-shrink: 0;
+      min-width: 0;
     }
 
     .brand-group {
@@ -109,14 +113,18 @@
     .top-line-right {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
+      gap: 8px;
+      flex-shrink: 1;
+      min-width: 0;
+      justify-content: flex-end;
     }
 
     .theme-selector-group {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 1;
+      min-width: 0;
     }
 
     .theme-label {
@@ -124,6 +132,7 @@
       font-weight: 800;
       color: var(--text-muted);
       line-height: 1;
+      white-space: nowrap;
     }
 
     .theme-select {
@@ -137,6 +146,8 @@
       color: #FFF;
       outline: none;
       cursor: pointer;
+      max-width: 170px;
+      flex-shrink: 1;
       display: inline-flex;
       align-items: center;
       box-sizing: border-box;
@@ -146,6 +157,22 @@
 
     .theme-select:hover {
       border-color: var(--emerald);
+    }
+
+    .badge-header-ctrl {
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+      display: inline-flex !important;
+      align-items: center;
+    }
+
+    .badge-user-email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .btn-header-ctrl {
@@ -217,11 +244,6 @@
       background-color: #21262D;
     }
 
-    .nav-tab.active {
-      color: #000;
-      background-color: var(--emerald);
-      font-weight: 900;
-    }
 
     .btn-hamburger {
       display: none;
@@ -356,10 +378,25 @@
       transition: all 0.2s;
     }
 
-    .mobile-nav-tab.active {
-      color: #000;
-      background-color: var(--emerald);
-      font-weight: 900;
+
+    /* Colores específicos para jerarquía de Módulos vs Features */
+    .nav-tab.module-tab.active, .mobile-nav-tab.module-tab.active {
+      color: #FFF !important;
+      background-color: #A78BFA !important;
+      border-color: #A78BFA !important;
+      font-weight: 900 !important;
+    }
+
+    @media (max-width: 1200px) {
+      .badge-user-email {
+        display: none !important;
+      }
+      .badge-header-ctrl {
+        max-width: 130px;
+      }
+      .btn-connect-cell {
+        display: none !important;
+      }
     }
 
     @media (max-width: 1023px) {
@@ -370,16 +407,30 @@
         display: flex;
       }
       .theme-label {
-        display: none;
+        display: none !important;
+      }
+      .theme-select {
+        max-width: 140px;
       }
     }
 
     @media (max-width: 767px) {
       .header-top-line {
-        padding: 10px 16px;
+        padding: 8px 12px;
+        gap: 8px;
       }
-      .btn-connect-cell {
-        display: none;
+      .badge-header-ctrl {
+        display: none !important;
+      }
+      .theme-select {
+        max-width: 120px;
+        font-size: 11px;
+        height: 30px !important;
+      }
+      .btn-logout-header {
+        height: 30px !important;
+        padding: 0 10px !important;
+        font-size: 11px !important;
       }
       .status-bar-center {
         display: none;
@@ -881,7 +932,7 @@
             <span id="brandLogoText"><span class="logo-holo">Holo</span><span class="logo-ware">Ware</span></span>
           </div>
           <span id="activeContextBadge" class="context-badge">
-            TENANTS
+            SUPERADMIN
           </span>
         </div>
       </div>
@@ -904,21 +955,29 @@
       </div>
     </div>
 
-    <!-- Línea 2: Barra de Pestañas de Navegación Dedicada -->
-    <nav class="header-nav-line" id="desktopNavTabs">
-      <!-- 1. MÓDULO TENANTS (SUPERADMIN ONLY) -->
-      <button class="nav-tab" id="tabTenants" onclick="switchTab('tenants')" style="display:none;">Tenants</button>
+    <!-- Línea 2: Módulos Principales -->
+    <nav class="header-nav-line" id="desktopNavModules" style="background-color: #0F131A; border-bottom: 1px solid var(--card-border);">
+      <button class="nav-tab module-tab" id="modTenants" onclick="switchModule('tenants')" style="display:none;">Tenants</button>
+      <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;">Core</button>
+      <button class="nav-tab module-tab" id="modScanBan" onclick="switchModule('scanban')" style="display:none;">ScanBan</button>
+      <button class="nav-tab module-tab" id="modScanFlow" onclick="switchModule('scanflow')" style="display:none;">ScanFlow</button>
+    </nav>
 
-      <!-- 2. MÓDULO CORE (SUPERADMIN) -->
-      <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma</button>
-      <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios Core</button>
+    <!-- Línea 3: Features del Módulo Activo -->
+    <nav class="header-nav-line" id="desktopNavFeatures">
+      <!-- Features Tenants -->
+      <button class="nav-tab feature-tab feature-tenants" id="tabTenants" onclick="switchTab('tenants')" style="display:none;">Directorio de Organizaciones</button>
+
+      <!-- Features Core -->
+      <button class="nav-tab feature-tab feature-core" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma y Módulos</button>
+      <button class="nav-tab feature-tab feature-core" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios</button>
       
-      <!-- 3. MÓDULO SCANBAN BOARD (ADMIN & OPERATOR) -->
-      <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">ScanBan Board</button>
-      <button class="nav-tab" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
+      <!-- Features ScanBan -->
+      <button class="nav-tab feature-tab feature-scanban" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
+      <button class="nav-tab feature-tab feature-scanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
 
-      <!-- 4. MÓDULO SCANFLOW (STOCK & INVENTARIO) -->
-      <button class="nav-tab" id="tabScanFlow" onclick="switchTab('scanflow')" style="display:none;">ScanFlow</button>
+      <!-- Features ScanFlow -->
+      <button class="nav-tab feature-tab feature-scanflow" id="tabScanFlow" onclick="switchTab('scanflow')" style="display:none;">Stock e Inventario</button>
     </nav>
   </header>
 
@@ -934,15 +993,26 @@
     <div class="mobile-drawer-body">
       <div class="mobile-context-info" style="margin-bottom: 12px;">
         <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Contexto Activo</span>
-        <div id="mobileActiveContext" style="font-size: 13px; font-weight: 800; color: var(--emerald); margin-top: 2px;">TENANTS</div>
+        <div id="mobileActiveContext" style="font-size: 13px; font-weight: 800; color: var(--emerald); margin-top: 2px;">SUPERADMIN</div>
       </div>
-      <nav class="mobile-drawer-nav">
-        <button class="mobile-nav-tab" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Tenants</button>
-        <button class="mobile-nav-tab" id="mobTabPlatform" onclick="switchTabMobile('platform')" style="display:none;">Plataforma</button>
-        <button class="mobile-nav-tab" id="mobTabUsers" onclick="switchTabMobile('users')" style="display:none;">Usuarios Core</button>
-        <button class="mobile-nav-tab" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">ScanBan Board</button>
-        <button class="mobile-nav-tab" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
-        <button class="mobile-nav-tab" id="mobTabScanFlow" onclick="switchTabMobile('scanflow')" style="display:none;">ScanFlow</button>
+      <nav class="mobile-drawer-nav" id="mobileNavModules">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Módulos</div>
+        <button class="mobile-nav-tab module-tab" id="mobModTenants" onclick="switchModule('tenants')" style="display:none;">Tenants</button>
+        <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;">Core</button>
+        <button class="mobile-nav-tab module-tab" id="mobModScanBan" onclick="switchModule('scanban')" style="display:none;">ScanBan</button>
+        <button class="mobile-nav-tab module-tab" id="mobModScanFlow" onclick="switchModule('scanflow')" style="display:none;">ScanFlow</button>
+      </nav>
+      <nav class="mobile-drawer-nav" id="mobileNavFeatures" style="margin-top: 16px;">
+        <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Funcionalidades</div>
+        <button class="mobile-nav-tab feature-tab feature-tenants" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Directorio de Organizaciones</button>
+        
+        <button class="mobile-nav-tab feature-tab feature-core" id="mobTabPlatform" onclick="switchTabMobile('platform')" style="display:none;">Plataforma y Módulos</button>
+        <button class="mobile-nav-tab feature-tab feature-core" id="mobTabUsers" onclick="switchTabMobile('users')" style="display:none;">Usuarios</button>
+        
+        <button class="mobile-nav-tab feature-tab feature-scanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Tablero Kanban</button>
+        <button class="mobile-nav-tab feature-tab feature-scanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
+        
+        <button class="mobile-nav-tab feature-scanflow" id="mobTabScanFlow" onclick="switchTabMobile('scanflow')" style="display:none;">Stock e Inventario</button>
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
@@ -1003,8 +1073,8 @@
         <div class="upload-dropzone" onclick="document.getElementById('fileInput').click()">
           <h3 style="font-size: 18px; font-weight: 800; color: var(--emerald);">Subir Comprobante PDF (Factura Comercial)</h3>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Arrastra aquí tu archivo PDF o haz clic para seleccionarlo de tu equipo</p>
-          <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
         </div>
+        <input type="file" id="fileInput" accept=".pdf" style="display: none;" onchange="handleFileUpload(event)">
       </div>
 
       <div class="kanban-grid">
@@ -1057,6 +1127,7 @@
           <tr>
             <th>Nombre</th>
             <th>Email</th>
+            <th>Organización</th>
             <th>Rol</th>
             <th>ID Operario</th>
             <th>Estado</th>
@@ -1262,8 +1333,10 @@
   <!-- MODAL DE AUTENTICACIÓN / LOGIN -->
   <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
-      <h2 class="brand-title" style="font-size: 28px; text-align: center; color: #FFFFFF;">HOLOWARE <span style="color: var(--emerald);">BASELINE</span></h2>
-      <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Plataforma Enterprise • Inicie Sesión en HoloWare</p>
+      <h2 class="brand-title" style="font-size: 28px; display: flex; justify-content: center;">
+        <span class="logo-holo">Holo</span><span class="logo-ware">Ware</span>
+      </h2>
+      <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Iniciar Sesión</p>
       
       <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
         <div>
@@ -1389,6 +1462,6 @@
     </div>
   </footer>
 
-  <script src="/app.js"></script>
+  <script src="/app.js?v=2.1"></script>
 </body>
 </html>

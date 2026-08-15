@@ -342,8 +342,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  const reqPath = req.url.split('?')[0];
+
   // Rutas estáticas
-  if (req.url === '/' || req.url === '/index.html') {
+  if (reqPath === '/' || reqPath === '/index.html') {
     let indexPath = path.join(__dirname, 'public', 'index.html');
     if (!fs.existsSync(indexPath)) {
       indexPath = path.join(__dirname, 'modules', 'core', 'public', 'index.html');
@@ -360,7 +362,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.url === '/app.js') {
+  if (reqPath === '/app.js') {
     let jsPath = path.join(__dirname, 'public', 'app.js');
     if (!fs.existsSync(jsPath)) {
       jsPath = path.join(__dirname, 'modules', 'core', 'public', 'core.js');
@@ -377,10 +379,10 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (req.url === '/css/holoware-theme.css' || req.url.startsWith('/css/')) {
-    let cssPath = path.join(__dirname, 'public', req.url);
+  if (reqPath === '/css/holoware-theme.css' || reqPath.startsWith('/css/')) {
+    let cssPath = path.join(__dirname, 'public', reqPath);
     if (!fs.existsSync(cssPath)) {
-      cssPath = path.join(__dirname, 'modules', 'core', 'public', req.url);
+      cssPath = path.join(__dirname, 'modules', 'core', 'public', reqPath);
     }
     if (fs.existsSync(cssPath)) {
       fs.readFile(cssPath, (err, content) => {
@@ -967,11 +969,22 @@ const server = http.createServer(async (req, res) => {
       // 9. ENDPOINTS ABM DE USUARIOS
       if (req.url.startsWith('/api/users')) {
         if (req.method === 'GET') {
-          const userList = await query(
-            'SELECT id, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ? ORDER BY name',
-            [tenantId],
-            { tenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
-          );
+          let userList;
+          if (currentUser && currentUser.role === 'SUPERADMIN') {
+            userList = await query(`
+              SELECT u.id, u.email, u.name, u.role, u.is_active as active, u.tenant_id,
+                     t.name as tenant_name, t.slug as tenant_slug
+              FROM users u
+              LEFT JOIN tenants t ON u.tenant_id = t.id
+              ORDER BY t.slug, u.name
+            `, [], { isSuperAdmin: true });
+          } else {
+            userList = await query(
+              'SELECT id, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ? ORDER BY name',
+              [tenantId],
+              { tenantId }
+            );
+          }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(userList));
           return;

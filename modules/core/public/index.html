@@ -50,17 +50,21 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      padding: 12px 28px;
+      gap: 12px;
+      padding: 10px 24px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.05);
       min-height: 54px;
+      box-sizing: border-box;
+      width: 100%;
+      overflow: hidden;
     }
 
     .top-line-left {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       flex-shrink: 0;
+      min-width: 0;
     }
 
     .brand-group {
@@ -109,14 +113,18 @@
     .top-line-right {
       display: flex;
       align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
+      gap: 8px;
+      flex-shrink: 1;
+      min-width: 0;
+      justify-content: flex-end;
     }
 
     .theme-selector-group {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-shrink: 1;
+      min-width: 0;
     }
 
     .theme-label {
@@ -124,6 +132,7 @@
       font-weight: 800;
       color: var(--text-muted);
       line-height: 1;
+      white-space: nowrap;
     }
 
     .theme-select {
@@ -134,6 +143,28 @@
       border-radius: 8px;
       border: 1px solid var(--card-border);
       background-color: #21262D;
+      color: #FFF;
+      outline: none;
+      cursor: pointer;
+      max-width: 170px;
+      flex-shrink: 1;
+    }
+
+    .badge-header-ctrl {
+      max-width: 280px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex-shrink: 1;
+      display: inline-flex !important;
+      align-items: center;
+    }
+
+    .badge-user-email {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
       color: #FFF;
       outline: none;
       cursor: pointer;
@@ -362,6 +393,18 @@
       font-weight: 900;
     }
 
+    @media (max-width: 1200px) {
+      .badge-user-email {
+        display: none !important;
+      }
+      .badge-header-ctrl {
+        max-width: 130px;
+      }
+      .btn-connect-cell {
+        display: none !important;
+      }
+    }
+
     @media (max-width: 1023px) {
       .header-nav-line {
         display: none !important;
@@ -370,16 +413,30 @@
         display: flex;
       }
       .theme-label {
-        display: none;
+        display: none !important;
+      }
+      .theme-select {
+        max-width: 140px;
       }
     }
 
     @media (max-width: 767px) {
       .header-top-line {
-        padding: 10px 16px;
+        padding: 8px 12px;
+        gap: 8px;
       }
-      .btn-connect-cell {
-        display: none;
+      .badge-header-ctrl {
+        display: none !important;
+      }
+      .theme-select {
+        max-width: 120px;
+        font-size: 11px;
+        height: 30px !important;
+      }
+      .btn-logout-header {
+        height: 30px !important;
+        padding: 0 10px !important;
+        font-size: 11px !important;
       }
       .status-bar-center {
         display: none;
@@ -1057,6 +1114,7 @@
           <tr>
             <th>Nombre</th>
             <th>Email</th>
+            <th>Organización</th>
             <th>Rol</th>
             <th>ID Operario</th>
             <th>Estado</th>

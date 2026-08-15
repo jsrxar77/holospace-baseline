@@ -167,3 +167,9 @@
   - Sincronización Core: [`modules/core/public/index.html`](file:///Users/javier/Projects/holoware-baseline/modules/core/public/index.html) y [`modules/core/public/core.js`](file:///Users/javier/Projects/holoware-baseline/modules/core/public/core.js)
 
 
+
+### Tareas Completadas (Recientes)
+- [x] Corrección de carga y parseo de PDF (loop infinito resuelto).
+- [x] Corrección de autodescubrimiento de IP en Expo Mobile (inyección de EXPO_PUBLIC_SERVER_IP).
+- [x] Corrección de Modal de Login (Logo HoloWare sin términos Enterprise).
+- [x] Reestructuración del Header (Jerarquía Módulos vs Features).

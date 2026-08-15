@@ -233,7 +233,8 @@ function applyRoleVisibility() {
     if (mobActiveCtx) mobActiveCtx.innerText = 'TENANTS';
 
     if (userBadge) {
-      userBadge.innerText = `SUPERADMIN: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
+      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
@@ -279,7 +280,8 @@ function applyRoleVisibility() {
     if (mobActiveCtx) mobActiveCtx.innerText = orgName;
 
     if (userBadge) {
-      userBadge.innerText = `${currentUser.role}: ${currentUser.email}`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${currentUser.email}</span>`;
+      userBadge.title = `${currentUser.role}: ${currentUser.email}`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
@@ -1027,11 +1029,17 @@ async function fetchUsers() {
     tbody.innerHTML = usersList.map(u => {
       const isTargetSuperAdmin = u.role === 'SUPERADMIN';
       const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloWare Cloud Platform' : 'Organización');
 
       return `
         <tr>
           <td><strong>${u.name}</strong></td>
           <td>${u.email}</td>
+          <td>
+            <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
+              ${orgName}
+            </span>
+          </td>
           <td>
             <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
               ${u.role}

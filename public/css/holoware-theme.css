@@ -757,3 +757,20 @@ body.theme-cyberpunk_glassmorphism .btn-close-drawer:hover {
   color: #FF007F !important;
   text-shadow: 0 0 8px rgba(255, 0, 127, 0.6) !important;
 }
+
+/* ============================================================ */
+/* CUSTOM OVERRIDES FOR FEATURES (AZUL)                         */
+/* ============================================================ */
+body .nav-tab.feature-tab.active, 
+body .mobile-nav-tab.feature-tab.active {
+  color: #000 !important;
+  background-color: var(--accent, #00d4ff) !important;
+  border-color: var(--accent, #00d4ff) !important;
+  font-weight: 900 !important;
+}
+
+body.theme-omarchy_tiling .nav-tab,
+body.theme-omarchy_tiling .mobile-nav-tab {
+  border-radius: 4px !important;
+}
+

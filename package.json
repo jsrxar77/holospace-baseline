@@ -3,7 +3,7 @@
   "version": "1.1.0",
   "main": "expo/AppEntry.js",
   "scripts": {
-    "dev": "npx -y kill-port 3001 8081 && npx -y concurrently \"node --watch server.js\" \"npx expo start --host lan -c\"",
+    "dev": "npx -y kill-port 3001 8081 && npx -y concurrently \"node --watch server.js\" \"REACT_NATIVE_PACKAGER_HOSTNAME=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo 127.0.0.1) EXPO_PUBLIC_SERVER_IP=$(ipconfig getifaddr en0 || ipconfig getifaddr en1 || echo 127.0.0.1) npx expo start --host lan -c\"",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",

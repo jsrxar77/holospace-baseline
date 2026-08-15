@@ -16,6 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
   const displayBadge = badgeText || (user ? `OP: ${user.email}` : 'OP: Desconectado');
+  const orgName = user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'SUPERADMIN';
 
   const isOmarchy = theme.borderRadius === 4;
   const isSoftMinimal = theme.borderRadius === 12;
@@ -45,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({
             HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>WARE</Text>
           </Text>
           <View style={[styles.moduleBadge, { borderColor: theme.emerald, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 20 : 6) }]}>
-            <Text style={[styles.moduleBadgeText, { color: theme.emerald }]}>ScanBan Scanner</Text>
+            <Text style={[styles.moduleBadgeText, { color: theme.emerald }]}>{orgName}</Text>
           </View>
         </View>
         <Text style={[styles.operatorText, { color: theme.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
