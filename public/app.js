@@ -1809,7 +1809,6 @@ async function loadTenantsManagementData() {
           <div>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
               <span style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Usuarios (${users.length})</span>
-              <button class="btn-secondary" onclick="openAssignUserModal('${t.id}')" style="font-size: 11px; padding: 3px 8px;">+ Asignar</button>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
@@ -1935,84 +1934,6 @@ async function handleCreateTenantSubmit(e) {
     } else {
       if (errEl) {
         errEl.innerText = data.error || 'Error al crear la organización.';
-        errEl.style.display = 'block';
-      }
-    }
-  } catch (err) {
-    if (errEl) {
-      errEl.innerText = `Error de red: ${err.message}`;
-      errEl.style.display = 'block';
-    }
-  }
-}
-
-function openAssignUserModal(preselectedTenantId) {
-  const modal = document.getElementById('assignUserModal');
-  const err = document.getElementById('assignUserError');
-  if (err) err.style.display = 'none';
-
-  const select = document.getElementById('assignUserTenantSelect');
-  if (select && cachedTenantsList && cachedTenantsList.length > 0) {
-    select.innerHTML = cachedTenantsList.map(t => `<option value="${t.id}">${t.name} (${t.slug})</option>`).join('');
-  }
-
-  if (preselectedTenantId && select) {
-    select.value = preselectedTenantId;
-  }
-
-  const form = document.getElementById('assignUserForm');
-  if (form) {
-    document.getElementById('assignUserNickInput').value = '';
-    document.getElementById('assignUserNameInput').value = '';
-    document.getElementById('assignUserEmailInput').value = '';
-    document.getElementById('assignUserPasswordInput').value = '';
-  }
-
-  if (modal) modal.classList.remove('hidden');
-}
-
-function closeAssignUserModal() {
-  const modal = document.getElementById('assignUserModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function handleAssignUserSubmit(e) {
-  e.preventDefault();
-  const tenantId = document.getElementById('assignUserTenantSelect').value;
-  const username = document.getElementById('assignUserNickInput').value.trim().toLowerCase();
-  const name = document.getElementById('assignUserNameInput').value.trim();
-  const email = document.getElementById('assignUserEmailInput').value.trim().toLowerCase();
-  const role = document.getElementById('assignUserRoleSelect').value;
-  const password = document.getElementById('assignUserPasswordInput').value;
-
-  const errEl = document.getElementById('assignUserError');
-
-  if (!username) {
-    if (errEl) {
-      errEl.innerText = 'El Nick (Username) es obligatorio.';
-      errEl.style.display = 'block';
-    }
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/tenants/users', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
-      },
-      body: JSON.stringify({ tenantId, username, name, email, role, password })
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      closeAssignUserModal();
-      await showCustomAlert('Éxito', `Usuario @${username} (${name}) asignado exitosamente.`);
-      loadTenantsManagementData();
-    } else {
-      if (errEl) {
-        errEl.innerText = data.error || 'Error al crear el usuario.';
         errEl.style.display = 'block';
       }
     }
