@@ -490,13 +490,13 @@ async function loadKanbanData() {
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin comprobantes pendientes</div>'
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-          <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
-            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">Pasar a Listo</button>
-            <button class="btn-delete-card" style="position: static; font-size: 11px; padding: 4px 8px;" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
-          </div>
+          <button class="btn-delete-card" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px; border-color: rgba(255, 82, 82, 0.4); color: var(--red);" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
+          <button class="btn-primary" style="margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 800; cursor: pointer;" onclick="markOrderReady('${item.id}', event)">
+            Pasar a Listo
+          </button>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Haz clic o arrastra esta tarjeta a LISTO</div>
         </div>
       `).join('');
@@ -1017,9 +1017,13 @@ async function deleteBacklogOrder(orderId, event) {
   if (!confirmed) return;
 
   try {
+    const token = localStorage.getItem('hw_token') || '';
     const res = await fetch('/api/scanban/delete-order', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         orderId,
         userEmail: currentUser ? currentUser.email : ''

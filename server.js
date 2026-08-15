@@ -1275,6 +1275,23 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 10.3.2 ELIMINAR PEDIDO DE BACKLOG
+      if (req.url === '/api/scanban/delete-order' && (req.method === 'POST' || req.method === 'DELETE')) {
+        const { orderId, orderNumber, userEmail } = data || {};
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
+
+        const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
+        if (order) {
+          await execute('DELETE FROM order_items WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+          await execute('DELETE FROM audit_logs WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+          await execute('DELETE FROM orders WHERE id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Pedido eliminado con éxito.' }));
+        return;
+      }
+
       // 10.4 SUBIDA DE PDF CON PARSER REAL
       if (req.url === '/api/scanban/upload-pdf' && req.method === 'POST') {
         const { fileName, pdfBase64, userEmail } = data;
