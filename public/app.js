@@ -403,6 +403,7 @@ function switchTab(tabName) {
     if (mobTab) mobTab.classList.add('active');
     const view = document.getElementById('viewOrders');
     if (view) view.classList.remove('hidden');
+    renderOperatorPills();
     fetchExplorerOrders();
   } else if (tabName === 'scanflow') {
     const tab = document.getElementById('tabScanFlow');
@@ -1332,10 +1333,17 @@ let allOperatorEmails = [];
 
 async function renderOperatorPills() {
   try {
-    const res = await fetch('/api/users');
+    const token = localStorage.getItem('hw_token') || '';
+    const res = await fetch('/api/users', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
-    allOperatorEmails = usersList.map((u) => u.email.toLowerCase());
+    // Solo operarios
+    const operators = usersList.filter(u => u.role === 'OPERATOR');
+    allOperatorEmails = operators.map((u) => u.email.toLowerCase());
 
     const container = document.getElementById('operatorPillsContainer');
     if (!container) return;
@@ -1348,14 +1356,15 @@ async function renderOperatorPills() {
       </button>
     `;
 
-    const pillsHtml = allOperatorEmails
-      .map((email) => {
+    const pillsHtml = operators
+      .map((u) => {
+        const email = u.email.toLowerCase();
         const isSelected = selectedExplorerOperators.has(email);
         return `
         <button type="button" 
           onclick="toggleOperatorFilter('${email}')"
           style="background: ${isSelected ? 'var(--emerald)' : '#21262D'}; color: ${isSelected ? '#000' : '#FFF'}; border: 1px solid ${isSelected ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-          ${isSelected ? '✓ ' : ''}${email}
+          ${isSelected ? '✓ ' : ''}${u.name} (@${u.username || email.split('@')[0]})
         </button>
       `;
       })
@@ -1391,8 +1400,14 @@ async function fetchExplorerOrders() {
   const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
+    const token = localStorage.getItem('hw_token') || '';
     const res = await fetch(
-      `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`
+      `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
     );
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');
