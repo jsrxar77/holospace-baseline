@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import { SERVER_URL } from '../config';
-import { useAuthStore } from './useAuthStore';
 
 export interface ThemeTokens {
   background: string;
@@ -30,14 +29,13 @@ export const DEFAULT_THEME: ThemeTokens = {
 
 interface ThemeState {
   theme: ThemeTokens;
-  fetchTheme: () => Promise<void>;
+  fetchTheme: (token?: string | null) => Promise<void>;
 }
 
 export const useThemeStore = create<ThemeState>((set) => ({
   theme: DEFAULT_THEME,
-  fetchTheme: async () => {
+  fetchTheme: async (token?: string | null) => {
     try {
-      const token = useAuthStore.getState().token;
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;

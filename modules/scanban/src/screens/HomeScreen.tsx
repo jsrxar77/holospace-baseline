@@ -38,7 +38,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
   };
 
   const syncData = async () => {
-    await fetchTheme();
+    const token = useAuthStore.getState().token;
+    await fetchTheme(token);
     await loadInitialOrders();
     await fetchReadyOrders();
   };

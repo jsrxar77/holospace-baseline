@@ -17,8 +17,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
-    fetchTheme();
-    const interval = setInterval(fetchTheme, 3000);
+    fetchTheme(null);
+    const interval = setInterval(() => fetchTheme(null), 3000);
     return () => clearInterval(interval);
   }, []);
 
