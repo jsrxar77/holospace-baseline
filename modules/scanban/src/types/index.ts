@@ -1,4 +1,4 @@
-export type OrderStatus = 'DRAFT' | 'PARSED' | 'SCANNING' | 'VERIFIED' | 'CLOSED' | 'PARTIAL_DISPATCH';
+export type OrderStatus = 'DRAFT' | 'PARSED' | 'SCANNING' | 'VERIFIED' | 'CLOSED' | 'PARTIAL_DISPATCH' | 'READY';
 
 export type ItemStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVER_SCANNED';
 

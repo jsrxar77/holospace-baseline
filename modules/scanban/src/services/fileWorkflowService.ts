@@ -1,4 +1,6 @@
 import { Order } from '../types';
+import { SERVER_URL } from '../config';
+import { useAuthStore } from '../store/useAuthStore';
 
 export interface WorkflowFile {
   orderNumber: string;
@@ -7,14 +9,27 @@ export interface WorkflowFile {
   operatorEmail?: string;
 }
 
-import { SERVER_URL } from '../config';
+/**
+ * Devuelve los headers con Authorization si hay token disponible.
+ * Esto garantiza que el backend resuelva el tenant correcto (ej: poke).
+ */
+function getAuthHeaders(): Record<string, string> {
+  const token = useAuthStore.getState().token;
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 export const fileWorkflowService = {
-  // Auto-detectar si el operario (por email) tiene un pedido activo en DB
+  // Auto-detectar si el operario (por email) tiene un pedido activo DOING en DB
   getActiveDoingOrder: async (userEmail?: string): Promise<{ hasActive: boolean; orderNumber?: string; pdfFileName?: string; order?: Order }> => {
     try {
       const emailParam = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
-      const response = await fetch(`${SERVER_URL}/api/scanban/active-order${emailParam}`);
+      const response = await fetch(`${SERVER_URL}/api/scanban/active-order${emailParam}`, {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
       if (data && data.hasActive) {
         return {
@@ -33,7 +48,9 @@ export const fileWorkflowService = {
   // Obtener detalle 100% REAL de la orden desde el servidor
   getOrderDetails: async (orderNumber: string): Promise<Order | null> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/scanban/order-detail?orderNumber=${orderNumber}`);
+      const response = await fetch(`${SERVER_URL}/api/scanban/order-detail?orderNumber=${orderNumber}`, {
+        headers: getAuthHeaders()
+      });
       const data = await response.json();
       if (data && data.success && data.order) {
         const o = data.order;
@@ -69,7 +86,7 @@ export const fileWorkflowService = {
     try {
       await fetch(`${SERVER_URL}/api/scanban/update-scan-progress`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ orderNumber, items, totalItemsScanned })
       });
       return true;
@@ -86,7 +103,7 @@ export const fileWorkflowService = {
     try {
       const response = await fetch(`${SERVER_URL}/api/scanban/claim-order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ orderNumber, userEmail })
       });
       const data = await response.json();
@@ -101,12 +118,12 @@ export const fileWorkflowService = {
     return { success: true, targetFileName };
   },
 
-  // Acción: Liberar Pedido (Cambio de estado a READY en DB)
+  // Acción: Liberar Pedido (Cambio de estado a READY en DB) — desde operario móvil
   releaseOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean }> => {
     try {
       const response = await fetch(`${SERVER_URL}/api/scanban/release-order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ orderNumber, userEmail })
       });
       const data = await response.json();
@@ -128,13 +145,13 @@ export const fileWorkflowService = {
   ): Promise<{ success: boolean; doneFileName: string; watermarkText: string }> => {
     const doneFileName = `${orderNumber}.pdf`;
     const nowIso = new Date().toLocaleString('es-AR');
-    const email = userEmail || 'jsrxar@gmail.com';
+    const email = userEmail || 'operario@holoware.com.ar';
     const watermarkText = `AUDITADO Y EXPEDIDO POR OPERARIO ${email} | FECHA: ${nowIso} | BULTOS: ${scannedCount}/${totalCount}`;
 
     try {
       await fetch(`${SERVER_URL}/api/scanban/complete-order`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ orderNumber, userEmail: email, watermarkText })
       });
     } catch (e) {

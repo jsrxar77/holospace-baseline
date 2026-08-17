@@ -1389,6 +1389,60 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 10.5.1 APP MÓVIL: PEDIDO ACTIVO (DOING) DEL OPERARIO
+      if (req.url.startsWith('/api/scanban/active-order') && req.method === 'GET') {
+        const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+        const opEmail = urlParams.get('userEmail') || (currentUser && currentUser.email) || '';
+
+        if (!opEmail) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ hasActive: false }));
+          return;
+        }
+
+        const activeRow = await getOne(
+          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? LIMIT 1",
+          [opEmail.toLowerCase(), tenantId],
+          { tenantId }
+        );
+
+        if (activeRow) {
+          const fullOrder = await getFullOrderFromDb(activeRow.id, { tenantId });
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ hasActive: true, orderNumber: activeRow.orderNumber, order: fullOrder }));
+          return;
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ hasActive: false }));
+        return;
+      }
+
+      // 10.5.2 APP MÓVIL: LIBERAR PEDIDO A READY (desde operario móvil)
+      if (req.url === '/api/scanban/release-order' && req.method === 'POST') {
+        const { orderId, orderNumber, userEmail } = data || {};
+        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+
+        const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
+        if (order) {
+          const now = new Date().toLocaleString('es-AR');
+          await execute(
+            "UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?",
+            [order.id, tenantId],
+            { tenantId }
+          );
+          await execute(
+            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            [order.id, tenantId, now, opEmail, 'LIBERAR_PEDIDO_OPERARIO', `Pedido #${order.orderNumber} liberado a Listo por Operario (${opEmail}).`],
+            { tenantId }
+          );
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+        return;
+      }
+
       if (req.url.startsWith('/api/scanban/order-detail') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');

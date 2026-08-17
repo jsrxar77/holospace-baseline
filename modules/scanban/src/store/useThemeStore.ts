@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { SERVER_URL } from '../config';
+import { useAuthStore } from './useAuthStore';
 
 export interface ThemeTokens {
   background: string;
@@ -37,7 +38,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   fetchTheme: async () => {
     try {
       const token = useAuthStore.getState().token;
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }

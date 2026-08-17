@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshCon
 import { Header } from '../components/Header';
 import { useOrderStore } from '../store/useOrderStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { SERVER_URL } from '../config';
 
 interface HomeScreenProps {
@@ -23,7 +24,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   const fetchReadyOrders = async () => {
     try {
-      const res = await fetch(`${SERVER_URL}/api/scanban/available-orders`);
+      const token = useAuthStore.getState().token;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetch(`${SERVER_URL}/api/scanban/available-orders`, { headers });
       const data = await res.json();
       if (data && data.success && Array.isArray(data.orders)) {
         setReadyOrders(data.orders);

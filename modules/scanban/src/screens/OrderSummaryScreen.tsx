@@ -19,7 +19,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 }) => {
   const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
   const { theme } = useThemeStore();
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'READY'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
 
   React.useEffect(() => {
@@ -65,6 +65,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   const filteredItems = activeOrder.items.filter((item) => {
     if (filter === 'PENDING') return item.quantityScanned < item.quantityRequired;
     if (filter === 'COMPLETED') return item.quantityScanned >= item.quantityRequired;
+    if (filter === 'READY') return activeOrder.status === 'READY';
     return true;
   });
 
@@ -74,8 +75,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     } else {
       Alert.alert(
         'Bloqueo Estricto de Cierre (US-05)',
-        `No se puede cerrar el pedido. Faltan ${
-          activeOrder.totalItemsRequired - activeOrder.totalItemsScanned
+        `No se puede cerrar el pedido. Faltan ${activeOrder.totalItemsRequired - activeOrder.totalItemsScanned
         } unidades por verificar.`,
         [
           { text: 'Continuar Escaneando', onPress: onNavigateToScanner },
@@ -170,6 +170,15 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         >
           <Text style={[styles.tabText, { color: theme.textMuted }, filter === 'COMPLETED' && { color: '#000', fontWeight: '900' }]}>
             Verificados ({activeOrder.items.filter((i) => i.quantityScanned >= i.quantityRequired).length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, { borderColor: theme.cardBorder }, filter === 'READY' && { backgroundColor: theme.emerald, borderColor: theme.emerald }]}
+          onPress={() => setFilter('READY')}
+        >
+          <Text style={[styles.tabText, { color: theme.textMuted }, filter === 'READY' && { color: '#000', fontWeight: '900' }]}>
+            Listo ({activeOrder.status === 'READY' ? activeOrder.items.length : 0})
           </Text>
         </TouchableOpacity>
       </View>
