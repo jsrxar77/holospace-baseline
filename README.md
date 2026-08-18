@@ -171,7 +171,7 @@ HoloSpace cuenta con herramientas de backup seguras y trazables:
 
 ```bash
 # Generar un respaldo instantáneo completo de la base de datos
-bash bin/backup-database.sh
+bash bin/devops-db-backup.sh
 
 # Exportar de forma aislada y sanitizada todos los datos de un Tenant específico
 node bin/tenant-dump.sh drinklovers
@@ -186,7 +186,7 @@ node bin/tenant-dump.sh drinklovers
 holospace-baseline/
 ├── .agents/                        ← Directivas y reglas de gobernanza del Agente
 ├── bin/                            ← Herramientas DevOps, migradores y test suites
-│   ├── backup-database.sh          ← Script universal de backups
+│   ├── devops-db-backup.sh          ← Script universal de backups
 │   ├── migrate-sqlite-to-postgres.js ← Migrador SQLite a Postgres RLS
 │   ├── tenant-dump.sh              ← Exportador aislado de datos por Tenant
 │   ├── test-auth-jwt.js            ← Test suite de autenticación JWT

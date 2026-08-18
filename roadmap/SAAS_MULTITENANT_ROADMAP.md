@@ -86,13 +86,13 @@
 * **Tareas Ejecutadas:**
   - [x] **4.1** Crear [`Dockerfile`](file:///Users/javier/Projects/holospace-baseline/Dockerfile) multi-stage optimizado para Node.js y Web assets (imagen `node:20-alpine`, non-root, healthchecks).
   - [x] **4.2** Crear [`docker-compose.yml`](file:///Users/javier/Projects/holospace-baseline/docker-compose.yml) orquestando App Server, PostgreSQL 16 con RLS, Redis 7, Nginx Proxy y Contenedor de Backups.
-  - [x] **4.3** Configurar configuración Nginx [`nginx/default.conf`](file:///Users/javier/Projects/holospace-baseline/nginx/default.conf) y script de respaldos automatizados [`bin/backup-database.sh`](file:///Users/javier/Projects/holospace-baseline/bin/backup-database.sh).
+  - [x] **4.3** Configurar configuración Nginx [`nginx/default.conf`](file:///Users/javier/Projects/holospace-baseline/nginx/default.conf) y script de respaldos automatizados [`bin/devops-db-backup.sh`](file:///Users/javier/Projects/holospace-baseline/bin/devops-db-backup.sh).
   - [x] **4.4** Crear script de exportación/dump bajo demanda de un Tenant específico ([`bin/tenant-dump.sh`](file:///Users/javier/Projects/holospace-baseline/bin/tenant-dump.sh)).
 * **Entregables:**
   - Dockerfile de producción: [`Dockerfile`](file:///Users/javier/Projects/holospace-baseline/Dockerfile) y [`.dockerignore`](file:///Users/javier/Projects/holospace-baseline/.dockerignore)
   - Stack Docker Compose: [`docker-compose.yml`](file:///Users/javier/Projects/holospace-baseline/docker-compose.yml)
   - Configuración Nginx: [`nginx/default.conf`](file:///Users/javier/Projects/holospace-baseline/nginx/default.conf)
-  - Scripts DevOps de Backups: [`bin/backup-database.sh`](file:///Users/javier/Projects/holospace-baseline/bin/backup-database.sh) y [`bin/tenant-dump.sh`](file:///Users/javier/Projects/holospace-baseline/bin/tenant-dump.sh)
+  - Scripts DevOps de Backups: [`bin/devops-db-backup.sh`](file:///Users/javier/Projects/holospace-baseline/bin/devops-db-backup.sh) y [`bin/tenant-dump.sh`](file:///Users/javier/Projects/holospace-baseline/bin/tenant-dump.sh)
 
 ---
 

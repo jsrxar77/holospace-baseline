@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# bin/backup-database.sh - Script de Respaldo Automatizado de PostgreSQL 16
+# bin/devops-db-backup.sh - Script de Respaldo Automatizado de PostgreSQL 16
 # ============================================================================
 
 set -e

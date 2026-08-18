@@ -34,7 +34,7 @@ async function runTests() {
   console.log('\n--- 1. Catálogo de Planes Comerciales ---');
   assert(PLANS.starter && PLANS.pro && PLANS.enterprise, 'Planes Starter, Pro y Enterprise definidos');
   assert(PLANS.pro.priceUsd === 149, 'Precio del Plan Pro = $149 USD');
-  assert(PLANS.pro.includedModules.includes('scanban'), 'Plan Pro incluye módulo ScanBan');
+  assert(PLANS.pro.includedModules.includes('kanban'), 'Plan Pro incluye módulo ScanBan');
 
   // 2. Flujo de Auto-Registro de Nueva Organización (Tenant Onboarding)
   console.log('\n--- 2. Auto-Registro de Nueva Organización B2B ---');
@@ -57,7 +57,7 @@ async function runTests() {
   // 3. Verificación de Aprovisionamiento de Suscripción y Módulos
   const subData = await getTenantSubscriptionAndUsage(regResult.tenant.id);
   assert(subData.subscription.planCode === 'pro', 'Suscripción inicial asignada en Plan Pro');
-  assert(subData.entitlements.includes('scanban'), 'Módulo ScanBan aprovisionado automáticamente');
+  assert(subData.entitlements.includes('kanban'), 'Módulo Kanban aprovisionado automáticamente');
 
   // 4. Creación de Sesión de Checkout
   console.log('\n--- 4. Generación de Checkout Session ---');
@@ -77,7 +77,7 @@ async function runTests() {
 
   const upgradedSub = await getTenantSubscriptionAndUsage(regResult.tenant.id);
   assert(upgradedSub.subscription.planCode === 'enterprise', 'Suscripción actualizada a Enterprise tras webhook');
-  assert(upgradedSub.entitlements.includes('stockflow'), 'Módulo StockFlow desbloqueado automáticamente tras upgrade');
+  assert(upgradedSub.entitlements.includes('tenant'), 'Módulo Tenant desbloqueado automáticamente tras upgrade');
 
   // Limpieza estricta de datos de prueba
   const { execute } = require('../lib/db');
