@@ -223,12 +223,19 @@ function applyRoleVisibility() {
 
     const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displaySuperUser}</span>`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displaySuperUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
       userBadge.title = `${currentUser.role}: ${displaySuperUser} (${currentUser.email || ''})`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
     }
+
+    const dropName = document.getElementById('dropdownUserName');
+    const dropEmail = document.getElementById('dropdownUserEmail');
+    const dropOrg = document.getElementById('dropdownUserOrg');
+    if (dropName) dropName.innerText = currentUser.name || displaySuperUser;
+    if (dropEmail) dropEmail.innerText = currentUser.email || '';
+    if (dropOrg) dropOrg.innerText = 'HoloWare Cloud Platform (SUPERADMIN)';
 
     if (footerTenant) {
       footerTenant.innerText = 'Organización: HoloWare Cloud Platform';
@@ -257,12 +264,19 @@ function applyRoleVisibility() {
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
 
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displayUser}</span>`;
+      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displayUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
       userBadge.title = `${currentUser.role}: ${displayUser} (${currentUser.email || ''})`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
     }
+
+    const dropName = document.getElementById('dropdownUserName');
+    const dropEmail = document.getElementById('dropdownUserEmail');
+    const dropOrg = document.getElementById('dropdownUserOrg');
+    if (dropName) dropName.innerText = currentUser.name || displayUser;
+    if (dropEmail) dropEmail.innerText = currentUser.email || '';
+    if (dropOrg) dropOrg.innerText = `Organización: ${currentUser.tenantName || orgName}`;
 
     if (footerTenant) {
       footerTenant.innerText = `Organización: ${currentUser.tenantName || orgName}`;
@@ -1631,7 +1645,30 @@ function closeQrModal() {
   document.getElementById('qrModal').classList.add('hidden');
 }
 
+function toggleUserDropdown(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById('userDropdownMenu');
+  if (menu) {
+    menu.classList.toggle('hidden');
+  }
+}
+
+function closeUserDropdown() {
+  const menu = document.getElementById('userDropdownMenu');
+  if (menu) {
+    menu.classList.add('hidden');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const container = document.querySelector('.user-dropdown-container');
+  if (container && !container.contains(e.target)) {
+    closeUserDropdown();
+  }
+});
+
 function logout() {
+  closeUserDropdown();
   localStorage.removeItem('hw_token');
   localStorage.removeItem('hw_user');
   currentUser = null;
