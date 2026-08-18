@@ -13,25 +13,25 @@ HoloWare Baseline SaaS opera bajo un modelo híbrido: **Planes Base por Capacida
 | Característica / Métrica | Plan STARTER | Plan PROFESSIONAL | Plan ENTERPRISE |
 |---|---|---|---|
 | **Precio Sugerido** | $49 USD / mes | $149 USD / mes | Personalizado |
-| **Límite de Usuarios / Operarios** | Hasta 3 usuarios | Hasta 15 usuarios | Ilimitados |
-| **Límite de Pedidos / Ingesta PDF** | 500 pedidos / mes | 3.000 pedidos / mes | Ilimitados |
-| **Módulos Incluidos** | `core` | `core`, `scanban` | `core`, `scanban`, `stockflow`, `analytics` |
+| **Límite de Usuarios / Operarios** | Hasta 5 usuarios | Hasta 20 usuarios | 100+ usuarios |
+| **Límite de Pedidos / Ingesta PDF** | 500 pedidos / mes | 2.500 pedidos / mes | 10.000+ pedidos / mes |
+| **Módulos Incluidos** | `core`, `kanban` | `core`, `kanban`, `scanner` | `core`, `tenant`, `kanban`, `scanner` |
 | **Retención de Auditoría** | 30 días | 180 días | 365+ días |
 | **Soporte & SLA** | Email estándar (48h) | Prioritario (12h) | SLA 99.9% + Soporte 24/7 |
 | **Aislamiento de BD** | RLS Compartido | RLS Compartido | RLS Compartido o BD Dedicada |
 
 ---
 
-## 2. Catálogo de Módulos & Licenciamiento
+## 2. Catálogo Oficial de Módulos & Licenciamiento
 
 Cada módulo de HoloWare se comporta como una unidad de negocio independiente:
 
 | Código Módulo | Nombre | Rol | Tipo de Licencia |
 |---|---|---|---|
-| **`core`** | HoloWare Core | Plataforma base (Usuarios, Auth, Temas) | **Mandatorio / Gratuito** (Incluido en todos los planes) |
-| **`scanban`** | ScanBan Logistics | Tablero Kanban, Ingesta PDF y App Escáner | **Suscripción Add-On / Pro** |
-| **`stockflow`** | StockFlow WMS | Control de Inventario y Ubicaciones de Almacén | **Suscripción Add-On / Pro** |
-| **`analytics`** | HoloMetrics | Reportes avanzados, KPI de operarios y BI | **Suscripción Enterprise** |
+| **`tenant`** | Tenant Management | Panel de Gobierno Multi-Tenant | **Mandatorio / Exclusivo SuperAdmin** |
+| **`core`** | HoloWare Core | Plataforma base (Usuarios, Auth, Temas, Auditoría) | **Mandatorio / Gratuito** (Incluido en todos los planes) |
+| **`kanban`** | Kanban Logistics | Tablero Kanban 4 Columnas e Ingesta PDF | **Suscripción Starter/Pro/Enterprise** |
+| **`scanner`** | Mobile/Web Scanner | App de Depósito, Escáner EAN-13 y Despacho | **Suscripción Pro/Enterprise** |
 
 ---
 

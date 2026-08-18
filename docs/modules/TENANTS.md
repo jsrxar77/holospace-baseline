@@ -1,15 +1,15 @@
-# Módulo: Tenants (Gobierno SaaS Multi-Tenant)
+# Módulo: Tenant (Gobierno SaaS Multi-Tenant)
 
 > **Tipo:** Módulo Core Exclusivo de Gobierno (`SUPERADMIN`)  
-> **Entorno:** Web Shell (`/public` / `modules/core/public`)  
-> **Entitlement:** Mandatorio (`tenants`)  
+> **URL Directa:** `http://localhost:3001/tenant`  
+> **Entitlement:** Mandatorio (`tenant`)  
 > **Rol Autorizado:** `SUPERADMIN`
 
 ---
 
 ## Propósito y Alcance
 
-El módulo **Tenants** es el panel de mando central de la plataforma SaaS HoloWare. Permite al SuperAdmin de la plataforma aprovisionar nuevas empresas clientes, definir sus planes comerciales, asignar cuentas de usuarios y activar o desactivar módulos licenciados en tiempo real.
+El módulo **Tenant** es el panel de mando central de la plataforma SaaS HoloWare. Permite al SuperAdmin de la plataforma aprovisionar nuevas empresas clientes, definir sus planes comerciales, cuotas, asignar cuentas de usuarios y activar o desactivar módulos licenciados en tiempo real.
 
 ---
 
@@ -21,19 +21,21 @@ El módulo **Tenants** es el panel de mando central de la plataforma SaaS HoloWa
    - Total de Usuarios globales auditados.
 
 2. **Aprovisionamiento Dinámico de Organizaciones (Nueva Organización):**
-   - Creación de un nuevo Tenant con su `slug` único (subdominio).
+   - Creación de un nuevo Tenant con su `slug` único.
    - Selección de Plan comercial (`Starter`, `Pro`, `Enterprise`).
    - Aprovisionamiento instantáneo de la cuenta Administradora inicial.
 
-3. **Asignación de Usuarios a Empresas (Asignar Usuario):**
+3. **Asignación de Usuarios a Empresas:**
    - Creación de cuentas `ADMIN` o `OPERATOR` vinculadas estrictamente al `tenant_id` de la empresa.
 
 4. **Licenciamiento Modular en Vivo:**
    - Switches interactivos por organización para activar/desactivar en tiempo real:
-     - `ScanBan Board` (`scanban-board`)
-     - `ScanBan Scanner` (`scanban-scanner`)
-     - `ScanFlow` (`scanflow`)
+     - `Kanban` (`kanban`)
+     - `Scanner` (`scanner`)
    - El cambio se refleja instantáneamente en la base de datos PostgreSQL 16 y en los tokens JWT de los usuarios de esa empresa.
+
+5. **Configuración de Tema Corporativo Base:**
+   - Selector en modal de edición de organización para fijar el tema visual por defecto (`Omarchy Tiling WM`, `Omarchy Aetheria`, `Dark Glassmorphism`, etc.).
 
 ---
 
@@ -43,6 +45,7 @@ El módulo **Tenants** es el panel de mando central de la plataforma SaaS HoloWa
 |---|---|---|---|
 | `GET` | `/api/tenants` | `SUPERADMIN` | Lista todas las organizaciones con suscripciones, módulos y usuarios. |
 | `POST` | `/api/tenants` | `SUPERADMIN` | Crea una nueva organización y asigna su plan y administrador inicial. |
+| `PUT` | `/api/tenants` | `SUPERADMIN` | Edición integral de organización (nombre, plan, cuotas, tema base y módulos). |
 | `POST` | `/api/tenants/users` | `SUPERADMIN` | Crea un usuario y lo asocia a una organización. |
 | `POST` | `/api/tenants/modules` | `SUPERADMIN` | Activa o desactiva un módulo para un tenant. |
-| `GET` | `/api/modules` | `SUPERADMIN` | Catálogo de los 5 módulos de la plataforma. |
+| `GET` | `/api/modules` | `SUPERADMIN` | Catálogo oficial de módulos de la plataforma. |

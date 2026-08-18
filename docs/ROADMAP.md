@@ -57,31 +57,16 @@ holoware-baseline/
 |---|---|---|
 | C-01 | Rename filesystem `phone-ware` → `holoware-baseline` | Directorio movido |
 | C-02 | Rename git remote → `jsrxar77/holoware-baseline` | URL actualizada |
-| C-03 | Rename DB `phoneware.db` → `holoware.db` | Archivo + referencia en server.js |
-| C-04 | Actualizar `README.md` con branding HoloWare | Reescrito |
-| C-05 | Actualizar `bin/devops-db-refresh.sh` | Referencia DB corregida |
-| C-06 | Crear `modules/scanban/` | src/, orders/, App.tsx, README.md |
-| C-07 | Root `App.tsx` shim para Expo | Re-exporta desde modules/scanban/App |
-| C-08 | Crear `docs/HOLOWARE_PLATFORM.md` | Visión de plataforma documentada |
-| C-09 | Actualizar `docs/ARCHITECTURE.md` | Rebrandeado a ScanBan/HoloWare |
-| C-10 | Actualizar `docs/FEATURES.md` | Sección §0 Core + ScanBan rebrandeado |
-| C-11 | Git commit consolidado | 33 files, historial de renombres preservado |
-| C-12 | Crear `modules/core/` (carpeta + README) | `modules/core/public/`, `routes/`, `README.md` |
-| C-13 | Tabla `modules` en DB + seed ScanBan | `server.js` — `initModules()` |
-| C-14 | Tabla `platform_audit_logs` en DB | `server.js` — core platform event auditing |
-| C-15 | Soporte rol `SUPERADMIN` + seed user | `server.js` — `superadmin@holoware.com.ar` / `BrunaSeRelambe22!` |
-| C-16 | Crear `docs/ROADMAP.md` | Este archivo |
-| C-17 | P-05: Prefijar rutas ScanBan → `/api/scanban/...` | `server.js` — 21 rutas migradas |
-| C-18 | P-06: Actualizar `public/app.js` | Rutas `/api/scanban/...` + localStorage `pw_` → `hw_` |
-| C-19 | P-07: Actualizar app móvil `modules/scanban/src/` | `HomeScreen.tsx`, `fileWorkflowService.ts` |
-| C-20 | P-08: Endpoint `GET/POST /api/modules` | SUPERADMIN toggle + log en `platform_audit_logs` |
-| C-21 | P-09: Panel Super Admin (UI) | Pestaña `🏛️ Plataforma` (SUPERADMIN only) + gestión de módulos + logs |
-| C-22 | P-10: Modulos public JS (`core.js`, `scanban.js`) | `modules/core/public/core.js` y `modules/scanban/public/scanban.js` |
-| C-23 | M-01 / L-01: `.env` y `app.js` HW_ | `HW_THEME`, `HW_PORT`, `hw_token` localStorage keys |
-| C-24 | M-02 / M-03: Route modules | `modules/core/routes/core.routes.js` y `modules/scanban/routes/scanban.routes.js` |
-| C-25 | M-04: Servir index.html desde Core | `modules/core/public/index.html` servido por `server.js` |
-| C-26 | L-03: Plantilla 2º módulo | `modules/stockflow/` (README + estructura) |
-| C-27 | L-04: Guía de creación de módulos | `docs/MODULE_CREATION.md` |
+| C-03 | Migración a PostgreSQL 16 con RLS | Tablas `tenants`, `users`, `orders`, `order_items`, `tenant_modules` |
+| C-04 | Actualizar `README.md` con credenciales y URLs directas | Actualizado con los 4 módulos y Smart Auth Guard |
+| C-05 | Script DevOps de refresco y siembra de BD | `bin/devops-db-refresh.sh` |
+| C-06 | Catálogo Oficial de 4 Módulos | **`Tenant`**, **`Core`**, **`Kanban`**, **`Scanner`** |
+| C-07 | Enrutamiento Directo por URL SPA | `/tenant`, `/core`, `/kanban`, `/scanner` servidos limpiamente |
+| C-08 | Smart Auth Guard & RBAC 403 Screen | Redirección automática inteligente por rol y pantalla de acceso restringido |
+| C-09 | Tema Omarchy Aetheria & Bordes 4px Tiling WM | Paleta OLED Deep Violet + Teal con regla 4px square tiling |
+| C-10 | Dropdown Flotante de Usuario | Botón superior compacto con username y menú desplegable |
+| C-11 | Versionado dinámico en Footer | Lectura en tiempo real desde `package.json` vía `/api/config` |
+| C-12 | Suite de Pruebas Automatizadas | `verify-db-integrity.js`, `test-auth-jwt.js`, `test-entitlement.js` |
 
 ---
 
