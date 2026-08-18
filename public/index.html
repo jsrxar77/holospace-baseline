@@ -56,7 +56,9 @@
       min-height: 54px;
       box-sizing: border-box;
       width: 100%;
-      overflow: hidden;
+      overflow: visible;
+      position: relative;
+      z-index: 105;
     }
 
     .top-line-left {
@@ -953,20 +955,23 @@
         <button class="btn-secondary btn-header-ctrl btn-connect-cell" onclick="openQrModal()">Conectar Celular</button>
 
         <!-- Dropdown de Usuario con Cerrar Sesión -->
-        <div class="user-dropdown-container" style="position: relative; display: inline-block;">
+        <div class="user-dropdown-container" style="position: relative; display: inline-block; z-index: 1000;">
           <button id="userBadge" class="badge-role badge-header-ctrl" style="cursor: pointer; display: inline-flex; align-items: center; gap: 6px; user-select: none;" onclick="toggleUserDropdown(event)" title="Menú de Usuario">
-            <span class="badge-role-text">ADMIN</span>
+            <span class="badge-user-name">superadmin</span>
             <span style="font-size: 9px; opacity: 0.7; margin-left: 2px;">▾</span>
           </button>
 
-          <div id="userDropdownMenu" class="user-dropdown-menu hidden" style="position: absolute; right: 0; top: calc(100% + 8px); min-width: 220px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1100; display: flex; flex-direction: column; gap: 8px;">
-            <div style="padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08);">
-              <div id="dropdownUserName" style="font-size: 13px; font-weight: 800; color: #FFF;">Usuario</div>
-              <div id="dropdownUserEmail" style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">usuario@empresa.com</div>
-              <div id="dropdownUserOrg" style="font-size: 10px; font-weight: 800; color: var(--emerald); margin-top: 4px; text-transform: uppercase;">Organización</div>
+          <div id="userDropdownMenu" class="user-dropdown-menu hidden" style="position: absolute; right: 0; top: calc(100% + 8px); min-width: 240px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.7); z-index: 1200; display: flex; flex-direction: column; gap: 10px;">
+            <div style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                <div id="dropdownUserName" style="font-size: 14px; font-weight: 800; color: #FFF;">superadmin</div>
+                <span id="dropdownUserRoleBadge" class="badge-role" style="font-size: 10px; padding: 2px 6px;">SUPERADMIN</span>
+              </div>
+              <div id="dropdownUserEmail" style="font-size: 12px; color: var(--text-muted);">superadmin@hologrowth.com.ar</div>
+              <div id="dropdownUserOrg" style="font-size: 11px; font-weight: 700; color: var(--emerald); margin-top: 4px; text-transform: uppercase;">HoloWare Cloud Platform</div>
             </div>
 
-            <button type="button" class="btn-danger" style="width: 100%; padding: 8px 12px; font-size: 12px; font-weight: 800; border-radius: 8px; justify-content: center;" onclick="logout()">
+            <button type="button" class="btn-danger" style="width: 100%; padding: 8px 12px; font-size: 12px; font-weight: 800; border-radius: 6px; justify-content: center;" onclick="logout()">
               Cerrar Sesión
             </button>
           </div>

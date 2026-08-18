@@ -223,17 +223,24 @@ function applyRoleVisibility() {
 
     const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displaySuperUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
-      userBadge.title = `${currentUser.role}: ${displaySuperUser} (${currentUser.email || ''})`;
+      userBadge.innerHTML = `<span class="badge-user-name">${displaySuperUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
+      userBadge.title = `${displaySuperUser} (${currentUser.role})`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
     }
 
     const dropName = document.getElementById('dropdownUserName');
+    const dropRoleBadge = document.getElementById('dropdownUserRoleBadge');
     const dropEmail = document.getElementById('dropdownUserEmail');
     const dropOrg = document.getElementById('dropdownUserOrg');
-    if (dropName) dropName.innerText = currentUser.name || displaySuperUser;
+    if (dropName) dropName.innerText = currentUser.name ? `${currentUser.name} (@${displaySuperUser})` : displaySuperUser;
+    if (dropRoleBadge) {
+      dropRoleBadge.innerText = currentUser.role || 'SUPERADMIN';
+      dropRoleBadge.style.background = 'rgba(167, 139, 250, 0.2)';
+      dropRoleBadge.style.color = '#A78BFA';
+      dropRoleBadge.style.border = '1px solid #A78BFA';
+    }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
     if (dropOrg) dropOrg.innerText = 'HoloWare Cloud Platform (SUPERADMIN)';
 
@@ -264,17 +271,24 @@ function applyRoleVisibility() {
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
 
     if (userBadge) {
-      userBadge.innerHTML = `<span class="badge-role-text">${currentUser.role}</span><span class="badge-user-email">: ${displayUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
-      userBadge.title = `${currentUser.role}: ${displayUser} (${currentUser.email || ''})`;
+      userBadge.innerHTML = `<span class="badge-user-name">${displayUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
+      userBadge.title = `${displayUser} (${currentUser.role})`;
       userBadge.style.background = 'rgba(0, 230, 118, 0.15)';
       userBadge.style.color = 'var(--emerald)';
       userBadge.style.borderColor = 'var(--emerald)';
     }
 
     const dropName = document.getElementById('dropdownUserName');
+    const dropRoleBadge = document.getElementById('dropdownUserRoleBadge');
     const dropEmail = document.getElementById('dropdownUserEmail');
     const dropOrg = document.getElementById('dropdownUserOrg');
-    if (dropName) dropName.innerText = currentUser.name || displayUser;
+    if (dropName) dropName.innerText = currentUser.name ? `${currentUser.name} (@${displayUser})` : displayUser;
+    if (dropRoleBadge) {
+      dropRoleBadge.innerText = currentUser.role || 'OPERATOR';
+      dropRoleBadge.style.background = 'rgba(0, 230, 118, 0.15)';
+      dropRoleBadge.style.color = 'var(--emerald)';
+      dropRoleBadge.style.border = '1px solid var(--emerald)';
+    }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
     if (dropOrg) dropOrg.innerText = `Organización: ${currentUser.tenantName || orgName}`;
 
