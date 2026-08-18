@@ -171,7 +171,7 @@ const THEMES = {
   omarchy_aetheria: {
     name: 'Omarchy Aetheria',
     background: '#0E091D',
-    cardBg: 'rgba(23, 15, 46, 0.75)',
+    cardBg: '#170F2E',
     cardBorder: '#3D256D',
     emerald: '#14B9B5',
     cobalt: '#7C3AED',
@@ -181,13 +181,13 @@ const THEMES = {
     textMuted: '#9D8BBF',
     fontFamily: 'JetBrains Mono',
     fontMono: 'JetBrains Mono',
-    borderRadius: 6,
-    radiusCard: 6,
-    radiusBtn: 6,
-    radiusBadge: 4,
-    borderWidth: 1,
-    backdropBlur: 'blur(12px)',
-    boxShadow: '0 4px 20px rgba(124, 58, 237, 0.15)'
+    borderRadius: 4,
+    radiusCard: 4,
+    radiusBtn: 4,
+    radiusBadge: 2,
+    borderWidth: 2,
+    backdropBlur: 'none',
+    boxShadow: 'none'
   },
   soft_minimal_pastel: {
     name: 'Soft Minimal Pastel',

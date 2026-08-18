@@ -759,7 +759,7 @@ body.theme-cyberpunk_glassmorphism .btn-close-drawer:hover {
 }
 
 /* ============================================================ */
-/* 5. OMARCHY AETHERIA THEME (OLED DEEP VIOLET & TEAL/CYAN)     */
+/* 5. OMARCHY AETHERIA THEME (OLED DEEP VIOLET & TEAL 4PX TILING) */
 /* ============================================================ */
 html.theme-omarchy_aetheria,
 body.theme-omarchy_aetheria {
@@ -768,16 +768,18 @@ body.theme-omarchy_aetheria {
   background-image: none !important;
 }
 
+/* Universal Wildcard Enforcement: ALL elements in Omarchy Aetheria MUST be 4px square tiling */
 body.theme-omarchy_aetheria,
 body.theme-omarchy_aetheria *,
 body.theme-omarchy_aetheria *:before,
 body.theme-omarchy_aetheria *:after {
   font-family: 'JetBrains Mono', monospace !important;
+  border-radius: 4px !important;
 }
 
 body.theme-omarchy_aetheria header {
   background: #090514 !important;
-  border-bottom: 1px solid #3D256D !important;
+  border-bottom: 2px solid #3D256D !important;
   border-radius: 0px !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
@@ -806,7 +808,7 @@ body.theme-omarchy_aetheria #activeContextBadge {
   font-family: 'JetBrains Mono', monospace !important;
   font-size: 12px !important;
   font-weight: 800 !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   border: 1px solid #7C3AED !important;
   background: rgba(124, 58, 237, 0.2) !important;
   color: #C4B5FD !important;
@@ -825,17 +827,17 @@ body.theme-omarchy_aetheria .data-table,
 body.theme-omarchy_aetheria section,
 body.theme-omarchy_aetheria article {
   background: #170F2E !important;
-  border: 1px solid #3D256D !important;
-  border-radius: 6px !important;
+  border: 2px solid #3D256D !important;
+  border-radius: 4px !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
+  box-shadow: none !important;
 }
 
 body.theme-omarchy_aetheria .kanban-card:hover,
 body.theme-omarchy_aetheria .module-card:hover {
   border-color: #14B9B5 !important;
-  box-shadow: 0 0 12px rgba(20, 185, 181, 0.25) !important;
+  box-shadow: 0 0 12px rgba(20, 185, 181, 0.3) !important;
 }
 
 body.theme-omarchy_aetheria .btn-primary,
@@ -844,7 +846,7 @@ body.theme-omarchy_aetheria .btn-action {
   background: #14B9B5 !important;
   color: #0E091D !important;
   font-weight: 800 !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
 body.theme-omarchy_aetheria .btn-secondary,
@@ -854,7 +856,7 @@ body.theme-omarchy_aetheria .nav-tab {
   border: 1px solid #3D256D !important;
   background: #170F2E !important;
   color: #F3EEFF !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
 body.theme-omarchy_aetheria .theme-select,
@@ -862,7 +864,7 @@ body.theme-omarchy_aetheria .btn-header-ctrl,
 body.theme-omarchy_aetheria .badge-header-ctrl {
   height: 34px !important;
   font-size: 12px !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   border: 1px solid #3D256D !important;
   background: #170F2E !important;
   color: #F3EEFF !important;
@@ -872,26 +874,48 @@ body.theme-omarchy_aetheria .badge-header-ctrl {
   justify-content: center !important;
 }
 
+body.theme-omarchy_aetheria .badge-header-ctrl {
+  border-color: #7C3AED !important;
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #C4B5FD !important;
+}
+
 body.theme-omarchy_aetheria .nav-tab.active {
   background: #7C3AED !important;
   color: #FFFFFF !important;
   border-color: #7C3AED !important;
   font-weight: 800 !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_aetheria .badge-role,
+body.theme-omarchy_aetheria .superadmin-badge,
+body.theme-omarchy_aetheria .badge-admin,
+body.theme-omarchy_aetheria .badge-operator,
+body.theme-omarchy_aetheria .badge-superadmin,
+body.theme-omarchy_aetheria #activeContextBadge {
+  border-radius: 4px !important;
+  border: 1px solid #7C3AED !important;
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #C4B5FD !important;
 }
 
 body.theme-omarchy_aetheria input,
 body.theme-omarchy_aetheria select {
-  border-radius: 6px !important;
+  border-radius: 4px !important;
   border: 1px solid #3D256D !important;
   background: #110B24 !important;
   color: #F3EEFF !important;
 }
 
-/* Omarchy Aetheria Mobile Drawer */
+/* Omarchy Aetheria Mobile Drawer & Hamburger */
 body.theme-omarchy_aetheria .btn-hamburger span {
   background-color: #14B9B5 !important;
   border-radius: 1px !important;
+}
+
+body.theme-omarchy_aetheria .btn-hamburger:hover span {
+  background-color: #7C3AED !important;
 }
 
 body.theme-omarchy_aetheria .mobile-nav-drawer {
@@ -899,6 +923,45 @@ body.theme-omarchy_aetheria .mobile-nav-drawer {
   border-right: 1px solid #3D256D !important;
   font-family: 'JetBrains Mono', monospace !important;
   border-radius: 0px !important;
+}
+
+body.theme-omarchy_aetheria .mobile-drawer-header,
+body.theme-omarchy_aetheria .mobile-drawer-footer {
+  border-color: #3D256D !important;
+}
+
+body.theme-omarchy_aetheria #mobileActiveContext {
+  font-family: 'JetBrains Mono', monospace !important;
+  color: #C4B5FD !important;
+}
+
+body.theme-omarchy_aetheria .mobile-nav-tab {
+  font-family: 'JetBrains Mono', monospace !important;
+  color: #F3EEFF !important;
+  border-radius: 4px !important;
+  border: 1px solid transparent !important;
+}
+
+body.theme-omarchy_aetheria .mobile-nav-tab:hover {
+  background: #3D256D !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-omarchy_aetheria .mobile-nav-tab.active {
+  background: #7C3AED !important;
+  color: #FFFFFF !important;
+  border-color: #7C3AED !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_aetheria .btn-close-drawer {
+  color: #F3EEFF !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+body.theme-omarchy_aetheria .btn-close-drawer:hover {
+  color: #14B9B5 !important;
 }
 
 /* ============================================================ */
@@ -919,7 +982,8 @@ body.theme-omarchy_tiling .mobile-nav-tab {
 
 body.theme-omarchy_aetheria .nav-tab,
 body.theme-omarchy_aetheria .mobile-nav-tab {
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
+
 
 
