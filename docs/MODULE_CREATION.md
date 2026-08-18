@@ -1,14 +1,14 @@
-# Guía de Creación de Nuevos Módulos en HoloWare Baseline
+# Guía de Creación de Nuevos Módulos en HoloSpace Baseline
 
-> Guía paso a paso para desarrolladores que deseen agregar un nuevo módulo a la plataforma HoloWare Baseline.
+> Guía paso a paso para desarrolladores que deseen agregar un nuevo módulo a la plataforma HoloSpace Baseline.
 
 ---
 
-## 1. Concepto de Módulo en HoloWare
+## 1. Concepto de Módulo en HoloSpace
 
-Un módulo en HoloWare Baseline es una aplicación aislada dentro del contenedor principal que comparte:
+Un módulo en HoloSpace Baseline es una aplicación aislada dentro del contenedor principal que comparte:
 - Autenticación JWT y esquema de usuarios (`users`).
-- Base de datos SQLite unificada (`./data/holoware.db`).
+- Base de datos SQLite unificada (`./data/holospace.db`).
 - Sistema de temas visuales dinámicos.
 - Panel de gestión para el **Super Administrador**.
 

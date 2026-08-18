@@ -1,6 +1,6 @@
-# 🎨 ESPECIFICACIÓN DEL SISTEMA DE DISEÑO HOLOWARE (HW-DS)
+# 🎨 ESPECIFICACIÓN DEL SISTEMA DE DISEÑO HOLOSPACE (HW-DS)
 
-Este documento define la especificación técnica, tokens visuales, jerarquía de bordes, tipografías y comportamiento de fondo para cada uno de los **4 temas oficiales de la plataforma HoloWare Baseline**.
+Este documento define la especificación técnica, tokens visuales, jerarquía de bordes, tipografías y comportamiento de fondo para cada uno de los **4 temas oficiales de la plataforma HoloSpace Baseline**.
 
 ---
 

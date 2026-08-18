@@ -1,5 +1,5 @@
 /**
- * HoloWare Module: ScanBan — API Router Module
+ * HoloSpace Module: ScanBan — API Router Module
  * Handles all /api/scanban/* routes
  */
 

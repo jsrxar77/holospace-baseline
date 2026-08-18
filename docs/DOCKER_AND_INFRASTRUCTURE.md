@@ -1,4 +1,4 @@
-# 🐳 HoloWare SaaS: Dockerización & Despliegue de Infraestructura
+# 🐳 HoloSpace SaaS: Dockerización & Despliegue de Infraestructura
 
 > **Documento de Especificación Técnica:** Contenedorización multi-etapa, orquestación con Docker Compose, arquitectura de servicios y despliegue en producción.
 
@@ -13,13 +13,13 @@
                         ┌───────────────────────────┐
                         │   Nginx / Traefik Proxy   │ (Puertos 80, 443)
                         │   - Terminación SSL/TLS   │
-                        │   - Wildcard *.holoware.app│
+                        │   - Wildcard *.holospace.app│
                         └─────────────┬─────────────┘
                                       │
                  ┌────────────────────┼────────────────────┐
                  ▼                    ▼                    ▼
      ┌───────────────────────┐ ┌──────────────┐ ┌───────────────────────┐
-     │  HoloWare App Server  │ │ Redis Cache  │ │ PostgreSQL 16 (RLS)   │
+     │  HoloSpace App Server  │ │ Redis Cache  │ │ PostgreSQL 16 (RLS)   │
      │  Node.js (Core+ScanBan│ │ Sesiones/Rate│ │ Multi-Tenant DB       │
      │  Container            │ │ Limiting     │ │ Storage Volume        │
      └───────────┬───────────┘ └──────────────┘ └───────────┬───────────┘
@@ -81,12 +81,12 @@ CMD ["node", "server.js"]
 version: '3.8'
 
 services:
-  # 1. Servidor de Aplicación HoloWare Core
+  # 1. Servidor de Aplicación HoloSpace Core
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: holoware_app
+    container_name: holospace_app
     restart: always
     environment:
       - NODE_ENV=production
@@ -100,42 +100,42 @@ services:
       redis:
         condition: service_started
     networks:
-      - holoware_network
+      - holospace_network
 
   # 2. Base de Datos Relacional PostgreSQL 16 con RLS
   postgres:
     image: postgres:16-alpine
-    container_name: holoware_postgres
+    container_name: holospace_postgres
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-holoware_admin}
+      POSTGRES_USER: ${POSTGRES_USER:-holospace_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Secr3tP@ssword2026}
-      POSTGRES_DB: ${POSTGRES_DB:-holoware_saas}
+      POSTGRES_DB: ${POSTGRES_DB:-holospace_saas}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data/init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-holoware_admin}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-holospace_admin}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - holoware_network
+      - holospace_network
 
   # 3. Redis para Caché de Licenciamiento, Sesiones y Rate-Limiting
   redis:
     image: redis:7-alpine
-    container_name: holoware_redis
+    container_name: holospace_redis
     restart: always
     volumes:
       - redis_data:/data
     networks:
-      - holoware_network
+      - holospace_network
 
   # 4. Proxy Reverso Nginx con SSL Automático
   nginx:
     image: nginx:alpine
-    container_name: holoware_proxy
+    container_name: holospace_proxy
     restart: always
     ports:
       - "80:80"
@@ -146,17 +146,17 @@ services:
     depends_on:
       - app
     networks:
-      - holoware_network
+      - holospace_network
 
   # 5. Servicio Automatizado de Backups Encriptados
   backup_runner:
     image: prodrigestivill/postgres-backup-local:16-alpine
-    container_name: holoware_backups
+    container_name: holospace_backups
     restart: always
     environment:
       - POSTGRES_HOST=postgres
-      - POSTGRES_DB=${POSTGRES_DB:-holoware_saas}
-      - POSTGRES_USER=${POSTGRES_USER:-holoware_admin}
+      - POSTGRES_DB=${POSTGRES_DB:-holospace_saas}
+      - POSTGRES_USER=${POSTGRES_USER:-holospace_admin}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-Secr3tP@ssword2026}
       - SCHEDULE=@daily
       - BACKUP_KEEP_DAYS=30
@@ -168,14 +168,14 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - holoware_network
+      - holospace_network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  holoware_network:
+  holospace_network:
     driver: bridge
 ```
 
@@ -190,7 +190,7 @@ Para inspeccionar y monitorear la salud de todos los contenedores en tiempo real
 # Ver logs de TODOS los servicios en tiempo real (seguimiento continuo)
 docker compose logs -f
 
-# Ver logs únicamente del Servidor de Aplicación (HoloWare App)
+# Ver logs únicamente del Servidor de Aplicación (HoloSpace App)
 docker compose logs -f app
 
 # Ver logs de la Base de Datos PostgreSQL 16
@@ -204,5 +204,5 @@ docker compose logs --tail=100 -f
 ```
 
 ### ⚡ Hot-Reload en Desarrollo:
-El contenedor `holoware_app` ejecuta `node --watch server.js` con volúmenes montados hacia el código fuente (`public/`, `server.js`, `lib/`, `modules/`). Cualquier modificación en el código es detectada y aplicada en menos de 100ms sin requerir reinicios manuales de Docker.
+El contenedor `holospace_app` ejecuta `node --watch server.js` con volúmenes montados hacia el código fuente (`public/`, `server.js`, `lib/`, `modules/`). Cualquier modificación en el código es detectada y aplicada en menos de 100ms sin requerir reinicios manuales de Docker.
 

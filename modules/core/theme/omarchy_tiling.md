@@ -8,7 +8,7 @@
 
 ## 1. Descripción General
 
-El tema **Omarchy Tiling WM** implementa la arquitectura de interfaz de la distribución Omarchy Linux (curada con Hyprland). Se caracteriza por esquinas nítidas de 4px, bordes definidos de 2px solid, tipografía `JetBrains Mono` en toda la aplicación, módulos estilo Waybar en el encabezado y el logo `HoloWare` en fuente pixelada `Press Start 2P`.
+El tema **Omarchy Tiling WM** implementa la arquitectura de interfaz de la distribución Omarchy Linux (curada con Hyprland). Se caracteriza por esquinas nítidas de 4px, bordes definidos de 2px solid, tipografía `JetBrains Mono` en toda la aplicación, módulos estilo Waybar en el encabezado y el logo `HoloSpace` en fuente pixelada `Press Start 2P`.
 
 ---
 

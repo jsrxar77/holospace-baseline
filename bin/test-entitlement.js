@@ -53,12 +53,12 @@ async function runTests() {
 
   // 5. Activación dinámica de Módulo (Feature Flag)
   console.log('\n--- 5. Activación Dinámica de Módulo ---');
-  await setTenantModuleState(TEST_TENANT_ID, 'stockflow', true, 'superadmin@holoware.com');
+  await setTenantModuleState(TEST_TENANT_ID, 'stockflow', true, 'superadmin@holospace.com');
   const stockflowAfter = await checkTenantModuleAccess(TEST_TENANT_ID, 'stockflow');
   assert(stockflowAfter === true, 'Módulo `stockflow` activado dinámicamente con éxito');
 
   // 6. Desactivación de Módulo
-  await setTenantModuleState(TEST_TENANT_ID, 'stockflow', false, 'superadmin@holoware.com');
+  await setTenantModuleState(TEST_TENANT_ID, 'stockflow', false, 'superadmin@holospace.com');
   const stockflowDisabled = await checkTenantModuleAccess(TEST_TENANT_ID, 'stockflow');
   assert(stockflowDisabled === false, 'Módulo `stockflow` desactivado con éxito');
 

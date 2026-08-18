@@ -1,4 +1,4 @@
-// metro.config.js — HoloWare Baseline
+// metro.config.js — HoloSpace Baseline
 // Resuelve la incompatibilidad de expo-sqlite en plataforma web
 // y fuerza a Zustand a usar CommonJS (evitando import.meta en ESM bajo Metro Web).
 

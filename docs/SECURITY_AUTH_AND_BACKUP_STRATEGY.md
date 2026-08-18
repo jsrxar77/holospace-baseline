@@ -1,4 +1,4 @@
-# 🔒 HoloWare SaaS: Seguridad, Autenticación & Estrategia de Backups
+# 🔒 HoloSpace SaaS: Seguridad, Autenticación & Estrategia de Backups
 
 > **Documento de Especificación Técnica:** Protocolos de seguridad de grado empresarial, hashing de credenciales, autenticación JWT multi-tenant y estrategia de respaldo y recuperación de desastres (DRP).
 
@@ -77,7 +77,7 @@ Para garantizar cero pérdida de datos (*RPO < 1 hora*) y rápida recuperación 
 2. **Backups Específicos por Tenant (Export on Demand):**
    * Script automatizado para extraer datos únicamente del Tenant solicitado:
    ```bash
-   pg_dump -d holoware_saas -t "orders" -t "order_items" -t "users" \
+   pg_dump -d holospace_saas -t "orders" -t "order_items" -t "users" \
      --where="tenant_id='550e8400-e29b-41d4-a716-446655440000'" > tenant_export.sql
    ```
 3. **Point-In-Time Recovery (PITR):** Activación de Write-Ahead Logging (WAL-G / pgBackRest) para permitir restauración al segundo exacto en caso de corrupción o incidente.

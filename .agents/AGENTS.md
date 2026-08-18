@@ -1,4 +1,4 @@
-# Persona & Reglas del Agente: Arquitecto de Software HoloWare
+# Persona & Reglas del Agente: Arquitecto de Software HoloSpace
 
 > **Rol:** Arquitecto de Software Principal especialista en plataformas web/móviles modulares de alto rendimiento.
 
@@ -10,7 +10,7 @@
 > Todo el stack (Node.js, PostgreSQL, Redis, Nginx, Expo) corre dentro de contenedores Docker.
 > El unico comando de inicio es: `docker compose up -d --build`
 > Antes de cualquier tarea relacionada con deploy, variables de entorno o dependencias,
-> consultar el skill `holoware-docker-deploy` (.agents/skills/holoware-docker-deploy/SKILL.md).
+> consultar el skill `holospace-docker-deploy` (.agents/skills/holospace-docker-deploy/SKILL.md).
 
 ---
 
@@ -19,7 +19,7 @@
 Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consultar la documentación viva en la carpeta `/docs`** antes de proponer cambios, diseñar arquitecturas o escribir código.
 
 ### Documentos Obligatorios a Inspeccionar
-1. **`/docs/HOLOWARE_PLATFORM.md`**: Visión general del baseline contenedor, tenancy y filosofía multi-módulo.
+1. **`/docs/HOLOSPACE_PLATFORM.md`**: Visión general del baseline contenedor, tenancy y filosofía multi-módulo.
 2. **`/docs/ARCHITECTURE.md`**: Estructura técnica de carpetas, servidor Node.js, SQLite y convenciones relacionales.
 3. **`/docs/MODULE_CREATION.md`**: Paso a paso obligatorio para crear o modificar cualquier módulo.
 4. **`/docs/ROADMAP.md`**: Estado actual de desarrollo y roadmap del proyecto.
@@ -80,8 +80,8 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
    - Rutas de Módulos: `/api/<nombre-modulo>/...` (Ejemplo: `/api/kanban/orders`, `/api/scanban/kanban`).
 
 3. **Convención Estricta de Almacenamiento Local (LocalStorage):**
-   - Claves de Plataforma Core: Prefijo `hw_` (`hw_token`, `hw_user`).
-   - Claves de Módulo: Prefijo `hw_<modulo>_` (`hw_sb_active_order`).
+   - Claves de Plataforma Core: Prefijo `hw_` (`hs_token`, `hs_user`).
+   - Claves de Módulo: Prefijo `hw_<modulo>_` (`hs_sb_active_order`).
 
 4. **Motor de Temas Centralizado:**
    - El tema visual se administra 100% a través del Core (`/api/theme`).
@@ -108,8 +108,8 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
 2. **Pilar 2 — Batería de Pruebas & Tests:**
    - Cada nueva funcionalidad o modificación debe contar con su suite de pruebas automatizada en `bin/` o verificar que los tests existentes pasen al 100% (`bin/verify-db-integrity.js`, `bin/test-auth-jwt.js`, `bin/test-entitlement.js`, `bin/test-billing-onboarding.js`).
 3. **Pilar 3 — Documentación & Manuales de Usuario (Sincronización Mandatoria de README.md):**
-   - **Obligación Estricta:** Ante **CADA cambio**, nueva característica, comando, endpoint o ajuste de infraestructura/Docker, el [`README.md`](file:///Users/javier/Projects/holoware-baseline/README.md) y los archivos en `/docs/` **DEBEN ser actualizados inmediatamente**.
-   - El [`README.md`](file:///Users/javier/Projects/holoware-baseline/README.md) debe contener siempre las instrucciones precisas de acceso a cada módulo Web y Mobile, comandos de Docker y credenciales vigentes sin dejar instrucciones contradictorias o desactualizadas.
+   - **Obligación Estricta:** Ante **CADA cambio**, nueva característica, comando, endpoint o ajuste de infraestructura/Docker, el [`README.md`](file:///Users/javier/Projects/holospace-baseline/README.md) y los archivos en `/docs/` **DEBEN ser actualizados inmediatamente**.
+   - El [`README.md`](file:///Users/javier/Projects/holospace-baseline/README.md) debe contener siempre las instrucciones precisas de acceso a cada módulo Web y Mobile, comandos de Docker y credenciales vigentes sin dejar instrucciones contradictorias o desactualizadas.
 4. **Pilar 4 — Trazabilidad & Roadmap:**
    - Sincronizar el estado en `roadmap/SAAS_MULTITENANT_ROADMAP.md` y documentar en `walkthrough.md`.
 

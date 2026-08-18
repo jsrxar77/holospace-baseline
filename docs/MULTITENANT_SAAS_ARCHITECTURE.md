@@ -1,18 +1,18 @@
-# 🏛️ HoloWare SaaS: Arquitectura Multi-Tenant & Modelo de Datos
+# 🏛️ HoloSpace SaaS: Arquitectura Multi-Tenant & Modelo de Datos
 
-> **Documento de Especificación Técnica:** Evolución de HoloWare Baseline de arquitectura Single-Tenant a Ecosistema SaaS B2B Multi-Tenant escalable, seguro y monetizable por suscripciones.
+> **Documento de Especificación Técnica:** Evolución de HoloSpace Baseline de arquitectura Single-Tenant a Ecosistema SaaS B2B Multi-Tenant escalable, seguro y monetizable por suscripciones.
 
 ---
 
 ## 1. Visión General & Objetivos Arquitectónicos
 
-La evolución a **HoloWare Multi-Tenant** permite transformar el software en un producto SaaS B2B donde múltiples empresas u organizaciones clientes (**Tenants**) operan de forma completamente aislada dentro de una misma infraestructura optimizada, compartiendo recursos computacionales con garantías criptográficas y relacionales de no-contaminación de datos (*Data Isolation*).
+La evolución a **HoloSpace Multi-Tenant** permite transformar el software en un producto SaaS B2B donde múltiples empresas u organizaciones clientes (**Tenants**) operan de forma completamente aislada dentro de una misma infraestructura optimizada, compartiendo recursos computacionales con garantías criptográficas y relacionales de no-contaminación de datos (*Data Isolation*).
 
 ### Objetivos Clave:
 1. **Aislamiento Estricto de Datos:** Ningún Tenant puede bajo ninguna circunstancia acceder, consultar o modificar información de otro Tenant.
 2. **Escalabilidad Horizontal & Eficiencia en Costos:** Capacidad para atender a miles de organizaciones sin multiplicar linealmente los costos de infraestructura.
 3. **Monetización Modular:** Capacidad de habilitar, cobrar y limitar módulos de forma independiente (`core`, `scanban`, `stockflow`, `analytics`) según la suscripción de cada Tenant.
-4. **Resolución Flexible de Tenant:** Soporte para subdominios (`empresa.holoware.app`), dominios personalizados y encabezados HTTP (`X-Tenant-ID`).
+4. **Resolución Flexible de Tenant:** Soporte para subdominios (`empresa.holospace.app`), dominios personalizados y encabezados HTTP (`X-Tenant-ID`).
 
 ---
 
@@ -99,10 +99,10 @@ await db.query(`SET LOCAL app.current_tenant_id = '${req.tenantId}';`);
 
 ## 5. Estrategia de Resolución de Tenant (Tenant Resolution)
 
-HoloWare resolverá el Tenant dinámicamente mediante 3 mecanismos jerárquicos:
+HoloSpace resolverá el Tenant dinámicamente mediante 3 mecanismos jerárquicos:
 
 1. **Subdominio DNS (Recomendado para Web):**
-   * Petición a `drinklovers.holoware.app` ➔ Extrae el slug `drinklovers`.
+   * Petición a `drinklovers.holospace.app` ➔ Extrae el slug `drinklovers`.
 2. **Encabezado HTTP `X-Tenant-ID` (Recomendado para Mobile App / Escáner):**
    * La app móvil envía `X-Tenant-ID: drinklovers` o `X-Tenant-ID: <UUID>` en cada llamada a la API.
 3. **Token JWT:**

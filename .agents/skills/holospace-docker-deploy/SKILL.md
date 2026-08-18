@@ -1,18 +1,18 @@
 ---
-name: holoware-docker-deploy
+name: holospace-docker-deploy
 description: >
-  Workflow de deploy y rebuild de servicios Docker de HoloWare Baseline.
+  Workflow de deploy y rebuild de servicios Docker de HoloSpace Baseline.
   Usar cuando se modifiquen variables de entorno, dependencias o el Dockerfile.
   Incluye guia de que cambios requieren rebuild y cuales no.
   ACTIVAR cuando el agente necesite saber si un cambio requiere reconstruir Docker
   o si el hot-reload lo aplica automaticamente.
 ---
 
-# Skill: HoloWare Docker Deploy and Rebuild
+# Skill: HoloSpace Docker Deploy and Rebuild
 
 ## CRITICO: Todo corre en Docker
 
-> **TODA la infraestructura de HoloWare corre dentro de Docker.**
+> **TODA la infraestructura de HoloSpace corre dentro de Docker.**
 > No existe npm, node ni servidor corriendo directamente en el host Mac.
 > El comando `npm run dev` NO debe usarse. Solo existe para desarrollo local
 > sin Docker, que no es el flujo de este proyecto.
@@ -22,12 +22,12 @@ description: >
 
 | Contenedor | Puerto Host | Descripcion |
 |---|---|---|
-| `holoware_app` | `3001` | Servidor Node.js (API + Web Core + ScanBan Board) |
-| `holoware_mobile` | `8081` | Expo Metro Bundler (ScanBan Scanner Web y QR Expo Go) |
-| `holoware_postgres` | `5434` | PostgreSQL 16 con RLS |
-| `holoware_redis` | `6382` | Cache de entitlements y sesiones |
-| `holoware_proxy` | `80, 443` | Nginx proxy reverso |
-| `holoware_backups` | - | Backups automaticos de PostgreSQL |
+| `holospace_app` | `3001` | Servidor Node.js (API + Web Core + ScanBan Board) |
+| `holospace_mobile` | `8081` | Expo Metro Bundler (ScanBan Scanner Web y QR Expo Go) |
+| `holospace_postgres` | `5434` | PostgreSQL 16 con RLS |
+| `holospace_redis` | `6382` | Cache de entitlements y sesiones |
+| `holospace_proxy` | `80, 443` | Nginx proxy reverso |
+| `holospace_backups` | - | Backups automaticos de PostgreSQL |
 
 ---
 
@@ -45,7 +45,7 @@ Metro y Node --watch los detectan solos sin necesidad de reiniciar nada:
 - `lib/*.js` - modulos de infraestructura (db, auth, billing, etc.)
 - `public/` - assets estaticos del portal
 
-Como verificar: `docker logs holoware_app -f` o `docker logs holoware_mobile -f`
+Como verificar: `docker logs holospace_app -f` o `docker logs holospace_mobile -f`
 
 ### SI requiere rebuild
 
@@ -65,14 +65,14 @@ Comando: `docker compose up -d --build <servicio>`
 ```bash
 docker compose up -d --build mobile
 docker ps
-docker logs holoware_mobile --tail 20
+docker logs holospace_mobile --tail 20
 ```
 
 ### Caso 2: Cambio en dependencias (package.json)
 
 ```bash
 docker compose up -d --build app mobile
-docker logs holoware_app --tail 10
+docker logs holospace_app --tail 10
 ```
 
 ### Caso 3: Reset completo
@@ -106,7 +106,7 @@ curl -s -X POST http://localhost:3001/api/login \
 ### 2. Verificar variables de entorno en el contenedor
 
 ```bash
-docker inspect holoware_mobile --format '{{range .Config.Env}}{{println .}}{{end}}'
+docker inspect holospace_mobile --format '{{range .Config.Env}}{{println .}}{{end}}'
 ```
 
 ### 3. Inspeccionar el bundle Metro (verificar SERVER_URL real)
@@ -159,6 +159,6 @@ Luego: `docker compose up -d --build mobile`
 
 | Modulo | Misma maquina | Red local (otro dispositivo) |
 |---|---|---|
-| HoloWare Core y ScanBan Board | `http://localhost:3001` | `http://192.168.100.247:3001` |
+| HoloSpace Core y ScanBan Board | `http://localhost:3001` | `http://192.168.100.247:3001` |
 | ScanBan Scanner (web) | `http://localhost:8081` | `http://192.168.100.247:8081` |
 | Expo Go (QR) | `http://localhost:8081` | `http://192.168.100.247:8081` |

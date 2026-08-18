@@ -1,13 +1,13 @@
-# Estrategia de Arquitectura UX/UI y Sistema de Diseño Responsive — HoloWare SaaS
+# Estrategia de Arquitectura UX/UI y Sistema de Diseño Responsive — HoloSpace SaaS
 
-> **Documento de Diseño y Arquitectura Visual:** Estándares de interfaz, distribución espacial (Header, Workspace, Footer), adaptabilidad multidispositivo (Desktop, Tablet, Mobile) y jerarquía de componentes para el Baseline SaaS de HoloWare.
+> **Documento de Diseño y Arquitectura Visual:** Estándares de interfaz, distribución espacial (Header, Workspace, Footer), adaptabilidad multidispositivo (Desktop, Tablet, Mobile) y jerarquía de componentes para el Baseline SaaS de HoloSpace.
 
 ---
 
 ## 1. Diagnóstico de la Situación Actual
 
 1. **Saturación en una Sola Fila (Header Amontonado):**
-   * Actualmente conviven en una misma barra horizontal: Logo `HoloWare`, Badge de contexto, 5 pestañas de navegación, selector de temas con texto, botón "Conectar Celular", badge con texto largo de usuario (`SUPERADMIN: superadmin@hologrowth.com.ar`) y botón "Cerrar Sesión".
+   * Actualmente conviven en una misma barra horizontal: Logo `HoloSpace`, Badge de contexto, 5 pestañas de navegación, selector de temas con texto, botón "Conectar Celular", badge con texto largo de usuario (`SUPERADMIN: superadmin@hologrowth.com.ar`) y botón "Cerrar Sesión".
    * Esto provoca colapso visual, textos apretados y desbordes horizontales en resoluciones estándar (1366px, laptops de 13" y tablets).
 
 2. **Falta de Responsividad Multidispositivo:**
@@ -43,7 +43,7 @@
 El encabezado superior se organiza en **3 áreas funcionales limpias**:
 
 ### Zona A: Identidad de Marca y Contexto Operativo (Izquierda)
-* **Logo de Plataforma:** `HoloWare` con tipografía bold y contraste nativo del tema.
+* **Logo de Plataforma:** `HoloSpace` con tipografía bold y contraste nativo del tema.
 * **Badge de Contexto:** Etiqueta sobria y monocromática que indica el contexto activo (`CORE`, `TENANTS`, `SCANBAN`, `SCANFLOW`). En vista cliente, indica el nombre/slug de la empresa (`DRINKLOVERS`, `POKE`).
 
 ### Zona B: Navegación Principal (Centro)
@@ -80,7 +80,7 @@ Para evitar saturar la barra con textos largos de emails y roles:
 Un footer delgado y discreto de 36px en la parte inferior con tipografía monoespaciada (`JetBrains Mono`, 12px) que aporta valor en entornos logísticos:
 * **Extremo Izquierdo:** Indicador de estado del motor de datos (`PostgreSQL 16 RLS • Online`).
 * **Centro:** Organización activa (`Organización: Drink Lovers Argentina`).
-* **Extremo Derecho:** Versión del sistema (`HoloWare SaaS v1.2.0`) y atajo a `Documentación`.
+* **Extremo Derecho:** Versión del sistema (`HoloSpace SaaS v1.2.0`) y atajo a `Documentación`.
 
 ---
 

@@ -1,16 +1,16 @@
-# Índice de Funcionalidades — HoloWare
+# Índice de Funcionalidades — HoloSpace
 
-> **Plataforma contenedora:** HoloWare — ver [HOLOWARE_PLATFORM.md](./HOLOWARE_PLATFORM.md).
+> **Plataforma contenedora:** HoloSpace — ver [HOLOSPACE_PLATFORM.md](./HOLOSPACE_PLATFORM.md).
 
 El sistema se organiza en 3 módulos oficiales:
 
 ---
 
-## 1. HoloWare Core (Web)
+## 1. HoloSpace Core (Web)
 
 - **Ámbito:** Gobierno de Plataforma (Exclusivo `SUPERADMIN`).
 - **Funcionalidades:**
-  - Autenticación JWT (`hw_token`).
+  - Autenticación JWT (`hs_token`).
   - ABM de Usuarios Core y roles.
   - Registro y activación/desactivación dinámica de módulos (`GET/POST /api/modules`).
   - Motor de Temas Visuales Globales (`GET/POST /api/theme`).
@@ -46,7 +46,7 @@ El sistema se organiza en 3 módulos oficiales:
 
 ---
 
-## 📋 4. HoloWare StockFlow (Plantilla Futura)
+## 📋 4. HoloSpace StockFlow (Plantilla Futura)
 
 - **Ámbito:** Módulo de Control de Inventario (Ejemplo de 2º Módulo).
 

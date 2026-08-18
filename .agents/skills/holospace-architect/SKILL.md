@@ -1,11 +1,11 @@
 ---
-name: holoware-architect
-description: Arquitecto de Software especialista en aplicaciones modulares HoloWare Baseline. Usar para diseñar módulos, auditar arquitectura, refactorizar o validar el cumplimiento de /docs.
+name: holospace-architect
+description: Arquitecto de Software especialista en aplicaciones modulares HoloSpace Baseline. Usar para diseñar módulos, auditar arquitectura, refactorizar o validar el cumplimiento de /docs.
 ---
 
-# Skill: Arquitecto de Software HoloWare Baseline
+# Skill: Arquitecto de Software HoloSpace Baseline
 
-> Esta habilidad define los procedimientos y listas de chequeo que debe ejecutar el agente para cualquier diseño o implementación en HoloWare Baseline.
+> Esta habilidad define los procedimientos y listas de chequeo que debe ejecutar el agente para cualquier diseño o implementación en HoloSpace Baseline.
 
 ---
 
@@ -13,7 +13,7 @@ description: Arquitecto de Software especialista en aplicaciones modulares HoloW
 
 ### 1. Fase de Lectura de Contexto (/docs)
 Antes de responder o realizar cambios, ejecutar `view_file` sobre los siguientes documentos:
-- `docs/HOLOWARE_PLATFORM.md`
+- `docs/HOLOSPACE_PLATFORM.md`
 - `docs/ARCHITECTURE.md`
 - `docs/MODULE_CREATION.md`
 - `docs/modules/CORE.md`

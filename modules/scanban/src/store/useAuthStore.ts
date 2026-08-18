@@ -29,9 +29,9 @@ interface AuthState {
   logout: () => void;
 }
 
-const CREDENTIALS_KEY_EMAIL = 'hw_saved_mobile_email';
-const CREDENTIALS_KEY_PASS = 'hw_saved_mobile_pass';
-const CREDENTIALS_KEY_TENANT = 'hw_saved_mobile_tenant';
+const CREDENTIALS_KEY_EMAIL = 'hs_saved_mobile_email';
+const CREDENTIALS_KEY_PASS = 'hs_saved_mobile_pass';
+const CREDENTIALS_KEY_TENANT = 'hs_saved_mobile_tenant';
 
 export const saveSavedCredentials = (email: string, pass: string = '', tenantSlug: string = '') => {
   try {

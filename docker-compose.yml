@@ -1,19 +1,19 @@
 services:
-  # 1. Servidor de Aplicación HoloWare Core Multi-Tenant
+  # 1. Servidor de Aplicación HoloSpace Core Multi-Tenant
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: holoware_app
+    container_name: holospace_app
     restart: unless-stopped
     command: ["node", "--watch", "server.js"]
     environment:
       - NODE_ENV=development
       - PORT=3001
-      - HW_PORT=3001
-      - DATABASE_URL=postgres://${POSTGRES_USER:-holoware_admin}:${POSTGRES_PASSWORD:-Secr3tP@ssword2026}@postgres:5432/${POSTGRES_DB:-holoware_saas}
+      - HS_PORT=3001
+      - DATABASE_URL=postgres://${POSTGRES_USER:-holospace_admin}:${POSTGRES_PASSWORD:-Secr3tP@ssword2026}@postgres:5432/${POSTGRES_DB:-holospace_saas}
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:-holoware_super_secret_jwt_key_2026_x89f_aes}
+      - JWT_SECRET=${JWT_SECRET:-holospace_super_secret_jwt_key_2026_x89f_aes}
     volumes:
       - ./data:/app/data
       - ./backups:/app/backups
@@ -30,46 +30,46 @@ services:
       redis:
         condition: service_started
     networks:
-      - holoware_network
+      - holospace_network
 
   # 2. Base de Datos Relacional PostgreSQL 16 con Row-Level Security (RLS)
   postgres:
     image: postgres:16-alpine
-    container_name: holoware_postgres
+    container_name: holospace_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-holoware_admin}
+      POSTGRES_USER: ${POSTGRES_USER:-holospace_admin}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Secr3tP@ssword2026}
-      POSTGRES_DB: ${POSTGRES_DB:-holoware_saas}
+      POSTGRES_DB: ${POSTGRES_DB:-holospace_saas}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data/init-schema.sql:/docker-entrypoint-initdb.d/01-init-schema.sql:ro
     ports:
       - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-holoware_admin} -d ${POSTGRES_DB:-holoware_saas}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-holospace_admin} -d ${POSTGRES_DB:-holospace_saas}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - holoware_network
+      - holospace_network
 
   # 3. Redis para Caché de Entitlements, Sesiones y Rate-Limiting
   redis:
     image: redis:7-alpine
-    container_name: holoware_redis
+    container_name: holospace_redis
     restart: unless-stopped
     ports:
       - "6382:6379"
     volumes:
       - redis_data:/data
     networks:
-      - holoware_network
+      - holospace_network
 
   # 4. Proxy Reverso Nginx con Enrutamiento Multi-Tenant
   nginx:
     image: nginx:alpine
-    container_name: holoware_proxy
+    container_name: holospace_proxy
     restart: unless-stopped
     ports:
       - "80:80"
@@ -79,14 +79,14 @@ services:
     depends_on:
       - app
     networks:
-      - holoware_network
+      - holospace_network
 
   # 5. Servicio de App Movil ScanBan Scanner (Expo Web & QR Metro Bundler)
   mobile:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: holoware_mobile
+    container_name: holospace_mobile
     restart: unless-stopped
     command: ["npx", "expo", "start", "--web", "--host", "lan", "--port", "8081"]
     ports:
@@ -109,17 +109,17 @@ services:
     depends_on:
       - app
     networks:
-      - holoware_network
+      - holospace_network
 
   # 6. Servicio Automatizado de Backups Diarios
   backups:
     image: prodrigestivill/postgres-backup-local:16-alpine
-    container_name: holoware_backups
+    container_name: holospace_backups
     restart: unless-stopped
     environment:
       - POSTGRES_HOST=postgres
-      - POSTGRES_DB=${POSTGRES_DB:-holoware_saas}
-      - POSTGRES_USER=${POSTGRES_USER:-holoware_admin}
+      - POSTGRES_DB=${POSTGRES_DB:-holospace_saas}
+      - POSTGRES_USER=${POSTGRES_USER:-holospace_admin}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-Secr3tP@ssword2026}
       - SCHEDULE=@daily
       - BACKUP_KEEP_DAYS=30
@@ -132,12 +132,12 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - holoware_network
+      - holospace_network
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  holoware_network:
+  holospace_network:
     driver: bridge

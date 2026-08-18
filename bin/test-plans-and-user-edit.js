@@ -87,7 +87,7 @@ async function testPlansAndUserEdit() {
   // Actualizar nombre
   const updateRes = await request('/api/users', 'PUT', {
     id: targetUser.id,
-    name: 'Super Administrador Global HoloWare',
+    name: 'Super Administrador Global HoloSpace',
     email: targetUser.email,
     role: 'SUPERADMIN'
   }, token);

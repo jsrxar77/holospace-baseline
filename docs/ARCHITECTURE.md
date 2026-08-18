@@ -1,6 +1,6 @@
-# Arquitectura Técnica — HoloWare SaaS Baseline
+# Arquitectura Técnica — HoloSpace SaaS Baseline
 
-> Arquitectura técnica modular de la plataforma contenedora SaaS Multi-Tenant HoloWare Baseline.
+> Arquitectura técnica modular de la plataforma contenedora SaaS Multi-Tenant HoloSpace Baseline.
 
 ---
 
@@ -8,7 +8,7 @@
 
 ```
 +----------------------------------------------------------------------------------------+
-|                              HoloWare Baseline SaaS Container                          |
+|                              HoloSpace Baseline SaaS Container                          |
 |                                                                                        |
 |  +----------------+  +-----------------+  +-------------------+  +------------------+  |
 |  | 🏛️ Tenant      |  | ⚙️ Core         |  | 📋 Kanban         |  | 📱 Scanner       |  |
@@ -32,20 +32,20 @@
 ## 2. Estructura de Carpetas
 
 ```
-holoware-baseline/
+holospace-baseline/
 ├── docs/                          ← Documentación viva del proyecto
-│   ├── HOLOWARE_PLATFORM.md       ← Visión de plataforma y los 4 módulos
+│   ├── HOLOSPACE_PLATFORM.md       ← Visión de plataforma y los 4 módulos
 │   ├── ARCHITECTURE.md            ← Este archivo
 │   ├── MODULE_CREATION.md         ← Guía de desarrollo de módulos
 │   ├── ROADMAP.md                 ← Seguimiento de tareas y fases SaaS
 │   └── modules/                   ← Especificación por módulo
 │       ├── TENANTS.md             ← Especificación Módulo Tenant (SuperAdmin)
-│       ├── CORE.md                ← Especificación HoloWare Core (Web)
+│       ├── CORE.md                ← Especificación HoloSpace Core (Web)
 │       ├── SCANBAN_BOARD.md       ← Especificación Módulo Kanban (Web)
 │       └── SCANBAN_SCANNER.md     ← Especificación Módulo Scanner (Mobile/Web)
 │
 ├── modules/                       ← Código fuente modularizado
-│   ├── core/                      ← HoloWare Core (Web: public/, routes/, theme/)
+│   ├── core/                      ← HoloSpace Core (Web: public/, routes/, theme/)
 │   └── scanban/                   ← Kanban & Scanner (public/, routes/, src/)
 │
 ├── lib/                           ← Capa de lógica y servicios de infraestructura

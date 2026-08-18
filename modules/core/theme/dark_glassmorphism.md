@@ -8,7 +8,7 @@
 
 ## 1. Descripción General
 
-El tema **Dark Glassmorphism** es la apariencia oscura clásica de HoloWare. Se caracteriza por tarjetas de cristal oscuro translúcido con desenfoque de fondo (`backdrop-filter: blur(12px)`), radios de borde orgánicos (`16px`) y acentos de alto contraste en verde esmeralda y azul cobalto.
+El tema **Dark Glassmorphism** es la apariencia oscura clásica de HoloSpace. Se caracteriza por tarjetas de cristal oscuro translúcido con desenfoque de fondo (`backdrop-filter: blur(12px)`), radios de borde orgánicos (`16px`) y acentos de alto contraste en verde esmeralda y azul cobalto.
 
 ---
 

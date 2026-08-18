@@ -1,5 +1,5 @@
 # ============================================================================
-# HOLOWARE BASELINE SAAS MULTI-TENANT: MULTI-STAGE DOCKERFILE
+# HOLOSPACE BASELINE SAAS MULTI-TENANT: MULTI-STAGE DOCKERFILE
 # ============================================================================
 
 # ----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=3001
-ENV HW_PORT=3001
+ENV HS_PORT=3001
 
 # Crear directorio de datos persistente con permisos adecuados
 RUN mkdir -p /app/data /app/backups && chown -R node:node /app

@@ -1,15 +1,15 @@
 # ScanBan — Módulo de Logística y Escaneo
 
-> **Plataforma:** HoloWare Baseline | **Estado:** ✅ Activo
+> **Plataforma:** HoloSpace Baseline | **Estado:** ✅ Activo
 
-ScanBan es el primer módulo de HoloWare Baseline. Provee gestión Kanban de pedidos, parseo inteligente de comprobantes PDF y una app móvil para escaneo de productos EAN-13 en depósito.
+ScanBan es el primer módulo de HoloSpace Baseline. Provee gestión Kanban de pedidos, parseo inteligente de comprobantes PDF y una app móvil para escaneo de productos EAN-13 en depósito.
 
 ---
 
 ## Componentes
 
 ### ScanBan Board (Web)
-Panel administrador integrado en el shell web de HoloWare Baseline.
+Panel administrador integrado en el shell web de HoloSpace Baseline.
 - Tablero Kanban 4 columnas: BACKLOG → LISTO → EN PROCESO → COMPLETADO
 - Upload + parseo de PDF por coordenadas Y
 - Explorador de pedidos con filtros avanzados
@@ -48,7 +48,7 @@ modules/scanban/
 | `order_items` | Ítems de cada orden (código EAN-13, cantidad, estado de escaneo). |
 | `audit_logs` | Historial de acciones por orden (asignación, escaneo, completado). |
 
-*(Base de datos compartida en `./data/holoware.db` del servidor central)*
+*(Base de datos compartida en `./data/holospace.db` del servidor central)*
 
 ---
 

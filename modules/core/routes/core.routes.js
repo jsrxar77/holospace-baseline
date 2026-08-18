@@ -1,5 +1,5 @@
 /**
- * HoloWare Core — Platform API Router Module
+ * HoloSpace Core — Platform API Router Module
  * Endpoints: /api/login, /api/users, /api/theme, /api/modules, /api/platform-audit, /api/error-logs, /api/log-client-error
  */
 

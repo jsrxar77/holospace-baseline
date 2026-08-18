@@ -1,4 +1,4 @@
-# Módulo: Core — Plataforma HoloWare Baseline
+# Módulo: Core — Plataforma HoloSpace Baseline
 
 > **Tipo:** Módulo Base Principal (Siempre Activo / Inmutable)  
 > **URL Directa:** `http://localhost:3001/core`  
@@ -10,7 +10,7 @@
 
 ## 1. Descripción General
 
-El módulo **Core** constituye el motor base de la plataforma HoloWare Baseline. Provee la infraestructura compartida sobre la cual operan los módulos funcionales de negocio (como Kanban o Scanner).
+El módulo **Core** constituye el motor base de la plataforma HoloSpace Baseline. Provee la infraestructura compartida sobre la cual operan los módulos funcionales de negocio (como Kanban o Scanner).
 
 ---
 
@@ -18,7 +18,7 @@ El módulo **Core** constituye el motor base de la plataforma HoloWare Baseline.
 
 ### 2.1 Autenticación & Control de Sesión Multi-Tenant
 - **Validación JWT:** Credenciales validadas contra PostgreSQL 16 (`users`) con hashing criptográfico seguro `scrypt`.
-- **Persistencia Local:** Almacenamiento seguro en `localStorage` usando el prefijo de plataforma `hw_` (`hw_token`, `hw_user`, `hw_tenant_id`, `hw_saved_email`).
+- **Persistencia Local:** Almacenamiento seguro en `localStorage` usando el prefijo de plataforma `hw_` (`hs_token`, `hs_user`, `hs_tenant_id`, `hs_saved_email`).
 - **Control RBAC y Aislamiento 403:** Roles `SUPERADMIN`, `ADMIN`, `OPERATOR` verificados server-side en cada endpoint. Acceso no autorizado genera pantalla 403 y log de seguridad.
 
 ### 2.2 Gestión de Usuarios Globales (ABM + Nick/Username)

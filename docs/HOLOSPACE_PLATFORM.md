@@ -1,8 +1,8 @@
-# Visión de Plataforma — HoloWare SaaS Baseline
+# Visión de Plataforma — HoloSpace SaaS Baseline
 
 > **Concepto:** Contenedor SaaS Multi-Tenant B2B Enterprise para Gestión Operativa, Logística y Monetización por Suscripción.
 
-HoloWare es una plataforma contenedora modular y multi-empresa de alto rendimiento construida sobre **PostgreSQL 16 con Row-Level Security (RLS)** y arquitectura desacoplada en Docker.
+HoloSpace es una plataforma contenedora modular y multi-empresa de alto rendimiento construida sobre **PostgreSQL 16 con Row-Level Security (RLS)** y arquitectura desacoplada en Docker.
 
 ---
 
@@ -20,7 +20,7 @@ HoloWare es una plataforma contenedora modular y multi-empresa de alto rendimien
 ## Jerarquía de Roles y Seguridad (RBAC & RLS)
 
 - **`SUPERADMIN` (`superadmin@hologrowth.com.ar`):**
-  Gobierno global de la plataforma desde el Tenant raíz `holoware`. Administra las organizaciones clientes (`Tenant`), audita la infraestructura, gestiona planes y licencias de módulos en `Core`.
+  Gobierno global de la plataforma desde el Tenant raíz `holospace`. Administra las organizaciones clientes (`Tenant`), audita la infraestructura, gestiona planes y licencias de módulos en `Core`.
 
 - **`ADMIN` (ej. `admin@drinklovers.com.ar`, `admin@poke.com.ar`):**
   Administrador de una empresa cliente específica. Gestiona sus propios pedidos en `Kanban`, sube remitos PDF, asigna pedidos y supervisa a sus operarios.

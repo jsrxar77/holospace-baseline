@@ -3,7 +3,7 @@ let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
 function populateSavedCredentials() {
-  const savedEmail = localStorage.getItem('hw_saved_email') || '';
+  const savedEmail = localStorage.getItem('hs_saved_email') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
@@ -27,7 +27,7 @@ function toggleLoginPasswordVisibility() {
 
 async function loadActiveTheme() {
   try {
-    const token = localStorage.getItem('hw_token') || (currentUser ? currentUser.email : '');
+    const token = localStorage.getItem('hs_token') || (currentUser ? currentUser.email : '');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     const res = await fetch('/api/theme', { headers });
     const data = await res.json();
@@ -69,7 +69,7 @@ async function loadActiveTheme() {
 
 async function changeAppThemeSubmit(themeKey) {
   try {
-    const token = localStorage.getItem('hw_token') || (currentUser ? currentUser.email : '');
+    const token = localStorage.getItem('hs_token') || (currentUser ? currentUser.email : '');
     const res = await fetch('/api/theme', {
       method: 'POST',
       headers: {
@@ -99,7 +99,7 @@ async function changeAppThemeSubmit(themeKey) {
 
 async function changeTenantDefaultTheme(tenantId, themeKey) {
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/theme', {
       method: 'POST',
       headers: {
@@ -131,7 +131,7 @@ async function loadAppConfig() {
     if (data.success && data.version) {
       const verEl = document.getElementById('footerAppVersion');
       if (verEl) {
-        verEl.innerText = `HoloWare SaaS v${data.version}`;
+        verEl.innerText = `HoloSpace SaaS v${data.version}`;
       }
     }
   } catch (e) { }
@@ -142,9 +142,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAppConfig();
   populateSavedCredentials();
 
-  const token = localStorage.getItem('hw_token');
-  const userJson = localStorage.getItem('hw_user');
-  const tenantJson = localStorage.getItem('hw_tenant');
+  const token = localStorage.getItem('hs_token');
+  const userJson = localStorage.getItem('hs_user');
+  const tenantJson = localStorage.getItem('hs_tenant');
   if (token && userJson) {
     currentUser = JSON.parse(userJson);
     const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'Drink Lovers Argentina' };
@@ -171,14 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success) {
         currentUser = data.user;
-        localStorage.setItem('hw_token', data.token);
-        localStorage.setItem('hw_user', JSON.stringify(data.user));
+        localStorage.setItem('hs_token', data.token);
+        localStorage.setItem('hs_user', JSON.stringify(data.user));
         if (data.tenant) {
-          localStorage.setItem('hw_tenant', JSON.stringify(data.tenant));
-          localStorage.setItem('hw_tenant_id', data.tenant.id);
-          localStorage.setItem('hw_tenant_slug', data.tenant.slug);
+          localStorage.setItem('hs_tenant', JSON.stringify(data.tenant));
+          localStorage.setItem('hs_tenant_id', data.tenant.id);
+          localStorage.setItem('hs_tenant_slug', data.tenant.slug);
         }
-        localStorage.setItem('hw_saved_email', email);
+        localStorage.setItem('hs_saved_email', email);
 
         document.getElementById('loginModal').classList.add('hidden');
         const orgName = data.tenant ? data.tenant.name : 'Drink Lovers';
@@ -223,7 +223,7 @@ function applyRoleVisibility() {
   const mobModQr = document.getElementById('mobModQr') || document.getElementById('mobModScanner');
 
   if (isSuperAdmin) {
-    // SUPERADMIN: Access strictly to HoloWare Tenant & Core Platform
+    // SUPERADMIN: Access strictly to HoloSpace Tenant & Core Platform
     if (modTenant) modTenant.style.display = 'inline-flex';
     if (modCore) modCore.style.display = 'inline-flex';
     if (modKanban) modKanban.style.display = 'none';
@@ -256,10 +256,10 @@ function applyRoleVisibility() {
       dropRoleBadge.style.border = '1px solid #A78BFA';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
-    if (dropOrg) dropOrg.innerText = 'Organización: HoloWare Global Platform';
+    if (dropOrg) dropOrg.innerText = 'Organización: HoloSpace Global Platform';
 
     if (footerTenant) {
-      footerTenant.innerText = 'Organización: HoloWare Global Platform (SUPERADMIN)';
+      footerTenant.innerText = 'Organización: HoloSpace Global Platform (SUPERADMIN)';
     }
 
     const path = window.location.pathname.toLowerCase();
@@ -353,7 +353,7 @@ function showForbiddenView(moduleName) {
   if (titleEl) titleEl.innerText = modTitles[moduleName] || `Módulo ${moduleName}`;
   if (descEl) {
     if (currentUser && currentUser.role !== 'SUPERADMIN') {
-      descEl.innerText = `Este módulo está reservado exclusivamente para el Super Administrador de HoloWare. Tu organización actual no tiene permisos de acceso.`;
+      descEl.innerText = `Este módulo está reservado exclusivamente para el Super Administrador de HoloSpace. Tu organización actual no tiene permisos de acceso.`;
     } else {
       descEl.innerText = `No tienes los permisos asignados para interactuar con este módulo.`;
     }
@@ -362,7 +362,7 @@ function showForbiddenView(moduleName) {
   const displayUser = (currentUser && (currentUser.username || currentUser.name)) || (currentUser && currentUser.email) || 'Usuario';
   if (userEl) userEl.innerText = displayUser;
   if (roleEl) roleEl.innerText = (currentUser && currentUser.role) || 'OPERATOR';
-  if (tenantEl) tenantEl.innerText = (currentUser && (currentUser.tenantName || currentUser.tenantSlug)) || 'HoloWare';
+  if (tenantEl) tenantEl.innerText = (currentUser && (currentUser.tenantName || currentUser.tenantSlug)) || 'HoloSpace';
 }
 
 function redirectAllowedModule() {
@@ -601,7 +601,7 @@ function toggleUserGroup(groupId) {
 async function loadKanbanData() {
   try {
     loadActiveTheme();
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/scanban/kanban', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -791,7 +791,7 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/scanban/release-order-admin', {
       method: 'POST',
       headers: { 
@@ -837,7 +837,7 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
   if (selectEl) {
     selectEl.innerHTML = '<option value="">Cargando operarios...</option>';
     try {
-      const token = localStorage.getItem('hw_token') || '';
+      const token = localStorage.getItem('hs_token') || '';
       const res = await fetch('/api/users', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -878,7 +878,7 @@ async function confirmAssignOperatorSubmit() {
   }
 
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/scanban/assign-order', {
       method: 'POST',
       headers: { 
@@ -1172,7 +1172,7 @@ async function handleFileUpload(event) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}`
+          'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}`
         },
         body: JSON.stringify({
           fileName: file.name,
@@ -1213,7 +1213,7 @@ async function deleteBacklogOrder(orderId, event) {
   if (!confirmed) return;
 
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/scanban/delete-order', {
       method: 'POST',
       headers: { 
@@ -1244,7 +1244,7 @@ let currentFetchedUsers = [];
 async function fetchUsers() {
   try {
     const res = await fetch('/api/users', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}` }
     });
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
@@ -1255,7 +1255,7 @@ async function fetchUsers() {
     tbody.innerHTML = usersList.map((u, idx) => {
       const isTargetSuperAdmin = u.role === 'SUPERADMIN';
       const canEdit = isSuperAdmin || !isTargetSuperAdmin;
-      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloWare Cloud Platform' : 'Organización');
+      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
       const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
 
       return `
@@ -1344,7 +1344,7 @@ async function populateUserModalTenants(selectedTenantId = '') {
 
     try {
       const res = await fetch('/api/tenants', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}` }
       });
       const data = await res.json();
       const tenants = data.tenants || [];
@@ -1491,7 +1491,7 @@ async function saveUserSubmit(e) {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token') || ''}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}`
       },
       body: JSON.stringify(payload)
     });
@@ -1543,7 +1543,7 @@ let allOperatorEmails = [];
 
 async function renderOperatorPills() {
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch('/api/users', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1610,7 +1610,7 @@ async function fetchExplorerOrders() {
   const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
-    const token = localStorage.getItem('hw_token') || '';
+    const token = localStorage.getItem('hs_token') || '';
     const res = await fetch(
       `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`,
       {
@@ -1781,8 +1781,8 @@ document.addEventListener('click', (e) => {
 
 function logout() {
   closeUserDropdown();
-  localStorage.removeItem('hw_token');
-  localStorage.removeItem('hw_user');
+  localStorage.removeItem('hs_token');
+  localStorage.removeItem('hs_user');
   currentUser = null;
   populateSavedCredentials();
   document.getElementById('loginModal').classList.remove('hidden');
@@ -1821,7 +1821,7 @@ async function loadPlatformPanel() {
   // Load modules
   try {
     const res = await fetch('/api/modules', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
     });
     const data = await res.json();
     if (data.success) {
@@ -1837,7 +1837,7 @@ async function loadPlatformPanel() {
   // Load platform audit log
   try {
     const auditRes = await fetch('/api/platform-audit', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
     });
     if (auditRes.ok) {
       const auditData = await auditRes.json();
@@ -1903,7 +1903,7 @@ async function toggleModuleActive(moduleKey, active) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
       },
       body: JSON.stringify({ key: moduleKey, active })
     });
@@ -1982,7 +1982,7 @@ async function loadTenantsManagementData() {
 
   try {
     const res = await fetch('/api/tenants', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hw_token')}` }
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
     });
     const data = await res.json();
 
@@ -2014,7 +2014,7 @@ async function loadTenantsManagementData() {
 
     // Renderizar Cards de Organizaciones
     container.innerHTML = cachedTenantsList.map(t => {
-      const isPlatform = t.slug === 'holoware';
+      const isPlatform = t.slug === 'holospace';
       const isSuspended = t.status === 'suspended';
       const planCode = t.plan_code || 'starter';
       const planBadgeColors = {
@@ -2144,7 +2144,7 @@ async function toggleTenantStatus(tenantId, tenantName, currentStatus) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
       },
       body: JSON.stringify({ tenantId, status: newStatus })
     });
@@ -2166,7 +2166,7 @@ async function toggleTenantModuleState(tenantId, moduleCode, isEnabled) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
       },
       body: JSON.stringify({ tenantId, moduleCode, isEnabled })
     });
@@ -2214,7 +2214,7 @@ async function handleCreateTenantSubmit(e) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
       },
       body: JSON.stringify({ name, slug, planCode, adminName, adminUsername, adminEmail, adminPassword })
     });
@@ -2326,7 +2326,7 @@ async function saveEditTenantSubmit(e) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
       },
       body: JSON.stringify({
         tenantId,

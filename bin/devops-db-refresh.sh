@@ -8,23 +8,23 @@ DATA_DIR="$PROJECT_ROOT/data"
 SCHEMA_SQL="$DATA_DIR/init-schema.sql"
 
 echo "======================================================"
-echo "HoloWare - Reinicializacion y Siembra de Base de Datos"
+echo "HoloSpace - Reinicializacion y Siembra de Base de Datos"
 echo "======================================================"
 echo ""
 
 # 1. Limpieza y Recreación de Estructura
 echo "[1/4] Limpiando datos anteriores y recreando tablas..."
-if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "holoware_postgres"; then
-  docker exec -i holoware_postgres psql -U holoware_admin -d holoware_saas -q -c "
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -q "holospace_postgres"; then
+  docker exec -i holospace_postgres psql -U holospace_admin -d holospace_saas -q -c "
     DROP SCHEMA IF EXISTS public CASCADE;
     CREATE SCHEMA public;
-    GRANT ALL ON SCHEMA public TO holoware_admin;
+    GRANT ALL ON SCHEMA public TO holospace_admin;
     GRANT ALL ON SCHEMA public TO public;
   " > /dev/null 2>&1
   
   # 2. Siembra de Estructura, Módulos y Usuarios
   echo "[2/4] Sembrando organizaciones, modulos oficiales y usuarios..."
-  docker exec -i holoware_postgres psql -U holoware_admin -d holoware_saas -q < "$SCHEMA_SQL" > /dev/null 2>&1
+  docker exec -i holospace_postgres psql -U holospace_admin -d holospace_saas -q < "$SCHEMA_SQL" > /dev/null 2>&1
   
   echo "[3/4] Configurando aislamiento seguro de organizaciones..."
 else
@@ -42,7 +42,7 @@ echo "======================================================"
 echo "PROCESO COMPLETADO CON EXITO"
 echo "======================================================"
 echo "Organizaciones y Cuentas Sembradas:"
-echo "  - HoloWare Cloud Platform (SuperAdmin): superadmin@hologrowth.com.ar"
+echo "  - HoloSpace Cloud Platform (SuperAdmin): superadmin@hologrowth.com.ar"
 echo "  - Poke Argentina (Cliente): admin@poke.com.ar"
 echo "  - Drink Lovers Argentina (Cliente): admin@drinklovers.com.ar"
 echo ""

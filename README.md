@@ -1,8 +1,8 @@
-# HoloWare SaaS Baseline (v1.2.1)
+# HoloSpace SaaS Baseline (v1.2.1)
 
 > **Plataforma Contenedora Multi-Tenant B2B Enterprise para Gestión Operativa, Logística y Monetización por Suscripción.**
 
-HoloWare es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de alto rendimiento. Permite ejecutar múltiples aplicaciones de negocio sobre una arquitectura desacoplada, con autenticación segura JWT, control de acceso basado en roles (RBAC), licenciamiento modular dinámico por plan de suscripción, base de datos relacional con **Row-Level Security (RLS)** y soporte completo para despliegue en **Docker**.
+HoloSpace es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de alto rendimiento. Permite ejecutar múltiples aplicaciones de negocio sobre una arquitectura desacoplada, con autenticación segura JWT, control de acceso basado en roles (RBAC), licenciamiento modular dinámico por plan de suscripción, base de datos relacional con **Row-Level Security (RLS)** y soporte completo para despliegue en **Docker**.
 
 ---
 
@@ -26,7 +26,7 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 
 | Rol | Organización / Tenant | Email | Contraseña | Acceso / Propósito |
 |---|---|---|---|---|
-| **SUPERADMIN** | `holoware` | `superadmin@hologrowth.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
+| **SUPERADMIN** | `holospace` | `superadmin@hologrowth.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
 
 ---
 
@@ -167,7 +167,7 @@ node bin/verify-db-integrity.js && node bin/test-auth-jwt.js && node bin/test-en
 
 ## 🛡️ Respaldos y Exportación Aislada de Tenants
 
-HoloWare cuenta con herramientas de backup seguras y trazables:
+HoloSpace cuenta con herramientas de backup seguras y trazables:
 
 ```bash
 # Generar un respaldo instantáneo completo de la base de datos
@@ -183,7 +183,7 @@ node bin/tenant-dump.sh drinklovers
 ## 📂 Estructura del Repositorio
 
 ```
-holoware-baseline/
+holospace-baseline/
 ├── .agents/                        ← Directivas y reglas de gobernanza del Agente
 ├── bin/                            ← Herramientas DevOps, migradores y test suites
 │   ├── backup-database.sh          ← Script universal de backups
@@ -196,7 +196,7 @@ holoware-baseline/
 ├── data/                           ← DDLs y esquemas de base de datos
 │   ├── init-schema.sql             ← DDL PostgreSQL 16 con políticas RLS
 │   ├── schema-sqlite.sql           ← DDL SQLite Multi-Tenant
-│   └── holoware.db                 ← Base de datos SQLite local
+│   └── holospace.db                 ← Base de datos SQLite local
 ├── docs/                           ← Especificaciones arquitectónicas vivas
 │   ├── ARCHITECTURE.md             ← Estructura técnica y capas
 │   ├── DOCKER_AND_INFRASTRUCTURE.md ← Guía completa de Docker y Nginx

@@ -9,7 +9,7 @@
 
 ## Propósito y Alcance
 
-El módulo **Tenant** es el panel de mando central de la plataforma SaaS HoloWare. Permite al SuperAdmin de la plataforma aprovisionar nuevas empresas clientes, definir sus planes comerciales, cuotas, asignar cuentas de usuarios y activar o desactivar módulos licenciados en tiempo real.
+El módulo **Tenant** es el panel de mando central de la plataforma SaaS HoloSpace. Permite al SuperAdmin de la plataforma aprovisionar nuevas empresas clientes, definir sus planes comerciales, cuotas, asignar cuentas de usuarios y activar o desactivar módulos licenciados en tiempo real.
 
 ---
 

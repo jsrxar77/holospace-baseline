@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 /**
- * Configuracion global del cliente movil/web HoloWare ScanBan Scanner.
+ * Configuracion global del cliente movil/web HoloSpace ScanBan Scanner.
  *
  * Estrategia de resolucion de SERVER_URL:
  *

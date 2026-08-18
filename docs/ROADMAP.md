@@ -1,4 +1,4 @@
-# HoloWare Baseline — Roadmap de Arquitectura y Desarrollo
+# HoloSpace Baseline — Roadmap de Arquitectura y Desarrollo
 
 > Documento vivo de seguimiento. Actualizado a medida que se ejecutan los ítems.
 > Última actualización: 2026-08-10
@@ -8,9 +8,9 @@
 ## Estructura de Carpetas Objetivo
 
 ```
-holoware-baseline/
+holospace-baseline/
 ├── docs/                          ← Documentación general de plataforma
-│   ├── HOLOWARE_PLATFORM.md
+│   ├── HOLOSPACE_PLATFORM.md
 │   ├── ARCHITECTURE.md
 │   ├── FEATURES.md
 │   └── ROADMAP.md                 ← Este archivo
@@ -40,7 +40,7 @@ holoware-baseline/
 ├── theme/                         ← Paleta de colores y definición de temas
 ├── bin/                           ← Scripts DevOps
 ├── data/
-│   └── holoware.db                ← SQLite unificado
+│   └── holospace.db                ← SQLite unificado
 ├── server.js                      ← Servidor Express (importa routes de módulos)
 ├── App.tsx                        ← Shim Expo → modules/scanban/App.tsx
 ├── app.json
@@ -55,8 +55,8 @@ holoware-baseline/
 
 | # | Ítem | Detalle |
 |---|---|---|
-| C-01 | Rename filesystem `phone-ware` → `holoware-baseline` | Directorio movido |
-| C-02 | Rename git remote → `jsrxar77/holoware-baseline` | URL actualizada |
+| C-01 | Rename filesystem `phone-ware` → `holospace-baseline` | Directorio movido |
+| C-02 | Rename git remote → `jsrxar77/holospace-baseline` | URL actualizada |
 | C-03 | Migración a PostgreSQL 16 con RLS | Tablas `tenants`, `users`, `orders`, `order_items`, `tenant_modules` |
 | C-04 | Actualizar `README.md` con credenciales y URLs directas | Actualizado con los 4 módulos y Smart Auth Guard |
 | C-05 | Script DevOps de refresco y siembra de BD | `bin/devops-db-refresh.sh` |
@@ -86,7 +86,7 @@ holoware-baseline/
 
 | # | Ítem | Dónde | Descripción |
 |---|---|---|---|
-| L-02 | Git push a `holoware-baseline` en GitHub | GitHub + terminal | **Requiere rename manual del repo en GitHub primero** |
+| L-02 | Git push a `holospace-baseline` en GitHub | GitHub + terminal | **Requiere rename manual del repo en GitHub primero** |
 | L-05 | Monorepo con `package.json` propio | `modules/scanban/package.json` | Dar a ScanBan su propio `package.json` + `node_modules` en el futuro |
 
 ---
@@ -103,15 +103,15 @@ holoware-baseline/
 
 | Tipo | Prefijo | Ejemplo |
 |---|---|---|
-| Core Platform | `hw_` | `hw_token`, `hw_user` |
-| Módulo ScanBan | `hw_sb_` | `hw_sb_active_order` |
+| Core Platform | `hw_` | `hs_token`, `hs_user` |
+| Módulo ScanBan | `hs_sb_` | `hs_sb_active_order` |
 
 ## Convenciones de Variables de Entorno
 
 | Tipo | Prefijo | Ejemplo |
 |---|---|---|
-| Core Platform | `HW_` | `HW_THEME`, `HW_PORT` |
-| Módulo ScanBan | `HW_SB_` | `HW_SB_MAX_ORDERS` |
+| Core Platform | `HW_` | `HS_THEME`, `HS_PORT` |
+| Módulo ScanBan | `HS_SB_` | `HS_SB_MAX_ORDERS` |
 
 ---
 

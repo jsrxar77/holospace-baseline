@@ -1,4 +1,4 @@
-# 💳 HoloWare SaaS: Suscripciones & Licenciamiento Modular (Entitlement)
+# 💳 HoloSpace SaaS: Suscripciones & Licenciamiento Modular (Entitlement)
 
 > **Documento de Especificación Técnica:** Modelo de monetización por suscripción, catálogo de planes y sistema dinámico de *Feature Flags & Modular Entitlements*.
 
@@ -6,7 +6,7 @@
 
 ## 1. Modelo de Monetización por Suscripción
 
-HoloWare Baseline SaaS opera bajo un modelo híbrido: **Planes Base por Capacidad** + **Módulos Adicionales a la Carta**.
+HoloSpace Baseline SaaS opera bajo un modelo híbrido: **Planes Base por Capacidad** + **Módulos Adicionales a la Carta**.
 
 ### A. Matriz de Planes Base
 
@@ -24,12 +24,12 @@ HoloWare Baseline SaaS opera bajo un modelo híbrido: **Planes Base por Capacida
 
 ## 2. Catálogo Oficial de Módulos & Licenciamiento
 
-Cada módulo de HoloWare se comporta como una unidad de negocio independiente:
+Cada módulo de HoloSpace se comporta como una unidad de negocio independiente:
 
 | Código Módulo | Nombre | Rol | Tipo de Licencia |
 |---|---|---|---|
 | **`tenant`** | Tenant Management | Panel de Gobierno Multi-Tenant | **Mandatorio / Exclusivo SuperAdmin** |
-| **`core`** | HoloWare Core | Plataforma base (Usuarios, Auth, Temas, Auditoría) | **Mandatorio / Gratuito** (Incluido en todos los planes) |
+| **`core`** | HoloSpace Core | Plataforma base (Usuarios, Auth, Temas, Auditoría) | **Mandatorio / Gratuito** (Incluido en todos los planes) |
 | **`kanban`** | Kanban Logistics | Tablero Kanban 4 Columnas e Ingesta PDF | **Suscripción Starter/Pro/Enterprise** |
 | **`scanner`** | Mobile/Web Scanner | App de Depósito, Escáner EAN-13 y Despacho | **Suscripción Pro/Enterprise** |
 

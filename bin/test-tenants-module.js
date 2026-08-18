@@ -46,7 +46,7 @@ async function runTests() {
   assert(tenants.length >= 3, `Listado de tenants recupera ${tenants.length} organizaciones.`);
   assert(tenants.some(t => t.slug === 'drinklovers'), 'Tenant `drinklovers` presente.');
   assert(tenants.some(t => t.slug === 'poke'), 'Tenant `poke` presente.');
-  assert(tenants.some(t => t.slug === 'holoware'), 'Tenant plataforma `holoware` presente.');
+  assert(tenants.some(t => t.slug === 'holospace'), 'Tenant plataforma `holospace` presente.');
 
   // 2. Creación de un Nuevo Tenant por SuperAdmin
   console.log('\n--- 2. Aprovisionamiento Dinámico de Nuevo Tenant ---');

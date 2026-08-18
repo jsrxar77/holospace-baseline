@@ -1,8 +1,8 @@
-# Core — Módulo Base de HoloWare Baseline
+# Core — Módulo Base de HoloSpace Baseline
 
 > **Estado:** ✅ Siempre activo (no se puede desactivar)
 
-El módulo Core es la base de la plataforma HoloWare Baseline. Provee todos los servicios compartidos que los demás módulos consumen: autenticación, gestión de usuarios, motor de temas, registro de módulos y auditoría de plataforma.
+El módulo Core es la base de la plataforma HoloSpace Baseline. Provee todos los servicios compartidos que los demás módulos consumen: autenticación, gestión de usuarios, motor de temas, registro de módulos y auditoría de plataforma.
 
 ---
 

@@ -37,7 +37,7 @@ function getPrimaryLocalIp(req) {
 
 // Leer variables de entorno
 let processEnv = {
-  HW_PORT: process.env.HW_PORT || process.env.PORT || '3001'
+  HS_PORT: process.env.HS_PORT || process.env.PORT || '3001'
 };
 
 const envPath = path.join(__dirname, '.env');
@@ -56,7 +56,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const PORT = parseInt(processEnv.HW_PORT || processEnv.PORT, 10) || 3001;
+const PORT = parseInt(processEnv.HS_PORT || processEnv.PORT, 10) || 3001;
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -504,7 +504,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (reqPath === '/css/holoware-theme.css' || reqPath.startsWith('/css/')) {
+  if (reqPath === '/css/holospace-theme.css' || reqPath.startsWith('/css/')) {
     let cssPath = path.join(__dirname, 'public', reqPath);
     if (!fs.existsSync(cssPath)) {
       cssPath = path.join(__dirname, 'modules', 'core', 'public', reqPath);
@@ -738,7 +738,7 @@ const server = http.createServer(async (req, res) => {
             success: true,
             modules: [
               { key: 'tenant', name: 'Gestión Multi-Tenant', description: 'Panel exclusivo SUPERADMIN para administración de organizaciones.', category: 'admin', is_active: true },
-              { key: 'core', name: 'HoloWare Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
+              { key: 'core', name: 'HoloSpace Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
               { key: 'kanban', name: 'Kanban Board', description: 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador.', category: 'operational', is_active: true },
               { key: 'scanner', name: 'Scanner App', description: 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13.', category: 'operational', is_active: true }
             ]
@@ -1082,9 +1082,9 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        if (targetTenant.slug === 'holoware' || targetTenant.id === 'a0000000-0000-0000-0000-000000000001') {
+        if (targetTenant.slug === 'holospace' || targetTenant.id === 'a0000000-0000-0000-0000-000000000001') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'La Organización de Plataforma HoloWare no puede ser suspendida.' }));
+          res.end(JSON.stringify({ success: false, error: 'La Organización de Plataforma HoloSpace no puede ser suspendida.' }));
           return;
         }
 
@@ -1792,5 +1792,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 HoloWare Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
+  console.log(`🚀 HoloSpace Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
 });
