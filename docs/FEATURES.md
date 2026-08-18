@@ -1,53 +1,78 @@
-# Índice de Funcionalidades — HoloSpace
+# Funcionalidades, Experiencia de Usuario y Planes — HoloSpace Baseline
 
-> **Plataforma contenedora:** HoloSpace — ver [HOLOSPACE_PLATFORM.md](./HOLOSPACE_PLATFORM.md).
-
-El sistema se organiza en 3 módulos oficiales:
+> Documento maestro que detalla todas las capacidades funcionales de la plataforma, el catálogo de planes comerciales, el motor de facturación B2B, el sistema de diseño UX/UI y la jerarquía de temas visuales.
 
 ---
 
-## 1. HoloSpace Core (Web)
+## 1. Matriz de Funcionalidades por Rol
 
-- **Ámbito:** Gobierno de Plataforma (Exclusivo `SUPERADMIN`).
-- **Funcionalidades:**
-  - Autenticación JWT (`hs_token`).
-  - ABM de Usuarios Core y roles.
-  - Registro y activación/desactivación dinámica de módulos (`GET/POST /api/modules`).
-  - Motor de Temas Visuales Globales (`GET/POST /api/theme`).
-  - Auditoría de Plataforma (`platform_audit_logs`).
-
-**Especificación completa:** Ver [docs/modules/CORE.md](./modules/CORE.md).
-
----
-
-## 2. ScanBan Board (Web)
-
-- **Ámbito:** Logística y Facturación (Exclusivo `ADMIN`).
-- **Funcionalidades:**
-  - Tablero Kanban 4 columnas (`BACKLOG`, `LISTO`, `EN PROCESO`, `COMPLETADO`).
-  - Ingesta y parser de Facturas PDF por coordenadas Y.
-  - Almacenamiento Blob de comprobantes.
-  - Explorador Inteligente de Pedidos.
-
-**Especificación completa:** Ver [docs/modules/SCANBAN_BOARD.md](./modules/SCANBAN_BOARD.md).
+| Característica / Capacidad | SUPERADMIN | ADMIN (Cliente) | OPERATOR (Cliente) |
+| :--- | :---: | :---: | :---: |
+| **Directorio de Organizaciones (Tenants)** | ✅ Total | ❌ | ❌ |
+| **Aprovisionamiento y Suspensión de Tenants** | ✅ Total | ❌ | ❌ |
+| **Licenciamiento Modular en Vivo** | ✅ Total | ❌ | ❌ |
+| **Catálogo de Planes y Modificación de Cuotas** | ✅ Total | ❌ | ❌ |
+| **Auditoría Global de Plataforma** | ✅ Total | ❌ | ❌ |
+| **Tablero Kanban Web de Logística** | ❌ (Separación estricta) | ✅ | ✅ |
+| **Carga y Procesamiento Inteligente de PDF** | ❌ | ✅ | ❌ |
+| **Asignación de Pedidos a Operarios** | ❌ | ✅ | ❌ |
+| **Escaneo Móvil de Códigos EAN-13 (Cámara)** | ❌ | ✅ | ✅ |
+| **Sincronización Offline en Celular (SQLite)** | ❌ | ✅ | ✅ |
+| **Selección de Tema Visual Personal** | ✅ | ✅ | ✅ |
+| **Definición de Tema Base del Tenant** | ✅ | ✅ | ❌ |
 
 ---
 
-## 3. ScanBan Scanner (Mobile)
+## 2. Catálogo Oficial de Planes SaaS y Facturación B2B (lib/billing.js)
 
-- **Ámbito:** Auditoría Operativa de Depósito (Exclusivo `OPERATOR`).
-- **Funcionalidades:**
-  - App móvil Expo Go / React Native.
-  - Escáner de códigos de barra EAN-13.
-  - Asignación 1 a 1 de pedidos.
-  - Persistencia SQLite local y estampa digital de despacho.
-
-**Especificación completa:** Ver [docs/modules/SCANBAN_SCANNER.md](./modules/SCANBAN_SCANNER.md).
+```javascript
+const PLANS = {
+  starter: {
+    code: 'starter',
+    name: 'Plan Starter Inicial',
+    priceUsd: 49,
+    maxUsers: 5,
+    maxOrdersMonthly: 500,
+    includedModules: ['core', 'kanban', 'scanner'],
+    description: 'Ideal para depósitos pequeños o pilotos operativos.'
+  },
+  pro: {
+    code: 'pro',
+    name: 'Plan Pro Profesional',
+    priceUsd: 149,
+    maxUsers: 15,
+    maxOrdersMonthly: 3000,
+    includedModules: ['core', 'kanban', 'scanner'],
+    description: 'Para centros de distribución y empresas de logística medianas.'
+  },
+  enterprise: {
+    code: 'enterprise',
+    name: 'Plan Enterprise Ilimitado',
+    priceUsd: 499,
+    maxUsers: 999,
+    maxOrdersMonthly: 999999,
+    includedModules: ['core', 'tenant', 'kanban', 'scanner'],
+    description: 'Capacidad ilimitada, soporte prioritario y acceso total al módulo Tenant.'
+  }
+};
+```
 
 ---
 
-## 📋 4. HoloSpace StockFlow (Plantilla Futura)
+## 3. Estrategia de Diseño UX/UI y Sistema de Temas
 
-- **Ámbito:** Módulo de Control de Inventario (Ejemplo de 2º Módulo).
+### A. Jerarquía de Temas Visuales (Tenant vs Usuario)
+1. **Scope Tenant (Nivel Empresa):** Tema base para toda la organización (`POST /api/theme` con `scope: 'tenant'`).
+2. **Scope Usuario (Nivel Personal):** Preferencia personal de cada usuario (`POST /api/theme` con `scope: 'user'`).
+3. **Resolución en Cascada:**
+   `Preferencia de Usuario` $ightarrow$ `Tema Base del Tenant` $ightarrow$ `Omarchy Tiling WM (Default)`.
 
-👉 **Especificación completa:** Ver [docs/modules/STOCKFLOW.md](./modules/STOCKFLOW.md).
+### B. Catálogo de Temas Disponibles:
+- **Omarchy Tiling WM:** Dracula palette, bordes 2px solid, tipografía JetBrains Mono y logo Press Start 2P.
+- **Omarchy Aetheria:** Acentos Teal y Violeta suave.
+- **Dark Glassmorphism:** Fondos translúcidos con blur(12px) y acentos Esmeralda.
+- **Cyberpunk Glassmorphism:** Alto contraste Neón.
+- **Soft Minimal Pastel:** Colores pasteles y bordes suaves.
+
+### C. Cero Alerts del Sistema:
+Todos los modales y diálogos son componentes HTML/CSS customizados (`showCustomAlert`, `showCustomConfirm`).

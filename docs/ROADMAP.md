@@ -1,125 +1,70 @@
-# HoloSpace Baseline — Roadmap de Arquitectura y Desarrollo
+# Roadmap de Evolución Técnica y SaaS Multi-Tenant — HoloSpace Baseline
 
-> Documento vivo de seguimiento. Actualizado a medida que se ejecutan los ítems.
-> Última actualización: 2026-08-10
-
----
-
-## Estructura de Carpetas Objetivo
-
-```
-holospace-baseline/
-├── docs/                          ← Documentación general de plataforma
-│   ├── HOLOSPACE_PLATFORM.md
-│   ├── ARCHITECTURE.md
-│   ├── FEATURES.md
-│   └── ROADMAP.md                 ← Este archivo
-│
-├── modules/
-│   ├── core/                      ← Módulo Core (plataforma base)
-│   │   ├── public/                ← UI web del core (login, nav, users, theme)
-│   │   │   ├── core.js            ← Lógica JS del core
-│   │   │   └── index.html         ← Shell HTML principal
-│   │   ├── routes/                ← Rutas API del core (login, users, theme, logs)
-│   │   │   └── core.routes.js
-│   │   └── README.md
-│   │
-│   └── scanban/                   ← Módulo ScanBan (logística + escaneo)
-│       ├── public/                ← UI web de ScanBan (kanban, pdf, explorer)
-│       │   └── scanban.js         ← Lógica JS de ScanBan
-│       ├── routes/                ← Rutas API de ScanBan (/api/scanban/...)
-│       │   └── scanban.routes.js
-│       ├── src/                   ← App móvil React Native / Expo
-│       ├── orders/                ← PDFs de órdenes
-│       └── README.md
-│
-├── public/                        ← Entry point estático (orquesta módulos)
-│   ├── index.html                 ← Incluye core + módulo activo
-│   └── app.js                     ← Bootstrap (carga core.js + scanban.js)
-│
-├── theme/                         ← Paleta de colores y definición de temas
-├── bin/                           ← Scripts DevOps
-├── data/
-│   └── holospace.db                ← SQLite unificado
-├── server.js                      ← Servidor Express (importa routes de módulos)
-├── App.tsx                        ← Shim Expo → modules/scanban/App.tsx
-├── app.json
-└── .env
-```
+> Documento maestro que consolida la evolución del proyecto, las convenciones técnicas de nombres, el checklist detallado de las 8 fases del Roadmap SaaS Multi-Tenant y las próximas fases planificadas.
 
 ---
 
-## Estado de Ejecución
+## 1. Convenciones Oficiales de Nombres y Prefijos
 
-### ✅ COMPLETADO
-
-| # | Ítem | Detalle |
-|---|---|---|
-| C-01 | Rename filesystem `phone-ware` → `holospace-baseline` | Directorio movido |
-| C-02 | Rename git remote → `jsrxar77/holospace-baseline` | URL actualizada |
-| C-03 | Migración a PostgreSQL 16 con RLS | Tablas `tenants`, `users`, `orders`, `order_items`, `tenant_modules` |
-| C-04 | Actualizar `README.md` con credenciales y URLs directas | Actualizado con los 4 módulos y Smart Auth Guard |
-| C-05 | Script DevOps de refresco y siembra de BD | `bin/devops-db-refresh.sh` |
-| C-06 | Catálogo Oficial de 4 Módulos | **`Tenant`**, **`Core`**, **`Kanban`**, **`Scanner`** |
-| C-07 | Enrutamiento Directo por URL SPA | `/tenant`, `/core`, `/kanban`, `/scanner` servidos limpiamente |
-| C-08 | Smart Auth Guard & RBAC 403 Screen | Redirección automática inteligente por rol y pantalla de acceso restringido |
-| C-09 | Tema Omarchy Aetheria & Bordes 4px Tiling WM | Paleta OLED Deep Violet + Teal con regla 4px square tiling |
-| C-10 | Dropdown Flotante de Usuario | Botón superior compacto con username y menú desplegable |
-| C-11 | Versionado dinámico en Footer | Lectura en tiempo real desde `package.json` vía `/api/config` |
-| C-12 | Suite de Pruebas Automatizadas | `verify-db-integrity.js`, `test-auth-jwt.js`, `test-entitlement.js` |
+| Capa / Alcance | Prefijo | Ejemplo de Uso |
+| :--- | :---: | :--- |
+| **Core Platform (LocalStorage)** | `hs_` | `hs_token`, `hs_user`, `hs_tenant`, `hs_saved_email` |
+| **Módulo Kanban (LocalStorage)** | `hs_kb_` | `hs_kb_active_filter`, `hs_kb_column_view` |
+| **Módulo Scanner (LocalStorage)** | `hs_sc_` | `hs_sc_active_order`, `hs_sc_sound_enabled` |
+| **Variables de Entorno (ENV)** | `HS_` | `HS_PORT`, `HS_THEME`, `HS_DATABASE_URL` |
+| **Variables de Módulos (ENV)** | `HS_MOD_` | `HS_MOD_KANBAN_MAX_ORDERS` |
 
 ---
 
-### 🔴 PENDIENTE — Alta Prioridad
+## 2. Estado del Roadmap SaaS Multi-Tenant (Fases 1 a 8 Completadas)
 
-*(¡Todos los ítems de alta prioridad han sido completados!)*
+### 🟢 FASE 1: Modelo de Datos Relacional PostgreSQL 16
+- [x] **1.1** Diseñar esquema DDL con soporte multi-tenant (`tenants`, `subscriptions`, `modules`, `plans`, `users`, `orders`, `order_items`, `audit_logs`).
+- [x] **1.2** Implementar aislamiento de datos mediante políticas PostgreSQL 16 Row-Level Security (RLS).
+- [x] **1.3** Crear adaptador relacional en `lib/db.js` con soporte de transacciones seguras y RLS context injection.
+
+### 🟢 FASE 2: Capa de Seguridad, Autenticación JWT y RBAC
+- [x] **2.1** Migrar hashing de contraseñas a algoritmo `scrypt` (`lib/auth.js`).
+- [x] **2.2** Implementar motor de firma y verificación de JSON Web Tokens (JWT).
+- [x] **2.3** Crear middleware de resolución de Tenant (`subdominio`, header `X-Tenant-ID` o claim JWT).
+- [x] **2.4** Implementar middleware de RBAC estricto validando `SUPERADMIN`, `ADMIN`, `OPERATOR`.
+
+### 🟢 FASE 3: Motor de Licenciamiento Modular (Entitlements)
+- [x] **3.1** Crear middleware `requireModule(moduleCode)` que bloquea accesos no contratados (`lib/entitlement.js`).
+- [x] **3.2** Endpoints de gestión de suscripciones y cuotas (`/api/subscription`, `/api/tenants/modules`).
+- [x] **3.3** Control de cuotas de usuarios y órdenes mensuales.
+
+### 🟢 FASE 4: Infraestructura Docker y Red de Producción
+- [x] **4.1** Multi-stage Dockerfile para servidor Node.js 22.
+- [x] **4.2** Orquestación con `docker-compose.yml` (`holospace_app`, `holospace_postgres`, `holospace_redis`, `holospace_proxy`, `holospace_mobile`, `holospace_backups`).
+- [x] **4.3** Configurar proxy reverso Nginx (`nginx/default.conf`) y backups automatizados (`bin/devops-db-backup.sh`).
+
+### 🟢 FASE 5: Gobierno SaaS y Gestión de Tenants (SuperAdmin)
+- [x] **5.1** Directorio interactivo de organizaciones en frontend web.
+- [x] **5.2** Modal de creación y edición de empresas con asignación de plan y cuotas.
+- [x] **5.3** Acciones de suspensión y reactivación inmediata en base de datos.
+- [x] **5.4** Asignación de licencias modulares en caliente.
+
+### 🟢 FASE 6: Motor de Facturación, Checkout y Auto-Onboarding B2B
+- [x] **6.1** Catálogo comercial de planes (Starter $49/mes, Pro $149/mes, Enterprise $499/mes).
+- [x] **6.2** Flujo de Auto-Registro de empresas (`registerNewTenant`).
+- [x] **6.3** Generación de sesiones de Checkout mock (`createCheckoutSession`).
+- [x] **6.4** Procesador de Webhooks de pasarela (`handlePaymentWebhook`).
+
+### 🟢 FASE 7: Enrutamiento Modular y Saneamiento de Endpoints
+- [x] **7.1** Saneamiento de rutas legadas y estandarización a 4 módulos canónicos.
+- [x] **7.2** Cero alerts y confirmaciones nativas del navegador (modales HTML/CSS dialog custom).
+- [x] **7.3** Auditoría de integridad de base de datos (`tests/verify-db-integrity.js`).
+
+### 🟢 FASE 8: Motor de Temas Jerárquico (Tenant vs Usuario)
+- [x] **8.1** Soporte de persistencia en base de datos para Tema Base de Organización y Preferencia Personal de Usuario.
+- [x] **8.2** Endpoints `GET /api/theme` y `POST /api/theme` con soporte de scopes.
+- [x] **8.3** Suite de pruebas jerárquicas (`tests/test-theme-hierarchy.js`).
 
 ---
 
-### 🟡 PENDIENTE — Media Prioridad
+## 3. Próximas Fases Planificadas
 
-*(¡Todos los ítems de media prioridad han sido completados!)*
-
----
-
-### 🟢 PENDIENTE — Baja Prioridad / Futuro
-
-| # | Ítem | Dónde | Descripción |
-|---|---|---|---|
-| L-02 | Git push a `holospace-baseline` en GitHub | GitHub + terminal | **Requiere rename manual del repo en GitHub primero** |
-| L-05 | Monorepo con `package.json` propio | `modules/scanban/package.json` | Dar a ScanBan su propio `package.json` + `node_modules` en el futuro |
-
----
-
-## Convenciones de Rutas
-
-| Tipo | Prefijo | Ejemplo |
-|---|---|---|
-| Core Platform | `/api/` | `/api/login`, `/api/users`, `/api/theme` |
-| Módulo ScanBan | `/api/scanban/` | `/api/scanban/kanban`, `/api/scanban/upload-pdf` |
-| Módulo futuro | `/api/<modulo>/` | `/api/stockflow/items` |
-
-## Convenciones de LocalStorage
-
-| Tipo | Prefijo | Ejemplo |
-|---|---|---|
-| Core Platform | `hw_` | `hs_token`, `hs_user` |
-| Módulo ScanBan | `hs_sb_` | `hs_sb_active_order` |
-
-## Convenciones de Variables de Entorno
-
-| Tipo | Prefijo | Ejemplo |
-|---|---|---|
-| Core Platform | `HW_` | `HS_THEME`, `HS_PORT` |
-| Módulo ScanBan | `HS_SB_` | `HS_SB_MAX_ORDERS` |
-
----
-
-## Registro de Cambios
-
-| Fecha | Versión | Cambio |
-|---|---|---|
-| 2026-08-09 | 0.1 | Creación inicial del roadmap |
-| 2026-08-10 | 0.2 | Rename completo + modules/scanban/ creado |
-| 2026-08-14 | 1.1.0 | Sistema de Diseño Centralizado (HW-DS), Motor 4 Temas y Reglas de Seguridad Cero Mocks |
-
+- [ ] **FASE 9:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 10:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 11:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
