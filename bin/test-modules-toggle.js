@@ -40,7 +40,7 @@ async function testModuleToggling() {
 
   // 0. Autenticación como SuperAdmin
   const loginRes = await request('/api/login', 'POST', {
-    email: 'superadmin@hologrowth.com.ar',
+    email: 'superadmin@holospace.app',
     password: 'BrunaSeRelambe22!'
   });
   assert.strictEqual(loginRes.status, 200, 'Login SuperAdmin debe responder 200');
@@ -55,21 +55,21 @@ async function testModuleToggling() {
   assert(Array.isArray(listRes.data.modules), 'modules debe ser un array');
   console.log(`✅ [PASS] ${listRes.data.modules.length} módulos recuperados.`);
 
-  // 2. Desactivar módulo scanflow
-  console.log('\n--- 2. Desactivar Módulo ScanFlow (POST /api/modules) ---');
-  const deactRes = await request('/api/modules', 'POST', { key: 'scanflow', active: false }, superAdminToken);
+  // 2. Desactivar módulo kanban
+  console.log('\n--- 2. Desactivar Módulo Kanban (POST /api/modules) ---');
+  const deactRes = await request('/api/modules', 'POST', { key: 'kanban', active: false }, superAdminToken);
   assert.strictEqual(deactRes.status, 200, 'POST /api/modules debe responder 200');
   assert.strictEqual(deactRes.data.is_active, false, 'is_active debe ser false');
   console.log('✅ [PASS] Módulo scanflow desactivado con éxito.');
 
   // Verificar en DB
-  const [scanflowDb] = await query("SELECT is_active, activated_by FROM modules WHERE key = 'scanflow'", [], { isSuperAdmin: true });
+  const [scanflowDb] = await query("SELECT is_active, activated_by FROM modules WHERE key = 'kanban'", [], { isSuperAdmin: true });
   assert.strictEqual(scanflowDb.is_active, false, 'En base de datos is_active debe ser false');
   console.log('✅ [PASS] Estado en PostgreSQL 16 verificado como false.');
 
-  // 3. Reactivar módulo scanflow
-  console.log('\n--- 3. Reactivar Módulo ScanFlow ---');
-  const reactRes = await request('/api/modules', 'POST', { key: 'scanflow', active: true }, superAdminToken);
+  // 3. Reactivar módulo kanban
+  console.log('\n--- 3. Reactivar Módulo Kanban ---');
+  const reactRes = await request('/api/modules', 'POST', { key: 'kanban', active: true }, superAdminToken);
   assert.strictEqual(reactRes.status, 200, 'POST /api/modules debe responder 200');
   assert.strictEqual(reactRes.data.is_active, true, 'is_active debe ser true');
   console.log('✅ [PASS] Módulo scanflow reactivado con éxito.');

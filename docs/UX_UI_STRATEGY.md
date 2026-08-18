@@ -7,7 +7,7 @@
 ## 1. Diagnóstico de la Situación Actual
 
 1. **Saturación en una Sola Fila (Header Amontonado):**
-   * Actualmente conviven en una misma barra horizontal: Logo `HoloSpace`, Badge de contexto, 5 pestañas de navegación, selector de temas con texto, botón "Conectar Celular", badge con texto largo de usuario (`SUPERADMIN: superadmin@hologrowth.com.ar`) y botón "Cerrar Sesión".
+   * Actualmente conviven en una misma barra horizontal: Logo `HoloSpace`, Badge de contexto, 5 pestañas de navegación, selector de temas con texto, botón "Conectar Celular", badge con texto largo de usuario (`SUPERADMIN: superadmin@holospace.app`) y botón "Cerrar Sesión".
    * Esto provoca colapso visual, textos apretados y desbordes horizontales en resoluciones estándar (1366px, laptops de 13" y tablets).
 
 2. **Falta de Responsividad Multidispositivo:**
@@ -55,7 +55,7 @@ Para evitar saturar la barra con textos largos de emails y roles:
 1. **Botón de Conexión Móvil (Quick Action):** Botón compacto con texto limpio `Escanear QR` o `Conectar Móvil` para abrir el modal de vinculación Expo Go.
 2. **Selector de Tema Compacto:** Selector estilizado con el tema activo de la sesión.
 3. **Píldora de Perfil con Menú Desplegable (User Menu Dropdown):**
-   * En lugar de imprimir todo el texto largo `SUPERADMIN: superadmin@hologrowth.com.ar` en la barra, se muestra un avatar compacto con rol (`SUPERADMIN` o iniciales del usuario).
+   * En lugar de imprimir todo el texto largo `SUPERADMIN: superadmin@holospace.app` en la barra, se muestra un avatar compacto con rol (`SUPERADMIN` o iniciales del usuario).
    * Al hacer clic, se despliega un popover estilizado con:
      * Nombre y Email completo.
      * Organización perteneciente.

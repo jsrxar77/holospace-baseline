@@ -27,8 +27,8 @@ function assert(condition, message) {
 
 async function runTests() {
   const superAdminToken = signJwt({
-    sub: 'superadmin@hologrowth.com.ar',
-    email: 'superadmin@hologrowth.com.ar',
+    sub: 'superadmin@holospace.app',
+    email: 'superadmin@holospace.app',
     role: 'SUPERADMIN',
     tenantId: 'a0000000-0000-0000-0000-000000000001'
   });
@@ -76,8 +76,8 @@ async function runTests() {
   const testUserEmail = `operario_${Date.now()}@testcorp.com`;
   
   await execute(
-    'INSERT INTO users (id, tenant_id, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, true)',
-    [testUserId, testTenantId, testUserEmail, hashPassword('Pass123!'), 'Operario Test', 'OPERATOR'],
+    'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+    [testUserId, testTenantId, 'operario_test', testUserEmail, hashPassword('Pass123!'), 'Operario Test', 'OPERATOR'],
     { isSuperAdmin: true }
   );
 
@@ -88,9 +88,9 @@ async function runTests() {
 
   // 4. Licenciamiento Modular Dinámico (ScanBan Board, ScanBan Scanner, ScanFlow)
   console.log('\n--- 4. Licenciamiento Modular por Tenant ---');
-  await setTenantModuleState(testTenantId, 'scanban-board', true, 'superadmin@hologrowth.com.ar');
-  await setTenantModuleState(testTenantId, 'scanban-scanner', true, 'superadmin@hologrowth.com.ar');
-  await setTenantModuleState(testTenantId, 'scanflow', true, 'superadmin@hologrowth.com.ar');
+  await setTenantModuleState(testTenantId, 'scanban-board', true, 'superadmin@holospace.app');
+  await setTenantModuleState(testTenantId, 'scanban-scanner', true, 'superadmin@holospace.app');
+  await setTenantModuleState(testTenantId, 'scanflow', true, 'superadmin@holospace.app');
 
   const activeModules = await query('SELECT module_code FROM tenant_modules WHERE tenant_id = ? AND is_enabled = true', [testTenantId], { isSuperAdmin: true });
   const modCodes = activeModules.map(m => m.module_code);

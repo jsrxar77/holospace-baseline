@@ -67,7 +67,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             }
           ]}
         >
-          HOLO<Text style={[styles.brandTitleGreen, { color: theme.emerald }]}>WARE</Text>
+          HOLO<Text style={[styles.brandTitleGreen, { color: theme.emerald }]}>SPACE</Text>
         </Text>
         <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: isOmarchy ? 'JetBrains Mono' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit') }]}>ScanBan Scanner · Operativa de Depósito</Text>
 

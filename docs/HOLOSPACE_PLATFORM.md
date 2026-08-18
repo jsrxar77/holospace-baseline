@@ -19,7 +19,7 @@ HoloSpace es una plataforma contenedora modular y multi-empresa de alto rendimie
 
 ## Jerarquía de Roles y Seguridad (RBAC & RLS)
 
-- **`SUPERADMIN` (`superadmin@hologrowth.com.ar`):**
+- **`SUPERADMIN` (`superadmin@holospace.app`):**
   Gobierno global de la plataforma desde el Tenant raíz `holospace`. Administra las organizaciones clientes (`Tenant`), audita la infraestructura, gestiona planes y licencias de módulos en `Core`.
 
 - **`ADMIN` (ej. `admin@drinklovers.com.ar`, `admin@poke.com.ar`):**

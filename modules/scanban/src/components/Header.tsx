@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
               }
             ]}
           >
-            HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>WARE</Text>
+            HOLO<Text style={[styles.titleGreen, { color: theme.emerald }]}>SPACE</Text>
           </Text>
           <View style={[styles.moduleBadge, { borderColor: theme.emerald, borderRadius: isOmarchy ? 4 : (isSoftMinimal ? 20 : 6) }]}>
             <Text style={[styles.moduleBadgeText, { color: theme.emerald }]}>{orgName}</Text>

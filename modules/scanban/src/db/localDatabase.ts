@@ -13,7 +13,7 @@ export const getDb = async () => {
   }
   const SQLite = require('expo-sqlite');
   if (!dbInstance) {
-    dbInstance = await SQLite.openDatabaseAsync('phoneware.db');
+    dbInstance = await SQLite.openDatabaseAsync('holospace.db');
     await initTables(dbInstance);
   }
   return dbInstance;

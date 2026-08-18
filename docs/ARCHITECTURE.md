@@ -86,6 +86,6 @@ holospace-baseline/
 1. **Aislamiento Estricto por Tenant (Zero Data Leakage):** Todas las consultas a la base de datos se ejecutan en el contexto de sesión PostgreSQL `app.current_tenant_id = $tenantId`. Las políticas RLS garantizan a nivel de motor SQL que ningún usuario pueda leer o escribir registros de otra organización.
 2. **Control de Acceso RBAC y Respuestas 403:** Se valida server-side el rol del usuario (`SUPERADMIN`, `ADMIN`, `OPERATOR`). Acceso no autorizado a módulos de plataforma renderiza la pantalla 403 explicativa.
 3. **Claves Primarias Nativas UUID:** Todas las tablas de PostgreSQL utilizan UUIDs para garantizar unicidad global sin colisiones entre empresas.
-4. **SuperAdmin Global:** Solo el SuperAdmin autenticado (`superadmin@hologrowth.com.ar`) tiene bypass de RLS (`app.is_superadmin = true`) para labores de auditoría y gobierno multiplataforma.
+4. **SuperAdmin Global:** Solo el SuperAdmin autenticado (`superadmin@holospace.app`) tiene bypass de RLS (`app.is_superadmin = true`) para labores de auditoría y gobierno multiplataforma.
 
 
