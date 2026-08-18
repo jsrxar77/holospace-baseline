@@ -28,6 +28,17 @@ export default function App() {
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
+    // Sincronizar URL en Expo Web si corre en navegador
+    if (typeof window !== 'undefined' && window.location) {
+      if (window.location.pathname === '/' || window.location.pathname === '') {
+        if (window.history && window.history.replaceState) {
+          window.history.replaceState(null, '', '/scanner');
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const token = useAuthStore.getState().token;
     fetchTheme(token);
     const interval = setInterval(() => {

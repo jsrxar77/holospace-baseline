@@ -201,30 +201,30 @@ function applyRoleVisibility() {
   const modTenant = document.getElementById('modTenant') || document.getElementById('modTenants');
   const modCore = document.getElementById('modCore');
   const modKanban = document.getElementById('modKanban') || document.getElementById('modScanBan');
-  const modScanner = document.getElementById('modScanner') || document.getElementById('modScanFlow');
+  const modQr = document.getElementById('modQr') || document.getElementById('modScanner');
   
   const mobModTenant = document.getElementById('mobModTenant') || document.getElementById('mobModTenants');
   const mobModCore = document.getElementById('mobModCore');
   const mobModKanban = document.getElementById('mobModKanban') || document.getElementById('mobModScanBan');
-  const mobModScanner = document.getElementById('mobModScanner') || document.getElementById('mobModScanFlow');
+  const mobModQr = document.getElementById('mobModQr') || document.getElementById('mobModScanner');
 
   if (isSuperAdmin) {
     // SUPERADMIN: Access strictly to HoloWare Tenant & Core Platform
     if (modTenant) modTenant.style.display = 'inline-flex';
     if (modCore) modCore.style.display = 'inline-flex';
     if (modKanban) modKanban.style.display = 'none';
-    if (modScanner) modScanner.style.display = 'none';
+    if (modQr) modQr.style.display = 'none';
     if (themeContainer) themeContainer.style.display = 'flex';
 
     if (mobModTenant) mobModTenant.style.display = 'block';
     if (mobModCore) mobModCore.style.display = 'block';
     if (mobModKanban) mobModKanban.style.display = 'none';
-    if (mobModScanner) mobModScanner.style.display = 'none';
+    if (mobModQr) mobModQr.style.display = 'none';
 
     const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
       userBadge.innerHTML = `<span class="badge-user-name">${displaySuperUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
-      userBadge.title = `${displaySuperUser} (${currentUser.role})`;
+      userBadge.title = `${displaySuperUser} (SUPERADMIN)`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       userBadge.style.color = '#A78BFA';
       userBadge.style.borderColor = '#A78BFA';
@@ -236,19 +236,18 @@ function applyRoleVisibility() {
     const dropOrg = document.getElementById('dropdownUserOrg');
     if (dropName) dropName.innerText = currentUser.name ? `${currentUser.name} (@${displaySuperUser})` : displaySuperUser;
     if (dropRoleBadge) {
-      dropRoleBadge.innerText = currentUser.role || 'SUPERADMIN';
-      dropRoleBadge.style.background = 'rgba(167, 139, 250, 0.2)';
+      dropRoleBadge.innerText = 'SUPERADMIN';
+      dropRoleBadge.style.background = 'rgba(167, 139, 250, 0.15)';
       dropRoleBadge.style.color = '#A78BFA';
       dropRoleBadge.style.border = '1px solid #A78BFA';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
-    if (dropOrg) dropOrg.innerText = 'HoloWare Cloud Platform (SUPERADMIN)';
+    if (dropOrg) dropOrg.innerText = 'Organización: HoloWare Global Platform';
 
     if (footerTenant) {
-      footerTenant.innerText = 'Organización: HoloWare Cloud Platform';
+      footerTenant.innerText = 'Organización: HoloWare Global Platform (SUPERADMIN)';
     }
 
-    const tenantsView = document.getElementById('viewTenants');
     const path = window.location.pathname.toLowerCase();
     if (path.includes('core')) {
       switchModule('core');
@@ -256,17 +255,17 @@ function applyRoleVisibility() {
       switchModule('tenant');
     }
   } else {
-    // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, Scanner)
+    // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, QR Connection)
     if (modTenant) modTenant.style.display = 'none';
     if (modCore) modCore.style.display = 'none';
     if (modKanban) modKanban.style.display = 'inline-flex';
-    if (modScanner) modScanner.style.display = 'inline-flex';
+    if (modQr) modQr.style.display = 'inline-flex';
     if (themeContainer) themeContainer.style.display = 'none';
 
     if (mobModTenant) mobModTenant.style.display = 'none';
     if (mobModCore) mobModCore.style.display = 'none';
     if (mobModKanban) mobModKanban.style.display = 'block';
-    if (mobModScanner) mobModScanner.style.display = 'block';
+    if (mobModQr) mobModQr.style.display = 'block';
 
     const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'KANBAN';
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');

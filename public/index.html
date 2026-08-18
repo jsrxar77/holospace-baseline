@@ -984,7 +984,7 @@
       <button class="nav-tab module-tab" id="modTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
       <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;">Core</button>
       <button class="nav-tab module-tab" id="modKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-      <button class="nav-tab module-tab" id="modScanner" onclick="switchModule('scanner')" style="display:none;">Scanner</button>
+      <button class="nav-tab module-tab" id="modQr" onclick="openQrModal()" style="display:none;">QR</button>
     </nav>
 
     <!-- Línea 3: Features del Módulo Activo -->
@@ -999,9 +999,6 @@
       <!-- Features Kanban -->
       <button class="nav-tab feature-tab feature-kanban" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
       <button class="nav-tab feature-tab feature-kanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
-
-      <!-- Features Scanner -->
-      <button class="nav-tab feature-tab feature-scanner" id="tabScanner" onclick="switchTab('scanner')" style="display:none;">Conexión Móvil Scanner</button>
     </nav>
   </header>
 
@@ -1024,7 +1021,7 @@
         <button class="mobile-nav-tab module-tab" id="mobModTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
         <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;">Core</button>
         <button class="mobile-nav-tab module-tab" id="mobModKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-        <button class="mobile-nav-tab module-tab" id="mobModScanner" onclick="switchModule('scanner')" style="display:none;">Scanner</button>
+        <button class="mobile-nav-tab module-tab" id="mobModQr" onclick="openQrModal(); closeMobileDrawer();" style="display:none;">QR</button>
       </nav>
       <nav class="mobile-drawer-nav" id="mobileNavFeatures" style="margin-top: 16px;">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Funcionalidades</div>
@@ -1035,8 +1032,6 @@
         
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Tablero Kanban</button>
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
-        
-        <button class="mobile-nav-tab feature-scanner" id="mobTabScanner" onclick="switchTabMobile('scanner')" style="display:none;">Conexión Móvil Scanner</button>
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">

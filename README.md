@@ -13,7 +13,7 @@ HoloWare es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de a
 | **Tenant** | `http://localhost:3001/tenant` | `SUPERADMIN` (Exclusivo) | Mandatorio (`tenant`) | **Gobierno SaaS Multi-Tenant:** Alta de empresas, gestión de planes, cuotas, asignación de usuarios y licenciamiento. |
 | **Core** | `http://localhost:3001/core` | `SUPERADMIN` | Mandatorio (`core`) | Plataforma base: autenticación centralizada, control de usuarios/roles, motor de temas y auditoría. |
 | **Kanban** | `http://localhost:3001/kanban` | `ADMIN` / `OPERATOR` | Plan Starter/Pro/Enterprise (`kanban`) | Tablero Kanban interactivo 4 columnas, ingesta/parseo automático de remitos PDF y explorador de pedidos. |
-| **Scanner** | `http://localhost:3001/scanner` (App Expo `8081`) | `OPERATOR` / `ADMIN` | Plan Starter/Pro/Enterprise (`scanner`) | App móvil de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
+| **Scanner** | `http://localhost:8081/scanner` (App Expo) | `OPERATOR` / `ADMIN` | Plan Starter/Pro/Enterprise (`scanner`) | App móvil/web de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
 
 ---
 
@@ -26,7 +26,7 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 
 | Rol | Organización / Tenant | Email | Contraseña | Acceso / Propósito |
 |---|---|---|---|---|
-| **SUPERADMIN** | `holoware` | `superadmin@hologrowth.com.ar` | `BrunaSeRelambe22!` | **HoloWare Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
+| **SUPERADMIN** | `holoware` | `superadmin@hologrowth.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
 
 ---
 
@@ -36,16 +36,16 @@ Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentr
 #### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@poke.com.ar` | `poke2026!` | **ScanBan Board (Web):** Tablero Kanban operativo y explorador de pedidos de Poke. |
-| **OPERATOR** | `juan@poke.com.ar` | `juan2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
-| **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
+| **ADMIN** | `admin@poke.com.ar` | `poke2026!` | **Kanban (Web `3001`):** Tablero Kanban operativo y explorador de pedidos de Poke. |
+| **OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 #### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | **ScanBan Board (Web):** Tablero Kanban operativo y explorador de pedidos de DrinkLovers. |
-| **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
-| **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
+| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | **Kanban (Web `3001`):** Tablero Kanban operativo y explorador de pedidos de DrinkLovers. |
+| **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 ---
 
@@ -79,8 +79,6 @@ Para monitorear la actividad de los contenedores, depurar peticiones y ver event
 * **Detener todos los servicios:** `docker compose down`
 * **Reiniciar el servidor de aplicación:** `docker compose restart app`
 * **Limpiar y resetear la base de datos PostgreSQL:** `bash bin/devops-db-refresh.sh`
-
----
 
 ---
 
@@ -126,13 +124,13 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 * **Funcionalidades:**
   * **Tablero Kanban 4 Columnas:** `BACKLOG` (Subida de remito PDF), `READY` (Listos para tomar), `DOING` (En preparación por operario), `DONE` (Completados y estampados).
   * **Explorador de Pedidos:** Búsqueda rápida por comprobante, cliente y filtros por operario.
+  * **Acceso Rápido a Conexión QR:** Botón **`QR`** en la barra superior para vincular dispositivos móviles.
 
 ---
 
 ### 4. 📱 Módulo Scanner (`OPERATOR` / `ADMIN`)
-* **URL Web Directa:** [`http://localhost:3001/scanner`](http://localhost:3001/scanner)
-* **App Móvil Expo (Navegador / Dispositivo LAN):** [`http://localhost:8081`](http://localhost:8081)
-* **Celular Físico (Expo Go):** Escanear el código QR disponible en `http://localhost:3001/scanner` o en el botón *"Conectar Celular"*.
+* **URL Web Directa:** [`http://localhost:8081/scanner`](http://localhost:8081/scanner) (o [`http://localhost:8081`](http://localhost:8081))
+* **Celular Físico (Expo Go):** Escanear el código QR del botón **`QR`** en `http://localhost:3001/kanban`.
 * **Credenciales de Operarios de Depósito:**
   * **Poke Argentina:** `juan@poke.com.ar` / `juan2026` (o `vanesa@poke.com.ar` / `vanesa2026`)
   * **Drink Lovers:** `juan@drinklovers.com.ar` / `juan2026` (o `vanesa@drinklovers.com.ar` / `vanesa2026`)
