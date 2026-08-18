@@ -28,6 +28,8 @@ Ante cada requerimiento o cambio, ejecutar el ciclo de verificación en los 4 pi
 
 ### 3. Checklist de Validación Arquitectónica
 Verificar que todo nuevo cambio o propuesta cumpla con:
+- [ ] **Aislamiento Estricto Multi-Tenant (Regla de Oro - Cero Data Leakage)**: Ningún usuario u operario puede visualizar, listar o modificar datos de otra organización (`tenant_id`). Todas las consultas SQL filtran obligatoriamente por `tenant_id` y por rol (`RBAC`).
+- [ ] **Control de Acceso y Mensajes 403**: Si un usuario intenta acceder a una ruta o módulo no autorizado (`/tenant`, `/core`), el sistema muestra explícitamente la pantalla y logs de "Acceso Restringido (403)" con su rol y organización.
 - [ ] **Estructura en `modules/`**: El código pertenece a su módulo correspondiente.
 - [ ] **Rutas `/api/<modulo>/`**: Los nuevos endpoints siguen la convención de enrutamiento prefijado.
 - [ ] **RBAC Server-side**: Se valida el rol del usuario (`SUPERADMIN`, `ADMIN`, `OPERATOR`).

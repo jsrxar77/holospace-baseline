@@ -57,10 +57,11 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ---
 
-## 🔒 Regla de Oro Obligatoria: Aislamiento Estricto de Pedidos por Organización (Multi-Tenancy) y Visibilidad Móvil
+## 🔒 Regla de Oro Obligatoria: Aislamiento Estricto de Datos por Organización (Multi-Tenancy) y Control de Acceso RBAC
 
-1. **Aislamiento Estricto de Pedidos (Zero Data Leakage):** Todo pedido u orden pertenece obligatoriamente a una organización (`tenant_id`). Queda terminantemente prohibido que usuarios u operarios de una organización visualicen, listen o interactúen con pedidos de otra organización.
-2. **Visibilidad Operativa Móvil (Expo / Web 8081):**
+1. **Aislamiento Estricto de Datos (Zero Data Leakage):** Todo pedido, usuario, ítem, configuración y remito pertenece obligatoriamente a una organización (`tenant_id`). Queda terminantemente prohibido que usuarios o administradores de una organización visualicen, listen o interactúen con información de otra organización.
+2. **Control de Acceso por Módulos y Mensajes 403:** Si un usuario sin permisos suficientes (ej. un `ADMIN` u `OPERATOR` de un cliente) intenta acceder a módulos restringidos de plataforma (`/tenant`, `/core`), el sistema debe denegar el acceso inmediatamente, registrar el evento en los logs de seguridad y presentar la pantalla explicativa de **"Acceso Restringido (403)"** indicando el usuario, su rol y su organización asignada.
+3. **Visibilidad Operativa Móvil (Expo / Web 8081):**
    - **Pedidos en Listo (`READY`):** El operario visualiza únicamente los pedidos disponibles para tomar que pertenecen a su organización (`tenant_id`).
    - **Pedidos en Proceso (`DOING`):** El operario visualiza única y exclusivamente todos y cada uno de los pedidos que él mismo tiene asignados (`operator_email` y `tenant_id`) en tarjetas individuales, con escaneo enfocado (1 a 1) para garantizar precisión en depósito. Nunca ve pedidos en proceso de otros operarios.
    - **Backlog / Done:** No se renderizan en el escáner operativo para evitar saturación de la interfaz móvil.

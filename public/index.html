@@ -1279,6 +1279,41 @@
       </div>
     </div>
 
+    <!-- 6. VISTA DE ACCESO DENEGADO / RESTRINGIDO (403 FORBIDDEN) -->
+    <div id="viewForbidden" class="view-panel hidden">
+      <div style="min-height: 50vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
+        <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 32px; max-width: 520px; width: 100%; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
+          <div style="display: inline-block; padding: 6px 16px; border-radius: 12px; background: rgba(239,68,68,0.15); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+            Acceso Restringido (403)
+          </div>
+          <h2 style="font-size: 24px; font-weight: 900; color: #FFF; margin-top: 20px;" id="forbiddenModuleTitle">Módulo No Autorizado</h2>
+          <p style="color: var(--text-muted); font-size: 14px; margin-top: 10px; line-height: 22px;" id="forbiddenModuleDesc">
+            Tu rol y organización no cuentan con los permisos requeridos para acceder a este módulo.
+          </p>
+          
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; margin: 24px 0; text-align: left; font-size: 13px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Usuario:</span>
+              <strong style="color: #FFF;" id="forbiddenUserDisplay">—</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Rol de Acceso:</span>
+              <strong style="color: var(--emerald);" id="forbiddenRoleDisplay">—</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Organización:</span>
+              <strong style="color: #FFF;" id="forbiddenTenantDisplay">—</strong>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-primary" id="forbiddenRedirectBtn" onclick="redirectAllowedModule()">Ir a mi Módulo</button>
+            <button class="btn-secondary" onclick="logout()">Cerrar Sesión</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->

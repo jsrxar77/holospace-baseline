@@ -309,19 +309,82 @@ function applyRoleVisibility() {
   }
 }
 
+function showForbiddenView(moduleName) {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'viewScanFlow'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+
+  const view = document.getElementById('viewForbidden');
+  if (view) view.classList.remove('hidden');
+
+  const titleEl = document.getElementById('forbiddenModuleTitle');
+  const descEl = document.getElementById('forbiddenModuleDesc');
+  const userEl = document.getElementById('forbiddenUserDisplay');
+  const roleEl = document.getElementById('forbiddenRoleDisplay');
+  const tenantEl = document.getElementById('forbiddenTenantDisplay');
+
+  const modTitles = {
+    tenant: 'Módulo Tenant (Gobierno de Plataforma)',
+    core: 'Módulo Core (Plataforma & Auditoría)',
+    kanban: 'Módulo Kanban (Tablero Logístico)'
+  };
+
+  if (titleEl) titleEl.innerText = modTitles[moduleName] || `Módulo ${moduleName}`;
+  if (descEl) {
+    if (currentUser && currentUser.role !== 'SUPERADMIN') {
+      descEl.innerText = `Este módulo está reservado exclusivamente para el Super Administrador de HoloWare. Tu organización actual no tiene permisos de acceso.`;
+    } else {
+      descEl.innerText = `No tienes los permisos asignados para interactuar con este módulo.`;
+    }
+  }
+
+  const displayUser = (currentUser && (currentUser.username || currentUser.name)) || (currentUser && currentUser.email) || 'Usuario';
+  if (userEl) userEl.innerText = displayUser;
+  if (roleEl) roleEl.innerText = (currentUser && currentUser.role) || 'OPERATOR';
+  if (tenantEl) tenantEl.innerText = (currentUser && (currentUser.tenantName || currentUser.tenantSlug)) || 'HoloWare';
+}
+
+function redirectAllowedModule() {
+  if (!currentUser) {
+    logout();
+    return;
+  }
+  if (currentUser.role === 'SUPERADMIN') {
+    switchModule('tenant');
+  } else {
+    switchModule('kanban');
+  }
+}
+
 function switchModule(moduleName, updateUrl = true) {
   const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
 
-  // 1. Ocultar todas las features (Tabs)
+  // Control estricto de acceso (RBAC):
+  // 1. Tenant y Core son exclusivos para SUPERADMIN
+  if ((normMod === 'tenant' || normMod === 'core') && (!currentUser || currentUser.role !== 'SUPERADMIN')) {
+    console.warn(`[SECURITY] Acceso denegado a módulo ${normMod} para usuario ${currentUser ? currentUser.email : 'anónimo'} (${currentUser ? currentUser.role : 'sin rol'})`);
+    if (updateUrl && window.history && window.history.pushState) {
+      window.history.pushState({ module: normMod }, '', '/' + normMod);
+    }
+    showForbiddenView(normMod);
+    return;
+  }
+
+  // 1. Ocultar vista de acceso denegado si estaba visible
+  const forbidView = document.getElementById('viewForbidden');
+  if (forbidView) forbidView.classList.add('hidden');
+
+  // 2. Ocultar todas las features (Tabs)
   document.querySelectorAll('.feature-tenant, .feature-tenants, .feature-core, .feature-kanban, .feature-scanban, .feature-scanner').forEach(el => {
     el.style.display = 'none';
   });
 
-  // 2. Mostrar las features del módulo seleccionado
+  // 3. Mostrar las features del módulo seleccionado
   document.querySelectorAll('.nav-tab.feature-' + normMod + ', .nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'inline-flex');
   document.querySelectorAll('.mobile-nav-tab.feature-' + normMod + ', .mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
 
-  // 3. Marcar módulo activo con mapeo exacto de IDs
+  // 4. Marcar módulo activo con mapeo exacto de IDs
   const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner' };
   const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner' };
 
@@ -331,7 +394,7 @@ function switchModule(moduleName, updateUrl = true) {
   if (dMod) dMod.classList.add('active');
   if (mMod) mMod.classList.add('active');
 
-  // 4. Actualizar URL amigable en navegador
+  // 5. Actualizar URL amigable en navegador
   if (updateUrl && window.history && window.history.pushState) {
     const targetUrl = '/' + normMod;
     if (window.location.pathname !== targetUrl) {
@@ -339,7 +402,7 @@ function switchModule(moduleName, updateUrl = true) {
     }
   }
 
-  // 5. Seleccionar la feature por defecto
+  // 6. Seleccionar la feature por defecto
   if (normMod === 'tenant') {
     switchTab('tenants');
   } else if (normMod === 'core') {
