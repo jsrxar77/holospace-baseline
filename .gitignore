@@ -40,11 +40,15 @@ yarn-error.log*
 *.db-shm
 *.sqlite
 *.sqlite3
-data/
-data/*
+!data/init-schema.sql
 
 # Environment
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Application Logs
+logs/
+logs/**/*.log
+!logs/.gitkeep

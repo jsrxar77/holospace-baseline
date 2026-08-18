@@ -71,36 +71,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 function logDetailedError(context, err, payload = {}) {
-  const timestamp = new Date().toLocaleString('es-AR');
-  const errorMessage = err ? (err.message || String(err)) : 'Error sin descripción';
-  const stackTrace = err && err.stack ? err.stack : 'No hay stack trace disponible';
-
-  const logEntry = `
-======================================================
-[ERROR DETALLADO - ${timestamp}]
-Contexto / Ruta: ${context}
-Usuario: ${payload.userEmail || payload.email || 'No especificado'}
-Error: ${errorMessage}
-Payload Contexto: ${JSON.stringify(payload, null, 2)}
-Stack Trace:
-${stackTrace}
-======================================================
-`;
-
-  console.error(logEntry);
-  try {
-    fs.appendFileSync(ERROR_LOG_PATH, logEntry, 'utf8');
-  } catch (e) {
-    console.error('Error escribiendo en log de archivo:', e);
-  }
-
-  return {
-    timestamp,
-    context,
-    error: errorMessage,
-    details: payload,
-    stackTrace
-  };
+  return logger.error(context, err, payload);
 }
 
 // Catálogo de Temas Centralizado
@@ -1771,7 +1742,8 @@ const server = http.createServer(async (req, res) => {
 
       // 11. LOGS DE ERROR
       if (req.url.startsWith('/api/error-logs') && req.method === 'GET') {
-        const errorContent = fs.existsSync(ERROR_LOG_PATH) ? fs.readFileSync(ERROR_LOG_PATH, 'utf8') : 'Sin errores registrados.';
+        const errorList = logger.getRecentErrors();
+        const errorContent = errorList.length > 0 ? JSON.stringify(errorList, null, 2) : 'Sin errores registrados.';
         res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
         res.end(errorContent);
         return;
