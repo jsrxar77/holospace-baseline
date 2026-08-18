@@ -86,43 +86,59 @@ Para monitorear la actividad de los contenedores, depurar peticiones y ver event
 
 ## 🖥️ ¿Cómo Acceder a Cada Módulo y Aplicación?
 
-Una vez levantado Docker, accede a cada aplicación según tu rol y entorno:
+Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo por su URL directa según el rol y propósito:
 
-### 1. 🏛️ HoloWare Core (Web — Gobierno de Plataforma)
-* **URL en Navegador:** [`http://localhost:3001`](http://localhost:3001) (o [`http://localhost`](http://localhost))
-* **Datos de Login:**
-  * **Organización:** `holoware`
+---
+
+### 1. 🏛️ Módulo Tenant (`SUPERADMIN`)
+* **URL Directa:** [`http://localhost:3001/tenant`](http://localhost:3001/tenant)
+* **Credenciales de Acceso:**
   * **Email:** `superadmin@hologrowth.com.ar`
   * **Contraseña:** `BrunaSeRelambe22!`
-* **Funcionalidades:** Panel `🏛️ Plataforma` (gestión y licenciamiento de módulos por Tenant, estado del servidor y base de datos, logs de auditoría global), `👥 Usuarios Core` y selector central de `🎨 Tema`.
+* **Funcionalidades:**
+  * **Directorio de Organizaciones:** Gestión integral de Tenants (Nombre, Slug, Plan, Límites de Usuarios y Órdenes/Mes).
+  * **Licenciamiento Dinámico:** Activación/desactivación de módulos **Kanban** y **Scanner** por empresa.
+  * **Tema Base por Defecto:** Asignación del tema visual corporativo (`Omarchy Tiling WM`, `Omarchy Aetheria`, `Dark Glassmorphism`, etc.).
 
 ---
 
-### 2. 📋 ScanBan Board (Web — Gestión Operativa & Kanban)
-* **URL en Navegador:** [`http://localhost:3001`](http://localhost:3001) (o [`http://localhost`](http://localhost))
-* **Datos de Login:**
-  * **Empresa Drink Lovers:** Organización: `drinklovers` | Email: `admin@drinklovers.com.ar` | Contraseña: `drinklovers2026!`
-  * **Empresa Poke Argentina:** Organización: `poke` | Email: `admin@poke.com.ar` | Contraseña: `poke2026!`
-* **Funcionalidades:** `📋 Tablero Kanban` interactivo en 4 columnas (`TODO`, `DOING`, `DONE`, `HISTORIC`), subida y parseo automático de remitos PDF, `🔍 Explorador de Pedidos` e información del Tenant activo.
+### 2. ⚙️ Módulo Core (`SUPERADMIN`)
+* **URL Directa:** [`http://localhost:3001/core`](http://localhost:3001/core)
+* **Credenciales de Acceso:**
+  * **Email:** `superadmin@hologrowth.com.ar`
+  * **Contraseña:** `BrunaSeRelambe22!`
+* **Funcionalidades:**
+  * **Usuarios Globales:** Alta, edición y desactivación de usuarios en toda la plataforma.
+  * **Plataforma y Módulos:** Estado de base de datos PostgreSQL, servidor Node.js y catálogo oficial.
+  * **Auditoría Inmutable:** Registro de auditoría de eventos de seguridad y cambios de configuración.
 
 ---
 
-### 3. ScanBan Scanner (Mobile / Web — Operativa de Deposito)
+### 3. 📋 Módulo Kanban (`ADMIN` / `OPERATOR`)
+* **URL Directa:** [`http://localhost:3001/kanban`](http://localhost:3001/kanban)
+* **Credenciales de Acceso por Empresa:**
+  * **Poke Argentina:**
+    * Admin: `admin@poke.com.ar` / `poke2026!`
+    * Operarios: `juan@poke.com.ar` / `juan2026` · `vanesa@poke.com.ar` / `vanesa2026`
+  * **Drink Lovers Argentina:**
+    * Admin: `admin@drinklovers.com.ar` / `drinklovers2026!`
+    * Operarios: `juan@drinklovers.com.ar` / `juan2026` · `vanesa@drinklovers.com.ar` / `vanesa2026`
+* **Funcionalidades:**
+  * **Tablero Kanban 4 Columnas:** `BACKLOG` (Subida de remito PDF), `READY` (Listos para tomar), `DOING` (En preparación por operario), `DONE` (Completados y estampados).
+  * **Explorador de Pedidos:** Búsqueda rápida por comprobante, cliente y filtros por operario.
 
-> **Importante:** Este servicio corre dentro de Docker. Para acceder desde un dispositivo en la misma red WiFi,
-> usa la **IP LAN de la maquina host** en lugar de `localhost`.
-> Si tu IP cambia, actualiza `EXPO_PUBLIC_SERVER_IP` en `docker-compose.yml` y reconstruye el contenedor `mobile`.
+---
 
-* **Opcion A (Navegador Web / PC — misma maquina):** [`http://localhost:8081`](http://localhost:8081)
-* **Opcion A (Navegador Web / celular en red local):** `http://192.168.100.247:8081` (reemplazar con la IP actual de la Mac)
-* **Opcion B (Celular Fisico Android / iOS con Expo Go):** Abre la app **Expo Go** y escanea el codigo QR disponible en `http://192.168.100.247:8081`.
-* **Datos de Login:**
-  * **Operario Drink Lovers:** `juan@drinklovers.com.ar` / `juan2026` (o `vanesa@drinklovers.com.ar` / `vanesa2026`)
-  * **Operario Poke Argentina:** `juan@poke.com.ar` / `juan2026` (o `vanesa@poke.com.ar` / `vanesa2026`)
-* **Funcionalidades:** Interfaz movil tactil para deposito, lector de codigo de barras EAN-13 via camara, confirmacion sonora de escaneo, asignacion de pedidos e impresion/estampa digital.
-
-> **Nota tecnica:** Si cambia la IP LAN de la maquina, actualizar `EXPO_PUBLIC_SERVER_IP` y `REACT_NATIVE_PACKAGER_HOSTNAME`
-> en el servicio `mobile` del archivo `docker-compose.yml` y reconstruir con `docker compose up -d --build mobile`.
+### 4. 📱 Módulo Scanner (`OPERATOR` / `ADMIN`)
+* **URL Web Directa:** [`http://localhost:3001/scanner`](http://localhost:3001/scanner)
+* **App Móvil Expo (Navegador / Dispositivo LAN):** [`http://localhost:8081`](http://localhost:8081)
+* **Celular Físico (Expo Go):** Escanear el código QR disponible en `http://localhost:3001/scanner` o en el botón *"Conectar Celular"*.
+* **Credenciales de Operarios de Depósito:**
+  * **Poke Argentina:** `juan@poke.com.ar` / `juan2026` (o `vanesa@poke.com.ar` / `vanesa2026`)
+  * **Drink Lovers:** `juan@drinklovers.com.ar` / `juan2026` (o `vanesa@drinklovers.com.ar` / `vanesa2026`)
+* **Funcionalidades:**
+  * **Toma 1 a 1 de Pedidos:** Escaneo enfocado con prioridad del pedido activo en primer lugar.
+  * **Validación Sonora y Visual:** Lector de código de barras EAN-13, progreso en tiempo real y despacho con estampa digital.
 
 ---
 
