@@ -148,7 +148,7 @@ const THEMES = {
     boxShadow: '0 0 25px rgba(255, 0, 127, 0.2)'
   },
   omarchy_tiling: {
-    name: 'Omarchy Tiling WM',
+    name: 'Omarchy Tiling WM (Dracula)',
     background: '#121317',
     cardBg: '#1A1B22',
     cardBorder: '#2E303E',
@@ -167,6 +167,27 @@ const THEMES = {
     borderWidth: 1,
     backdropBlur: 'none',
     boxShadow: 'none'
+  },
+  omarchy_aetheria: {
+    name: 'Omarchy Aetheria',
+    background: '#0E091D',
+    cardBg: 'rgba(23, 15, 46, 0.75)',
+    cardBorder: '#3D256D',
+    emerald: '#14B9B5',
+    cobalt: '#7C3AED',
+    amber: '#FBBF24',
+    red: '#A60234',
+    textMain: '#F3EEFF',
+    textMuted: '#9D8BBF',
+    fontFamily: 'JetBrains Mono',
+    fontMono: 'JetBrains Mono',
+    borderRadius: 6,
+    radiusCard: 6,
+    radiusBtn: 6,
+    radiusBadge: 4,
+    borderWidth: 1,
+    backdropBlur: 'blur(12px)',
+    boxShadow: '0 4px 20px rgba(124, 58, 237, 0.15)'
   },
   soft_minimal_pastel: {
     name: 'Soft Minimal Pastel',

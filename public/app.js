@@ -1922,11 +1922,12 @@ async function loadTenantsManagementData() {
             <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
             <span style="font-size: 12px; font-weight: 700; color: #FFF; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
               ${{
-                omarchy_tiling: 'Omarchy Tiling WM',
+                omarchy_tiling: 'Omarchy Tiling WM (Dracula)',
+                omarchy_aetheria: 'Omarchy Aetheria',
                 dark_glassmorphism: 'Dark Glassmorphism',
                 cyberpunk_glassmorphism: 'Cyberpunk Glassmorphism',
                 soft_minimal_pastel: 'Soft Minimal Pastel'
-              }[t.active_theme] || t.active_theme || 'Omarchy Tiling WM'}
+              }[t.active_theme] || t.active_theme || 'Omarchy Tiling WM (Dracula)'}
             </span>
           </div>
 
