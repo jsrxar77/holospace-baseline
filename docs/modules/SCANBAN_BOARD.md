@@ -21,9 +21,12 @@
 - **EN PROCESO (Azul):** Pedidos asignados a un operario móvil en ejecución interactiva.
 - **COMPLETADO (Amarillo):** Historial inmutable de pedidos auditados al 100% con estampa digital.
 
-### 2.2 Ingesta & Parser de Facturas PDF por Coordenadas Y
-- Extrae número de comprobante, razón social del cliente, CUIT y lista de artículos EAN-13 con cantidades y precios unitarios.
-- Guarda el archivo PDF original como Blob Base64 en SQLite.
+### 2.2 Ingesta & Parser de Facturas PDF con Diagnóstico en 3 Pasos
+- **Paso 1 (Integridad del Archivo):** Verificación de cabecera binaria `%PDF-` y estructura de páginas legible.
+- **Paso 2 (Lectura de Cabecera y Metadatos):** Extracción de número de comprobante, cliente/razón social, CUIT y fecha de emisión.
+- **Paso 3 (Detección de Productos y Cantidades):** Extracción de tabla de artículos EAN-13, cantidades requeridas y precios unitarios.
+- **Feedback Visual Inmediato:** Modal de diagnóstico gráfico que detalla con íconos de estado (`✓` o `✗`) y sugerencias accionables el resultado exacto de la subida para el usuario final.
+- Guarda el archivo PDF original como Blob Base64 en PostgreSQL y registra la acción en `audit_logs`.
 - Permite la descarga del comprobante original vía `/api/scanban/download-pdf`.
 
 ### 2.3 Explorador Inteligente de Pedidos (`Explorador de Pedidos`)
@@ -41,9 +44,8 @@
 | `audit_logs` | Historial inmutable de acciones en cada pedido. |
 
 ### 3.1 Convenciones de Claves e Identificación Única de Pedidos
-- **`id` (`INTEGER PRIMARY KEY AUTOINCREMENT`):** Clave primaria relacional única de la tabla `orders`. **Es el identificador obligatorio** utilizado para el seguimiento unívoco de pedidos, cambios de estado, transiciones entre lanes/columnas del Kanban y referencias en la API.
-- **`uuid` (`TEXT UNIQUE NOT NULL`):** Identificador único universal (UUID v4) de cada comprobante.
-- **`orderNumber` (`TEXT NOT NULL`):** Número de comprobante o comprobante comercial extraído de la factura PDF ingresada. **REGLA DE ARQUITECTURA CRÍTICA:** `orderNumber` es únicamente una propiedad visible de negocio y **NO ES UNA CLAVE ÚNICA** (pudiendo repetirse en facturas de distintos clientes o proveedores externos). Queda **estrictamente prohibido** utilizar `orderNumber` como clave primaria o identificador de transición entre los lanes del Kanban.
+- **`id` (`UUID PRIMARY KEY`):** Clave primaria relacional y única universal (UUID v4) de la tabla `orders` en PostgreSQL. **Es el identificador obligatorio y exclusivo** utilizado para el seguimiento unívoco de pedidos, cambios de estado, asignación de operarios, transiciones entre lanes/columnas del Kanban y referencias en la API.
+- **`orderNumber` (`TEXT NOT NULL`):** Número de comprobante comercial extraído de la factura PDF ingresada. **REGLA DE ARQUITECTURA CRÍTICA:** `orderNumber` es únicamente una propiedad visible de negocio y **NO ES UNA CLAVE ÚNICA** (pudiendo repetirse legítimamente en comprobantes de distintos clientes, proveedores externos o periodos fiscales). Queda **estrictamente prohibido** utilizar `orderNumber` como clave primaria, restricción UNIQUE o identificador de transición entre los lanes del Kanban.
 
 
 ---

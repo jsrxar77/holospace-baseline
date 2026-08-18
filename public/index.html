@@ -1418,6 +1418,87 @@
     </div>
   </div>
 
+  <!-- MODAL EDICIÓN INTEGRAL DE ORGANIZACIÓN (SUPERADMIN ONLY) -->
+  <div id="editTenantModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 520px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h3 id="editTenantModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Editar Organización</h3>
+        <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="closeEditTenantModal()">✕</button>
+      </div>
+
+      <form id="editTenantForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="saveEditTenantSubmit(event)">
+        <input type="hidden" id="editTenantId">
+
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre de la Empresa / Organización <span style="color: var(--red);">*</span></label>
+          <input type="text" id="editTenantNameInput" class="input-field" placeholder="ej: Poke Argentina" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Slug del Tenant</label>
+            <input type="text" id="editTenantSlugInput" class="input-field" style="background: rgba(255,255,255,0.04); cursor: not-allowed;" readonly>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Plan de Suscripción <span style="color: var(--red);">*</span></label>
+            <select id="editTenantPlanSelect" class="input-field" required onchange="handleEditTenantPlanChange(this.value)">
+              <option value="starter">Starter (1 Módulo - ScanBan Board)</option>
+              <option value="pro">Pro (2 Módulos - Board + Scanner)</option>
+              <option value="enterprise">Enterprise (Todos los Módulos)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Límite de Usuarios</label>
+            <input type="number" id="editTenantMaxUsersInput" class="input-field" min="1" max="100" required>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Límite de Órdenes / Mes</label>
+            <input type="number" id="editTenantMaxOrdersInput" class="input-field" min="10" max="10000" required>
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Tema Base por Defecto de la Organización</label>
+          <select id="editTenantThemeSelect" class="input-field">
+            <option value="omarchy_tiling">Omarchy Tiling WM</option>
+            <option value="dark_glassmorphism">Dark Glassmorphism</option>
+            <option value="cyberpunk_glassmorphism">Cyberpunk Glassmorphism</option>
+            <option value="soft_minimal_pastel">Soft Minimal Pastel</option>
+          </select>
+        </div>
+
+        <!-- Módulos Licenciados en Modal -->
+        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;">
+          <div style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Módulos Licenciados</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+              <span>ScanBan Board (Tablero Web)</span>
+              <input type="checkbox" id="editTenantModBoard">
+            </label>
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+              <span>ScanBan Scanner (App Móvil EAN-13)</span>
+              <input type="checkbox" id="editTenantModScanner">
+            </label>
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+              <span>ScanFlow (Gestión de Stock)</span>
+              <input type="checkbox" id="editTenantModFlow">
+            </label>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;">
+          <button type="button" class="btn-secondary" onclick="closeEditTenantModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">✓ Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL CONECTAR EXPO GO (QR) -->
   <div id="qrModal" class="modal-overlay hidden">
     <div class="modal-content" style="text-align: center; max-width: 480px;">

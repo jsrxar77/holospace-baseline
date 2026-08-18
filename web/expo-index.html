@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0E14">
+  <title>%WEB_TITLE%</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #0B0E14;
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    #expo-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0B0E14;
+      gap: 16px;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    #expo-loader .brand { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.5px; }
+    #expo-loader .brand span { color: #00E676; }
+    #expo-loader .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(0,230,118,0.2);
+      border-top-color: #00E676;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    #expo-loader .err { font-size: 13px; color: #FF5252; max-width: 340px; text-align: center; display: none; font-family: monospace; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="expo-loader">
+    <div class="brand">HOLO<span>WARE</span></div>
+    <div class="spinner"></div>
+    <div class="err" id="loader-err"></div>
+  </div>
+  <div id="root"></div>
+  <script>
+    // Capturar errores JS globales y mostrarlos en el loader
+    window.addEventListener('error', function(e) {
+      var err = document.getElementById('loader-err');
+      if (err) {
+        err.style.display = 'block';
+        err.textContent = 'Error: ' + (e.message || e.type) + (e.filename ? ' — ' + e.filename.split('/').pop() + ':' + e.lineno : '');
+      }
+      console.error('[HoloWare Loader] JS Error:', e.message, e.filename, e.lineno);
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      var err = document.getElementById('loader-err');
+      if (err) {
+        err.style.display = 'block';
+        err.textContent = 'Promise Error: ' + (e.reason?.message || String(e.reason));
+      }
+      console.error('[HoloWare Loader] Unhandled Promise:', e.reason);
+    });
+
+    // Ocultar loader cuando React monte — MutationObserver + polling fallback
+    function hideLoader() {
+      var loader = document.getElementById('expo-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(function() { loader.style.display = 'none'; }, 300);
+      }
+    }
+
+    // MutationObserver para detectar cuando React inserta algo en #root
+    var observer = new MutationObserver(function() {
+      var root = document.getElementById('root');
+      if (root && root.childNodes.length > 0) {
+        hideLoader();
+        observer.disconnect();
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Polling fallback: revisar cada 200ms durante 10s
+    var checkCount = 0;
+    var checkInterval = setInterval(function() {
+      var root = document.getElementById('root');
+      if (root && root.childNodes.length > 0) {
+        hideLoader();
+        clearInterval(checkInterval);
+      }
+      checkCount++;
+      if (checkCount > 50) { // 10 segundos
+        clearInterval(checkInterval);
+        var spinner = document.querySelector('#expo-loader .spinner');
+        if (spinner) spinner.style.display = 'none';
+        var err = document.getElementById('loader-err');
+        if (err && !err.textContent) {
+          err.style.display = 'block';
+          err.textContent = 'La app tardo demasiado en cargar. Revisa la consola del navegador (F12) para ver errores.';
+        }
+      }
+    }, 200);
+  </script>
+</body>
+</html>

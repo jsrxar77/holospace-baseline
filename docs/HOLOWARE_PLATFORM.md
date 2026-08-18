@@ -26,6 +26,17 @@ HoloWare es una plataforma contenedora modular y multi-empresa de alto rendimien
 - **`ADMIN` (ej. `admin@drinklovers.com.ar`, `admin@poke.com.ar`):**
   Administrador de una empresa cliente específica. Gestiona sus propios pedidos en `ScanBan Board`, visualiza su inventario en `ScanFlow` y administra a sus operarios.
 
-- **`OPERATOR` (ej. `juan@drinklovers.com.ar`, `vanesa@poke.com.ar`):**
+- **`OPERATOR` (ej. `juan@drinklovers.com.ar`, `vanesa@poke.com.ar`, `juan@poke.com.ar`):**
   Operarios de depósito que escanean y preparan pedidos desde la app móvil `ScanBan Scanner` o la vista web autorizada.
+
+---
+
+## Principio de Aislamiento de Datos y Visibilidad Operativa Multi-Tenant
+
+1. **Aislamiento Cero Fugas (Zero Data Leakage):**
+   Todos los registros operativos (pedidos, ítems, auditorías, inventario) se encuentran particionados y asegurados por `tenant_id`. Ninguna organización tiene acceso de lectura o escritura a los pedidos de otra empresa.
+2. **Visibilidad en el Flujo Móvil (ScanBan Scanner):**
+   - **Pedidos Listos (`READY`):** El operario visualiza la lista de órdenes disponibles pertenecientes únicamente a su organización.
+   - **Pedidos en Proceso (`DOING`):** El operario visualiza de forma destacada su orden activa asignada (`operator_email`). Los pedidos en proceso de otros compañeros permanecen aislados para evitar duplicidad de trabajo.
+   - **Backlog & Done:** Permanecen en el tablero administrativo (`ScanBan Board`) y no saturan el dispositivo móvil de escaneo.
 

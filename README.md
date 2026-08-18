@@ -1,4 +1,4 @@
-# HoloWare SaaS Baseline
+# HoloWare SaaS Baseline (v1.2.1)
 
 > **Plataforma Contenedora Multi-Tenant B2B Enterprise para Gestión Operativa, Logística y Monetización por Suscripción.**
 
@@ -34,19 +34,19 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 ### Nivel 2: Organizaciones Clientes (Tenants Aislados)
 Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentro de su tenant:
 
-#### Organización: `poke` (Poke Argentina — `poke.com.ar`)
-| Rol | Email | Contraseña | Acceso / Entorno |
+#### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
+| Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
 | **ADMIN** | `admin@poke.com.ar` | `poke2026!` | **ScanBan Board (Web):** Tablero Kanban operativo y explorador de pedidos de Poke. |
-| **OPERATOR** | `juan@poke.com.ar` | `juan2026!` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparación en depósito. |
-| **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026!` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparación en depósito. |
+| **OPERATOR** | `juan@poke.com.ar` | `juan2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
+| **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
 
-#### Organización: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
-| Rol | Email | Contraseña | Acceso / Entorno |
+#### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
+| Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
 | **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | **ScanBan Board (Web):** Tablero Kanban operativo y explorador de pedidos de DrinkLovers. |
-| **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026!` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparación en depósito. |
-| **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026!` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparación en depósito. |
+| **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
+| **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **ScanBan Scanner (Mobile / Web):** Escaneo y preparacion en deposito. |
 
 ---
 
@@ -108,13 +108,22 @@ Una vez levantado Docker, accede a cada aplicación según tu rol y entorno:
 
 ---
 
-### 3. 📱 ScanBan Scanner (Mobile / Web — Operativa de Depósito)
-* **Opción A (Navegador Web / PC):** Abre [`http://localhost:8081`](http://localhost:8081) directamente en Chrome o Safari.
-* **Opción B (Celular Físico Android / iOS):** Abre la aplicación **Expo Go** en tu celular y escanea el código QR que se muestra en [`http://localhost:8081`](http://localhost:8081).
+### 3. ScanBan Scanner (Mobile / Web — Operativa de Deposito)
+
+> **Importante:** Este servicio corre dentro de Docker. Para acceder desde un dispositivo en la misma red WiFi,
+> usa la **IP LAN de la maquina host** en lugar de `localhost`.
+> Si tu IP cambia, actualiza `EXPO_PUBLIC_SERVER_IP` en `docker-compose.yml` y reconstruye el contenedor `mobile`.
+
+* **Opcion A (Navegador Web / PC — misma maquina):** [`http://localhost:8081`](http://localhost:8081)
+* **Opcion A (Navegador Web / celular en red local):** `http://192.168.100.247:8081` (reemplazar con la IP actual de la Mac)
+* **Opcion B (Celular Fisico Android / iOS con Expo Go):** Abre la app **Expo Go** y escanea el codigo QR disponible en `http://192.168.100.247:8081`.
 * **Datos de Login:**
-  * **Operario de Drink Lovers:** Organización: `drinklovers` | Email: `juan@drinklovers.com.ar` (o `vanesa@drinklovers.com.ar`) | Contraseña: `juan2026!` (o `vanesa2026!`)
-  * **Operario de Poke Argentina:** Organización: `poke` | Email: `juan@poke.com.ar` (o `vanesa@poke.com.ar`) | Contraseña: `juan2026!` (o `vanesa2026!`)
-* **Funcionalidades:** Interfaz móvil táctil para depósito, lector de código de barras EAN-13 vía cámara, confirmación sonora de escaneo, asignación de pedidos e impresión/estampa digital.
+  * **Operario Drink Lovers:** `juan@drinklovers.com.ar` / `juan2026` (o `vanesa@drinklovers.com.ar` / `vanesa2026`)
+  * **Operario Poke Argentina:** `juan@poke.com.ar` / `juan2026` (o `vanesa@poke.com.ar` / `vanesa2026`)
+* **Funcionalidades:** Interfaz movil tactil para deposito, lector de codigo de barras EAN-13 via camara, confirmacion sonora de escaneo, asignacion de pedidos e impresion/estampa digital.
+
+> **Nota tecnica:** Si cambia la IP LAN de la maquina, actualizar `EXPO_PUBLIC_SERVER_IP` y `REACT_NATIVE_PACKAGER_HOSTNAME`
+> en el servicio `mobile` del archivo `docker-compose.yml` y reconstruir con `docker compose up -d --build mobile`.
 
 ---
 

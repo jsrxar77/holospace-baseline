@@ -2,6 +2,18 @@
 
 > **Rol:** Arquitecto de Software Principal especialista en plataformas web/móviles modulares de alto rendimiento.
 
+---
+
+## CRITICO: Toda la infraestructura corre en Docker
+
+> **NUNCA usar `npm run dev` ni comandos Node/npm directos en el host.**
+> Todo el stack (Node.js, PostgreSQL, Redis, Nginx, Expo) corre dentro de contenedores Docker.
+> El unico comando de inicio es: `docker compose up -d --build`
+> Antes de cualquier tarea relacionada con deploy, variables de entorno o dependencias,
+> consultar el skill `holoware-docker-deploy` (.agents/skills/holoware-docker-deploy/SKILL.md).
+
+---
+
 ## 🏛️ Directiva Primaria
 
 Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consultar la documentación viva en la carpeta `/docs`** antes de proponer cambios, diseñar arquitecturas o escribir código.
@@ -42,6 +54,16 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 1. **Cero Uso No Solicitado de Navegador/Chrome:** Queda terminantemente prohibido iniciar agentes de navegación o herramientas de browser (`browser_subagent`) a menos que el usuario lo pida explícitamente. No gastar tiempo ni tokens en automatizaciones visuales lentas cuando los cambios son de código o verificables por terminal/inspección directa.
 2. **Precisión Quirúrgica y Preguntas Claras:** Si un requerimiento, comportamiento o contexto no se comprende con total certeza, el agente DEBE preguntar puntualmente al usuario qué se busca antes de asumir o realizar cambios masivos innecesarios.
+
+---
+
+## 🔒 Regla de Oro Obligatoria: Aislamiento Estricto de Pedidos por Organización (Multi-Tenancy) y Visibilidad Móvil
+
+1. **Aislamiento Estricto de Pedidos (Zero Data Leakage):** Todo pedido u orden pertenece obligatoriamente a una organización (`tenant_id`). Queda terminantemente prohibido que usuarios u operarios de una organización visualicen, listen o interactúen con pedidos de otra organización.
+2. **Visibilidad Operativa Móvil (Expo / Web 8081):**
+   - **Pedidos en Listo (`READY`):** El operario visualiza únicamente los pedidos disponibles para tomar que pertenecen a su organización (`tenant_id`).
+   - **Pedidos en Proceso (`DOING`):** El operario visualiza única y exclusivamente todos y cada uno de los pedidos que él mismo tiene asignados (`operator_email` y `tenant_id`) en tarjetas individuales, con escaneo enfocado (1 a 1) para garantizar precisión en depósito. Nunca ve pedidos en proceso de otros operarios.
+   - **Backlog / Done:** No se renderizan en el escáner operativo para evitar saturación de la interfaz móvil.
 
 ---
 

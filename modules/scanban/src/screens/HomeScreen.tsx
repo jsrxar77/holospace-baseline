@@ -17,7 +17,7 @@ interface ReadyOrder {
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
-  const { activeOrder, operatorId, loadInitialOrders, releaseOrder } = useOrderStore();
+  const { activeOrder, myDoingOrders, operatorId, loadInitialOrders, releaseOrder, focusDoingOrder } = useOrderStore();
   const { theme, fetchTheme } = useThemeStore();
   const [readyOrders, setReadyOrders] = useState<ReadyOrder[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,12 +57,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
   }, []);
 
   const handleClaimOrder = async (orderNumber: string) => {
-    if (activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
+    if (myDoingOrders.length > 0) {
       Alert.alert(
-        'Límite de Pedido Activo (1 a 1)',
-        `Ya tienes el Pedido #${activeOrder.orderNumber} en proceso.\n\nDebes finalizar la auditoría o liberarlo antes de tomar un pedido nuevo.`,
+        'Límite de Pedidos Activos',
+        `Ya tienes ${myDoingOrders.length} pedido(s) en proceso.\n\nDebes finalizar la auditoría o liberar tus pedidos antes de tomar uno nuevo de la lista general.`,
         [
-          { text: 'Ir al Pedido Activo', onPress: onNavigateToSummary },
+          { text: 'Ir a Mis Pedidos', onPress: () => {} },
           { text: 'Entendido', style: 'cancel' }
         ]
       );
@@ -72,37 +72,53 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     const { claimOrder } = useOrderStore.getState();
     const success = await claimOrder(orderNumber);
     if (success) {
-      await fetchReadyOrders();
+      await syncData();
       onNavigateToSummary();
     } else {
       Alert.alert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.');
     }
   };
 
-  const handleReleaseCurrentOrder = async () => {
-    if (!activeOrder) return;
+  const handleSelectOrderToAudit = async (orderId: string, orderNumber: string) => {
+    await focusDoingOrder(orderId || orderNumber);
+    onNavigateToSummary();
+  };
+
+  const handleReleaseOrder = async (orderId: string, orderNumber: string) => {
     Alert.alert(
-      'Liberar Pedido Activo',
-      `¿Deseas devolver el Pedido #${activeOrder.orderNumber} a la columna LISTO?`,
+      'Liberar Pedido',
+      `¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Sí, Liberar',
           style: 'destructive',
           onPress: async () => {
-            await releaseOrder(activeOrder.orderNumber);
-            await fetchReadyOrders();
-            Alert.alert('Pedido Liberado', `El Pedido #${activeOrder.orderNumber} fue devuelto a la columna LISTO (READY).`);
+            await releaseOrder(orderId || orderNumber);
+            await syncData();
+            Alert.alert('Pedido Liberado', `El Pedido #${orderNumber} fue devuelto a la columna LISTO (READY).`);
           }
         }
       ]
     );
   };
 
-  const hasActiveDoingOrder = activeOrder && activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH';
+  const hasDoingOrders = myDoingOrders && myDoingOrders.length > 0;
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 24));
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 16));
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius === 4 ? 2 : 8);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || 'System';
+  const fontFamilyMono = theme.fontMono || 'monospace';
 
-  const cardRadius = theme.radiusCard || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 32));
-  const btnRadius = theme.radiusBtn || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 16));
+  // Ordenar para que el pedido actualmente en foco / abierto aparezca siempre primero en la lista
+  const sortedDoingOrders = [...myDoingOrders].sort((a, b) => {
+    const aIsFocused = activeOrder && (activeOrder.id === a.id || activeOrder.orderNumber === a.orderNumber);
+    const bIsFocused = activeOrder && (activeOrder.id === b.id || activeOrder.orderNumber === b.orderNumber);
+    if (aIsFocused && !bIsFocused) return -1;
+    if (!aIsFocused && bIsFocused) return 1;
+    return 0;
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -112,44 +128,86 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.emerald} />}
       >
-        {/* Si el operario ya tiene un pedido activo en proceso (doing) */}
-        {hasActiveDoingOrder ? (
-          <View style={[styles.activeDoingCard, { backgroundColor: theme.cardBg, borderColor: theme.cobalt, borderRadius: cardRadius }]}>
-            <Text style={[styles.activeTitle, { color: theme.emerald }]}>PEDIDO EN PROCESO #{activeOrder.orderNumber}</Text>
-            <Text style={[styles.activeSubtitle, { color: theme.textMain }]}>
-              Cliente: {activeOrder.clientName}
-            </Text>
-            <Text style={[styles.activeProgressText, { color: theme.textMuted }]}>
-              Verificado: {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
-              {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
-            </Text>
+        {/* SECCIÓN 1: MIS PEDIDOS EN PROCESO (DOING) */}
+        {hasDoingOrders ? (
+          <View style={{ gap: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Text style={{ fontSize: 15, fontWeight: '900', color: theme.emerald, fontFamily: fontFamilyMain, letterSpacing: 0.5 }}>
+                MIS PEDIDOS EN PROCESO ({myDoingOrders.length})
+              </Text>
+            </View>
 
-            <TouchableOpacity
-              style={[styles.btnContinue, { backgroundColor: theme.emerald, borderRadius: btnRadius }]}
-              onPress={onNavigateToSummary}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.btnContinueText}>CONTINUAR AUDITORÍA #{activeOrder.orderNumber}</Text>
-            </TouchableOpacity>
+            {sortedDoingOrders.map((doingItem) => {
+              const isFocused = activeOrder && (activeOrder.id === doingItem.id || activeOrder.orderNumber === doingItem.orderNumber);
+              const percent = doingItem.totalItemsRequired > 0
+                ? Math.round(((doingItem.totalItemsScanned || 0) / doingItem.totalItemsRequired) * 100)
+                : 0;
 
-            <TouchableOpacity
-              style={[styles.btnReleaseHome, { borderColor: theme.amber, borderRadius: btnRadius }]}
-              onPress={handleReleaseCurrentOrder}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.btnReleaseHomeText, { color: theme.amber }]}>LIBERAR PEDIDO A LISTO (READY)</Text>
-            </TouchableOpacity>
+              return (
+                <View
+                  key={doingItem.id || doingItem.orderNumber}
+                  style={[
+                    styles.activeDoingCard,
+                    {
+                      backgroundColor: theme.cardBg,
+                      borderColor: isFocused ? theme.emerald : theme.cardBorder,
+                      borderRadius: cardRadius,
+                      borderWidth: isFocused ? Math.max(2, borderWidthVal) : borderWidthVal
+                    }
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={[styles.activeTitle, { color: isFocused ? theme.emerald : theme.textMain, fontFamily: fontFamilyMain }]}>
+                      PEDIDO #{doingItem.orderNumber}
+                    </Text>
+                    {isFocused && (
+                      <View style={{ backgroundColor: 'rgba(0, 230, 118, 0.15)', borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
+                        <Text style={{ color: theme.emerald, fontSize: 11, fontWeight: '900', fontFamily: fontFamilyMono }}>EN FOCO</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <Text style={[styles.activeSubtitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
+                    Cliente: {doingItem.clientName || 'Cliente Logística'}
+                  </Text>
+
+                  <Text style={[styles.activeProgressText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
+                    Verificado: {doingItem.totalItemsScanned || 0} / {doingItem.totalItemsRequired || 0} U ({percent}%)
+                  </Text>
+
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                    <TouchableOpacity
+                      style={[styles.btnContinue, { backgroundColor: theme.emerald, borderRadius: btnRadius, flex: 1 }]}
+                      onPress={() => handleSelectOrderToAudit(doingItem.id, doingItem.orderNumber)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.btnContinueText, { fontFamily: fontFamilyMain }]}>
+                        {isFocused ? 'CONTINUAR ESCANEO' : 'AUDITAR ESTE PEDIDO'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[styles.btnReleaseHome, { borderColor: theme.amber, borderWidth: borderWidthVal, borderRadius: btnRadius, paddingHorizontal: 12 }]}
+                      onPress={() => handleReleaseOrder(doingItem.id, doingItem.orderNumber)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.btnReleaseHomeText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
           </View>
         ) : null}
 
-        {/* Sección de Pedidos Disponibles en LISTO (Verde) */}
-        <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: cardRadius }]}>
-          <Text style={[styles.uploadTitle, { color: theme.emerald }]}>Pedidos Listos para Tomar</Text>
+        {/* SECCIÓN 2: PEDIDOS DISPONIBLES EN LISTO (READY) */}
+        <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: borderWidthVal, borderRadius: cardRadius }]}>
+          <Text style={[styles.uploadTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Pedidos Listos para Tomar</Text>
 
           {readyOrders.length > 0 && (
-            <Text style={[styles.uploadSubtitle, { color: theme.textMuted }]}>
-              {hasActiveDoingOrder
-                ? `[BLOQUEADO] Tienes el Pedido #${activeOrder.orderNumber} en proceso. Libéralo para tomar otro.`
+            <Text style={[styles.uploadSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
+              {hasDoingOrders
+                ? `[BLOQUEADO] Tienes ${myDoingOrders.length} pedido(s) en proceso. Finalízalos o libéralos para tomar otro de la lista general.`
                 : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
             </Text>
           )}
@@ -157,19 +215,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           {readyOrders.map((item) => (
             <TouchableOpacity
               key={item.orderNumber}
-              style={[styles.btnUpload, { backgroundColor: theme.emerald, borderColor: theme.emerald, borderRadius: btnRadius }, hasActiveDoingOrder && styles.btnDisabled]}
+              style={[
+                styles.btnUpload,
+                { backgroundColor: theme.emerald, borderColor: theme.emerald, borderWidth: borderWidthVal, borderRadius: btnRadius },
+                hasDoingOrders && styles.btnDisabled
+              ]}
               onPress={() => handleClaimOrder(item.orderNumber)}
-              activeOpacity={hasActiveDoingOrder ? 1 : 0.8}
+              activeOpacity={hasDoingOrders ? 1 : 0.8}
             >
-              <Text style={[styles.btnUploadText, hasActiveDoingOrder && styles.textDisabled]}>
+              <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain }, hasDoingOrders && styles.textDisabled]}>
                 TOMAR PEDIDO #{item.orderNumber} ({item.clientName} - {item.totalItems} U)
               </Text>
             </TouchableOpacity>
           ))}
 
-          {readyOrders.length === 0 && !hasActiveDoingOrder && (
+          {readyOrders.length === 0 && !hasDoingOrders && (
             <View style={styles.emptyBox}>
-              <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+              <Text style={[styles.emptyText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
                 No hay pedidos en estado LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
               </Text>
             </View>

@@ -2,10 +2,14 @@
   "expo": {
     "name": "HoloWare Baseline",
     "slug": "holoware-baseline",
-    "version": "1.0.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "holoware",
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.holoware.baseline"

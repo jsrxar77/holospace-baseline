@@ -11,6 +11,7 @@ import { loggerService } from '../services/loggerService';
 
 interface OrderState {
   orders: Order[];
+  myDoingOrders: DoingOrderSummary[];
   activeOrder: Order | null;
   isScannerOpen: boolean;
   operatorId: string;
@@ -24,6 +25,7 @@ interface OrderState {
 
   // Actions
   loadInitialOrders: () => Promise<void>;
+  focusDoingOrder: (orderIdOrNumber: string) => Promise<void>;
   loadPdfOrder: (fileName: string, pdfText?: string) => Promise<Order>;
   claimOrder: (orderNumber: string) => Promise<Order>;
   releaseOrder: (orderNumber: string) => Promise<boolean>;
@@ -37,6 +39,7 @@ interface OrderState {
 
 export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
+  myDoingOrders: [],
   activeOrder: null,
   isScannerOpen: false,
   operatorId: useAuthStore.getState().user?.email || 'jsrxar@gmail.com',
@@ -48,35 +51,54 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     set({ unassignedOrderNotification: null });
   },
 
+  focusDoingOrder: async (orderIdOrNumber: string) => {
+    try {
+      const currentUserEmail = useAuthStore.getState().user?.email || '';
+      const res = await fileWorkflowService.getActiveDoingOrder(currentUserEmail, orderIdOrNumber);
+      if (res.hasActive && res.order) {
+        await dbService.saveOrder(res.order);
+        set({ activeOrder: res.order });
+      }
+    } catch (e) {
+      console.log('Error focusing doing order:', e);
+    }
+  },
+
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
       const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
 
-      // Auto-detección de pedido activo asignado por email en el servidor
-      const activeDoing = await fileWorkflowService.getActiveDoingOrder(currentUserEmail);
-      let restoredActiveOrder: Order | null = null;
-      const currentLocalActive = get().activeOrder;
+      // 1. Obtener todos los pedidos asignados a este operario
+      const myDoing = await fileWorkflowService.getMyDoingOrders(currentUserEmail);
+
+      // 2. Determinar cuál pedido está en foco
+      const currentActive = get().activeOrder;
+      let focusedOrder: Order | null = null;
       let unassignedNum: string | null = null;
 
-      if (activeDoing.hasActive && activeDoing.orderNumber) {
-        let realOrder = activeDoing.order || (await fileWorkflowService.getOrderDetails(activeDoing.orderNumber));
-        if (realOrder) {
-          restoredActiveOrder = realOrder;
-          await dbService.saveOrder(restoredActiveOrder);
+      if (myDoing.length > 0) {
+        const targetId = currentActive && myDoing.some(d => d.id === currentActive.id || d.orderNumber === currentActive.orderNumber)
+          ? currentActive.id || currentActive.orderNumber
+          : myDoing[0].id || myDoing[0].orderNumber;
+
+        const activeDoing = await fileWorkflowService.getActiveDoingOrder(currentUserEmail, targetId);
+        if (activeDoing.hasActive && activeDoing.order) {
+          focusedOrder = activeDoing.order;
+          await dbService.saveOrder(focusedOrder);
         }
       } else {
-        // Si el servidor informa que ya no posee orden activa (desasignado/liberado a LISTO por Admin)
-        if (currentLocalActive && currentLocalActive.status !== 'CLOSED' && currentLocalActive.status !== 'PARTIAL_DISPATCH') {
-          console.log(`[STORE] Pedido #${currentLocalActive.orderNumber} fue desasignado por el Administrador desde ScanBan Board.`);
-          unassignedNum = currentLocalActive.orderNumber;
-          restoredActiveOrder = null;
+        if (currentActive && currentActive.status !== 'CLOSED' && currentActive.status !== 'PARTIAL_DISPATCH') {
+          console.log(`[STORE] Pedido #${currentActive.orderNumber} fue desasignado por el Administrador desde ScanBan Board.`);
+          unassignedNum = currentActive.orderNumber;
+          focusedOrder = null;
         }
       }
 
       set({
         orders: savedOrders,
-        activeOrder: activeDoing.hasActive ? restoredActiveOrder : null,
+        myDoingOrders: myDoing,
+        activeOrder: focusedOrder,
         isScannerOpen: unassignedNum ? false : get().isScannerOpen,
         unassignedOrderNotification: unassignedNum || get().unassignedOrderNotification,
         operatorId: currentUserEmail

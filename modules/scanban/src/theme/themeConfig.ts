@@ -10,20 +10,32 @@ export interface ThemeTokens {
   red: string;
   textMain: string;
   textMuted: string;
+  fontFamily?: string;
+  fontMono?: string;
   borderRadius: number;
+  radiusCard?: number;
+  radiusBtn?: number;
+  radiusBadge?: number;
+  borderWidth?: number;
 }
 
 export const ORIGINAL_THEME: ThemeTokens = {
-  background: '#0B0E14',
-  cardBg: '#161B22',
-  cardBorder: '#30363D',
-  emerald: '#00E676',
-  cobalt: '#3B82F6',
-  amber: '#F59E0B',
-  red: '#FF5252',
-  textMain: '#FFFFFF',
-  textMuted: '#8B949E',
-  borderRadius: 16
+  background: '#121317',
+  cardBg: '#1A1B22',
+  cardBorder: '#2E303E',
+  emerald: '#50FA7B',
+  cobalt: '#BD93F9',
+  amber: '#F1FA8C',
+  red: '#FF5555',
+  textMain: '#F8F8F2',
+  textMuted: '#6272A4',
+  fontFamily: 'JetBrains Mono',
+  fontMono: 'JetBrains Mono',
+  borderRadius: 4,
+  radiusCard: 4,
+  radiusBtn: 4,
+  radiusBadge: 2,
+  borderWidth: 1
 };
 
 let currentThemeTokens: ThemeTokens = { ...ORIGINAL_THEME };
@@ -47,7 +59,13 @@ export const fetchRemoteTheme = async (baseUrl: string = SERVER_URL): Promise<Th
         red: data.theme.red || ORIGINAL_THEME.red,
         textMain: data.theme.textMain || ORIGINAL_THEME.textMain,
         textMuted: data.theme.textMuted || ORIGINAL_THEME.textMuted,
-        borderRadius: typeof data.theme.borderRadius === 'number' ? data.theme.borderRadius : ORIGINAL_THEME.borderRadius
+        fontFamily: data.theme.fontFamily || ORIGINAL_THEME.fontFamily,
+        fontMono: data.theme.fontMono || ORIGINAL_THEME.fontMono,
+        borderRadius: typeof data.theme.borderRadius === 'number' ? data.theme.borderRadius : ORIGINAL_THEME.borderRadius,
+        radiusCard: typeof data.theme.radiusCard === 'number' ? data.theme.radiusCard : (data.theme.borderRadius || 4),
+        radiusBtn: typeof data.theme.radiusBtn === 'number' ? data.theme.radiusBtn : (data.theme.borderRadius || 4),
+        radiusBadge: typeof data.theme.radiusBadge === 'number' ? data.theme.radiusBadge : (data.theme.borderRadius || 2),
+        borderWidth: typeof data.theme.borderWidth === 'number' ? data.theme.borderWidth : 1
       };
     }
   } catch (e) {

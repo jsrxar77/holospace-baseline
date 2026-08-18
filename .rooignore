@@ -1,0 +1,10 @@
+node_modules/
+vendor/
+dist/
+build/
+.git/
+*.lock
+*.log
+*.map
+*.sqlite
+*.db

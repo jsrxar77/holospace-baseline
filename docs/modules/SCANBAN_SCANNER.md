@@ -15,11 +15,15 @@
 
 ## 2. Funcionalidades de la App Móvil
 
-### 2.1 Autenticación y Asignación
-- **Login por Email:** Identificación única del operario (`jsrxar@gmail.com`).
-- **Regla 1 a 1:** Un operario solo puede tener 1 pedido activo en proceso simultáneamente.
+### 2.1 Autenticación, Aislamiento Multi-Tenant y Asignación
+- **Aislamiento Estricto por Organización:** Al autenticarse mediante JWT (`POST /api/login`), todas las consultas de la aplicación móvil se acotan estrictamente al `tenant_id` de la organización del operario (ej. `poke`). Queda terminantemente prohibida la fuga o visualización de datos entre organizaciones.
+- **Visibilidad Operativa en Depósito:**
+  - **Mis Pedidos en Proceso (`DOING`):** El operario visualiza **todos y cada uno de los pedidos que tiene asignados** (`operator_email`) en tarjetas individuales con su avance de verificación.
+  - **Foco de Auditoría (1 a 1):** Aunque el Administrador le haya asignado 2 o más pedidos en proceso en la Web, el operario escanea siempre **1 pedido enfocado a la vez** para garantizar precisión de picking en depósito, pudiendo alternar o auditar cualquiera de sus pedidos asignados con un simple toque (*"Continuar Escaneo"* / *"Auditar este Pedido"*).
+  - **Pedidos en Listo (`READY`):** El operario visualiza los pedidos disponibles de su organización (`tenant_id`). Si ya posee pedidos asignados en proceso, la toma de nuevos pedidos de la lista general queda bloqueada hasta finalizar o liberar los actuales.
+  - **Backlog y Done:** Ocultos en el escáner móvil para mantener la interfaz operativa limpia y enfocada.
 - **Toma de Pedido:** Selección de orden en estado `LISTO` (`POST /api/scanban/claim-order`).
-- **Liberación Voluntaria:** Posibilidad de liberar un pedido devuélviendolo a `LISTO` (`POST /api/scanban/release-order`).
+- **Liberación Voluntaria:** Posibilidad de liberar un pedido específico devolviéndolo a `LISTO` (`POST /api/scanban/release-order`).
 
 ### 2.2 Escáner EAN-13 & Persistencia Local
 - **Escáner Naci de Cámara:** Lectura continua de códigos de barras EAN-13.

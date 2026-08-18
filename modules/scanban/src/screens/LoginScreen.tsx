@@ -8,8 +8,9 @@ interface LoginScreenProps {
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const saved = getSavedCredentials();
+  const [email, setEmail] = useState(saved.email || '');
+  const [password, setPassword] = useState(saved.password || '');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -17,6 +18,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
+    // Cargar credenciales guardadas si existen
+    const creds = getSavedCredentials();
+    if (creds.email && !email) setEmail(creds.email);
+    if (creds.password && !password) setPassword(creds.password);
+
     fetchTheme(null);
     const interval = setInterval(() => fetchTheme(null), 3000);
     return () => clearInterval(interval);
@@ -37,6 +43,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setLoading(false);
 
     if (success) {
+      const token = useAuthStore.getState().token;
+      if (token) {
+        await fetchTheme(token);
+      }
       onLoginSuccess();
     } else {
       setErrorMessage('Credenciales incorrectas. Verifica tu email y contraseña.');

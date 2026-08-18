@@ -968,6 +968,71 @@ function downloadPdf(orderId) {
   window.open(`/api/scanban/download-pdf?id=${orderId}`, '_blank');
 }
 
+// MODAL DE DIAGNÓSTICO Y CHECKLIST VISUAL DE SUBIDA DE PDF (3 PASOS)
+function showUploadDiagnosticsModal(result, fileName) {
+  return new Promise((resolve) => {
+    const isSuccess = !!result.success;
+    const checklist = result.checklist || {};
+    const titleElem = document.getElementById('dialogTitle');
+    const msgElem = document.getElementById('dialogMessage');
+
+    titleElem.innerText = isSuccess ? 'Comprobante Ingerido con Éxito' : 'Diagnóstico de Ingesta de Comprobante';
+    titleElem.style.color = isSuccess ? 'var(--emerald)' : 'var(--red)';
+
+    const step1 = checklist.step1_integrity || { passed: isSuccess, title: 'Integridad del Archivo PDF', details: isSuccess ? 'Estructura binaria válida.' : 'Error al leer estructura PDF.' };
+    const step2 = checklist.step2_metadata || { passed: isSuccess, title: 'Lectura de Cabecera y Metadatos', details: isSuccess ? `N° Comprobante: #${result.orderNumber || ''} | Cliente: ${result.clientName || ''}` : 'No se detectó cabecera válida.' };
+    const step3 = checklist.step3_items || { passed: isSuccess, title: 'Detección de Productos y Cantidades', details: isSuccess ? `${result.totalItems || 0} unidades requeridas detectadas.` : 'No se encontraron artículos con cantidades.' };
+
+    const renderStep = (num, step) => {
+      const icon = step.passed ? '✓' : '✗';
+      const color = step.passed ? 'var(--emerald)' : 'var(--red)';
+      const bg = step.passed ? 'rgba(0, 230, 118, 0.08)' : 'rgba(255, 82, 82, 0.08)';
+      const border = step.passed ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 82, 82, 0.25)';
+
+      return `
+        <div style="background: ${bg}; border: 1px solid ${border}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; text-align: left; transition: all 0.2s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 800; font-size: 13px; color: #FFF; letter-spacing: 0.3px;">Paso ${num}: ${step.title}</span>
+            <span style="font-weight: 900; font-size: 14px; color: ${color}; background: rgba(0,0,0,0.3); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${icon}</span>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 18px;">${step.details}</p>
+        </div>
+      `;
+    };
+
+    msgElem.innerHTML = `
+      <div style="text-align: left; margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">
+        Archivo: <strong style="color: #FFF;">${fileName}</strong>
+      </div>
+      <div style="margin-top: 10px;">
+        ${renderStep(1, step1)}
+        ${renderStep(2, step2)}
+        ${renderStep(3, step3)}
+      </div>
+      ${!isSuccess ? `
+        <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
+          <span style="font-size: 12px; color: #FFF; font-weight: 700;">Recomendación:</span>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
+            Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
+          </p>
+        </div>
+      ` : `
+        <div style="margin-top: 14px; padding: 10px 12px; background: rgba(0, 230, 118, 0.12); border-left: 3px solid var(--emerald); border-radius: 6px; text-align: left;">
+          <span style="font-size: 12px; color: var(--emerald); font-weight: 700;">Estado de Carga:</span>
+          <p style="font-size: 12px; color: #FFF; margin: 4px 0 0 0; line-height: 16px;">
+            El pedido #${result.orderNumber || ''} se encuentra disponible en la columna <strong>BACKLOG</strong> de tu organización.
+          </p>
+        </div>
+      `}
+    `;
+
+    document.getElementById('dialogCancelBtn').style.display = 'none';
+    document.getElementById('dialogConfirmBtn').innerText = 'Entendido';
+    document.getElementById('customDialogModal').classList.remove('hidden');
+    customDialogResolver = resolve;
+  });
+}
+
 // SUBIDA DE COMPROBANTES PDF
 async function handleFileUpload(event) {
   const file = event.target.files[0];
@@ -990,14 +1055,19 @@ async function handleFileUpload(event) {
         })
       });
       const data = await res.json();
+      await showUploadDiagnosticsModal(data, file.name);
       if (data.success) {
-        await showCustomAlert('¡Éxito!', `Comprobante ${file.name} parseado y cargado en el Backlog.`);
         loadKanbanData();
-      } else {
-        await showCustomAlert('Error', data.error || 'No se pudo subir el archivo.');
       }
     } catch (err) {
-      await showCustomAlert('Error', 'Error de conexión al subir comprobante.');
+      await showUploadDiagnosticsModal({
+        success: false,
+        checklist: {
+          step1_integrity: { passed: false, title: 'Integridad del Archivo PDF', details: 'Error de red o conexión al enviar el comprobante al servidor.' },
+          step2_metadata: { passed: false, title: 'Lectura de Cabecera y Metadatos', details: 'No se pudo comunicar con el backend.' },
+          step3_items: { passed: false, title: 'Detección de Productos y Cantidades', details: 'No se procesó la respuesta.' }
+        }
+      }, file.name);
     } finally {
       event.target.value = '';
     }
@@ -1829,13 +1899,16 @@ async function loadTenantsManagementData() {
                 </span>
               </div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-                Usuarios: <strong style="color: #FFF;">${users.length}</strong> activos en la empresa
+                Usuarios: <strong style="color: #FFF;">${users.length} / ${t.max_users || '—'}</strong> · Órdenes/Mes: <strong style="color: #FFF;">${t.max_orders_monthly || '—'}</strong>
               </div>
             </div>
             <div style="display: flex; gap: 6px; align-items: center;">
               <span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border: 1px solid ${planBadgeColors.border};">
                 Plan ${planCode}
               </span>
+              <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px; border-radius: 8px; border-color: var(--emerald); color: var(--emerald); font-weight: 800;" onclick="openEditTenantModal('${t.id}')" title="Editar Organización">
+                Editar
+              </button>
               ${!isPlatform ? `
                 <button class="${isSuspended ? 'btn-primary' : 'btn-danger'}" style="padding: 4px 8px; font-size: 11px; border-radius: 8px;" onclick="toggleTenantStatus('${t.id}', '${t.name}', '${t.status || 'active'}')" title="${isSuspended ? 'Reactivar Organización' : 'Suspender Organización'}">
                   ${isSuspended ? 'Reactivar' : 'Suspender'}
@@ -1844,39 +1917,41 @@ async function loadTenantsManagementData() {
             </div>
           </div>
 
-          <!-- Tema Base por Defecto del Tenant -->
+          <!-- Tema Base por Defecto del Tenant (Solo lectura en tarjeta) -->
           <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
             <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
-            <select class="input-field" style="padding: 4px 8px; font-size: 12px; border-radius: 8px; border-color: var(--card-border);" onchange="changeTenantDefaultTheme('${t.id}', this.value)">
-              <option value="omarchy_tiling" ${t.active_theme === 'omarchy_tiling' || !t.active_theme ? 'selected' : ''}>Omarchy Tiling WM</option>
-              <option value="dark_glassmorphism" ${t.active_theme === 'dark_glassmorphism' ? 'selected' : ''}>Dark Glassmorphism</option>
-              <option value="cyberpunk_glassmorphism" ${t.active_theme === 'cyberpunk_glassmorphism' ? 'selected' : ''}>Cyberpunk Glassmorphism</option>
-              <option value="soft_minimal_pastel" ${t.active_theme === 'soft_minimal_pastel' ? 'selected' : ''}>Soft Minimal Pastel</option>
-            </select>
+            <span style="font-size: 12px; font-weight: 700; color: #FFF; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+              ${{
+                omarchy_tiling: 'Omarchy Tiling WM',
+                dark_glassmorphism: 'Dark Glassmorphism',
+                cyberpunk_glassmorphism: 'Cyberpunk Glassmorphism',
+                soft_minimal_pastel: 'Soft Minimal Pastel'
+              }[t.active_theme] || t.active_theme || 'Omarchy Tiling WM'}
+            </span>
           </div>
 
-          <!-- Módulos Licenciados Toggles -->
+          <!-- Módulos Licenciados Toggles (Solo lectura en tarjeta) -->
           <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos Licenciados en Vivo</div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
               <!-- ScanBan Board -->
-              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
                 <span style="font-size: 12px; font-weight: 700; color: ${isScanBanBoardActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Board</span>
-                <input type="checkbox" ${isScanBanBoardActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanban-board', this.checked)" style="cursor: pointer;">
-              </label>
+                <input type="checkbox" ${isScanBanBoardActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
+              </div>
 
               <!-- ScanBan Scanner -->
-              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
                 <span style="font-size: 12px; font-weight: 700; color: ${isScanBanScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Scanner</span>
-                <input type="checkbox" ${isScanBanScannerActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanban-scanner', this.checked)" style="cursor: pointer;">
-              </label>
+                <input type="checkbox" ${isScanBanScannerActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
+              </div>
 
               <!-- ScanFlow -->
-              <label style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px; cursor: pointer;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
                 <span style="font-size: 12px; font-weight: 700; color: ${isScanFlowActive ? 'var(--accent)' : 'var(--text-muted)'};">ScanFlow</span>
-                <input type="checkbox" ${isScanFlowActive ? 'checked' : ''} onchange="toggleTenantModuleState('${t.id}', 'scanflow', this.checked)" style="cursor: pointer;">
-              </label>
+                <input type="checkbox" ${isScanFlowActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
+              </div>
             </div>
           </div>
 
@@ -2017,5 +2092,118 @@ async function handleCreateTenantSubmit(e) {
       errEl.innerText = `Error de red: ${err.message}`;
       errEl.style.display = 'block';
     }
+  }
+}
+
+// ============================================================================
+// FUNCIONES DE EDICIÓN INTEGRAL DE ORGANIZACIONES (SUPERADMIN ONLY)
+// ============================================================================
+
+function openEditTenantModal(tenantId) {
+  const tenant = cachedTenantsList.find(t => String(t.id) === String(tenantId));
+  if (!tenant) return;
+
+  const modal = document.getElementById('editTenantModal');
+  const title = document.getElementById('editTenantModalTitle');
+  const idInput = document.getElementById('editTenantId');
+  const nameInput = document.getElementById('editTenantNameInput');
+  const slugInput = document.getElementById('editTenantSlugInput');
+  const planSelect = document.getElementById('editTenantPlanSelect');
+  const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
+  const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
+  const themeSelect = document.getElementById('editTenantThemeSelect');
+
+  const modBoard = document.getElementById('editTenantModBoard');
+  const modScanner = document.getElementById('editTenantModScanner');
+  const modFlow = document.getElementById('editTenantModFlow');
+
+  if (title) title.innerText = `Editar: ${tenant.name}`;
+  if (idInput) idInput.value = tenant.id;
+  if (nameInput) nameInput.value = tenant.name || '';
+  if (slugInput) slugInput.value = tenant.slug || '';
+  if (planSelect) planSelect.value = tenant.plan_code || 'starter';
+  if (maxUsersInput) maxUsersInput.value = tenant.max_users || 5;
+  if (maxOrdersInput) maxOrdersInput.value = tenant.max_orders_monthly || 500;
+  if (themeSelect) themeSelect.value = tenant.active_theme || 'omarchy_tiling';
+
+  const modules = tenant.modules || [];
+  const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'scanban-board' && m.module_code === 'scanban') || (code === 'scanflow' && m.module_code === 'stockflow')) && m.is_enabled);
+
+  if (modBoard) modBoard.checked = hasModule('scanban-board');
+  if (modScanner) modScanner.checked = hasModule('scanban-scanner');
+  if (modFlow) modFlow.checked = hasModule('scanflow');
+
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditTenantModal() {
+  const modal = document.getElementById('editTenantModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function handleEditTenantPlanChange(newPlan) {
+  const defaultQuotas = {
+    starter: { users: 5, orders: 500, board: true, scanner: false, flow: false },
+    pro: { users: 20, orders: 2500, board: true, scanner: true, flow: false },
+    enterprise: { users: 100, orders: 10000, board: true, scanner: true, flow: true }
+  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false, flow: false };
+
+  const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
+  const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
+  const modBoard = document.getElementById('editTenantModBoard');
+  const modScanner = document.getElementById('editTenantModScanner');
+  const modFlow = document.getElementById('editTenantModFlow');
+
+  if (maxUsersInput) maxUsersInput.value = defaultQuotas.users;
+  if (maxOrdersInput) maxOrdersInput.value = defaultQuotas.orders;
+  if (modBoard) modBoard.checked = defaultQuotas.board;
+  if (modScanner) modScanner.checked = defaultQuotas.scanner;
+  if (modFlow) modFlow.checked = defaultQuotas.flow;
+}
+
+async function saveEditTenantSubmit(e) {
+  e.preventDefault();
+
+  const tenantId = document.getElementById('editTenantId').value;
+  const name = document.getElementById('editTenantNameInput').value.trim();
+  const planCode = document.getElementById('editTenantPlanSelect').value;
+  const maxUsers = parseInt(document.getElementById('editTenantMaxUsersInput').value, 10);
+  const maxOrdersMonthly = parseInt(document.getElementById('editTenantMaxOrdersInput').value, 10);
+  const activeTheme = document.getElementById('editTenantThemeSelect').value;
+
+  const modules = {
+    'scanban-board': document.getElementById('editTenantModBoard').checked,
+    'scanban-scanner': document.getElementById('editTenantModScanner').checked,
+    'scanflow': document.getElementById('editTenantModFlow').checked
+  };
+
+  try {
+    const res = await fetch('/api/tenants', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('hw_token')}`
+      },
+      body: JSON.stringify({
+        tenantId,
+        name,
+        planCode,
+        maxUsers,
+        maxOrdersMonthly,
+        activeTheme,
+        modules
+      })
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      closeEditTenantModal();
+      await showCustomAlert('Éxito', `Organización '${name}' actualizada exitosamente.`);
+      loadTenantsManagementData();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo actualizar la organización.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
   }
 }

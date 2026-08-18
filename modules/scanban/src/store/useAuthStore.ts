@@ -30,12 +30,16 @@ interface AuthState {
 }
 
 const CREDENTIALS_KEY_EMAIL = 'hw_saved_mobile_email';
+const CREDENTIALS_KEY_PASS = 'hw_saved_mobile_pass';
 const CREDENTIALS_KEY_TENANT = 'hw_saved_mobile_tenant';
 
-export const saveSavedCredentials = (email: string, tenantSlug: string = '') => {
+export const saveSavedCredentials = (email: string, pass: string = '', tenantSlug: string = '') => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       window.localStorage.setItem(CREDENTIALS_KEY_EMAIL, email);
+      if (pass) {
+        window.localStorage.setItem(CREDENTIALS_KEY_PASS, pass);
+      }
       if (tenantSlug) window.localStorage.setItem(CREDENTIALS_KEY_TENANT, tenantSlug);
     }
   } catch (e) { }
@@ -45,11 +49,12 @@ export const getSavedCredentials = () => {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
       const email = window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) || '';
-      const tenantSlug = window.localStorage.getItem(CREDENTIALS_KEY_TENANT) || 'drinklovers';
-      return { email, tenantSlug };
+      const password = window.localStorage.getItem(CREDENTIALS_KEY_PASS) || '';
+      const tenantSlug = window.localStorage.getItem(CREDENTIALS_KEY_TENANT) || 'poke';
+      return { email, password, tenantSlug };
     }
   } catch (e) { }
-  return { email: '', tenantSlug: 'drinklovers' };
+  return { email: '', password: '', tenantSlug: 'poke' };
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -70,7 +75,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
       const data = await response.json();
       if (data.success && data.user) {
-        saveSavedCredentials(email);
+        saveSavedCredentials(email, pass, data.tenant?.slug || '');
         set({
           user: data.user,
           tenant: data.tenant || null,

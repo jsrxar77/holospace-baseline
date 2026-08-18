@@ -13,8 +13,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   const isCompleted = item.quantityScanned >= item.quantityRequired;
   const isPending = item.quantityScanned === 0;
 
-  const cardRadius = theme.radiusCard || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 32));
-  const badgeRadius = theme.radiusBadge || (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 14));
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 24));
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius === 4 ? 2 : 8);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || 'System';
+  const fontFamilyMono = theme.fontMono || 'monospace';
 
   return (
     <TouchableOpacity
@@ -23,28 +26,30 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
         {
           backgroundColor: theme.cardBg,
           borderColor: isCompleted ? theme.emerald : (isPending ? theme.cardBorder : theme.cobalt),
-          borderRadius: cardRadius
+          borderRadius: cardRadius,
+          borderWidth: borderWidthVal
         }
       ]}
       onPress={onPress}
       activeOpacity={0.8}
     >
       <View style={styles.details}>
-        <Text style={[styles.skuText, { color: theme.textMuted }]}>EAN: {item.code}</Text>
-        <Text style={[styles.descriptionText, { color: theme.textMain }]} numberOfLines={2}>
+        <Text style={[styles.skuText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>EAN: {item.code}</Text>
+        <Text style={[styles.descriptionText, { color: theme.textMain, fontFamily: fontFamilyMain }]} numberOfLines={2}>
           {item.description}
         </Text>
       </View>
 
       <View style={styles.rightGroup}>
-        <Text style={[styles.countText, { color: isCompleted ? theme.emerald : theme.textMain }]}>
+        <Text style={[styles.countText, { color: isCompleted ? theme.emerald : theme.textMain, fontFamily: fontFamilyMono }]}>
           {item.quantityScanned} / {item.quantityRequired}
         </Text>
         <View
           style={[
             styles.badge,
             {
-              borderRadius: theme.borderRadius === 4 ? 4 : 8,
+              borderRadius: badgeRadius,
+              borderWidth: borderWidthVal,
               borderColor: isCompleted ? theme.emerald : theme.cardBorder,
               backgroundColor: isCompleted ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 255, 255, 0.05)'
             }
@@ -53,7 +58,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
           <Text
             style={[
               styles.badgeText,
-              { color: isCompleted ? theme.emerald : theme.textMuted }
+              { color: isCompleted ? theme.emerald : theme.textMuted, fontFamily: fontFamilyMono }
             ]}
           >
             {isCompleted ? 'COMPLETADO' : 'PENDIENTE'}

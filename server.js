@@ -108,7 +108,7 @@ const THEMES = {
   dark_glassmorphism: {
     name: 'Dark Glassmorphism',
     background: '#0B0E14',
-    cardBg: 'rgba(18, 24, 38, 0.45)',
+    cardBg: 'rgba(18, 24, 38, 0.55)',
     cardBorder: 'rgba(255, 255, 255, 0.12)',
     emerald: '#00E676',
     cobalt: '#3B82F6',
@@ -116,22 +116,34 @@ const THEMES = {
     red: '#FF5252',
     textMain: '#FFFFFF',
     textMuted: '#8B949E',
-    fontFamily: "'Outfit', sans-serif",
+    fontFamily: 'Outfit',
+    fontMono: 'monospace',
+    borderRadius: 24,
+    radiusCard: 24,
+    radiusBtn: 16,
+    radiusBadge: 12,
+    borderWidth: 1,
     backdropBlur: 'blur(20px)',
     boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
   },
   cyberpunk_glassmorphism: {
     name: 'Cyberpunk Glassmorphism',
     background: '#05050A',
-    cardBg: 'rgba(20, 10, 35, 0.55)',
-    cardBorder: 'rgba(255, 0, 127, 0.3)',
+    cardBg: 'rgba(20, 10, 35, 0.70)',
+    cardBorder: 'rgba(255, 0, 127, 0.45)',
     emerald: '#00FFCC',
     cobalt: '#FF007F',
     amber: '#FFE600',
     red: '#FF003C',
     textMain: '#FFFFFF',
     textMuted: '#A0A0B0',
-    fontFamily: "'Press Start 2P', monospace",
+    fontFamily: 'Press Start 2P',
+    fontMono: 'Press Start 2P',
+    borderRadius: 8,
+    radiusCard: 8,
+    radiusBtn: 6,
+    radiusBadge: 4,
+    borderWidth: 2,
     backdropBlur: 'blur(16px)',
     boxShadow: '0 0 25px rgba(255, 0, 127, 0.2)'
   },
@@ -146,7 +158,13 @@ const THEMES = {
     red: '#FF5555',
     textMain: '#F8F8F2',
     textMuted: '#6272A4',
-    fontFamily: "'JetBrains Mono', monospace",
+    fontFamily: 'JetBrains Mono',
+    fontMono: 'JetBrains Mono',
+    borderRadius: 4,
+    radiusCard: 4,
+    radiusBtn: 4,
+    radiusBadge: 2,
+    borderWidth: 1,
     backdropBlur: 'none',
     boxShadow: 'none'
   },
@@ -161,13 +179,19 @@ const THEMES = {
     red: '#F38BA8',
     textMain: '#CDD6F4',
     textMuted: '#7F849C',
-    fontFamily: "'Plus Jakarta Sans', sans-serif",
+    fontFamily: 'Plus Jakarta Sans',
+    fontMono: 'monospace',
+    borderRadius: 16,
+    radiusCard: 16,
+    radiusBtn: 20,
+    radiusBadge: 14,
+    borderWidth: 1,
     backdropBlur: 'none',
     boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
   }
 };
 
-// Parser Real de Archivos PDF con Extracción por Coordenadas Y (Sin Datos Ficticios)
+// Parser Real de Archivos PDF con Diagnóstico Estructurado en 3 Pasos
 async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
   let orderNumber = '';
   let clientName = '';
@@ -176,11 +200,50 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 
   const items = [];
   let fullText = '';
+  const checklist = {
+    step1_integrity: { passed: false, title: 'Integridad del Archivo PDF', details: 'Verificando formato binario y estructura...' },
+    step2_metadata: { passed: false, title: 'Lectura de Cabecera y Metadatos', details: 'Buscando N° de comprobante, cliente y fecha...' },
+    step3_items: { passed: false, title: 'Detección de Productos y Cantidades', details: 'Extrayendo tabla de artículos y cantidades requeridas...' }
+  };
 
   try {
-    const data = new Uint8Array(pdfBuffer);
+    let cleanBuffer = pdfBuffer;
+    // Si el buffer recibido viene como un string base64 o texto
+    if (typeof pdfBuffer === 'string') {
+      cleanBuffer = Buffer.from(pdfBuffer, 'base64');
+    } else if (Buffer.isBuffer(pdfBuffer)) {
+      const strStart = pdfBuffer.slice(0, 30).toString('utf8');
+      if (strStart.startsWith('JVBERi0') || strStart.startsWith('data:application/pdf;base64,')) {
+        const cleanBase64 = pdfBuffer.toString('utf8').replace(/^data:application\/pdf;base64,/, '');
+        cleanBuffer = Buffer.from(cleanBase64, 'base64');
+      }
+    }
+
+    // Paso 1: Validar firma mágica %PDF-
+    const headerCheck = cleanBuffer.slice(0, 10).toString('utf8');
+    if (!headerCheck.includes('%PDF-')) {
+      checklist.step1_integrity = {
+        passed: false,
+        title: 'Integridad del Archivo PDF',
+        details: 'El archivo subido no tiene una estructura PDF válida o está dañado.'
+      };
+      return {
+        success: false,
+        checklist,
+        error: 'El archivo no tiene una cabecera PDF válida (%PDF-).',
+        orderNumber, clientName, issueDate, items
+      };
+    }
+
+    const data = new Uint8Array(cleanBuffer);
     const loadingTask = pdfjsLib.getDocument({ data, useSystemFonts: true, disableFontFace: true });
     const pdfDocument = await loadingTask.promise;
+
+    checklist.step1_integrity = {
+      passed: true,
+      title: 'Integridad del Archivo PDF',
+      details: `Estructura PDF válida (${pdfDocument.numPages} página${pdfDocument.numPages > 1 ? 's' : ''}).`
+    };
 
     for (let pageNum = 1; pageNum <= pdfDocument.numPages; pageNum++) {
       const page = await pdfDocument.getPage(pageNum);
@@ -271,17 +334,57 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
         }
       }
     }
+
+    if (!orderNumber) {
+      orderNumber = fileName.replace(/\.[^/.]+$/, '');
+    }
+
+    // Paso 2: Evaluación de Cabecera
+    if (orderNumber || clientName) {
+      checklist.step2_metadata = {
+        passed: true,
+        title: 'Lectura de Cabecera y Metadatos',
+        details: `N° Comprobante: #${orderNumber} | Cliente: ${clientName || 'Consumidor Final'} | Fecha: ${issueDate || 'Hoy'}`
+      };
+    } else {
+      checklist.step2_metadata = {
+        passed: false,
+        title: 'Lectura de Cabecera y Metadatos',
+        details: 'No se detectó número de comprobante ni cliente legible en la cabecera.'
+      };
+    }
+
+    // Paso 3: Evaluación de Productos
+    if (items.length > 0) {
+      const totalUnits = items.reduce((acc, i) => acc + (i.quantityRequired || 0), 0);
+      checklist.step3_items = {
+        passed: true,
+        title: 'Detección de Productos y Cantidades',
+        details: `${items.length} producto(s) detectado(s) con un total de ${totalUnits} unidad(es) requerida(s).`
+      };
+    } else {
+      checklist.step3_items = {
+        passed: false,
+        title: 'Detección de Productos y Cantidades',
+        details: 'No se detectaron productos o cantidades válidas en el cuerpo del comprobante.'
+      };
+    }
+
   } catch (err) {
     console.error('Error parseando PDF con pdfjsLib:', err);
-  }
-
-  if (!orderNumber) {
-    orderNumber = fileName.replace(/\.[^/.]+$/, '');
+    checklist.step1_integrity = {
+      passed: false,
+      title: 'Integridad del Archivo PDF',
+      details: `Error al decodificar la estructura PDF: ${err.message || 'Archivo corrupto o no legible'}`
+    };
   }
 
   const totalAmount = items.reduce((acc, i) => acc + ((i.unitPrice || 0) * (i.quantityRequired || 0)), 0);
+  const isOverallValid = checklist.step1_integrity.passed && items.length > 0;
 
   return {
+    success: isOverallValid,
+    checklist,
     orderNumber,
     clientName,
     issueDate,
@@ -441,7 +544,7 @@ const server = http.createServer(async (req, res) => {
   req.on('end', async () => {
     let data = {};
     if (body) {
-      try { data = JSON.parse(body); } catch (e) {}
+      try { data = JSON.parse(body); } catch (e) { }
     }
 
     let currentUser = null;
@@ -474,7 +577,7 @@ const server = http.createServer(async (req, res) => {
         if (dbUser) {
           currentUser = { ...(currentUser || {}), ...dbUser };
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const tenantContext = await resolveTenantContext(req, currentUser);
@@ -819,8 +922,8 @@ const server = http.createServer(async (req, res) => {
         const cleanUsername = username ? username.toLowerCase().trim() : cleanEmail.split('@')[0];
 
         const existingUser = await getOne(
-          'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(email) = ? OR LOWER(username) = ?)', 
-          [targetTenantId, cleanEmail, cleanUsername], 
+          'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(email) = ? OR LOWER(username) = ?)',
+          [targetTenantId, cleanEmail, cleanUsername],
           { isSuperAdmin: true }
         );
         if (existingUser) {
@@ -838,6 +941,92 @@ const server = http.createServer(async (req, res) => {
 
         res.writeHead(201, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, message: `Usuario '${name}' asignado con éxito.`, userId, email: cleanEmail }));
+        return;
+      }
+
+      // 6.2 EDICIÓN INTEGRAL DE ORGANIZACIÓN (SUPERADMIN ONLY)
+      if (req.url === '/api/tenants' && req.method === 'PUT') {
+        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede editar organizaciones.' }));
+          return;
+        }
+
+        const { tenantId: targetTenantId, name, planCode, maxUsers, maxOrdersMonthly, activeTheme, modules } = data || {};
+        if (!targetTenantId || !name) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'El ID de la organización y el nombre son obligatorios.' }));
+          return;
+        }
+
+        const targetTenant = await getOne('SELECT * FROM tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
+        if (!targetTenant) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Organización no encontrada.' }));
+          return;
+        }
+
+        // 1. Actualizar Nombre de Organización
+        await execute(
+          'UPDATE tenants SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          [name.trim(), targetTenant.id],
+          { isSuperAdmin: true }
+        );
+
+        // 2. Actualizar Suscripción y Cuotas si se especificó plan
+        if (planCode) {
+          const selectedPlan = PLANS[planCode] || PLANS.starter;
+          const finalMaxUsers = maxUsers !== undefined ? parseInt(maxUsers, 10) : selectedPlan.maxUsers;
+          const finalMaxOrders = maxOrdersMonthly !== undefined ? parseInt(maxOrdersMonthly, 10) : selectedPlan.maxOrdersMonthly;
+
+          await execute(
+            `INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end)
+             VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')
+             ON CONFLICT (tenant_id) DO UPDATE SET
+               plan_code = EXCLUDED.plan_code,
+               max_users = EXCLUDED.max_users,
+               max_orders_monthly = EXCLUDED.max_orders_monthly,
+               updated_at = CURRENT_TIMESTAMP`,
+            [crypto.randomUUID(), targetTenant.id, selectedPlan.code, finalMaxUsers, finalMaxOrders],
+            { isSuperAdmin: true }
+          );
+        }
+
+        // 3. Actualizar Tema Base del Tenant
+        if (activeTheme && THEMES[activeTheme]) {
+          await execute(
+            'INSERT INTO app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
+            [targetTenant.id, 'active_theme', activeTheme],
+            { tenantId: targetTenant.id, isSuperAdmin: true }
+          );
+        }
+
+        // 4. Actualizar Módulos Licenciados si se enviaron
+        if (modules && typeof modules === 'object') {
+          for (const [modKey, isEnabled] of Object.entries(modules)) {
+            await setTenantModuleState(targetTenant.id, modKey, Boolean(isEnabled), currentUser.email);
+          }
+        }
+
+        // 5. Registrar en Auditoría de Plataforma
+        await execute(
+          'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
+          [targetTenant.id, currentUser.email, 'TENANT_UPDATED', JSON.stringify({
+            tenantName: name.trim(),
+            planCode,
+            activeTheme,
+            modules,
+            updatedBy: currentUser.email
+          })],
+          { isSuperAdmin: true }
+        );
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: `Organización '${name}' actualizada con éxito.`,
+          tenant: { id: targetTenant.id, name: name.trim(), planCode, activeTheme }
+        }));
         return;
       }
 
@@ -883,10 +1072,10 @@ const server = http.createServer(async (req, res) => {
         );
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ 
-          success: true, 
+        res.end(JSON.stringify({
+          success: true,
           message: `Organización '${targetTenant.name}' ${newStatus === 'suspended' ? 'suspendida' : 'reactivada'} con éxito.`,
-          status: newStatus 
+          status: newStatus
         }));
         return;
       }
@@ -977,7 +1166,7 @@ const server = http.createServer(async (req, res) => {
           try {
             const secureHash = hashPassword(password);
             await execute('UPDATE users SET password_hash = ? WHERE LOWER(email) = ?', [secureHash, normalizedEmail], { isSuperAdmin: true });
-          } catch (upgradeErr) {}
+          } catch (upgradeErr) { }
         }
 
         const userTenantId = user.tenant_id || DEFAULT_TENANT_ID;
@@ -1109,7 +1298,7 @@ const server = http.createServer(async (req, res) => {
           const updatedRole = role !== undefined ? role : targetUser.role;
           const updatedActive = active !== undefined ? Boolean(active) : targetUser.is_active;
           const updatedTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : targetUser.tenant_id;
-          
+
           let updatedHash = targetUser.password_hash;
           if (password && password.trim() && password !== '••••••••') {
             updatedHash = hashPassword(password);
@@ -1133,12 +1322,23 @@ const server = http.createServer(async (req, res) => {
         const search = (urlParams.get('q') || urlParams.get('search') || '').toLowerCase().trim();
         const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
 
-        const allOrdersInDb = await query('SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC', [tenantId], { tenantId });
+        // SUPERADMIN puede ver todas las órdenes de la plataforma (o filtrado por tenantId si se especifica)
+        // ADMIN y OPERATOR ven estricta y únicamente las órdenes de su propia organización (tenantId)
+        const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+        const ordersContext = isSuperAdmin ? { isSuperAdmin: true } : { tenantId };
+        const allOrdersInDb = await query(
+          isSuperAdmin
+            ? 'SELECT * FROM orders ORDER BY created_at DESC'
+            : 'SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC',
+          isSuperAdmin ? [] : [tenantId],
+          ordersContext
+        );
 
         const formattedOrders = [];
         for (const o of allOrdersInDb) {
-          const items = await query('SELECT id, code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?', [o.id], { tenantId });
-          const logs = await query('SELECT timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ? ORDER BY id ASC', [o.id], { tenantId });
+          const orderTenantId = o.tenant_id || tenantId;
+          const items = await query('SELECT id, code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?', [o.id], { tenantId: orderTenantId, isSuperAdmin });
+          const logs = await query('SELECT timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ? ORDER BY id ASC', [o.id], { tenantId: orderTenantId, isSuperAdmin });
 
           const scannedItems = o.total_items_scanned || 0;
           const totalItems = o.total_items_required || 1;
@@ -1306,9 +1506,13 @@ const server = http.createServer(async (req, res) => {
         const email = (userEmail || 'admin@drinklovers.com.ar').toLowerCase();
 
         const parsed = await parsePdfBuffer(buffer, cleanName);
-        if (!parsed.items || parsed.items.length === 0) {
+        if (!parsed.success || !parsed.items || parsed.items.length === 0) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'No se pudieron extraer productos válidos del PDF.' }));
+          res.end(JSON.stringify({
+            success: false,
+            checklist: parsed.checklist,
+            error: parsed.error || 'No se pudieron extraer productos válidos del PDF.'
+          }));
           return;
         }
 
@@ -1316,38 +1520,18 @@ const server = http.createServer(async (req, res) => {
         const totalItemsRequired = parsed.items.reduce((acc, i) => acc + i.quantityRequired, 0);
 
         try {
-          // Verificar si la orden ya existe en el tenant para reemplazar sus items
-          const existingOrder = await getOne(
-            'SELECT id FROM orders WHERE tenant_id = ? AND order_number = ?',
-            [tenantId, parsed.orderNumber],
+          // Insertar siempre como nueva orden independiente identificada unívocamente por su id (UUID)
+          await execute(
+            'INSERT INTO orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+            [orderUuid, tenantId, orderUuid, parsed.orderNumber, parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired, totalItemsRequired],
             { tenantId }
           );
-
-          let finalOrderUuid = orderUuid;
-          if (existingOrder) {
-            finalOrderUuid = existingOrder.id;
-            // Actualizar orden existente
-            await execute(
-              'UPDATE orders SET client_name = ?, issue_date = ?, pdf_file_name = ?, pdf_blob = ?, status = ?, total_items = ?, total_items_required = ?, total_items_scanned = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-              [parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired, totalItemsRequired, finalOrderUuid],
-              { tenantId }
-            );
-            // Limpiar items previos para re-ingesta limpia
-            await execute('DELETE FROM order_items WHERE order_id = ?', [finalOrderUuid], { tenantId });
-          } else {
-            // Insertar nueva orden
-            await execute(
-              'INSERT INTO orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
-              [finalOrderUuid, tenantId, finalOrderUuid, parsed.orderNumber, parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired, totalItemsRequired],
-              { tenantId }
-            );
-          }
 
           for (const item of parsed.items) {
             const itemId = crypto.randomUUID();
             await execute(
               'INSERT INTO order_items (id, tenant_id, order_id, code, description, unit_price, quantity_required, quantity_scanned, status) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)',
-              [itemId, tenantId, finalOrderUuid, item.code, item.description, item.unitPrice || 0, item.quantityRequired, 'PENDING'],
+              [itemId, tenantId, orderUuid, item.code, item.description, item.unitPrice || 0, item.quantityRequired, 'PENDING'],
               { tenantId }
             );
           }
@@ -1355,24 +1539,31 @@ const server = http.createServer(async (req, res) => {
           const now = new Date().toLocaleString('es-AR');
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
-            [finalOrderUuid, tenantId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF #${parsed.orderNumber} ${existingOrder ? 're-subido y actualizado' : 'parseado y guardado'} en PostgreSQL por ${email}.`],
+            [orderUuid, tenantId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF #${parsed.orderNumber} cargado e ingresado en PostgreSQL por ${email}.`],
             { tenantId }
           );
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ 
-            success: true, 
-            id: finalOrderUuid, 
-            uuid: finalOrderUuid, 
-            fileName: cleanName, 
-            orderNumber: parsed.orderNumber, 
-            message: `Comprobante #${parsed.orderNumber} guardado en PostgreSQL.` 
+          res.end(JSON.stringify({
+            success: true,
+            checklist: parsed.checklist,
+            id: orderUuid,
+            uuid: orderUuid,
+            fileName: cleanName,
+            orderNumber: parsed.orderNumber,
+            clientName: parsed.clientName,
+            totalItems: totalItemsRequired,
+            message: `Comprobante #${parsed.orderNumber} guardado en PostgreSQL.`
           }));
           return;
         } catch (dbErr) {
           console.error('Error guardando pedido PDF en PostgreSQL:', dbErr);
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: `Error en Base de Datos: ${dbErr.message}` }));
+          res.end(JSON.stringify({
+            success: false,
+            checklist: parsed.checklist,
+            error: `Error en Base de Datos: ${dbErr.message}`
+          }));
           return;
         }
       }
@@ -1389,10 +1580,33 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 10.5.1 APP MÓVIL: PEDIDO ACTIVO (DOING) DEL OPERARIO
+      // 10.5.1 APP MÓVIL: PEDIDOS EN PROCESO (DOING) ASIGNADOS AL OPERARIO
+      if (req.url.startsWith('/api/scanban/my-doing-orders') && req.method === 'GET') {
+        const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
+        const opEmail = urlParams.get('userEmail') || (currentUser && currentUser.email) || '';
+
+        if (!opEmail) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, count: 0, orders: [] }));
+          return;
+        }
+
+        const doingRows = await query(
+          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
+          [opEmail.toLowerCase(), tenantId],
+          { tenantId }
+        );
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, count: doingRows.length, orders: doingRows }));
+        return;
+      }
+
+      // 10.5.1.B APP MÓVIL: PEDIDO ACTIVO EN FOCO DE ESCANEO
       if (req.url.startsWith('/api/scanban/active-order') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const opEmail = urlParams.get('userEmail') || (currentUser && currentUser.email) || '';
+        const requestedId = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
 
         if (!opEmail) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1400,16 +1614,27 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const activeRow = await getOne(
-          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? LIMIT 1",
-          [opEmail.toLowerCase(), tenantId],
-          { tenantId }
-        );
+        let activeRow = null;
+        if (requestedId) {
+          activeRow = await getOne(
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ?",
+            [requestedId, requestedId, requestedId, opEmail.toLowerCase(), tenantId],
+            { tenantId }
+          );
+        }
+
+        if (!activeRow) {
+          activeRow = await getOne(
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
+            [opEmail.toLowerCase(), tenantId],
+            { tenantId }
+          );
+        }
 
         if (activeRow) {
           const fullOrder = await getFullOrderFromDb(activeRow.id, { tenantId });
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ hasActive: true, orderNumber: activeRow.orderNumber, order: fullOrder }));
+          res.end(JSON.stringify({ hasActive: true, id: activeRow.id, orderNumber: activeRow.orderNumber, order: fullOrder }));
           return;
         }
 

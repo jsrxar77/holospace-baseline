@@ -22,18 +22,50 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+export interface DoingOrderSummary {
+  id: string;
+  uuid: string;
+  orderNumber: string;
+  clientName: string;
+  totalItemsRequired: number;
+  totalItemsScanned: number;
+  status: string;
+}
+
 export const fileWorkflowService = {
-  // Auto-detectar si el operario (por email) tiene un pedido activo DOING en DB
-  getActiveDoingOrder: async (userEmail?: string): Promise<{ hasActive: boolean; orderNumber?: string; pdfFileName?: string; order?: Order }> => {
+  // Obtener todos los pedidos asignados en DOING al operario actual
+  getMyDoingOrders: async (userEmail?: string): Promise<DoingOrderSummary[]> => {
     try {
       const emailParam = userEmail ? `?userEmail=${encodeURIComponent(userEmail)}` : '';
-      const response = await fetch(`${SERVER_URL}/api/scanban/active-order${emailParam}`, {
+      const response = await fetch(`${SERVER_URL}/api/scanban/my-doing-orders${emailParam}`, {
+        headers: getAuthHeaders()
+      });
+      const data = await response.json();
+      if (data && data.success && Array.isArray(data.orders)) {
+        return data.orders;
+      }
+    } catch (e) {
+      console.log('Error obteniendo mis pedidos en proceso:', e);
+    }
+    return [];
+  },
+
+  // Auto-detectar o cargar el pedido activo enfocado de escaneo
+  getActiveDoingOrder: async (userEmail?: string, orderIdentifier?: string): Promise<{ hasActive: boolean; id?: string; orderNumber?: string; pdfFileName?: string; order?: Order }> => {
+    try {
+      const params = new URLSearchParams();
+      if (userEmail) params.append('userEmail', userEmail);
+      if (orderIdentifier) params.append('id', orderIdentifier);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+
+      const response = await fetch(`${SERVER_URL}/api/scanban/active-order${queryString}`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
       if (data && data.hasActive) {
         return {
           hasActive: true,
+          id: data.id,
           orderNumber: data.orderNumber,
           pdfFileName: `${data.orderNumber}.pdf`,
           order: data.order

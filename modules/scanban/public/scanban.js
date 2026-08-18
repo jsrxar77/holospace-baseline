@@ -472,7 +472,12 @@ function toggleUserGroup(groupId) {
 async function loadKanbanData() {
   try {
     loadActiveTheme();
-    const res = await fetch('/api/scanban/kanban');
+    const token = localStorage.getItem('hw_token') || '';
+    const res = await fetch('/api/scanban/kanban', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
     const data = await res.json();
 
     // 1. Render Backlog (Gris - Draggable hacia LISTO)
@@ -947,6 +952,71 @@ function downloadPdf(orderId) {
   window.open(`/api/scanban/download-pdf?id=${orderId}`, '_blank');
 }
 
+// MODAL DE DIAGNÓSTICO Y CHECKLIST VISUAL DE SUBIDA DE PDF (3 PASOS)
+function showUploadDiagnosticsModal(result, fileName) {
+  return new Promise((resolve) => {
+    const isSuccess = !!result.success;
+    const checklist = result.checklist || {};
+    const titleElem = document.getElementById('dialogTitle');
+    const msgElem = document.getElementById('dialogMessage');
+
+    titleElem.innerText = isSuccess ? 'Comprobante Ingerido con Éxito' : 'Diagnóstico de Ingesta de Comprobante';
+    titleElem.style.color = isSuccess ? 'var(--emerald)' : 'var(--red)';
+
+    const step1 = checklist.step1_integrity || { passed: isSuccess, title: 'Integridad del Archivo PDF', details: isSuccess ? 'Estructura binaria válida.' : 'Error al leer estructura PDF.' };
+    const step2 = checklist.step2_metadata || { passed: isSuccess, title: 'Lectura de Cabecera y Metadatos', details: isSuccess ? `N° Comprobante: #${result.orderNumber || ''} | Cliente: ${result.clientName || ''}` : 'No se detectó cabecera válida.' };
+    const step3 = checklist.step3_items || { passed: isSuccess, title: 'Detección de Productos y Cantidades', details: isSuccess ? `${result.totalItems || 0} unidades requeridas detectadas.` : 'No se encontraron artículos con cantidades.' };
+
+    const renderStep = (num, step) => {
+      const icon = step.passed ? '✓' : '✗';
+      const color = step.passed ? 'var(--emerald)' : 'var(--red)';
+      const bg = step.passed ? 'rgba(0, 230, 118, 0.08)' : 'rgba(255, 82, 82, 0.08)';
+      const border = step.passed ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 82, 82, 0.25)';
+
+      return `
+        <div style="background: ${bg}; border: 1px solid ${border}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; text-align: left; transition: all 0.2s;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+            <span style="font-weight: 800; font-size: 13px; color: #FFF; letter-spacing: 0.3px;">Paso ${num}: ${step.title}</span>
+            <span style="font-weight: 900; font-size: 14px; color: ${color}; background: rgba(0,0,0,0.3); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${icon}</span>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 18px;">${step.details}</p>
+        </div>
+      `;
+    };
+
+    msgElem.innerHTML = `
+      <div style="text-align: left; margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">
+        Archivo: <strong style="color: #FFF;">${fileName}</strong>
+      </div>
+      <div style="margin-top: 10px;">
+        ${renderStep(1, step1)}
+        ${renderStep(2, step2)}
+        ${renderStep(3, step3)}
+      </div>
+      ${!isSuccess ? `
+        <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
+          <span style="font-size: 12px; color: #FFF; font-weight: 700;">Recomendación:</span>
+          <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
+            Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
+          </p>
+        </div>
+      ` : `
+        <div style="margin-top: 14px; padding: 10px 12px; background: rgba(0, 230, 118, 0.12); border-left: 3px solid var(--emerald); border-radius: 6px; text-align: left;">
+          <span style="font-size: 12px; color: var(--emerald); font-weight: 700;">Estado de Carga:</span>
+          <p style="font-size: 12px; color: #FFF; margin: 4px 0 0 0; line-height: 16px;">
+            El pedido #${result.orderNumber || ''} se encuentra disponible en la columna <strong>BACKLOG</strong> de tu organización.
+          </p>
+        </div>
+      `}
+    `;
+
+    document.getElementById('dialogCancelBtn').style.display = 'none';
+    document.getElementById('dialogConfirmBtn').innerText = 'Entendido';
+    document.getElementById('customDialogModal').classList.remove('hidden');
+    customDialogResolver = resolve;
+  });
+}
+
 // SUBIDA DE COMPROBANTES PDF
 async function handleFileUpload(event) {
   const file = event.target.files[0];
@@ -956,9 +1026,13 @@ async function handleFileUpload(event) {
   reader.onload = async (e) => {
     const base64 = e.target.result.split(',')[1];
     try {
+      const token = localStorage.getItem('hw_token') || '';
       const res = await fetch('/api/scanban/upload-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           fileName: file.name,
           pdfBase64: base64,
@@ -966,14 +1040,21 @@ async function handleFileUpload(event) {
         })
       });
       const data = await res.json();
+      await showUploadDiagnosticsModal(data, file.name);
       if (data.success) {
-        await showCustomAlert('¡Éxito!', `Comprobante ${file.name} parseado y cargado en el Backlog.`);
         loadKanbanData();
-      } else {
-        await showCustomAlert('Error', data.error || 'No se pudo subir el archivo.');
       }
     } catch (err) {
-      await showCustomAlert('Error', 'Error de conexión al subir comprobante.');
+      await showUploadDiagnosticsModal({
+        success: false,
+        checklist: {
+          step1_integrity: { passed: false, title: 'Integridad del Archivo PDF', details: 'Error de red o conexión al enviar el comprobante al servidor.' },
+          step2_metadata: { passed: false, title: 'Lectura de Cabecera y Metadatos', details: 'No se pudo comunicar con el backend.' },
+          step3_items: { passed: false, title: 'Detección de Productos y Cantidades', details: 'No se procesó la respuesta.' }
+        }
+      }, file.name);
+    } finally {
+      event.target.value = '';
     }
   };
   reader.readAsDataURL(file);
@@ -1249,8 +1330,14 @@ async function fetchExplorerOrders() {
   const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
+    const token = localStorage.getItem('hw_token') || '';
     const res = await fetch(
-      `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`
+      `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
     );
     const data = await res.json();
     const grid = document.getElementById('ordersExplorerGrid');

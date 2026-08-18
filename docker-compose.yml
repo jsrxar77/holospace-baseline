@@ -81,19 +81,31 @@ services:
     networks:
       - holoware_network
 
-  # 5. Servicio de App Móvil ScanBan Scanner (Expo Web & QR Metro Bundler)
+  # 5. Servicio de App Movil ScanBan Scanner (Expo Web & QR Metro Bundler)
   mobile:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: holoware_mobile
     restart: unless-stopped
-    command: ["npx", "expo", "start", "--web", "--port", "8081"]
+    command: ["npx", "expo", "start", "--web", "--host", "lan", "--port", "8081"]
     ports:
       - "8081:8081"
+      - "19000:19000"
+      - "19001:19001"
     environment:
       - EXPO_NO_TELEMETRY=1
-      - CI=1
+      # IP LAN del host Mac: permite que config.ts resuelva SERVER_URL correctamente
+      # desde el browser externo y desde Expo Go en dispositivos fisicos.
+      # Actualizar este valor si cambia la IP de la maquina en la red local.
+      - EXPO_PUBLIC_SERVER_IP=192.168.100.247
+      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.100.247
+    volumes:
+      - ./modules:/app/modules
+      - ./web/expo-index.html:/app/public/index.html:ro
+      - ./web:/app/web
+      - ./metro.config.js:/app/metro.config.js
+      - ./app.json:/app/app.json
     depends_on:
       - app
     networks:
