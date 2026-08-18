@@ -22,7 +22,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     if (moduleName === 'expo-sqlite') {
       return {
         type: 'sourceFile',
-        filePath: path.resolve(__dirname, 'modules/scanban/src/db/sqliteWebStub.js'),
+        filePath: path.resolve(__dirname, 'modules/scanner/src/db/sqliteWebStub.js'),
       };
     }
     if (moduleName === 'zustand') {

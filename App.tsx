@@ -1,3 +1,2 @@
-// HoloSpace Baseline — ScanBan Module Entry Point
-// This file re-exports the ScanBan module as the active app entry
-export { default } from './modules/scanban/App';
+// HoloSpace Baseline — Scanner Module Entry Point
+export { default } from "./modules/scanner/App";
