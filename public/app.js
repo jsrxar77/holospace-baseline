@@ -265,6 +265,8 @@ function applyRoleVisibility() {
     const path = window.location.pathname.toLowerCase();
     if (path.includes('core')) {
       switchModule('core');
+    } else if (path.includes('kanban')) {
+      switchModule('kanban');
     } else {
       switchModule('tenant');
     }
@@ -311,8 +313,12 @@ function applyRoleVisibility() {
     }
 
     const path = window.location.pathname.toLowerCase();
-    if (path.includes('scanner')) {
-      switchModule('scanner');
+    if (path.includes('tenant')) {
+      showForbiddenView('tenant');
+      if (window.history && window.history.replaceState) window.history.replaceState({ module: 'tenant' }, '', '/tenant');
+    } else if (path.includes('core')) {
+      showForbiddenView('core');
+      if (window.history && window.history.replaceState) window.history.replaceState({ module: 'core' }, '', '/core');
     } else if (path.includes('orders')) {
       switchModule('kanban');
       switchTab('orders');
