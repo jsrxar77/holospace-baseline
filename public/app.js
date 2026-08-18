@@ -198,28 +198,28 @@ function applyRoleVisibility() {
   if (badge) badge.innerText = orgName.toUpperCase();
   if (mobActiveCtx) mobActiveCtx.innerText = orgName.toUpperCase();
 
-  const modTenants = document.getElementById('modTenants');
+  const modTenant = document.getElementById('modTenant') || document.getElementById('modTenants');
   const modCore = document.getElementById('modCore');
-  const modScanBan = document.getElementById('modScanBan');
-  const modScanFlow = document.getElementById('modScanFlow');
+  const modKanban = document.getElementById('modKanban') || document.getElementById('modScanBan');
+  const modScanner = document.getElementById('modScanner') || document.getElementById('modScanFlow');
   
-  const mobModTenants = document.getElementById('mobModTenants');
+  const mobModTenant = document.getElementById('mobModTenant') || document.getElementById('mobModTenants');
   const mobModCore = document.getElementById('mobModCore');
-  const mobModScanBan = document.getElementById('mobModScanBan');
-  const mobModScanFlow = document.getElementById('mobModScanFlow');
+  const mobModKanban = document.getElementById('mobModKanban') || document.getElementById('mobModScanBan');
+  const mobModScanner = document.getElementById('mobModScanner') || document.getElementById('mobModScanFlow');
 
   if (isSuperAdmin) {
-    // SUPERADMIN: Access strictly to HoloWare Tenants & Core Platform
-    if (modTenants) modTenants.style.display = 'inline-flex';
+    // SUPERADMIN: Access strictly to HoloWare Tenant & Core Platform
+    if (modTenant) modTenant.style.display = 'inline-flex';
     if (modCore) modCore.style.display = 'inline-flex';
-    if (modScanBan) modScanBan.style.display = 'none';
-    if (modScanFlow) modScanFlow.style.display = 'none';
+    if (modKanban) modKanban.style.display = 'none';
+    if (modScanner) modScanner.style.display = 'none';
     if (themeContainer) themeContainer.style.display = 'flex';
 
-    if (mobModTenants) mobModTenants.style.display = 'block';
+    if (mobModTenant) mobModTenant.style.display = 'block';
     if (mobModCore) mobModCore.style.display = 'block';
-    if (mobModScanBan) mobModScanBan.style.display = 'none';
-    if (mobModScanFlow) mobModScanFlow.style.display = 'none';
+    if (mobModKanban) mobModKanban.style.display = 'none';
+    if (mobModScanner) mobModScanner.style.display = 'none';
 
     const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
@@ -249,25 +249,26 @@ function applyRoleVisibility() {
     }
 
     const tenantsView = document.getElementById('viewTenants');
-    if (tenantsView && !tenantsView.classList.contains('hidden')) {
-      switchModule('tenants');
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('core')) {
+      switchModule('core');
     } else {
-      switchModule('tenants');
+      switchModule('tenant');
     }
   } else {
-    // ADMIN / OPERATOR: Access to licensed operational modules (ScanBan Board, ScanFlow)
-    if (modTenants) modTenants.style.display = 'none';
+    // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, Scanner)
+    if (modTenant) modTenant.style.display = 'none';
     if (modCore) modCore.style.display = 'none';
-    if (modScanBan) modScanBan.style.display = 'inline-flex';
-    if (modScanFlow) modScanFlow.style.display = 'inline-flex';
+    if (modKanban) modKanban.style.display = 'inline-flex';
+    if (modScanner) modScanner.style.display = 'inline-flex';
     if (themeContainer) themeContainer.style.display = 'none';
 
-    if (mobModTenants) mobModTenants.style.display = 'none';
+    if (mobModTenant) mobModTenant.style.display = 'none';
     if (mobModCore) mobModCore.style.display = 'none';
-    if (mobModScanBan) mobModScanBan.style.display = 'block';
-    if (mobModScanFlow) mobModScanFlow.style.display = 'block';
+    if (mobModKanban) mobModKanban.style.display = 'block';
+    if (mobModScanner) mobModScanner.style.display = 'block';
 
-    const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'SCANBAN';
+    const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'KANBAN';
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
 
     if (userBadge) {
@@ -296,46 +297,58 @@ function applyRoleVisibility() {
       footerTenant.innerText = `Organización: ${currentUser.tenantName || orgName}`;
     }
 
-    const ordersView = document.getElementById('viewOrders');
-    if (ordersView && !ordersView.classList.contains('hidden')) {
-      switchModule('scanban');
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('scanner')) {
+      switchModule('scanner');
+    } else if (path.includes('orders')) {
+      switchModule('kanban');
       switchTab('orders');
     } else {
-      switchModule('scanban');
+      switchModule('kanban');
       switchTab('kanban');
     }
   }
 }
 
-function switchModule(moduleName) {
+function switchModule(moduleName, updateUrl = true) {
+  const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
+
   // 1. Ocultar todas las features (Tabs)
-  document.querySelectorAll('.feature-tenants, .feature-core, .feature-scanban, .feature-scanflow').forEach(el => {
+  document.querySelectorAll('.feature-tenant, .feature-tenants, .feature-core, .feature-kanban, .feature-scanban, .feature-scanner').forEach(el => {
     el.style.display = 'none';
   });
 
   // 2. Mostrar las features del módulo seleccionado
-  document.querySelectorAll('.nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'inline-flex');
-  document.querySelectorAll('.mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
+  document.querySelectorAll('.nav-tab.feature-' + normMod + ', .nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'inline-flex');
+  document.querySelectorAll('.mobile-nav-tab.feature-' + normMod + ', .mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
 
   // 3. Marcar módulo activo con mapeo exacto de IDs
-  const desktopModMap = { tenants: 'modTenants', core: 'modCore', scanban: 'modScanBan', scanflow: 'modScanFlow' };
-  const mobileModMap = { tenants: 'mobModTenants', core: 'mobModCore', scanban: 'mobModScanBan', scanflow: 'mobModScanFlow' };
+  const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner' };
+  const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner' };
 
   document.querySelectorAll('.module-tab').forEach(el => el.classList.remove('active'));
-  const dMod = document.getElementById(desktopModMap[moduleName]);
-  const mMod = document.getElementById(mobileModMap[moduleName]);
+  const dMod = document.getElementById(desktopModMap[normMod]);
+  const mMod = document.getElementById(mobileModMap[normMod]);
   if (dMod) dMod.classList.add('active');
   if (mMod) mMod.classList.add('active');
 
-  // 4. Seleccionar la feature por defecto
-  if (moduleName === 'tenants') {
+  // 4. Actualizar URL amigable en navegador
+  if (updateUrl && window.history && window.history.pushState) {
+    const targetUrl = '/' + normMod;
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({ module: normMod }, '', targetUrl);
+    }
+  }
+
+  // 5. Seleccionar la feature por defecto
+  if (normMod === 'tenant') {
     switchTab('tenants');
-  } else if (moduleName === 'core') {
+  } else if (normMod === 'core') {
     switchTab('platform');
-  } else if (moduleName === 'scanban') {
+  } else if (normMod === 'kanban') {
     switchTab('kanban');
-  } else if (moduleName === 'scanflow') {
-    switchTab('scanflow');
+  } else if (normMod === 'scanner') {
+    switchTab('scanner');
   }
 }
 
@@ -371,8 +384,8 @@ function switchTabMobile(tabName) {
 // NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
   // Limpiar clase activa de todos los feature tabs
-  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanFlow',
-   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanFlow'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanner',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -387,14 +400,14 @@ function switchTab(tabName) {
 
   // Asegurarnos de que el módulo padre también esté activo
   let parentModule = '';
-  if (tabName === 'tenants') parentModule = 'tenants';
+  if (tabName === 'tenants') parentModule = 'tenant';
   if (tabName === 'platform' || tabName === 'users') parentModule = 'core';
-  if (tabName === 'kanban' || tabName === 'orders') parentModule = 'scanban';
-  if (tabName === 'scanflow') parentModule = 'scanflow';
+  if (tabName === 'kanban' || tabName === 'orders') parentModule = 'kanban';
+  if (tabName === 'scanner') parentModule = 'scanner';
   
   if (parentModule) {
-    const desktopModMap = { tenants: 'modTenants', core: 'modCore', scanban: 'modScanBan', scanflow: 'modScanFlow' };
-    const mobileModMap = { tenants: 'mobModTenants', core: 'mobModCore', scanban: 'mobModScanBan', scanflow: 'mobModScanFlow' };
+    const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner' };
+    const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner' };
 
     document.querySelectorAll('.module-tab').forEach(m => m.classList.remove('active'));
     const dMod = document.getElementById(desktopModMap[parentModule]);
@@ -433,13 +446,8 @@ function switchTab(tabName) {
     if (view) view.classList.remove('hidden');
     renderOperatorPills();
     fetchExplorerOrders();
-  } else if (tabName === 'scanflow') {
-    const tab = document.getElementById('tabScanFlow');
-    if (tab) tab.classList.add('active');
-    const mobTab = document.getElementById('mobTabScanFlow');
-    if (mobTab) mobTab.classList.add('active');
-    const view = document.getElementById('viewScanFlow');
-    if (view) view.classList.remove('hidden');
+  } else if (tabName === 'scanner') {
+    openQrModal();
   } else if (tabName === 'users') {
     const tab = document.getElementById('tabUsers');
     if (tab) tab.classList.add('active');
@@ -458,6 +466,14 @@ function switchTab(tabName) {
     loadPlatformPanel();
   }
 }
+
+// Soporte de navegación adelante/atrás del navegador (popstate)
+window.addEventListener('popstate', (e) => {
+  const path = window.location.pathname.replace('/', '').toLowerCase();
+  if (['tenant', 'tenants', 'core', 'kanban', 'scanner'].includes(path)) {
+    switchModule(path, false);
+  }
+});
 
 // SISTEMA DE DIÁLOGOS PERSONALIZADOS (CERO ALERT Y CONFIRM DE SISTEMA)
 function showCustomAlert(title, message) {
@@ -1926,11 +1942,10 @@ async function loadTenantsManagementData() {
       }[planCode] || { bg: 'rgba(255,255,255,0.1)', color: '#FFF', border: '#888' };
 
       const modules = t.modules || [];
-      const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'scanban-board' && m.module_code === 'scanban') || (code === 'scanflow' && m.module_code === 'stockflow')) && m.is_enabled);
+      const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
 
-      const isScanBanBoardActive = hasModule('scanban-board');
-      const isScanBanScannerActive = hasModule('scanban-scanner');
-      const isScanFlowActive = hasModule('scanflow');
+      const isKanbanActive = hasModule('kanban');
+      const isScannerActive = hasModule('scanner');
 
       const users = t.users || [];
 
@@ -1987,22 +2002,16 @@ async function loadTenantsManagementData() {
             <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos Licenciados en Vivo</div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
-              <!-- ScanBan Board -->
+              <!-- Kanban -->
               <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
-                <span style="font-size: 12px; font-weight: 700; color: ${isScanBanBoardActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Board</span>
-                <input type="checkbox" ${isScanBanBoardActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
+                <span style="font-size: 12px; font-weight: 700; color: ${isKanbanActive ? 'var(--emerald)' : 'var(--text-muted)'};">Kanban</span>
+                <input type="checkbox" ${isKanbanActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
 
-              <!-- ScanBan Scanner -->
+              <!-- Scanner -->
               <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
-                <span style="font-size: 12px; font-weight: 700; color: ${isScanBanScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">ScanBan Scanner</span>
-                <input type="checkbox" ${isScanBanScannerActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
-              </div>
-
-              <!-- ScanFlow -->
-              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
-                <span style="font-size: 12px; font-weight: 700; color: ${isScanFlowActive ? 'var(--accent)' : 'var(--text-muted)'};">ScanFlow</span>
-                <input type="checkbox" ${isScanFlowActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
+                <span style="font-size: 12px; font-weight: 700; color: ${isScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">Scanner</span>
+                <input type="checkbox" ${isScannerActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
             </div>
           </div>
@@ -2179,11 +2188,10 @@ function openEditTenantModal(tenantId) {
   if (themeSelect) themeSelect.value = tenant.active_theme || 'omarchy_tiling';
 
   const modules = tenant.modules || [];
-  const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'scanban-board' && m.module_code === 'scanban') || (code === 'scanflow' && m.module_code === 'stockflow')) && m.is_enabled);
+  const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
 
-  if (modBoard) modBoard.checked = hasModule('scanban-board');
-  if (modScanner) modScanner.checked = hasModule('scanban-scanner');
-  if (modFlow) modFlow.checked = hasModule('scanflow');
+  if (modBoard) modBoard.checked = hasModule('kanban');
+  if (modScanner) modScanner.checked = hasModule('scanner');
 
   if (modal) modal.classList.remove('hidden');
 }
@@ -2195,22 +2203,20 @@ function closeEditTenantModal() {
 
 function handleEditTenantPlanChange(newPlan) {
   const defaultQuotas = {
-    starter: { users: 5, orders: 500, board: true, scanner: false, flow: false },
-    pro: { users: 20, orders: 2500, board: true, scanner: true, flow: false },
-    enterprise: { users: 100, orders: 10000, board: true, scanner: true, flow: true }
-  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false, flow: false };
+    starter: { users: 5, orders: 500, board: true, scanner: false },
+    pro: { users: 20, orders: 2500, board: true, scanner: true },
+    enterprise: { users: 100, orders: 10000, board: true, scanner: true }
+  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false };
 
   const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
   const modBoard = document.getElementById('editTenantModBoard');
   const modScanner = document.getElementById('editTenantModScanner');
-  const modFlow = document.getElementById('editTenantModFlow');
 
   if (maxUsersInput) maxUsersInput.value = defaultQuotas.users;
   if (maxOrdersInput) maxOrdersInput.value = defaultQuotas.orders;
   if (modBoard) modBoard.checked = defaultQuotas.board;
   if (modScanner) modScanner.checked = defaultQuotas.scanner;
-  if (modFlow) modFlow.checked = defaultQuotas.flow;
 }
 
 async function saveEditTenantSubmit(e) {
@@ -2223,10 +2229,14 @@ async function saveEditTenantSubmit(e) {
   const maxOrdersMonthly = parseInt(document.getElementById('editTenantMaxOrdersInput').value, 10);
   const activeTheme = document.getElementById('editTenantThemeSelect').value;
 
+  const isBoardChecked = document.getElementById('editTenantModBoard').checked;
+  const isScannerChecked = document.getElementById('editTenantModScanner').checked;
+
   const modules = {
-    'scanban-board': document.getElementById('editTenantModBoard').checked,
-    'scanban-scanner': document.getElementById('editTenantModScanner').checked,
-    'scanflow': document.getElementById('editTenantModFlow').checked
+    'kanban': isBoardChecked,
+    'scanban-board': isBoardChecked,
+    'scanner': isScannerChecked,
+    'scanban-scanner': isScannerChecked
   };
 
   try {

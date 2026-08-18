@@ -8,13 +8,12 @@ HoloWare es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de a
 
 ## Módulos Oficiales del Sistema
 
-| Módulo | Entorno | Rol Acceso | Entitlement / Código | Descripción |
+| Módulo | Entorno / URL Directa | Rol Acceso | Entitlement / Código | Descripción |
 |---|---|---|---|---|
-| **Tenants** | Web | `SUPERADMIN` (Exclusivo) | Mandatorio (`tenants`) | **Gobierno SaaS Multi-Tenant:** Alta de empresas, gestión de suscripciones, asignación de usuarios y licenciamiento dinámico de módulos. |
-| **HoloWare Core** | Web | `SUPERADMIN` | Mandatorio (`core`) | Plataforma base transversal: autenticación centralizada, motor de temas y logs de auditoría global. |
-| **ScanBan Board** | Web | `ADMIN` / `OPERATOR` | Plan Pro/Enterprise (`scanban-board`) | Tablero Kanban interactivo 4 columnas, ingesta y parseo automático de remitos PDF y explorador de pedidos. |
-| **ScanBan Scanner** | Mobile (Expo) / Web | `OPERATOR` / `ADMIN` | Plan Pro/Enterprise (`scanban-scanner`) | App móvil de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
-| **ScanFlow** | Web / Mobile | `ADMIN` / `OPERATOR` | Plan Enterprise (`scanflow`) | Módulo de control de inventario, stock por ubicación en depósito, trazabilidad de SKU/EAN y balance de existencias. |
+| **Tenant** | `http://localhost:3001/tenant` | `SUPERADMIN` (Exclusivo) | Mandatorio (`tenant`) | **Gobierno SaaS Multi-Tenant:** Alta de empresas, gestión de planes, cuotas, asignación de usuarios y licenciamiento. |
+| **Core** | `http://localhost:3001/core` | `SUPERADMIN` | Mandatorio (`core`) | Plataforma base: autenticación centralizada, control de usuarios/roles, motor de temas y auditoría. |
+| **Kanban** | `http://localhost:3001/kanban` | `ADMIN` / `OPERATOR` | Plan Starter/Pro/Enterprise (`kanban`) | Tablero Kanban interactivo 4 columnas, ingesta/parseo automático de remitos PDF y explorador de pedidos. |
+| **Scanner** | `http://localhost:3001/scanner` (App Expo `8081`) | `OPERATOR` / `ADMIN` | Plan Starter/Pro/Enterprise (`scanner`) | App móvil de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
 
 ---
 

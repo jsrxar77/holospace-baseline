@@ -981,27 +981,27 @@
 
     <!-- Línea 2: Módulos Principales -->
     <nav class="header-nav-line" id="desktopNavModules" style="background-color: #0F131A; border-bottom: 1px solid var(--card-border);">
-      <button class="nav-tab module-tab" id="modTenants" onclick="switchModule('tenants')" style="display:none;">Tenants</button>
+      <button class="nav-tab module-tab" id="modTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
       <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;">Core</button>
-      <button class="nav-tab module-tab" id="modScanBan" onclick="switchModule('scanban')" style="display:none;">ScanBan</button>
-      <button class="nav-tab module-tab" id="modScanFlow" onclick="switchModule('scanflow')" style="display:none;">ScanFlow</button>
+      <button class="nav-tab module-tab" id="modKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
+      <button class="nav-tab module-tab" id="modScanner" onclick="switchModule('scanner')" style="display:none;">Scanner</button>
     </nav>
 
     <!-- Línea 3: Features del Módulo Activo -->
     <nav class="header-nav-line" id="desktopNavFeatures">
-      <!-- Features Tenants -->
-      <button class="nav-tab feature-tab feature-tenants" id="tabTenants" onclick="switchTab('tenants')" style="display:none;">Directorio de Organizaciones</button>
+      <!-- Features Tenant -->
+      <button class="nav-tab feature-tab feature-tenant" id="tabTenants" onclick="switchTab('tenants')" style="display:none;">Directorio de Organizaciones</button>
 
       <!-- Features Core -->
       <button class="nav-tab feature-tab feature-core" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma y Módulos</button>
       <button class="nav-tab feature-tab feature-core" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios</button>
       
-      <!-- Features ScanBan -->
-      <button class="nav-tab feature-tab feature-scanban" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
-      <button class="nav-tab feature-tab feature-scanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
+      <!-- Features Kanban -->
+      <button class="nav-tab feature-tab feature-kanban" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
+      <button class="nav-tab feature-tab feature-kanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
 
-      <!-- Features ScanFlow -->
-      <button class="nav-tab feature-tab feature-scanflow" id="tabScanFlow" onclick="switchTab('scanflow')" style="display:none;">Stock e Inventario</button>
+      <!-- Features Scanner -->
+      <button class="nav-tab feature-tab feature-scanner" id="tabScanner" onclick="switchTab('scanner')" style="display:none;">Conexión Móvil Scanner</button>
     </nav>
   </header>
 
@@ -1021,22 +1021,22 @@
       </div>
       <nav class="mobile-drawer-nav" id="mobileNavModules">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Módulos</div>
-        <button class="mobile-nav-tab module-tab" id="mobModTenants" onclick="switchModule('tenants')" style="display:none;">Tenants</button>
+        <button class="mobile-nav-tab module-tab" id="mobModTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
         <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;">Core</button>
-        <button class="mobile-nav-tab module-tab" id="mobModScanBan" onclick="switchModule('scanban')" style="display:none;">ScanBan</button>
-        <button class="mobile-nav-tab module-tab" id="mobModScanFlow" onclick="switchModule('scanflow')" style="display:none;">ScanFlow</button>
+        <button class="mobile-nav-tab module-tab" id="mobModKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
+        <button class="mobile-nav-tab module-tab" id="mobModScanner" onclick="switchModule('scanner')" style="display:none;">Scanner</button>
       </nav>
       <nav class="mobile-drawer-nav" id="mobileNavFeatures" style="margin-top: 16px;">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Funcionalidades</div>
-        <button class="mobile-nav-tab feature-tab feature-tenants" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Directorio de Organizaciones</button>
+        <button class="mobile-nav-tab feature-tab feature-tenant" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Directorio de Organizaciones</button>
         
         <button class="mobile-nav-tab feature-tab feature-core" id="mobTabPlatform" onclick="switchTabMobile('platform')" style="display:none;">Plataforma y Módulos</button>
         <button class="mobile-nav-tab feature-tab feature-core" id="mobTabUsers" onclick="switchTabMobile('users')" style="display:none;">Usuarios</button>
         
-        <button class="mobile-nav-tab feature-tab feature-scanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Tablero Kanban</button>
-        <button class="mobile-nav-tab feature-tab feature-scanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
+        <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Tablero Kanban</button>
+        <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
         
-        <button class="mobile-nav-tab feature-scanflow" id="mobTabScanFlow" onclick="switchTabMobile('scanflow')" style="display:none;">Stock e Inventario</button>
+        <button class="mobile-nav-tab feature-scanner" id="mobTabScanner" onclick="switchTabMobile('scanner')" style="display:none;">Conexión Móvil Scanner</button>
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
@@ -1502,16 +1502,12 @@
           <div style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Módulos Licenciados</div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
-              <span>ScanBan Board (Tablero Web)</span>
+              <span>Kanban (Tablero Web)</span>
               <input type="checkbox" id="editTenantModBoard">
             </label>
             <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
-              <span>ScanBan Scanner (App Móvil EAN-13)</span>
+              <span>Scanner (App Móvil EAN-13)</span>
               <input type="checkbox" id="editTenantModScanner">
-            </label>
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
-              <span>ScanFlow (Gestión de Stock)</span>
-              <input type="checkbox" id="editTenantModFlow">
             </label>
           </div>
         </div>

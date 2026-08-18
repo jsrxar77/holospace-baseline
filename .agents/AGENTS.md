@@ -69,13 +69,14 @@ Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consult
 
 ## 🎯 Reglas de Arquitectura Modular Obligatorias
 
-1. **Aislamiento por Módulo (`modules/<nombre-modulo>/`):**
-   - El código de cada módulo debe residir dentro de su carpeta en `modules/<nombre-modulo>/` (`public/`, `routes/`, `src/`).
-   - El módulo `core` (`modules/core/`) es la base y nunca puede ser desactivado.
+1. **Aislamiento por Módulo Oficial (`modules/<nombre-modulo>/`):**
+   - Catálogo Oficial de Módulos: **`Tenant`** (Gestión de organizaciones/cuotas), **`Core`** (Usuarios/roles/temas/auditoría), **`Kanban`** (Tablero logístico y explorador) y **`Scanner`** (Escáner móvil EAN-13 Expo).
+   - Acceso Web directo por URL limpia: `http://localhost:3001/tenant`, `http://localhost:3001/core`, `http://localhost:3001/kanban`, `http://localhost:3001/scanner`.
+   - El módulo `core` (`modules/core/`) es la base inmutable y nunca puede ser desactivado.
 
 2. **Convención Estricta de Rutas API:**
-   - Rutas Core de Plataforma: `/api/login`, `/api/users`, `/api/theme`, `/api/modules`, `/api/platform-audit`.
-   - Rutas de Módulos: `/api/<nombre-modulo>/...` (Ejemplo: `/api/scanban/kanban`, `/api/stockflow/items`).
+   - Rutas Core de Plataforma: `/api/login`, `/api/users`, `/api/theme`, `/api/modules`, `/api/platform-audit`, `/api/tenants`.
+   - Rutas de Módulos: `/api/<nombre-modulo>/...` (Ejemplo: `/api/kanban/orders`, `/api/scanban/kanban`).
 
 3. **Convención Estricta de Almacenamiento Local (LocalStorage):**
    - Claves de Plataforma Core: Prefijo `hw_` (`hw_token`, `hw_user`).
