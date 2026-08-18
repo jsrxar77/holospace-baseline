@@ -613,12 +613,22 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 1.1 CONFIGURACIÓN Y CONSULTA DE IP DINÁMICA LAN / EXPO
+      // 1.1 CONFIGURACIÓN Y CONSULTA DE IP DINÁMICA LAN / EXPO Y VERSIÓN
       if (req.url === '/api/config' && req.method === 'GET') {
         const hostIp = getPrimaryLocalIp(req);
+        let appVersion = '1.2.1';
+        try {
+          const pkgPath = path.join(__dirname, 'package.json');
+          if (fs.existsSync(pkgPath)) {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            if (pkg.version) appVersion = pkg.version;
+          }
+        } catch (e) { }
+
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
+          version: appVersion,
           hostIp,
           port: PORT,
           metroPort: 8081,

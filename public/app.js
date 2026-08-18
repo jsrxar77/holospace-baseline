@@ -124,8 +124,22 @@ async function changeTenantDefaultTheme(tenantId, themeKey) {
   }
 }
 
+async function loadAppConfig() {
+  try {
+    const res = await fetch('/api/config');
+    const data = await res.json();
+    if (data.success && data.version) {
+      const verEl = document.getElementById('footerAppVersion');
+      if (verEl) {
+        verEl.innerText = `HoloWare SaaS v${data.version}`;
+      }
+    }
+  } catch (e) { }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadActiveTheme();
+  loadAppConfig();
   populateSavedCredentials();
 
   const token = localStorage.getItem('hw_token');
