@@ -737,11 +737,10 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({
             success: true,
             modules: [
-              { key: 'tenants', name: 'Gestión Multi-Tenant', description: 'Panel exclusivo SUPERADMIN para administración de organizaciones.', category: 'admin', is_active: true },
+              { key: 'tenant', name: 'Gestión Multi-Tenant', description: 'Panel exclusivo SUPERADMIN para administración de organizaciones.', category: 'admin', is_active: true },
               { key: 'core', name: 'HoloWare Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
-              { key: 'scanban-board', name: 'ScanBan Board', description: 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador.', category: 'operational', is_active: true },
-              { key: 'scanban-scanner', name: 'ScanBan Scanner', description: 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13.', category: 'operational', is_active: true },
-              { key: 'scanflow', name: 'ScanFlow', description: 'Módulo de inventario y control de stock.', category: 'operational', is_active: true }
+              { key: 'kanban', name: 'Kanban Board', description: 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador.', category: 'operational', is_active: true },
+              { key: 'scanner', name: 'Scanner App', description: 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13.', category: 'operational', is_active: true }
             ]
           }));
         }
@@ -825,9 +824,9 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({
             success: true,
             plans: [
-              { code: 'starter', name: 'Plan Starter Inicial', max_users: 5, max_orders_monthly: 500, included_modules: ['core', 'scanban-board', 'scanban-scanner'] },
-              { code: 'pro', name: 'Plan Pro Profesional', max_users: 15, max_orders_monthly: 3000, included_modules: ['core', 'scanban-board', 'scanban-scanner', 'scanflow'] },
-              { code: 'enterprise', name: 'Plan Enterprise Ilimitado', max_users: 999, max_orders_monthly: 999999, included_modules: ['core', 'tenants', 'scanban-board', 'scanban-scanner', 'scanflow'] }
+              { code: 'starter', name: 'Plan Starter Inicial', max_users: 5, max_orders_monthly: 500, included_modules: ['core', 'kanban'] },
+              { code: 'pro', name: 'Plan Pro Profesional', max_users: 15, max_orders_monthly: 3000, included_modules: ['core', 'kanban', 'scanner'] },
+              { code: 'enterprise', name: 'Plan Enterprise Ilimitado', max_users: 999, max_orders_monthly: 999999, included_modules: ['tenant', 'core', 'kanban', 'scanner'] }
             ]
           }));
         }

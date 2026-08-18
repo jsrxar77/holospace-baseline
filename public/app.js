@@ -330,7 +330,7 @@ function applyRoleVisibility() {
 }
 
 function showForbiddenView(moduleName) {
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'viewScanFlow'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -498,7 +498,7 @@ function switchTab(tabName) {
     if (mMod) mMod.classList.add('active');
   }
 
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'viewScanFlow'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
