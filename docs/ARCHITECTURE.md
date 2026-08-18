@@ -125,12 +125,52 @@ CREATE POLICY rls_tenant_isolation ON orders
 
 ---
 
-## 6. Estrategia de Respaldos y Dump DevOps
+## 6. Estrategia de Respaldos y Recuperación ante Desastres (Disaster Recovery)
 
-1. **Backups Globales Diarios:** `bin/devops-db-backup.sh` (Dumps automáticos a las 02:00 UTC en `/backups`).
-2. **Exportación Aislada por Tenant:** `bin/tenant-dump.sh <tenant_slug>`.
+HoloSpace implementa un modelo de respaldos redundante de dos niveles para garantizar la continuidad del negocio y la integridad de datos de todas las empresas clientes:
 
----
+```mermaid
+graph TD
+    DB[(PostgreSQL 16 Multi-Tenant)] -->|CRON Diario 00:00 UTC - Automático| ContainerBackup[Contenedor holospace_backups]
+    DB -->|On-Demand / Pre-Deploy| ScriptBackup[bin/devops-db-backup.sh]
+    DB -->|Exportación por Tenant / GDPR| ScriptDump[bin/tenant-dump.sh]
+    
+    ContainerBackup -->|Rotación Gzip| FolderDaily[/backups/daily - 30 días/]
+    ContainerBackup -->|Rotación Gzip| FolderWeekly[/backups/weekly - 12 semanas/]
+    ContainerBackup -->|Rotación Gzip| FolderMonthly[/backups/monthly - 12 meses/]
+    
+    ScriptBackup -->|Dump Completo| FolderRoot[/backups/holospace_pg_*.sql.gz/]
+    ScriptDump -->|JSON Aislado| FolderDump[/backups/tenant_export_*.json/]
+```
+
+### A. Nivel 1: Respaldos Automatizados en Docker (Daemon CRON)
+- **Servicio:** Contenedor `holospace_backups` (`prodrigestivill/postgres-backup-local:16-alpine`).
+- **Frecuencia (CRON):** `SCHEDULE=@daily` (se ejecuta automáticamente a las 00:00 UTC).
+- **Compresión:** Algoritmo Gzip de nivel máximo (`-Z 9`).
+- **Política de Retención y Rotación Automática:**
+  - **Diarios:** Conserva los últimos 30 días (`BACKUP_KEEP_DAYS=30`).
+  - **Semanales:** Conserva las últimas 12 semanas (`BACKUP_KEEP_WEEKS=12`).
+  - **Mensuales:** Conserva los últimos 12 meses (`BACKUP_KEEP_MONTHS=12`).
+
+### B. Nivel 2: Respaldos On-Demand y Exportación por Tenant
+1. **Respaldo Global Inmediato (Pre-Deploy / Mantenimiento):**
+   ```bash
+   ./bin/devops-db-backup.sh
+   ```
+   Genera instantáneamente un archivo comprimido verificado: `/backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz`.
+
+2. **Exportación Aislada de una Sola Empresa (Data Portability / GDPR):**
+   ```bash
+   ./bin/tenant-dump.sh drinklovers
+   ```
+   Extrae únicamente los pedidos, usuarios, configuraciones y módulos del tenant especificado en formato JSON.
+
+### C. Procedimiento de Restauración ante Desastres (Disaster Recovery):
+Para restaurar una copia de seguridad en caso de fallo catastrófico:
+```bash
+# 1. Descomprimir el respaldo deseado
+gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace_postgres psql -U holospace_admin -d holospace_saas
+```
 
 ## 7. Estrategia de Logging y Telemetría (lib/logger.js)
 
