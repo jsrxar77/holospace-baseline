@@ -71,7 +71,7 @@ async function runTests() {
       scope: 'tenant',
       targetTenantId: pokeTenant.id
     }, {
-      'Authorization': 'Bearer superadmin@holospace.app'
+      'Authorization': 'Bearer superadmin@holospace.com.ar'
     });
 
     assert(setTenantThemeRes.status === 200, 'Endpoint POST /api/theme respondió 200 para scope tenant');

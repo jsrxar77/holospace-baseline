@@ -27,8 +27,8 @@ function assert(condition, message) {
 
 async function runTests() {
   const superAdminToken = signJwt({
-    sub: 'superadmin@holospace.app',
-    email: 'superadmin@holospace.app',
+    sub: 'superadmin@holospace.com.ar',
+    email: 'superadmin@holospace.com.ar',
     role: 'SUPERADMIN',
     tenantId: 'a0000000-0000-0000-0000-000000000001'
   });
@@ -88,9 +88,9 @@ async function runTests() {
 
   // 4. Licenciamiento Modular Dinámico (ScanBan Board, ScanBan Scanner, ScanFlow)
   console.log('\n--- 4. Licenciamiento Modular por Tenant ---');
-  await setTenantModuleState(testTenantId, 'scanban-board', true, 'superadmin@holospace.app');
-  await setTenantModuleState(testTenantId, 'scanban-scanner', true, 'superadmin@holospace.app');
-  await setTenantModuleState(testTenantId, 'scanflow', true, 'superadmin@holospace.app');
+  await setTenantModuleState(testTenantId, 'scanban-board', true, 'superadmin@holospace.com.ar');
+  await setTenantModuleState(testTenantId, 'scanban-scanner', true, 'superadmin@holospace.com.ar');
+  await setTenantModuleState(testTenantId, 'scanflow', true, 'superadmin@holospace.com.ar');
 
   const activeModules = await query('SELECT module_code FROM tenant_modules WHERE tenant_id = ? AND is_enabled = true', [testTenantId], { isSuperAdmin: true });
   const modCodes = activeModules.map(m => m.module_code);

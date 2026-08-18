@@ -26,7 +26,7 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 
 | Rol | Organización / Tenant | Email | Contraseña | Acceso / Propósito |
 |---|---|---|---|---|
-| **SUPERADMIN** | `holospace` | `superadmin@holospace.app` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
+| **SUPERADMIN** | `holospace` | `superadmin@holospace.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
 
 ---
 
@@ -91,7 +91,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 ### 1. 🏛️ Módulo Tenant (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/tenant`](http://localhost:3001/tenant)
 * **Credenciales de Acceso:**
-  * **Email:** `superadmin@holospace.app`
+  * **Email:** `superadmin@holospace.com.ar`
   * **Contraseña:** `BrunaSeRelambe22!`
 * **Funcionalidades:**
   * **Directorio de Organizaciones:** Gestión integral de Tenants (Nombre, Slug, Plan, Límites de Usuarios y Órdenes/Mes).
@@ -103,7 +103,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 ### 2. ⚙️ Módulo Core (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/core`](http://localhost:3001/core)
 * **Credenciales de Acceso:**
-  * **Email:** `superadmin@holospace.app`
+  * **Email:** `superadmin@holospace.com.ar`
   * **Contraseña:** `BrunaSeRelambe22!`
 * **Funcionalidades:**
   * **Usuarios Globales:** Alta, edición y desactivación de usuarios en toda la plataforma.

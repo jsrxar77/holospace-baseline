@@ -41,7 +41,7 @@ async function testPlansAndUserEdit() {
   // 1. Autenticación
   console.log('\n--- 1. Autenticación SuperAdmin ---');
   const loginRes = await request('/api/login', 'POST', {
-    email: 'superadmin@holospace.app',
+    email: 'superadmin@holospace.com.ar',
     password: 'BrunaSeRelambe22!'
   });
   assert.strictEqual(loginRes.status, 200, 'Login debe ser exitoso');
@@ -81,7 +81,7 @@ async function testPlansAndUserEdit() {
   console.log('\n--- 5. Edición y ABM de Usuarios (PUT /api/users) ---');
   const listUsersRes = await request('/api/users', 'GET', null, token);
   assert.strictEqual(listUsersRes.status, 200, 'GET /api/users debe responder 200');
-  const targetUser = listUsersRes.data.find(u => u.email === 'superadmin@holospace.app');
+  const targetUser = listUsersRes.data.find(u => u.email === 'superadmin@holospace.com.ar');
   assert(targetUser, 'SuperAdmin debe existir');
 
   // Actualizar nombre

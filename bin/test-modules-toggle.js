@@ -40,7 +40,7 @@ async function testModuleToggling() {
 
   // 0. Autenticación como SuperAdmin
   const loginRes = await request('/api/login', 'POST', {
-    email: 'superadmin@holospace.app',
+    email: 'superadmin@holospace.com.ar',
     password: 'BrunaSeRelambe22!'
   });
   assert.strictEqual(loginRes.status, 200, 'Login SuperAdmin debe responder 200');
