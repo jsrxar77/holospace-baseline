@@ -1788,7 +1788,7 @@ switchTab = function (tabName) {
   }
 };
 
-let currentQrMode = 'web'; // 'web' | 'expo'
+let currentQrMode = 'expo'; // 'expo' | 'web'
 
 async function openQrModal() {
   let host = window.location.hostname;
@@ -1820,7 +1820,7 @@ async function openQrModal() {
     }
   }
 
-  updateQrDisplay(host);
+  setQrMode(currentQrMode || 'expo');
   document.getElementById('qrModal').classList.remove('hidden');
 }
 
@@ -1829,12 +1829,12 @@ function setQrMode(mode) {
   const webBtn = document.getElementById('qrModeWebBtn');
   const expoBtn = document.getElementById('qrModeExpoBtn');
   
-  if (mode === 'web') {
+  if (mode === 'expo') {
+    if (expoBtn) { expoBtn.className = 'btn-primary'; }
+    if (webBtn) { webBtn.className = 'btn-secondary'; }
+  } else {
     if (webBtn) { webBtn.className = 'btn-primary'; }
     if (expoBtn) { expoBtn.className = 'btn-secondary'; }
-  } else {
-    if (webBtn) { webBtn.className = 'btn-secondary'; }
-    if (expoBtn) { expoBtn.className = 'btn-primary'; }
   }
 
   const savedHost = localStorage.getItem('hs_expo_host_ip') || (window.location.hostname.includes('holospace') ? 'm.holospace.com.ar' : window.location.hostname);

@@ -101,6 +101,8 @@ services:
       - EXPO_PUBLIC_SERVER_IP=192.168.100.247
       - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.100.247
     volumes:
+      - ./App.tsx:/app/App.tsx
+      - ./package.json:/app/package.json
       - ./modules:/app/modules
       - ./web/expo-index.html:/app/public/index.html:ro
       - ./web:/app/web
