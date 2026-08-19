@@ -14,16 +14,18 @@
 
 ---
 
-## 🏛️ Directiva Primaria
+## 🏛️ Directiva Primaria: Los Únicos 6 Documentos Canónicos en `/docs`
 
-Siempre que recibas una tarea o consulta sobre esta aplicación, **DEBES consultar la documentación viva en la carpeta `/docs`** antes de proponer cambios, diseñar arquitecturas o escribir código.
+Toda la documentación del sistema reside **única y obligatoriamente** en los siguientes **6 archivos dentro de `/docs`**. Queda terminantemente prohibido crear otros archivos `.md` en la raíz, en subcarpetas de módulos o en cualquier otra ubicación:
 
-### Documentos Obligatorios a Inspeccionar
-1. **`/docs/HOLOSPACE_PLATFORM.md`**: Visión general del baseline contenedor, tenancy y filosofía multi-módulo.
-2. **`/docs/ARCHITECTURE.md`**: Estructura técnica de carpetas, servidor Node.js, SQLite y convenciones relacionales.
-3. **`/docs/MODULE_CREATION.md`**: Paso a paso obligatorio para crear o modificar cualquier módulo.
-4. **`/docs/ROADMAP.md`**: Estado actual de desarrollo y roadmap del proyecto.
-5. **`/docs/modules/*.md`**: Especificación técnica y funcional del módulo impactado (`CORE.md`, `SCANBAN.md`, etc.).
+1. **`/docs/README.md`**: Guía de inicio rápido, cuentas/credenciales oficiales y comandos Docker.
+2. **`/docs/ARCHITECTURE.md`**: Arquitectura técnica desacoplada, PostgreSQL 16 RLS, Docker y Motor Centralizado de Temas (HW-DS).
+3. **`/docs/MODULES.md`**: Especificación de los 4 módulos oficiales (`tenant`, `core`, `kanban`, `scanner`), entitlements y guía de creación de módulos.
+4. **`/docs/FEATURES.md`**: Matriz de permisos RBAC por rol, catálogo de planes comerciales y facturación B2B.
+5. **`/docs/CONTENT.md`**: Estrategia de contenidos, sprites pixel art de módulos y copy de la Landing Page.
+6. **`/docs/ROADMAP.md`**: Trazabilidad de hitos, estados de desarrollo y convenciones de prefijos.
+
+> **Regla de Oro:** Si surge nueva información técnica, de diseño o de procesos, **DEBE incorporarse dentro del documento correspondiente entre estos 6 archivos**. Nunca crear archivos markdown adicionales.
 
 ---
 
