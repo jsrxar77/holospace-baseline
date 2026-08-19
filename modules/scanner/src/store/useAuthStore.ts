@@ -59,7 +59,7 @@ export const getSavedCredentials = () => {
 
 
 const getInitialAuthState = () => {
-  if (typeof window !== 'undefined' && window.localStorage) {
+  if (typeof window !== 'undefined') {
     try {
       // 1. Si viene con token SSO en URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -70,9 +70,11 @@ const getInitialAuthState = () => {
       if (authToken && authUserStr) {
         const authUser = JSON.parse(authUserStr);
         const authTenant = authTenantStr ? JSON.parse(authTenantStr) : null;
-        window.localStorage.setItem('hs_token', authToken);
-        window.localStorage.setItem('hs_user', authUserStr);
-        if (authTenant) window.localStorage.setItem('hs_tenant', JSON.stringify(authTenant));
+        if (window.sessionStorage) {
+          window.sessionStorage.setItem('hs_token', authToken);
+          window.sessionStorage.setItem('hs_user', authUserStr);
+          if (authTenant) window.sessionStorage.setItem('hs_tenant', JSON.stringify(authTenant));
+        }
 
         return {
           user: authUser,
@@ -83,10 +85,11 @@ const getInitialAuthState = () => {
         };
       }
 
-      // 2. Si ya existe sesión guardada en localStorage
-      const savedToken = window.localStorage.getItem('hs_token');
-      const savedUserStr = window.localStorage.getItem('hs_user');
-      const savedTenantStr = window.localStorage.getItem('hs_tenant');
+      // 2. Si ya existe sesión guardada en sessionStorage (prioritaria por pestaña) o localStorage
+      const storage = window.sessionStorage || window.localStorage;
+      const savedToken = storage.getItem('hs_token') || (window.localStorage ? window.localStorage.getItem('hs_token') : null);
+      const savedUserStr = storage.getItem('hs_user') || (window.localStorage ? window.localStorage.getItem('hs_user') : null);
+      const savedTenantStr = storage.getItem('hs_tenant') || (window.localStorage ? window.localStorage.getItem('hs_tenant') : null);
 
       if (savedToken && savedUserStr) {
         const user = JSON.parse(savedUserStr);
@@ -133,11 +136,12 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await response.json();
       if (data.success && data.user) {
         saveSavedCredentials(email, pass, data.tenant?.slug || '');
-        if (typeof window !== 'undefined' && window.localStorage) {
+        if (typeof window !== 'undefined') {
           try {
-            if (data.token) window.localStorage.setItem('hs_token', data.token);
-            window.localStorage.setItem('hs_user', JSON.stringify(data.user));
-            if (data.tenant) window.localStorage.setItem('hs_tenant', JSON.stringify(data.tenant));
+            const storage = window.sessionStorage || window.localStorage;
+            if (data.token) storage.setItem('hs_token', data.token);
+            storage.setItem('hs_user', JSON.stringify(data.user));
+            if (data.tenant) storage.setItem('hs_tenant', JSON.stringify(data.tenant));
           } catch (e) {}
         }
         set({
@@ -157,11 +161,18 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined') {
       try {
-        window.localStorage.removeItem('hs_token');
-        window.localStorage.removeItem('hs_user');
-        window.localStorage.removeItem('hs_tenant');
+        if (window.sessionStorage) {
+          window.sessionStorage.removeItem('hs_token');
+          window.sessionStorage.removeItem('hs_user');
+          window.sessionStorage.removeItem('hs_tenant');
+        }
+        if (window.localStorage) {
+          window.localStorage.removeItem('hs_token');
+          window.localStorage.removeItem('hs_user');
+          window.localStorage.removeItem('hs_tenant');
+        }
       } catch (e) {}
     }
     set({

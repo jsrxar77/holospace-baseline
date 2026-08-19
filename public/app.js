@@ -2,6 +2,56 @@ let currentUser = null;
 let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 
+// Helper de sesión multi-tab: prioriza sessionStorage (aislado por pestaña) con fallback a localStorage
+function getAuthToken() {
+  try {
+    return sessionStorage.getItem('hs_token') || localStorage.getItem('hs_token') || '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function getAuthUser() {
+  try {
+    const raw = sessionStorage.getItem('hs_user') || localStorage.getItem('hs_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getAuthTenant() {
+  try {
+    const raw = sessionStorage.getItem('hs_tenant') || localStorage.getItem('hs_tenant');
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function setAuthSession(token, user, tenant) {
+  try {
+    if (token) sessionStorage.setItem('hs_token', token);
+    if (user) sessionStorage.setItem('hs_user', typeof user === 'string' ? user : JSON.stringify(user));
+    if (tenant) sessionStorage.setItem('hs_tenant', typeof tenant === 'string' ? tenant : JSON.stringify(tenant));
+    // Limpiar localStorage de tokens para evitar contaminación cruzada entre tabs
+    localStorage.removeItem('hs_token');
+    localStorage.removeItem('hs_user');
+    localStorage.removeItem('hs_tenant');
+  } catch (e) {}
+}
+
+function clearAuthSession() {
+  try {
+    sessionStorage.removeItem('hs_token');
+    sessionStorage.removeItem('hs_user');
+    sessionStorage.removeItem('hs_tenant');
+    localStorage.removeItem('hs_token');
+    localStorage.removeItem('hs_user');
+    localStorage.removeItem('hs_tenant');
+  } catch (e) {}
+}
+
 function populateSavedCredentials() {
   const savedEmail = localStorage.getItem('hs_saved_email') || '';
   const emailInput = document.getElementById('loginEmail');
@@ -27,7 +77,7 @@ function toggleLoginPasswordVisibility() {
 
 async function loadActiveTheme() {
   try {
-    const token = localStorage.getItem('hs_token') || (currentUser ? currentUser.email : '');
+    const token = getAuthToken() || (currentUser ? currentUser.email : '');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     const res = await fetch('/api/theme', { headers });
     const data = await res.json();
@@ -70,7 +120,7 @@ async function loadActiveTheme() {
 
 async function changeAppThemeSubmit(themeKey) {
   try {
-    const token = localStorage.getItem('hs_token') || (currentUser ? currentUser.email : '');
+    const token = getAuthToken() || (currentUser ? currentUser.email : '');
     const res = await fetch('/api/theme', {
       method: 'POST',
       headers: {
@@ -100,7 +150,7 @@ async function changeAppThemeSubmit(themeKey) {
 
 async function changeTenantDefaultTheme(tenantId, themeKey) {
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/theme', {
       method: 'POST',
       headers: {
@@ -149,24 +199,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Si viene con ?logout=true desde mobile, limpiar todo en el dominio principal
   if (urlParams.get('logout') === 'true') {
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-    } catch (e) {}
+    clearAuthSession();
     currentUser = null;
     if (window.history && window.history.replaceState) {
-      window.history.replaceState(null, '', '/');
+      window.history.replaceState(null, '', '/login');
     }
   }
 
-  const token = localStorage.getItem('hs_token');
-  const userJson = localStorage.getItem('hs_user');
-  const tenantJson = localStorage.getItem('hs_tenant');
+  const token = getAuthToken();
+  const userObj = getAuthUser();
+  const tenantObj = getAuthTenant();
   const currentPath = window.location.pathname.toLowerCase();
 
-  if (token && userJson) {
-    currentUser = JSON.parse(userJson);
-    const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'HoloSpace' };
+  if (token && userObj) {
+    currentUser = userObj;
+    const tenant = tenantObj || { name: 'HoloSpace' };
 
     // Si viene con redirect hacia m.holospace.com.ar o /scanner, transferir credenciales de inmediato
     if (redirectTarget && (redirectTarget.includes('m.holospace') || redirectTarget.includes('scanner'))) {
@@ -213,13 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (data.success) {
         currentUser = data.user;
-        localStorage.setItem('hs_token', data.token);
-        localStorage.setItem('hs_user', JSON.stringify(data.user));
-        if (data.tenant) {
-          localStorage.setItem('hs_tenant', JSON.stringify(data.tenant));
-          localStorage.setItem('hs_tenant_id', data.tenant.id);
-          localStorage.setItem('hs_tenant_slug', data.tenant.slug);
-        }
+        setAuthSession(data.token, data.user, data.tenant);
         localStorage.setItem('hs_saved_email', email);
 
         document.body.classList.remove('state-logged-out');
@@ -686,7 +727,7 @@ function toggleUserGroup(groupId) {
 async function loadKanbanData() {
   try {
     loadActiveTheme();
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/scanban/kanban', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -876,7 +917,7 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
   if (event) event.stopPropagation();
 
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/scanban/release-order-admin', {
       method: 'POST',
       headers: { 
@@ -922,7 +963,7 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
   if (selectEl) {
     selectEl.innerHTML = '<option value="">Cargando operarios...</option>';
     try {
-      const token = localStorage.getItem('hs_token') || '';
+      const token = getAuthToken() || '';
       const activeTenantId = localStorage.getItem('hs_tenant_id') || '';
       const url = activeTenantId ? `/api/users?tenantId=${encodeURIComponent(activeTenantId)}` : '/api/users';
       const res = await fetch(url, {
@@ -965,7 +1006,7 @@ async function confirmAssignOperatorSubmit() {
   }
 
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/scanban/assign-order', {
       method: 'POST',
       headers: { 
@@ -1259,7 +1300,7 @@ async function handleFileUpload(event) {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}`
+          'Authorization': `Bearer ${getAuthToken() || ''}`
         },
         body: JSON.stringify({
           fileName: file.name,
@@ -1300,7 +1341,7 @@ async function deleteBacklogOrder(orderId, event) {
   if (!confirmed) return;
 
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/scanban/delete-order', {
       method: 'POST',
       headers: { 
@@ -1331,7 +1372,7 @@ let currentFetchedUsers = [];
 async function fetchUsers() {
   try {
     const res = await fetch('/api/users', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}` }
+      headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
     });
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
@@ -1431,7 +1472,7 @@ async function populateUserModalTenants(selectedTenantId = '') {
 
     try {
       const res = await fetch('/api/tenants', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}` }
+        headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
       });
       const data = await res.json();
       const tenants = data.tenants || [];
@@ -1578,7 +1619,7 @@ async function saveUserSubmit(e) {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token') || ''}`
+        'Authorization': `Bearer ${getAuthToken() || ''}`
       },
       body: JSON.stringify(payload)
     });
@@ -1630,7 +1671,7 @@ let allOperatorEmails = [];
 
 async function renderOperatorPills() {
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch('/api/users', {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -1697,7 +1738,7 @@ async function fetchExplorerOrders() {
   const operators = Array.from(selectedExplorerOperators).join(',');
 
   try {
-    const token = localStorage.getItem('hs_token') || '';
+    const token = getAuthToken() || '';
     const res = await fetch(
       `/api/scanban/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(status)}&sortBy=${encodeURIComponent(sortBy)}&operators=${encodeURIComponent(operators)}`,
       {
@@ -1911,10 +1952,7 @@ document.addEventListener('click', (e) => {
 
 function logout() {
   closeUserDropdown();
-  try {
-    localStorage.clear();
-    sessionStorage.clear();
-  } catch (e) {}
+  clearAuthSession();
   currentUser = null;
   populateSavedCredentials();
   window.location.href = '/login?logout=true';
@@ -1953,7 +1991,7 @@ async function loadPlatformPanel() {
   // Load modules
   try {
     const res = await fetch('/api/modules', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     });
     const data = await res.json();
     if (data.success) {
@@ -1969,7 +2007,7 @@ async function loadPlatformPanel() {
   // Load platform audit log
   try {
     const auditRes = await fetch('/api/platform-audit', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     });
     if (auditRes.ok) {
       const auditData = await auditRes.json();
@@ -2046,7 +2084,7 @@ async function toggleModuleActive(moduleKey, active) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
+        'Authorization': `Bearer ${getAuthToken()}`
       },
       body: JSON.stringify({ key: moduleKey, active })
     });
@@ -2125,7 +2163,7 @@ async function loadTenantsManagementData() {
 
   try {
     const res = await fetch('/api/tenants', {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('hs_token')}` }
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     });
     const data = await res.json();
 
@@ -2287,7 +2325,7 @@ async function toggleTenantStatus(tenantId, tenantName, currentStatus) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
+        'Authorization': `Bearer ${getAuthToken()}`
       },
       body: JSON.stringify({ tenantId, status: newStatus })
     });
@@ -2309,7 +2347,7 @@ async function toggleTenantModuleState(tenantId, moduleCode, isEnabled) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
+        'Authorization': `Bearer ${getAuthToken()}`
       },
       body: JSON.stringify({ tenantId, moduleCode, isEnabled })
     });
@@ -2357,7 +2395,7 @@ async function handleCreateTenantSubmit(e) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
+        'Authorization': `Bearer ${getAuthToken()}`
       },
       body: JSON.stringify({ name, slug, planCode, adminName, adminUsername, adminEmail, adminPassword })
     });
@@ -2469,7 +2507,7 @@ async function saveEditTenantSubmit(e) {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('hs_token')}`
+        'Authorization': `Bearer ${getAuthToken()}`
       },
       body: JSON.stringify({
         tenantId,
