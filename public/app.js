@@ -1920,10 +1920,12 @@ function renderModulesGrid(modules) {
     return;
   }
 
-  const actionColors = {
-    'MODULE_ACTIVATED': '#00E676',
-    'MODULE_DEACTIVATED': '#FF5252',
-    'THEME_CHANGED': '#3B82F6',
+  const moduleUrlMap = {
+    'landing': { path: '/landing', label: 'holospace.com.ar/landing', icon: '🌐' },
+    'tenant': { path: '/tenant', label: 'holospace.com.ar/tenant', icon: '🏢' },
+    'core': { path: '/core', label: 'holospace.com.ar/core', icon: '⚙️' },
+    'kanban': { path: '/kanban', label: 'holospace.com.ar/kanban', icon: '📊' },
+    'scanner': { path: '/scanner', label: 'm.holospace.com.ar', icon: '📱' }
   };
 
   grid.innerHTML = modules.map(mod => {
@@ -1933,22 +1935,31 @@ function renderModulesGrid(modules) {
     const activatedAt = rawDate ? new Date(rawDate).toLocaleString('es-AR') : '—';
     const statusColor = isActive ? 'var(--emerald)' : 'var(--text-muted)';
     const activatedBy = mod.activated_by || mod.activatedBy || '—';
+    const urlInfo = moduleUrlMap[mod.key] || { path: '/' + mod.key, label: 'holospace.com.ar/' + mod.key, icon: '📦' };
 
     return `
       <div class="module-card ${isActive ? 'active-module' : 'inactive-module'}" id="moduleCard-${mod.key}">
         <div class="module-info">
-          <div style="display:flex; align-items:center; gap:12px;">
-            <div class="module-name">${mod.name}</div>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div class="module-name" style="display:flex; align-items:center; gap:6px;">
+              <span>${urlInfo.icon}</span>
+              <span>${mod.name}</span>
+            </div>
             <span style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px;
               background:${isActive ? 'rgba(0,230,118,0.15)' : 'rgba(139,148,158,0.15)'};
               color:${statusColor}; border: 1px solid ${statusColor};">
               ${isActive ? 'ACTIVO' : 'INACTIVO'}
             </span>
+            <a href="${urlInfo.path}" target="${mod.key === 'scanner' || mod.key === 'landing' ? '_blank' : '_self'}" 
+               style="display:inline-flex; align-items:center; gap:4px; font-family:monospace; font-size:11px; font-weight:700; color:var(--cobalt); text-decoration:none; background:rgba(138,173,244,0.12); padding:3px 8px; border-radius:4px; border:1px solid rgba(138,173,244,0.25);">
+               🔗 ${urlInfo.label}
+            </a>
             ${isCore ? '<span style="font-size:11px; color:#F59E0B; font-weight:800;">⚡ CORE</span>' : ''}
           </div>
           <div class="module-desc">${mod.description || '—'}</div>
           <div class="module-meta">
-            Activado por: <strong style="color:#FFF;">${activatedBy}</strong>
+            Ruta Oficial: <strong style="color:var(--emerald);">${urlInfo.path}</strong>
+            · Activado por: <strong style="color:#FFF;">${activatedBy}</strong>
             · Fecha: ${activatedAt}
           </div>
         </div>
@@ -1958,7 +1969,7 @@ function renderModulesGrid(modules) {
               onchange="toggleModuleActive('${mod.key}', this.checked)">
             <span class="toggle-slider"></span>
           </label>
-        ` : `<div style="color:var(--text-muted); font-size:12px; font-weight:700;">Siempre activo</div>`}
+        ` : '<span style="font-size:12px; color:var(--text-muted); font-weight:600;">Siempre activo</span>'}
       </div>
     `;
   }).join('');

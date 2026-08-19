@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON tenant_subscriptions(tena
 CREATE TABLE IF NOT EXISTS tenant_modules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  module_code VARCHAR(64) NOT NULL CHECK (module_code IN ('tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics')),
+  module_code VARCHAR(64) NOT NULL CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics')),
   is_enabled BOOLEAN NOT NULL DEFAULT true,
   quota_limit INT DEFAULT NULL,
   quota_used INT NOT NULL DEFAULT 0,
@@ -322,6 +322,7 @@ ON CONFLICT (tenant_id) DO NOTHING;
 -- Catálogo de Módulos Oficiales de la Plataforma HoloSpace
 INSERT INTO modules (key, name, description, category, is_active, activated_by)
 VALUES
+  ('landing', 'Landing', 'Portal comercial público y catálogo SaaS con precios en ARS y vitrina interactiva.', 'marketing', true, 'system'),
   ('tenant', 'Tenant', 'Panel exclusivo SUPERADMIN para administración de organizaciones, cuotas y licencias.', 'admin', true, 'system'),
   ('core', 'Core', 'Plataforma base: autenticación centralizada, motor de temas y auditoría.', 'system', true, 'system'),
   ('kanban', 'Kanban', 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador de pedidos.', 'operational', true, 'system'),

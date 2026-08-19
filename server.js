@@ -706,6 +706,7 @@ const server = http.createServer(async (req, res) => {
           res.end(JSON.stringify({
             success: true,
             modules: [
+              { key: 'landing', name: 'Landing Page & Showcase', description: 'Portal comercial público con precios en ARS, vitrina interactiva y login.', category: 'marketing', is_active: true },
               { key: 'tenant', name: 'Gestión Multi-Tenant', description: 'Panel exclusivo SUPERADMIN para administración de organizaciones.', category: 'admin', is_active: true },
               { key: 'core', name: 'HoloSpace Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
               { key: 'kanban', name: 'Kanban Board', description: 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador.', category: 'operational', is_active: true },
