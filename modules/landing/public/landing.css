@@ -139,8 +139,8 @@ body {
   margin: 0;
   padding: 0;
   text-shadow: 
-    2px 2px 0px #363A4F,
-    4px 4px 0px #0F101A;
+    2px 2px 0px var(--accent-primary),
+    4px 4px 0px #000000 !important;
 }
 
 .brand-badge span.logo-space {
@@ -150,9 +150,9 @@ body {
   margin: 0;
   padding: 0;
   text-shadow: 
-    2px 2px 0px #2D4F3B,
-    4px 4px 0px #0F101A,
-    0 0 12px rgba(166, 218, 149, 0.35);
+    2px 2px 0px #1E4620,
+    4px 4px 0px #000000,
+    0 0 10px rgba(166, 218, 149, 0.5) !important;
 }
 
 .status-pill {
@@ -244,7 +244,8 @@ body {
   max-width: 900px;
   margin: 0 auto 24px;
   text-shadow: 
-    3px 3px 0px var(--border-color),
+    2px 2px 0px var(--accent-primary),
+    4px 4px 0px #1E2030,
     6px 6px 0px #0F101A;
 }
 
@@ -348,6 +349,7 @@ body {
   color: #FFF;
   margin-bottom: 10px;
   font-weight: 700;
+  text-shadow: 2px 2px 0px #0F101A;
 }
 
 .module-desc {
@@ -396,6 +398,7 @@ body {
   color: #FFF;
   margin-bottom: 10px;
   font-weight: 700;
+  text-shadow: 2px 2px 0px #0F101A;
 }
 
 .card-text {
@@ -414,7 +417,7 @@ body {
   color: #FFFFFF;
   margin-bottom: 12px;
   text-shadow: 
-    2px 2px 0px var(--border-color),
+    2px 2px 0px var(--accent-mauve),
     4px 4px 0px #0F101A;
 }
 
