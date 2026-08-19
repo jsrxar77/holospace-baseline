@@ -989,3 +989,67 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 
 
 
+
+
+/* ============================================================ */
+/* 8-BIT RETRO ANIMATED PIXEL BACKGROUND FOR LOGIN MODAL        */
+/* ============================================================ */
+#loginModal {
+  background-color: #0F101A !important;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 40px 70px, #A6DA95, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 50px 160px, #8AADF4, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 40px, #C6A0F6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 130px 80px, #F5A97F, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 160px 120px, #EED49F, rgba(0,0,0,0)),
+    linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
+  background-size: 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 32px 32px, 32px 32px !important;
+  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
+  animation: pixelStarfieldMove 40s linear infinite !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+@keyframes pixelStarfieldMove {
+  0% {
+    background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 400px, 40px 460px, 130px 670px, 70px 500px, -50px 540px, 120px 440px, 0 320px, 320px 0;
+  }
+}
+
+#loginModal .modal-content {
+  background: #181926 !important;
+  border: 2px solid #363A4F !important;
+  box-shadow: 6px 6px 0px #0A0B10, 0 0 24px rgba(138, 173, 244, 0.15) !important;
+  border-radius: 4px !important;
+  max-width: 380px !important;
+  width: 90% !important;
+  position: relative !important;
+}
+
+#loginModal .brand-title {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 22px !important;
+  text-shadow: 2px 2px 0px #363A4F, 4px 4px 0px #0F101A !important;
+  display: flex !important;
+  justify-content: center !important;
+  letter-spacing: 0px !important;
+  margin-bottom: 8px !important;
+}
+
+#loginModal .brand-title .logo-holo {
+  color: #FFFFFF !important;
+}
+
+#loginModal .brand-title .logo-space {
+  color: #A6DA95 !important;
+  text-shadow: 2px 2px 0px #2D4F3B, 4px 4px 0px #0F101A, 0 0 10px rgba(166, 218, 149, 0.35) !important;
+}

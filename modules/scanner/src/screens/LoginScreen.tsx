@@ -28,7 +28,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const isOmarchy = theme.borderRadius === 4;
+  const isOmarchy = true; // Forzar estilo pixel art Omarchy en pantalla de login
   const isSoftMinimal = theme.borderRadius === 12;
 
   const handleLogin = async () => {
