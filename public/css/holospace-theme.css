@@ -1064,14 +1064,15 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 /* MULTICOLOR 8-BIT PIXEL ROCKET ICON STYLING                   */
 /* ============================================================ */
 .pixel-rocket-icon {
-  width: 24px;
-  height: 24px;
-  margin-left: 8px;
+  width: 32px;
+  height: 32px;
+  margin-left: 10px;
   display: inline-block;
   vertical-align: middle;
   image-rendering: pixelated;
-  filter: drop-shadow(2px 2px 0px #000000);
+  filter: drop-shadow(3px 3px 0px #000000) drop-shadow(0 0 8px rgba(237, 135, 150, 0.4));
   animation: rocketPulse 2s steps(2) infinite;
+  transform-origin: center;
 }
 
 @keyframes rocketPulse {
