@@ -1071,11 +1071,12 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 .pixel-rocket-icon {
   width: 28px;
   height: 28px;
-  margin-left: 8px;
+  margin-left: 10px;
   display: inline-block;
   vertical-align: middle;
   image-rendering: pixelated;
   filter: drop-shadow(2px 2px 0px #000000);
+  overflow: visible !important;
   animation: rocketPulse 2s steps(2) infinite;
   transform-origin: center;
 }
