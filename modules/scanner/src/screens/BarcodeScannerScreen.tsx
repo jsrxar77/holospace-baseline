@@ -140,27 +140,41 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
       {/* Top Floating Action Controls */}
       <View style={styles.topControls}>
-        {/* Botón Linterna / Flash */}
+        {/* Botón Volver (Izquierda) */}
         <TouchableOpacity
-          style={[styles.btnCircle, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-          onPress={() => setTorch(!torch)}
+          style={[styles.btnHeaderBack, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          onPress={handleCloseScanner}
           activeOpacity={0.8}
         >
-          <Text style={[styles.btnCircleText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
+          <Text style={[styles.btnHeaderBackText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>← RESUMEN</Text>
         </TouchableOpacity>
 
-        {/* Botón Ingreso Manual */}
-        <TouchableOpacity
-          style={[styles.btnCircle, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-          onPress={() => setManualModalOpen(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.btnCircleText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
-        </TouchableOpacity>
+        {/* Botones de Acción (Derecha) */}
+        <View style={styles.topRightActions}>
+          {/* Botón Linterna / Flash */}
+          <TouchableOpacity
+            style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: torch ? theme.amber : theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+            onPress={() => setTorch(!torch)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.btnPillText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
+          </TouchableOpacity>
 
-        {/* Botón Cerrar / Volver a Resumen */}
+          {/* Botón Ingreso Manual */}
+          <TouchableOpacity
+            style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+            onPress={() => setManualModalOpen(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.btnPillText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Bottom Sticky Action: Finalizar Escaneo */}
+      <View style={styles.bottomControls}>
         <TouchableOpacity
-          style={[styles.btnClose, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          style={[styles.btnClose, { backgroundColor: theme.cardBg, borderColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={handleCloseScanner}
           activeOpacity={0.8}
         >
@@ -300,35 +314,62 @@ const styles = StyleSheet.create({
   },
   topControls: {
     position: 'absolute',
-    top: 50,
+    top: Platform.OS === 'web' ? 24 : 54,
+    left: 20,
     right: 20,
     flexDirection: 'row',
-    gap: 12
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 100
   },
-  btnCircle: {
-    width: 44,
-    height: 44,
+  btnHeaderBack: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center'
   },
-  btnIcon: {
-    fontSize: 18
+  btnHeaderBackText: {
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5
+  },
+  topRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10
+  },
+  btnPill: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    minHeight: 40,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  btnPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   bottomControls: {
     position: 'absolute',
     bottom: 30,
     left: 20,
-    right: 20
+    right: 20,
+    zIndex: 100
   },
   btnClose: {
     paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    width: '100%'
   },
   btnCloseText: {
     fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
+    textAlign: 'center'
   },
   modalOverlay: {
     flex: 1,
