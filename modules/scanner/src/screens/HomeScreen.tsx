@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { showThemedAlert } from '../components/ThemedAlertModal';
 import { Header } from '../components/Header';
 import { useOrderStore } from '../store/useOrderStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -63,13 +64,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
   const handleClaimOrder = async (orderNumber: string) => {
     if (myDoingOrders.length > 0) {
-      Alert.alert(
+      showThemedAlert(
         'Límite de Pedidos Activos',
         `Ya tienes ${myDoingOrders.length} pedido(s) en proceso.\n\nDebes finalizar la auditoría o liberar tus pedidos antes de tomar uno nuevo de la lista general.`,
-        [
-          { text: 'Ir a Mis Pedidos', onPress: () => {} },
-          { text: 'Entendido', style: 'cancel' }
-        ]
+        [{ text: 'Entendido', style: 'default' }]
       );
       return;
     }
@@ -80,7 +78,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
       await syncData();
       goToSummary();
     } else {
-      Alert.alert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.');
+      showThemedAlert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.', [{ text: 'Entendido', style: 'default' }]);
     }
   };
 
@@ -90,17 +88,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
   };
 
   const handleReleaseOrder = async (orderId: string, orderNumber: string) => {
-    // Si estamos en navegador Web
-    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
-      const ok = window.confirm(`¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`);
-      if (ok) {
-        await releaseOrder(orderId || orderNumber);
-        await syncData();
-      }
-      return;
-    }
-
-    Alert.alert(
+    showThemedAlert(
       'Liberar Pedido',
       `¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`,
       [

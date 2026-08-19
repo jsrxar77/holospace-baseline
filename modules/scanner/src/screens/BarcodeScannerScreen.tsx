@@ -4,10 +4,15 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useOrderStore } from '../store/useOrderStore';
 
 interface BarcodeScannerScreenProps {
-  onClose: () => void;
+  onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
+  onClose?: () => void;
 }
 
-export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onClose }) => {
+export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNavigate, onClose }) => {
+  const handleCloseScanner = () => {
+    if (onNavigate) onNavigate('SUMMARY');
+    else if (onClose) handleCloseScanner();
+  };
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
   const [isManualModalOpen, setManualModalOpen] = useState(false);
@@ -25,7 +30,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
 
   React.useEffect(() => {
     if (unassignedOrderNotification) {
-      onClose();
+      handleCloseScanner();
     }
   }, [unassignedOrderNotification]);
 
@@ -51,7 +56,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
       const result = await scanBarcode(data);
       if (result === 'SUCCESS') {
         setTimeout(() => {
-          onClose();
+          handleCloseScanner();
         }, 400);
       }
     }
@@ -64,7 +69,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
       setManualModalOpen(false);
       if (result === 'SUCCESS') {
         setTimeout(() => {
-          onClose();
+          handleCloseScanner();
         }, 400);
       }
     }
@@ -131,7 +136,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onCl
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity style={styles.btnClose} onPress={onClose}>
+            <TouchableOpacity style={styles.btnClose} onPress={handleCloseScanner}>
               <Text style={styles.btnCloseText}>CERRAR ESCÁNER</Text>
             </TouchableOpacity>
           </View>

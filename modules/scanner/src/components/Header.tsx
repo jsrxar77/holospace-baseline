@@ -42,16 +42,23 @@ export const Header: React.FC<HeaderProps> = ({
   const orgName = user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'POKE';
   const displayUser = (user as any)?.username || (user?.email ? user.email.split('@')[0] : 'operario');
 
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : (isSoftMinimal ? 16 : 24));
   const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : (isSoftMinimal ? 20 : 16));
   const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 4 : (isSoftMinimal ? 20 : 8));
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
 
-  const logoFontFamily = isOmarchy ? 'Press Start 2P' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit');
-  const fontFamilyMono = isOmarchy ? 'JetBrains Mono' : 'monospace';
+  // En web, 'Press Start 2P' se aplica con comillas o fallback monospace
+  const logoFontFamily = isOmarchy ? (Platform.OS === 'web' ? '"Press Start 2P", monospace' : 'Press Start 2P') : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit');
+  const fontFamilyMono = isOmarchy ? (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono') : 'monospace';
 
   const handleLogoutPress = () => {
     logout();
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('hs_token');
+      window.localStorage.removeItem('hs_user');
+      window.localStorage.removeItem('hs_tenant');
+      window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(window.location.href);
+      return;
+    }
     if (onLogout) onLogout();
   };
 
@@ -73,7 +80,7 @@ export const Header: React.FC<HeaderProps> = ({
             styles.titleHolo,
             {
               color: isOmarchy ? '#F8F8F2' : theme.textMain,
-              fontFamily: logoFontFamily,
+              fontFamily: logoFontFamily as any,
               fontSize: isOmarchy ? 18 : 22,
               letterSpacing: isOmarchy ? 1 : -0.5,
               textShadowColor: isOmarchy ? '#313244' : 'transparent',
@@ -103,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
               borderWidth: borderWidthVal
             }
           ]}>
-            <Text style={[styles.moduleBadgeText, { color: '#CBA6F7', fontFamily: fontFamilyMono }]}>
+            <Text style={[styles.moduleBadgeText, { color: '#CBA6F7', fontFamily: fontFamilyMono as any }]}>
               {orgName}
             </Text>
           </View>
@@ -124,10 +131,10 @@ export const Header: React.FC<HeaderProps> = ({
         onPress={handleLogoutPress}
         activeOpacity={0.7}
       >
-        <Text style={[styles.btnUserText, { color: isOmarchy ? '#CDD6F4' : '#FFFFFF', fontFamily: fontFamilyMono }]}>
+        <Text style={[styles.btnUserText, { color: isOmarchy ? '#CDD6F4' : '#FFFFFF', fontFamily: fontFamilyMono as any }]}>
           {displayUser}
         </Text>
-        <Text style={[styles.btnExitTag, { color: theme.red, fontFamily: fontFamilyMono }]}>✕</Text>
+        <Text style={[styles.btnExitTag, { color: theme.red, fontFamily: fontFamilyMono as any }]}>✕</Text>
       </TouchableOpacity>
     </View>
   );
@@ -182,8 +189,7 @@ const styles = StyleSheet.create({
     fontWeight: '700'
   },
   btnExitTag: {
-    fontSize: 11,
-    fontWeight: '900',
-    marginLeft: 2
+    fontSize: 12,
+    fontWeight: '900'
   }
 });

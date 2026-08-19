@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { showThemedAlert } from './ThemedAlertModal';
 
 interface SupervisorModalProps {
   visible: boolean;
@@ -17,11 +18,11 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
 
   const handleSubmit = () => {
     if (pin.trim() !== '9999') {
-      Alert.alert('PIN Incorrecto', 'El PIN de supervisor ingresado no es válido.');
+      showThemedAlert('PIN Incorrecto', 'El PIN de supervisor ingresado no es válido.', [{ text: 'Entendido', style: 'default' }]);
       return;
     }
     if (!reason.trim()) {
-      Alert.alert('Motivo Requerido', 'Por favor ingresa un motivo para el cierre parcial por excepción.');
+      showThemedAlert('Motivo Requerido', 'Por favor ingresa un motivo para el cierre parcial por excepción.', [{ text: 'Entendido', style: 'default' }]);
       return;
     }
     onConfirm(pin, reason);

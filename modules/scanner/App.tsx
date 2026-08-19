@@ -127,6 +127,7 @@ export default function App() {
           />
         )}
       </Suspense>
+      <ThemedAlertModal />
     </View>
   );
 }

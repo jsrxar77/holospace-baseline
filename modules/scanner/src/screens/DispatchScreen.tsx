@@ -1,19 +1,25 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { showThemedAlert } from '../components/ThemedAlertModal';
 import { useOrderStore } from '../store/useOrderStore';
 
 interface DispatchScreenProps {
-  onBackToHome: () => void;
+  onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
+  onBackToHome?: () => void;
 }
 
-export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) => {
+export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBackToHome }) => {
+  const goHome = () => {
+    if (onNavigate) onNavigate('HOME');
+    else if (onBackToHome) goHome();
+  };
   const { activeOrder, setActiveOrder, closeOrder } = useOrderStore();
 
   if (!activeOrder) {
     return (
       <View style={styles.container}>
         <Text style={styles.title}>No hay orden seleccionada.</Text>
-        <TouchableOpacity style={styles.btnHome} onPress={onBackToHome}>
+        <TouchableOpacity style={styles.btnHome} onPress={goHome}>
           <Text style={styles.btnHomeText}>Volver al Inicio</Text>
         </TouchableOpacity>
       </View>
@@ -27,22 +33,28 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onBackToHome }) 
       if (activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
         await closeOrder();
       }
-      Alert.alert(
+      showThemedAlert(
         'Despacho Concluido',
         `El Pedido #${activeOrder.orderNumber} fue corroborado y archivado físicamente en ./delivery/done/.\n\nAhora puedes tomar un nuevo pedido.`,
         [
           {
             text: 'Ir a Pedidos Libres',
+            style: 'default',
             onPress: () => {
               setActiveOrder(null);
-              onBackToHome();
+              goHome();
+            }
+          }
+        ]
+      );
+              goHome();
             }
           }
         ]
       );
     } catch (e) {
       setActiveOrder(null);
-      onBackToHome();
+      goHome();
     }
   };
 

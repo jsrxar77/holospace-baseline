@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { showThemedAlert } from '../components/ThemedAlertModal';
 import { useOrderStore } from '../store/useOrderStore';
 import { useThemeStore } from '../store/useThemeStore';
 import { ItemCard } from '../components/ItemCard';
@@ -7,16 +8,30 @@ import { ProgressBar } from '../components/ProgressBar';
 import { SupervisorModal } from '../components/SupervisorModal';
 
 interface OrderSummaryScreenProps {
-  onNavigateToScanner: () => void;
-  onNavigateToDispatch: () => void;
-  onBack: () => void;
+  onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
+  handleGoScanner?: () => void;
+  handleGoDispatch?: () => void;
+  onBack?: () => void;
 }
 
 export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
-  onNavigateToScanner,
-  onNavigateToDispatch,
+  onNavigate,
+  handleGoScanner,
+  handleGoDispatch,
   onBack
 }) => {
+  const handleGoBack = () => {
+    if (onNavigate) onNavigate('HOME');
+    else if (onBack) handleGoBack();
+  };
+  const handleGoScanner = () => {
+    if (onNavigate) onNavigate('SCANNER');
+    else if (handleGoScanner) handleGoScanner();
+  };
+  const handleGoDispatch = () => {
+    if (onNavigate) onNavigate('DISPATCH');
+    else if (handleGoDispatch) handleGoDispatch();
+  };
   const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
   const { theme } = useThemeStore();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'READY'>('ALL');
@@ -34,16 +49,15 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     if (unassignedOrderNotification) {
       const orderNum = unassignedOrderNotification;
       clearUnassignedNotification();
-      Alert.alert(
+      showThemedAlert(
         'Pedido Desasignado por Administrador',
         `El Pedido #${orderNum} fue desasignado o liberado a la columna LISTO por el Administrador desde ScanBan Board.`,
         [
           {
             text: 'Entendido',
-            onPress: () => onBack()
+            onPress: () => handleGoBack()
           }
-        ],
-        { cancelable: false }
+        ]
       );
     }
   }, [unassignedOrderNotification]);
@@ -71,14 +85,14 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 
   const handlePressDispatch = () => {
     if (is100Percent || isClosed) {
-      onNavigateToDispatch();
+      handleGoDispatch();
     } else {
       Alert.alert(
         'Bloqueo Estricto de Cierre (US-05)',
         `No se puede cerrar el pedido. Faltan ${activeOrder.totalItemsRequired - activeOrder.totalItemsScanned
         } unidades por verificar.`,
         [
-          { text: 'Continuar Escaneando', onPress: onNavigateToScanner },
+          { text: 'Continuar Escaneando', onPress: handleGoScanner },
           {
             text: 'Cierre Parcial (PIN)',
             style: 'destructive',
@@ -93,12 +107,12 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     setSupervisorModalOpen(false);
     const success = await closeOrder(pin, reason);
     if (success) {
-      onNavigateToDispatch();
+      handleGoDispatch();
     }
   };
 
   const handleReleaseOrder = async () => {
-    Alert.alert(
+    showThemedAlert(
       'Liberar Pedido',
       `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl pedido se devolverá a la columna LISTO para que lo tome otro operario.`,
       [
@@ -109,7 +123,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress: async () => {
             const { releaseOrder } = useOrderStore.getState();
             await releaseOrder(activeOrder.orderNumber);
-            onBack();
+            handleGoBack();
           }
         }
       ]
@@ -186,14 +200,14 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       {/* Items Scrollable List */}
       <ScrollView contentContainerStyle={styles.itemsList}>
         {filteredItems.map((item) => (
-          <ItemCard key={item.id} item={item} onPress={onNavigateToScanner} />
+          <ItemCard key={item.id} item={item} onPress={handleGoScanner} />
         ))}
       </ScrollView>
 
       {/* Bottom Sticky Action Buttons */}
       <View style={[styles.bottomBar, { backgroundColor: theme.cardBg, borderTopColor: theme.cardBorder }]}>
         {!isClosed && (
-          <TouchableOpacity style={[styles.btnScan, { backgroundColor: theme.emerald }]} onPress={onNavigateToScanner} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.btnScan, { backgroundColor: theme.emerald }]} onPress={handleGoScanner} activeOpacity={0.8}>
             <Text style={styles.btnScanText}>INICIAR ESCANEO</Text>
           </TouchableOpacity>
         )}
