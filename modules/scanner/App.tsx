@@ -36,7 +36,7 @@ export default function App() {
     // 3. Si no está autenticado, redirigir al login unificado
     if (!isAuthenticated && typeof window !== 'undefined') {
       const returnUrl = window.location.origin + window.location.pathname;
-      window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(returnUrl);
+      window.location.replace('https://holospace.com.ar/login?redirect=' + encodeURIComponent(returnUrl));
     }
   }, [isAuthenticated]);
 
