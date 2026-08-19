@@ -1384,3 +1384,46 @@ body.state-logged-in,
 body:has(#loginModal.hidden) {
   animation: none !important;
 }
+
+
+/* ============================================================ */
+/* STRICT BACKGROUND Z-INDEX & LOGIN CARD 8-BIT SPAWN ANIMATION */
+/* ============================================================ */
+.space-ambient-layer {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+  overflow: hidden !important;
+}
+
+#loginModal {
+  z-index: 1000 !important;
+}
+
+#loginModal .modal-content {
+  position: relative !important;
+  z-index: 1001 !important;
+  animation: login8BitSpawn 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+}
+
+@keyframes login8BitSpawn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-4px) scale(1.015);
+  }
+  75% {
+    transform: translateY(2px) scale(0.995);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
