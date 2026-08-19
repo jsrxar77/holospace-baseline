@@ -1917,7 +1917,7 @@ function logout() {
   } catch (e) {}
   currentUser = null;
   populateSavedCredentials();
-  window.location.href = '/';
+  window.location.href = '/login?logout=true';
 }
 
 // ============================================================

@@ -53,17 +53,20 @@ export const Header: React.FC<HeaderProps> = ({
 
   const handleLogoutPress = () => {
     setIsDropdownOpen(false);
-    if (typeof window !== 'undefined') {
+    logout();
+    if (onLogout) onLogout();
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
       try {
         window.localStorage.clear();
         window.sessionStorage.clear();
       } catch (e) {}
-      // Forzar navegación dura e inmediata a la Landing Page oficial sin disparar re-render de React
-      window.location.replace('https://holospace.com.ar/?logout=true');
-      return;
+      if (typeof window.location.replace === 'function') {
+        window.location.replace('https://holospace.com.ar/login?logout=true');
+      } else {
+        window.location.href = 'https://holospace.com.ar/login?logout=true';
+      }
     }
-    logout();
-    if (onLogout) onLogout();
   };
 
   const paddingTopVal = Platform.OS === 'android' ? (StatusBar.currentHeight || 36) + 8 : 44;
