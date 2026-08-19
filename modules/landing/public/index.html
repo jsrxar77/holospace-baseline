@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es" data-palette="soft_omarchy">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HoloSpace — SaaS Multi-Tenant para Logística Inteligente y Control de Depósitos</title>
+  <meta name="description" content="Plataforma SaaS B2B Multi-Tenant con escaneo EAN-13 móvil, tablero Kanban logístico y PostgreSQL 16 RLS.">
+  
+  <!-- Google Fonts: Press Start 2P & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Press Start 2P&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/landing/landing.css">
+</head>
+<body>
+
+  <!-- HEADER WAYBAR RETRO -->
+  <header class="waybar-header">
+    <a href="/" class="brand-badge">
+      <span class="pixel-font logo-holo">Holo</span><span class="pixel-font logo-space">Space</span>
+    </a>
+    
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span>POSTGRESQL 16 RLS • SYSTEM ONLINE</span>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <a href="/login" class="btn-pixel btn-pixel-secondary" style="padding: 6px 12px; font-size: 12px;">Ingresar</a>
+      <a href="#planes" class="btn-pixel btn-pixel-primary" style="padding: 6px 12px; font-size: 12px;">Comenzar</a>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <main class="container">
+    <section class="hero-section">
+      <div class="hero-tag pixel-font">★ SAAS MULTI-TENANT B2B ★</div>
+      <h1 class="hero-title pixel-font">Logística Inteligente y Control Total de Depósitos</h1>
+      <p class="hero-subtitle">
+        Digitaliza la preparación de pedidos, elimina errores de despacho con escaneo móvil EAN-13 y administra múltiples empresas con aislamiento criptográfico de datos.
+      </p>
+
+      <div class="hero-ctas">
+        <a href="#planes" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 12px; padding: 14px 28px;">
+          ⚡ Iniciar Prueba Gratuita
+        </a>
+        <a href="/login" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 12px; padding: 14px 28px;">
+          ▶ Ver Demo en Vivo
+        </a>
+      </div>
+
+      <!-- SELECTOR DINÁMICO DE PALETA SOFT OMARCHY -->
+      <div class="palette-picker">
+        <span>Paleta Visual:</span>
+        <button class="palette-btn active" onclick="setPalette('soft_omarchy')">Soft Omarchy (Pastel)</button>
+        <button class="palette-btn" onclick="setPalette('aetheria')">Aetheria (Cyan)</button>
+        <button class="palette-btn" onclick="setPalette('coffee')">Retro Coffee</button>
+      </div>
+    </section>
+
+    <!-- LOS 4 PILARES DE INGENIERÍA -->
+    <section style="margin-top: 40px;">
+      <h2 class="section-title pixel-font" style="font-size: 20px;">Los 4 Pilares de la Plataforma</h2>
+      <p class="section-subtitle">Arquitectura modular de alto rendimiento diseñada para depósitos exigentes.</p>
+
+      <div class="grid-pillars">
+        
+        <!-- PILAR 1: SEGURIDAD RLS -->
+        <div class="pixel-card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-emerald)" stroke-width="2" stroke-linecap="square">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+          <h3 class="card-title">1. Aislamiento Criptográfico RLS</h3>
+          <p class="card-text">
+            Seguridad a nivel de motor en PostgreSQL 16. Cada cliente opera con soberanía estricta de datos cumpliendo con normativas GDPR y SOC2.
+          </p>
+        </div>
+
+        <!-- PILAR 2: KANBAN LOGÍSTICO -->
+        <div class="pixel-card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" stroke-width="2" stroke-linecap="square">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18"/>
+              <path d="M15 3v18"/>
+            </svg>
+          </div>
+          <h3 class="card-title">2. Tablero Kanban con Ingesta PDF</h3>
+          <p class="card-text">
+            Arrastra facturas en PDF y el sistema extrae automáticamente SKUs, EAN-13 y cantidades organizándolos en un flujo de 4 columnas en tiempo real.
+          </p>
+        </div>
+
+        <!-- PILAR 3: ESCÁNER MÓVIL OFFLINE -->
+        <div class="pixel-card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-peach)" stroke-width="2" stroke-linecap="square">
+              <rect x="5" y="2" width="14" height="20" rx="2"/>
+              <path d="M12 18h.01"/>
+              <path d="M8 6h8"/>
+            </svg>
+          </div>
+          <h3 class="card-title">3. Escáner Móvil EAN-13 Offline</h3>
+          <p class="card-text">
+            Lectura con cámara de celular y base de datos SQLite local. Permite a los operarios seguir trabajando sin conexión Wi-Fi en el depósito.
+          </p>
+        </div>
+
+        <!-- PILAR 4: FACTURACIÓN Y MODULARIDAD -->
+        <div class="pixel-card">
+          <div class="card-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-mauve)" stroke-width="2" stroke-linecap="square">
+              <rect x="2" y="5" width="20" height="14" rx="2"/>
+              <line x1="2" y1="10" x2="22" y2="10"/>
+            </svg>
+          </div>
+          <h3 class="card-title">4. Facturación B2B y Entitlements</h3>
+          <p class="card-text">
+            Auto-onboarding instantáneo, suscripciones recurrentes y activación o desactivación de módulos por empresa sin reiniciar el servidor.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECCIÓN DE PRECIOS Y PLANES -->
+    <section id="planes" class="pricing-section">
+      <h2 class="section-title pixel-font" style="font-size: 20px;">Planes Claros y Transparentes</h2>
+      <p class="section-subtitle">Escala tu operación logística sin costos ocultos.</p>
+
+      <div class="pricing-grid">
+        
+        <!-- PLAN STARTER -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font">STARTER</div>
+          <h3 class="card-title" style="font-size: 20px;">Plan Inicial</h3>
+          <div class="plan-price">$49 <span>/ mes USD</span></div>
+          <p style="font-size: 13px; color: var(--text-muted);">Para pequeños depósitos o pilotos operativos.</p>
+          
+          <ul class="plan-features">
+            <li>Hasta 5 usuarios activos</li>
+            <li>Hasta 500 órdenes mensuales</li>
+            <li>Tablero Kanban logístico</li>
+            <li>Escáner móvil EAN-13</li>
+            <li>Aislamiento RLS en PostgreSQL</li>
+          </ul>
+
+          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Elegir Starter</a>
+        </div>
+
+        <!-- PLAN PRO -->
+        <div class="pricing-card featured">
+          <div class="plan-badge pixel-font" style="color: var(--accent-emerald);">★ RECOMENDADO ★</div>
+          <h3 class="card-title" style="font-size: 20px;">Plan Pro</h3>
+          <div class="plan-price" style="color: var(--accent-emerald);">$149 <span>/ mes USD</span></div>
+          <p style="font-size: 13px; color: var(--text-muted);">Para centros de distribución y pymes en crecimiento.</p>
+          
+          <ul class="plan-features">
+            <li>Hasta 15 usuarios activos</li>
+            <li>Hasta 3.000 órdenes mensuales</li>
+            <li>Ingesta y parseo automático de PDF</li>
+            <li>Sincronización offline SQLite</li>
+            <li>Soporte técnico prioritario</li>
+          </ul>
+
+          <a href="/login" class="btn-pixel btn-pixel-primary" style="width: 100%;">Elegir Plan Pro</a>
+        </div>
+
+        <!-- PLAN ENTERPRISE -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font">ENTERPRISE</div>
+          <h3 class="card-title" style="font-size: 20px;">Ilimitado</h3>
+          <div class="plan-price">$499 <span>/ mes USD</span></div>
+          <p style="font-size: 13px; color: var(--text-muted);">Capacidad ilimitada y gobierno multi-organización.</p>
+          
+          <ul class="plan-features">
+            <li>Usuarios ilimitados (999+)</li>
+            <li>Órdenes mensuales ilimitadas</li>
+            <li>Módulo Tenant (SuperAdmin)</li>
+            <li>Panel de auditoría y métricas</li>
+            <li>SLA 99.9% y soporte dedicado 24/7</li>
+          </ul>
+
+          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Contactar Ventas</a>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="pixel-footer">
+    <div class="container">
+      <div class="pixel-font" style="font-size: 12px; margin-bottom: 12px;">
+        <span class="logo-holo">Holo</span><span class="logo-space">Space</span> SaaS Platform
+      </div>
+      <p>© 2026 HoloSpace. Todos los derechos reservados. Arquitectura Soberana Multi-Tenant.</p>
+    </div>
+  </footer>
+
+  <script>
+    function setPalette(paletteName) {
+      document.documentElement.setAttribute('data-palette', paletteName);
+      document.querySelectorAll('.palette-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

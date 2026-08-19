@@ -1,0 +1,398 @@
+/* ============================================================ */
+/* HOLOSPACE SAAS — SOFT OMARCHY PIXEL ART LANDING CSS          */
+/* Clean, modular, easily swappable CSS Custom Properties       */
+/* ============================================================ */
+
+/* PALETA 1: SOFT OMARCHY / NORDIC PASTEL (DEFAULT) */
+:root,
+[data-palette="soft_omarchy"] {
+  --bg-main: #181926;
+  --bg-surface: #1E2030;
+  --bg-surface-raised: #24273A;
+  --border-color: #363A4F;
+  --border-accent: #8AADF4;
+  
+  --accent-primary: #8AADF4;    /* Soft Blue Lavender */
+  --accent-emerald: #A6DA95;    /* Soft Mint Green */
+  --accent-peach: #F5A97F;      /* Soft Coral Peach */
+  --accent-mauve: #C6A0F6;      /* Soft Lilac Purple */
+  --accent-amber: #EED49F;      /* Soft Warm Sand */
+  --accent-rose: #ED8796;       /* Soft Coral Red */
+  
+  --text-main: #CAD3F5;
+  --text-muted: #939AB7;
+  --text-inverse: #181926;
+  
+  --pixel-shadow: 4px 4px 0px #0F101A;
+  --pixel-shadow-sm: 2px 2px 0px #0F101A;
+  --pixel-shadow-hover: 6px 6px 0px #0F101A;
+}
+
+/* PALETA 2: OMARCHY AETHERIA (CYAN & TEAL SOFT) */
+[data-palette="aetheria"] {
+  --bg-main: #121A21;
+  --bg-surface: #19252E;
+  --bg-surface-raised: #20313D;
+  --border-color: #2D4454;
+  --border-accent: #8BD5CA;
+  
+  --accent-primary: #8BD5CA;    /* Soft Aqua */
+  --accent-emerald: #94E2D5;
+  --accent-peach: #F5BDE6;
+  --accent-mauve: #B7BDF8;
+  --accent-amber: #E5C890;
+  --accent-rose: #EE99A0;
+  
+  --text-main: #DCE7F0;
+  --text-muted: #8FA2B0;
+  --text-inverse: #121A21;
+}
+
+/* PALETA 3: SOFT RETRO COFFEE / DUNE */
+[data-palette="coffee"] {
+  --bg-main: #1D1917;
+  --bg-surface: #27221F;
+  --bg-surface-raised: #332C29;
+  --border-color: #4D423D;
+  --border-accent: #D79921;
+  
+  --accent-primary: #D79921;    /* Warm Gold */
+  --accent-emerald: #B8BB26;
+  --accent-peach: #FE8019;
+  --accent-mauve: #D3869B;
+  --accent-amber: #FABD2F;
+  --accent-rose: #FB4934;
+  
+  --text-main: #EBDBB2;
+  --text-muted: #A89984;
+  --text-inverse: #1D1917;
+}
+
+/* BASE STYLING */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'JetBrains Mono', monospace;
+  image-rendering: pixelated;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  background-image: 
+    linear-gradient(rgba(54, 58, 79, 0.25) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 58, 79, 0.25) 1px, transparent 1px);
+  background-size: 24px 24px;
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+.pixel-font {
+  font-family: 'Press Start 2P', monospace !important;
+  letter-spacing: 0.5px;
+}
+
+/* CONTAINER */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* HEADER WAYBAR RETRO */
+.waybar-header {
+  background: var(--bg-surface);
+  border-bottom: 2px solid var(--border-color);
+  padding: 12px 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brand-badge span.logo-holo { color: #FFF; font-size: 15px; }
+.brand-badge span.logo-space { color: var(--accent-emerald); font-size: 15px; }
+
+.status-pill {
+  font-size: 11px;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-color);
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--accent-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--accent-emerald);
+}
+
+/* PIXEL BUTTONS */
+.btn-pixel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: var(--pixel-shadow-sm);
+}
+
+.btn-pixel:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.btn-pixel-primary {
+  background: var(--accent-emerald);
+  color: var(--text-inverse);
+  border-color: var(--accent-emerald);
+}
+
+.btn-pixel-primary:hover {
+  background: #B6EBA5;
+  box-shadow: var(--pixel-shadow);
+}
+
+.btn-pixel-secondary {
+  background: var(--bg-surface-raised);
+  color: var(--text-main);
+}
+
+.btn-pixel-secondary:hover {
+  background: var(--border-color);
+  box-shadow: var(--pixel-shadow);
+}
+
+.btn-pixel-accent {
+  background: var(--accent-primary);
+  color: var(--text-inverse);
+  border-color: var(--accent-primary);
+}
+
+/* HERO SECTION */
+.hero-section {
+  padding: 80px 0 60px;
+  text-align: center;
+}
+
+.hero-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 6px 14px;
+  background: var(--bg-surface);
+  border: 2px solid var(--accent-mauve);
+  color: var(--accent-mauve);
+  border-radius: 4px;
+  margin-bottom: 24px;
+  box-shadow: var(--pixel-shadow-sm);
+}
+
+.hero-title {
+  font-size: 34px;
+  line-height: 1.3;
+  color: #FFF;
+  max-width: 900px;
+  margin: 0 auto 24px;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 720px;
+  margin: 0 auto 36px;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* PALETTE SELECTOR WIDGET */
+.palette-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 30px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.palette-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.palette-btn.active {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  font-weight: bold;
+}
+
+/* CARDS GRID & PILLARS */
+.grid-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin: 60px 0;
+}
+
+.pixel-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: var(--pixel-shadow);
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.pixel-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-hover);
+  border-color: var(--border-accent);
+}
+
+.card-icon {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-surface-raised);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  color: #FFF;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.card-text {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* PRICING SECTION */
+.pricing-section {
+  padding: 60px 0;
+}
+
+.section-title {
+  text-align: center;
+  font-size: 26px;
+  color: #FFF;
+  margin-bottom: 12px;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-bottom: 48px;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+}
+
+.pricing-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  padding: 32px 24px;
+  box-shadow: var(--pixel-shadow);
+  display: flex;
+  flex-direction: column;
+}
+
+.pricing-card.featured {
+  border-color: var(--accent-primary);
+  background: var(--bg-surface-raised);
+}
+
+.plan-badge {
+  font-size: 11px;
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+}
+
+.plan-price {
+  font-size: 32px;
+  color: #FFF;
+  margin: 12px 0 16px;
+}
+
+.plan-price span {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.plan-features {
+  list-style: none;
+  margin: 24px 0;
+  flex-grow: 1;
+}
+
+.plan-features li {
+  font-size: 13px;
+  color: var(--text-main);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-features li::before {
+  content: "■";
+  color: var(--accent-emerald);
+  font-size: 10px;
+}
+
+/* FOOTER */
+.pixel-footer {
+  background: var(--bg-surface);
+  border-top: 2px solid var(--border-color);
+  padding: 40px 0;
+  margin-top: 80px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}

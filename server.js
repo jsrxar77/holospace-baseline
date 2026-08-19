@@ -1,3 +1,4 @@
+const handleLandingRoutes = require('./modules/landing/routes/landing.routes');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -427,6 +428,9 @@ async function getFullOrderFromDb(identifier, context = {}) {
 
 // Servidor HTTP
 const server = http.createServer(async (req, res) => {
+    // 0. LANDING ROUTING (hologrowth.com.ar or /landing)
+    if (handleLandingRoutes(req, res)) return;
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
