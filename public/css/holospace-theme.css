@@ -994,7 +994,7 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 /* ============================================================ */
 /* 8-BIT RETRO ANIMATED PIXEL BACKGROUND FOR LOGIN MODAL        */
 /* ============================================================ */
-#loginModal {
+#loginModal:not(.hidden) {
   background-color: #0F101A !important;
   background-image: 
     radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
@@ -1014,6 +1014,11 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
   z-index: 9999 !important;
   -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
+}
+
+.hidden,
+#loginModal.hidden {
+  display: none !important;
 }
 
 @keyframes pixelStarfieldMove {

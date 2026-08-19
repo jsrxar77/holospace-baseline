@@ -180,12 +180,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('hs_saved_email', email);
 
-        document.getElementById('loginModal').classList.add('hidden');
+        const loginModalEl = document.getElementById('loginModal');
+        if (loginModalEl) {
+          loginModalEl.classList.add('hidden');
+          loginModalEl.style.display = 'none';
+        }
         const orgName = data.tenant ? data.tenant.name : 'Drink Lovers';
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${orgName})`;
         applyRoleVisibility();
-        loadKanbanData();
-        setInterval(loadKanbanData, 3000);
+        if (currentUser.role === 'SUPERADMIN') {
+          loadTenantDirectory();
+        } else {
+          loadKanbanData();
+          setInterval(loadKanbanData, 3000);
+        }
       } else {
         loginError.innerText = data.error || 'Credenciales inválidas';
         loginError.style.display = 'block';
