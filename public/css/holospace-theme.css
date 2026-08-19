@@ -135,8 +135,8 @@ body.theme-omarchy_tiling .logo-holo {
 }
 
 body.theme-omarchy_tiling .logo-space {
-  color: #50FA7B !important;
-  text-shadow: 2px 2px 0px #1E4620, 4px 4px 0px #11111B, 0 0 8px rgba(80, 250, 123, 0.4) !important;
+  color: #A6DA95 !important;
+  text-shadow: 2px 2px 0px #1E4620, 4px 4px 0px #11111B, 0 0 8px rgba(166, 218, 149, 0.4) !important;
 }
 
 body.theme-omarchy_tiling #activeContextBadge {
@@ -250,7 +250,7 @@ body.theme-omarchy_tiling .btn-hamburger span {
 }
 
 body.theme-omarchy_tiling .btn-hamburger:hover span {
-  background-color: #50FA7B !important;
+  background-color: #A6DA95 !important;
 }
 
 body.theme-omarchy_tiling .mobile-nav-drawer {
@@ -296,7 +296,7 @@ body.theme-omarchy_tiling .btn-close-drawer {
 }
 
 body.theme-omarchy_tiling .btn-close-drawer:hover {
-  color: #50FA7B !important;
+  color: #A6DA95 !important;
 }
 
 /* ============================================================ */

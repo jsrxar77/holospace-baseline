@@ -24,7 +24,7 @@ export const DEFAULT_THEME: ThemeTokens = {
   background: '#121317',
   cardBg: '#1A1B22',
   cardBorder: '#2E303E',
-  emerald: '#50FA7B',
+  emerald: '#A6DA95',
   cobalt: '#BD93F9',
   amber: '#F1FA8C',
   red: '#FF5555',

@@ -202,7 +202,7 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
 
 | Clave (`key`) | Nombre Oficial | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`omarchy_tiling`** | **Omarchy Tiling** *(Predeterminado)* | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#121317` | Verde Menta (`#50FA7B`) |
+| **`omarchy_tiling`** | **Omarchy Tiling** *(Predeterminado)* | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#121317` | Verde Menta (`#A6DA95`) |
 | **`omarchy_aetheria`** | **Omarchy Aetherial** | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#0E091D` (OLED) | Teal (`#14B9B5`) / Violeta (`#7C3AED`) |
 | **`soft_minimal_pastel`** | **Soft Pastel** | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#1E1E2E` (Catppuccin) | Menta (`#A6E3A1`) / Lavanda (`#89B4FA`) |
 | **`dark_glassmorphism`** | **Dark Glass** | `Outfit` | `24px` (Glass) | `#0B0E14` (Cristal oscuro) | Esmeralda (`#00E676`) / Cobalto (`#3B82F6`) |
@@ -216,7 +216,7 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
   "background": "#121317",
   "cardBg": "#1A1B22",
   "cardBorder": "#2E303E",
-  "emerald": "#50FA7B",
+  "emerald": "#A6DA95",
   "cobalt": "#BD93F9",
   "amber": "#F1FA8C",
   "red": "#FF5555",
