@@ -191,6 +191,18 @@ document.addEventListener('DOMContentLoaded', () => {
           loginModalEl.classList.add('hidden');
           loginModalEl.style.display = 'none';
         }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTarget = urlParams.get('redirect');
+
+        if (redirectTarget) {
+          // Si el redirect es hacia el escáner móvil m.holospace.com.ar o /scanner
+          const separator = redirectTarget.includes('?') ? '&' : '?';
+          const targetWithAuth = redirectTarget + separator + 'auth_token=' + encodeURIComponent(data.token) + '&auth_user=' + encodeURIComponent(JSON.stringify(data.user)) + '&auth_tenant=' + encodeURIComponent(JSON.stringify(data.tenant || {}));
+          window.location.href = targetWithAuth;
+          return;
+        }
+
         const orgName = data.tenant ? data.tenant.name : 'Drink Lovers';
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${orgName})`;
         applyRoleVisibility();
@@ -200,6 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
           loadKanbanData();
           setInterval(loadKanbanData, 3000);
         }
+
       } else {
         loginError.innerText = data.error || 'Credenciales inválidas';
         loginError.style.display = 'block';

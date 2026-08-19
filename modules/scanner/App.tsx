@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
-import { LoginScreen } from './src/screens/LoginScreen';
+import { StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 import { useAuthStore } from './src/store/useAuthStore';
 import { useThemeStore } from './src/store/useThemeStore';
 
@@ -26,12 +25,41 @@ export default function App() {
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
-    // Sincronizar token compartido de Web si existe en localStorage
-    if (typeof window !== 'undefined' && window.localStorage) {
+    // 1. Revisar si viene autenticado por parámetros URL (SSO Universal desde Login Web)
+    if (typeof window !== 'undefined' && window.location) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const authToken = urlParams.get('auth_token');
+      const authUserStr = urlParams.get('auth_user');
+      const authTenantStr = urlParams.get('auth_tenant');
+
+      if (authToken && authUserStr) {
+        try {
+          const authUser = JSON.parse(authUserStr);
+          const authTenant = authTenantStr ? JSON.parse(authTenantStr) : null;
+          window.localStorage.setItem('hs_token', authToken);
+          window.localStorage.setItem('hs_user', JSON.stringify(authUser));
+          if (authTenant) window.localStorage.setItem('hs_tenant', JSON.stringify(authTenant));
+
+          useAuthStore.setState({
+            token: authToken,
+            user: authUser,
+            tenant: authTenant,
+            isAuthenticated: true
+          });
+
+          // Limpiar parámetros de la URL para que quede limpia /scanner
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+          return;
+        } catch (e) {}
+      }
+
+      // 2. Revisar si ya existe sesión guardada en localStorage
       const webToken = window.localStorage.getItem('hs_token');
       const webUser = window.localStorage.getItem('hs_user');
       const webTenant = window.localStorage.getItem('hs_tenant');
-      if (webToken && webUser && !isAuthenticated) {
+      if (webToken && webUser) {
         try {
           useAuthStore.setState({
             token: webToken,
@@ -39,26 +67,33 @@ export default function App() {
             tenant: webTenant ? JSON.parse(webTenant) : null,
             isAuthenticated: true
           });
+          return;
         } catch (e) {}
       }
+
+      // 3. Si no hay sesión, redirigir de inmediato al ÚNICO Login Web Oficial
+      const returnUrl = window.location.href;
+      window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(returnUrl);
     }
   }, []);
 
   useEffect(() => {
-    const currentToken = useAuthStore.getState().token;
-    fetchTheme(currentToken);
-    const interval = setInterval(() => {
+    if (isAuthenticated) {
       const activeToken = useAuthStore.getState().token;
       fetchTheme(activeToken);
-    }, 3000);
-    return () => clearInterval(interval);
+      const interval = setInterval(() => {
+        const currentToken = useAuthStore.getState().token;
+        fetchTheme(currentToken);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
-      <View style={[styles.container, { backgroundColor: '#181926' }]}>
+      <View style={[styles.container, { backgroundColor: '#181926', alignItems: 'center', justifyContent: 'center' }]}>
         <StatusBar style="light" backgroundColor="#181926" />
-        <LoginScreen onLoginSuccess={() => setCurrentScreen('HOME')} />
+        <ActivityIndicator size="large" color="#A6DA95" />
       </View>
     );
   }
