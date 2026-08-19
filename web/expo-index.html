@@ -71,45 +71,45 @@
       console.error('[HoloSpace Loader] Unhandled Promise:', e.reason);
     });
 
-    // Ocultar loader cuando React monte — MutationObserver + polling fallback
+        // Ocultar loader cuando React monte o cargue el DOM
     function hideLoader() {
       var loader = document.getElementById('expo-loader');
       if (loader) {
         loader.style.opacity = '0';
-        setTimeout(function() { loader.style.display = 'none'; }, 300);
+        setTimeout(function() { loader.style.display = 'none'; }, 200);
       }
     }
 
-    // MutationObserver para detectar cuando React inserta algo en #root
+    // MutationObserver para detectar cuando React inserta algo en #root o body
     var observer = new MutationObserver(function() {
       var root = document.getElementById('root');
-      if (root && root.childNodes.length > 0) {
+      if (root && (root.childNodes.length > 0 || root.children.length > 0)) {
         hideLoader();
         observer.disconnect();
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Polling fallback: revisar cada 200ms durante 10s
+    // Fallback pasivo de verificación
     var checkCount = 0;
     var checkInterval = setInterval(function() {
       var root = document.getElementById('root');
-      if (root && root.childNodes.length > 0) {
+      if (root && (root.childNodes.length > 0 || root.children.length > 0)) {
         hideLoader();
         clearInterval(checkInterval);
       }
       checkCount++;
-      if (checkCount > 50) { // 10 segundos
+      if (checkCount > 15) { // 3 segundos maximo antes de liberar la pantalla
+        hideLoader();
         clearInterval(checkInterval);
-        var spinner = document.querySelector('#expo-loader .spinner');
-        if (spinner) spinner.style.display = 'none';
-        var err = document.getElementById('loader-err');
-        if (err && !err.textContent) {
-          err.style.display = 'block';
-          err.textContent = 'La app tardo demasiado en cargar. Revisa la consola del navegador (F12) para ver errores.';
-        }
       }
     }, 200);
+
+    // Ocultar al cargar la ventana
+    window.addEventListener('load', function() {
+      setTimeout(hideLoader, 500);
+    });
+
   </script>
 </body>
 </html>

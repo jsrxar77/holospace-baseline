@@ -12,6 +12,15 @@ import { ThemedAlertModal } from './src/components/ThemedAlertModal';
 type ScreenName = 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH';
 
 export default function App() {
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const loader = document.getElementById('expo-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        setTimeout(() => { loader.style.display = 'none'; }, 200);
+      }
+    }
+  }, []);
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('HOME');
   const { isAuthenticated } = useAuthStore();
   const { theme, fetchTheme } = useThemeStore();
