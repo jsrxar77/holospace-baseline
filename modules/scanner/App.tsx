@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { useAuthStore } from './src/store/useAuthStore';
 import { useThemeStore } from './src/store/useThemeStore';
@@ -22,7 +22,7 @@ type ScreenName = 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('HOME');
-  const { isAuthenticated, token } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
@@ -45,15 +45,6 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Si no está autenticado en navegador web, redirigir al Login Web Oficial
-    if (!isAuthenticated && typeof window !== 'undefined' && window.location) {
-      if (window.location.pathname.startsWith('/scanner') || window.location.hostname.startsWith('m.')) {
-        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-      }
-    }
-  }, [isAuthenticated]);
-
-  useEffect(() => {
     const currentToken = useAuthStore.getState().token;
     fetchTheme(currentToken);
     const interval = setInterval(() => {
@@ -65,9 +56,9 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <View style={[styles.container, { backgroundColor: '#181926', alignItems: 'center', justifyContent: 'center' }]}>
+      <View style={[styles.container, { backgroundColor: '#181926' }]}>
         <StatusBar style="light" backgroundColor="#181926" />
-        <ActivityIndicator size="large" color="#A6DA95" />
+        <LoginScreen onLoginSuccess={() => setCurrentScreen('HOME')} />
       </View>
     );
   }
