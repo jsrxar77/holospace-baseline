@@ -1837,9 +1837,9 @@ let currentQrMode = 'expo'; // 'expo' | 'web'
 async function openQrModal() {
   let host = window.location.hostname;
   
-  // Si estamos en dominio de producción holospace
-  if (host.includes('holospace.com.ar')) {
-    host = 'm.holospace.com.ar';
+  // Si estamos en dominio de producción holospace o VPS remoto
+  if (host.includes('holospace.com.ar') || host === '5.161.237.189') {
+    host = '5.161.237.189';
   } else if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
     try {
       const res = await fetch('/api/config');
@@ -1849,18 +1849,6 @@ async function openQrModal() {
       }
     } catch (e) {
       console.log('Error obteniendo IP dinámica:', e);
-    }
-  }
-
-  const savedHost = localStorage.getItem('hs_expo_host_ip');
-  if (savedHost) {
-    host = savedHost;
-  } else if (!host || host === 'localhost' || host === '127.0.0.1' || host.startsWith('172.')) {
-    // Si estamos en VPS remoto Hetzner
-    if (window.location.hostname === '5.161.237.189') {
-      host = 'm.holospace.com.ar';
-    } else {
-      host = '192.168.100.247';
     }
   }
 
@@ -1881,8 +1869,11 @@ function setQrMode(mode) {
     if (expoBtn) { expoBtn.className = 'btn-secondary'; }
   }
 
-  const savedHost = localStorage.getItem('hs_expo_host_ip') || (window.location.hostname.includes('holospace') ? 'm.holospace.com.ar' : window.location.hostname);
-  updateQrDisplay(savedHost);
+  let host = window.location.hostname;
+  if (host.includes('holospace.com.ar') || host === '5.161.237.189') {
+    host = mode === 'web' ? 'm.holospace.com.ar' : '5.161.237.189';
+  }
+  updateQrDisplay(host);
 }
 
 function updateQrDisplay(host) {
