@@ -487,7 +487,7 @@ body {
   font-size: 10px;
 }
 
-/* FOOTER RETRO ALINEADO */
+/* FOOTER RETRO EN 3 LÍNEAS PIXELADAS */
 .pixel-footer {
   background: var(--bg-surface);
   border-top: 2px solid var(--border-color);
@@ -496,47 +496,102 @@ body {
   text-align: center;
 }
 
-.footer-brand-container {
+.footer-lines-wrapper {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+/* LÍNEA 1: LOGO + PLATFORM LABEL */
+.footer-line-1 {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .footer-logo {
   font-family: 'Press Start 2P', monospace !important;
-  font-size: 20px !important;
+  font-size: 22px !important;
   display: inline-flex;
   align-items: center;
   letter-spacing: 0px;
-  text-shadow: 2px 2px 0px #000;
+  line-height: 1;
 }
 
 .footer-logo span.logo-holo {
   color: #FFFFFF !important;
   font-family: 'Press Start 2P', monospace !important;
-  font-size: 20px !important;
+  font-size: 22px !important;
   text-shadow: 2px 2px 0px #363A4F, 4px 4px 0px #0F101A;
 }
 
 .footer-logo span.logo-space {
   color: var(--accent-emerald) !important;
   font-family: 'Press Start 2P', monospace !important;
-  font-size: 20px !important;
+  font-size: 22px !important;
   text-shadow: 2px 2px 0px #2D4F3B, 4px 4px 0px #0F101A, 0 0 10px rgba(166, 218, 149, 0.35);
 }
 
 .footer-platform-label {
   font-family: 'Press Start 2P', monospace !important;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--accent-primary);
   text-transform: uppercase;
+  text-shadow: 1px 1px 0px #0F101A;
+  padding: 4px 8px;
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
 
-.footer-meta-text {
+/* LÍNEA 2: COPYRIGHT & ARQUITECTURA SOBERANA */
+.footer-line-2 {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 13px;
   color: var(--text-muted);
-  margin-top: 8px;
+  letter-spacing: 0.2px;
+}
+
+/* LÍNEA 3: LEYENDA HOLOGROWTH CON LOGO OFICIAL */
+.footer-line-3 {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: var(--text-main);
+  margin-top: 4px;
+}
+
+.hologrowth-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #FFD166;
+  text-decoration: none;
+  font-weight: 700;
+  font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  transition: all 0.15s ease;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(236, 151, 49, 0.08);
+  border: 1px solid rgba(236, 151, 49, 0.25);
+}
+
+.hologrowth-footer-link:hover {
+  color: #FFAA00;
+  background: rgba(236, 151, 49, 0.18);
+  border-color: #FFAA00;
+  transform: translateY(-1px);
+}
+
+.hologrowth-icon-svg {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
 }
