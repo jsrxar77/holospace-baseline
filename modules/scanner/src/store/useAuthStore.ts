@@ -50,17 +50,14 @@ export const saveSavedCredentials = (email: string, pass: string = '', tenantSlu
 
 export const getSavedCredentials = () => {
   try {
-    if (typeof window !== 'undefined') {
-      const storage = window.sessionStorage || window.localStorage;
-      if (storage) {
-        const email = storage.getItem(CREDENTIALS_KEY_EMAIL) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) : '') || '';
-        const password = storage.getItem(CREDENTIALS_KEY_PASS) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_PASS) : '') || '';
-        const tenantSlug = storage.getItem(CREDENTIALS_KEY_TENANT) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_TENANT) : '') || 'poke';
-        return { email, password, tenantSlug };
-      }
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const email = window.sessionStorage.getItem(CREDENTIALS_KEY_EMAIL) || '';
+      const password = window.sessionStorage.getItem(CREDENTIALS_KEY_PASS) || '';
+      const tenantSlug = window.sessionStorage.getItem(CREDENTIALS_KEY_TENANT) || '';
+      return { email, password, tenantSlug };
     }
   } catch (e) { }
-  return { email: '', password: '', tenantSlug: 'poke' };
+  return { email: '', password: '', tenantSlug: '' };
 };
 
 

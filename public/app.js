@@ -53,7 +53,8 @@ function clearAuthSession() {
 }
 
 function populateSavedCredentials() {
-  const savedEmail = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('hs_saved_email') : '') || (typeof localStorage !== 'undefined' ? localStorage.getItem('hs_saved_email') : '') || '';
+  // Inicialización limpia por defecto (Regla de Oro: Campos limpios y aislados por pestaña)
+  const savedEmail = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('hs_saved_email') : '') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
