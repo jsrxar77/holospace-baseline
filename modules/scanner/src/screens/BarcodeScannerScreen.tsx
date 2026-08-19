@@ -42,11 +42,11 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
     }
   }, [unassignedOrderNotification]);
 
-  if (!permission) {
+  if (!permission && Platform.OS !== 'web') {
     return <View style={[styles.container, { backgroundColor: theme.background }]} />;
   }
 
-  if (!permission.granted) {
+  if (permission && !permission.granted && Platform.OS !== 'web') {
     return (
       <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.permissionText, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
