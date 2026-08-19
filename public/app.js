@@ -1701,9 +1701,15 @@ switchTab = function (tabName) {
   }
 };
 
+let currentQrMode = 'web'; // 'web' | 'expo'
+
 async function openQrModal() {
   let host = window.location.hostname;
-  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
+  
+  // Si estamos en dominio de producción holospace
+  if (host.includes('holospace.com.ar')) {
+    host = 'm.holospace.com.ar';
+  } else if (!host || host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '::1') {
     try {
       const res = await fetch('/api/config');
       const data = await res.json();
@@ -1715,32 +1721,69 @@ async function openQrModal() {
     }
   }
 
-  // Fallback si corre en Docker y hostname es localhost
-  const savedHost = localStorage.getItem('hw_expo_host_ip');
+  const savedHost = localStorage.getItem('hs_expo_host_ip');
   if (savedHost) {
     host = savedHost;
   } else if (!host || host === 'localhost' || host === '127.0.0.1' || host.startsWith('172.')) {
-    // Si la IP devuelta es la interna del bridge Docker 172.x o localhost, sugerir la IP LAN real
-    host = '192.168.100.247';
+    // Si estamos en VPS remoto Hetzner
+    if (window.location.hostname === '5.161.237.189') {
+      host = 'm.holospace.com.ar';
+    } else {
+      host = '192.168.100.247';
+    }
   }
 
   updateQrDisplay(host);
   document.getElementById('qrModal').classList.remove('hidden');
 }
 
+function setQrMode(mode) {
+  currentQrMode = mode;
+  const webBtn = document.getElementById('qrModeWebBtn');
+  const expoBtn = document.getElementById('qrModeExpoBtn');
+  
+  if (mode === 'web') {
+    if (webBtn) { webBtn.className = 'btn-primary'; }
+    if (expoBtn) { expoBtn.className = 'btn-secondary'; }
+  } else {
+    if (webBtn) { webBtn.className = 'btn-secondary'; }
+    if (expoBtn) { expoBtn.className = 'btn-primary'; }
+  }
+
+  const savedHost = localStorage.getItem('hs_expo_host_ip') || (window.location.hostname.includes('holospace') ? 'm.holospace.com.ar' : window.location.hostname);
+  updateQrDisplay(savedHost);
+}
+
 function updateQrDisplay(host) {
-  const cleanHost = (host || '192.168.100.247').trim();
-  localStorage.setItem('hw_expo_host_ip', cleanHost);
-  const expoUrl = `exp://${cleanHost}:8081`;
+  const cleanHost = (host || 'm.holospace.com.ar').trim();
+  localStorage.setItem('hs_expo_host_ip', cleanHost);
+  
+  let targetUrl = '';
+  if (currentQrMode === 'web') {
+    // Web Móvil Directa
+    if (cleanHost === 'm.holospace.com.ar' || cleanHost.includes('.')) {
+      targetUrl = `https://${cleanHost}`;
+    } else {
+      targetUrl = `http://${cleanHost}:8081`;
+    }
+  } else {
+    // Modo Expo Go
+    if (cleanHost === 'm.holospace.com.ar') {
+      targetUrl = `exp://5.161.237.189:8081`;
+    } else {
+      targetUrl = `exp://${cleanHost}:8081`;
+    }
+  }
+
   const qrImg = document.getElementById('qrImage');
   const qrText = document.getElementById('qrText');
   const ipInput = document.getElementById('qrCustomIpInput');
 
   if (qrImg) {
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(expoUrl)}`;
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}`;
   }
   if (qrText) {
-    qrText.textContent = expoUrl;
+    qrText.textContent = targetUrl;
   }
   if (ipInput) {
     ipInput.value = cleanHost;
