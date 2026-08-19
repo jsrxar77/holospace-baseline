@@ -1,12 +1,9 @@
 
 /* ============================================================ */
-/* BULLETPROOF MOVING SPACE STARFIELD FOR LOGIN                 */
+/* MOVING SPACE STARFIELD EXCLUSIVELY FOR LOGIN VIEW            */
 /* ============================================================ */
-html,
-body,
 body.state-logged-out,
-body:has(#loginModal:not(.hidden)),
-html:has(#loginModal:not(.hidden)) {
+body:has(#loginModal:not(.hidden)) {
   background-color: #181926 !important;
   background-image: 
     radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
@@ -1355,4 +1352,18 @@ main,
 
 .app-header-shell {
   z-index: 50 !important;
+}
+
+
+/* ============================================================ */
+/* STRICT LOGGED-IN APP SHELL STABILITY (NO MOVING BACKGROUND)  */
+/* ============================================================ */
+body.state-logged-in .space-ambient-layer,
+body:has(#loginModal.hidden) .space-ambient-layer {
+  display: none !important;
+}
+
+body.state-logged-in,
+body:has(#loginModal.hidden) {
+  animation: none !important;
 }

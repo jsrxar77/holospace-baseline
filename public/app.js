@@ -213,6 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Apply strict domain/module isolation based on role
 function applyRoleVisibility() {
+  document.body.classList.remove('state-logged-out');
+  document.body.classList.add('state-logged-in');
   if (!currentUser) return;
   const isSuperAdmin = currentUser.role === 'SUPERADMIN';
 
