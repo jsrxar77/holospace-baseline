@@ -48,6 +48,41 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
+
+  <script>
+    (function() {
+      // 1. Si viene con token SSO en los parámetros de la URL, guardarlo inmediatamente
+      var urlParams = new URLSearchParams(window.location.search);
+      var authToken = urlParams.get('auth_token');
+      var authUserStr = urlParams.get('auth_user');
+      var authTenantStr = urlParams.get('auth_tenant');
+
+      if (authToken && authUserStr) {
+        try {
+          localStorage.setItem('hs_token', authToken);
+          localStorage.setItem('hs_user', authUserStr);
+          if (authTenantStr) localStorage.setItem('hs_tenant', authTenantStr);
+          // Limpiar la URL para dejarla limpia
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+          return;
+        } catch (e) {}
+      }
+
+      // 2. Si ya tiene token guardado en localStorage, continuar
+      var savedToken = localStorage.getItem('hs_token');
+      var savedUser = localStorage.getItem('hs_user');
+      if (savedToken && savedUser) {
+        return; // Sesión activa, permitir carga de la app
+      }
+
+      // 3. Si no tiene sesión, redirigir instantáneamente al Login Oficial Unificado de HoloSpace
+      var currentUrl = window.location.href;
+      window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(currentUrl);
+    })();
+  </script>
+
 </head>
 <body>
   <div id="expo-loader">
