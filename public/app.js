@@ -143,17 +143,41 @@ document.addEventListener('DOMContentLoaded', () => {
   loadActiveTheme();
   loadAppConfig();
   populateSavedCredentials();
+  // Si viene con ?logout=true desde mobile, limpiar todo en el dominio principal
+  if (urlParams.get('logout') === 'true') {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (e) {}
+    currentUser = null;
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '/');
+    }
+  }
+
 
   const token = localStorage.getItem('hs_token');
   const userJson = localStorage.getItem('hs_user');
   const tenantJson = localStorage.getItem('hs_tenant');
   const currentPath = window.location.pathname.toLowerCase();
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectTarget = urlParams.get('redirect');
+
   if (token && userJson) {
-    document.body.classList.remove('state-logged-out');
-    document.body.classList.add('state-logged-in');
     currentUser = JSON.parse(userJson);
     const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'HoloSpace' };
+
+    // Si viene con redirect hacia m.holospace.com.ar o /scanner, transferir credenciales de inmediato
+    if (redirectTarget && (redirectTarget.includes('m.holospace') || redirectTarget.includes('scanner'))) {
+      const separator = redirectTarget.includes('?') ? '&' : '?';
+      const targetWithAuth = redirectTarget + separator + 'auth_token=' + encodeURIComponent(token) + '&auth_user=' + encodeURIComponent(JSON.stringify(currentUser)) + '&auth_tenant=' + encodeURIComponent(JSON.stringify(tenant));
+      window.location.href = targetWithAuth;
+      return;
+    }
+
+    document.body.classList.remove('state-logged-out');
+    document.body.classList.add('state-logged-in');
     const loginModalEl = document.getElementById('loginModal');
     if (loginModalEl) {
       loginModalEl.classList.add('hidden');
@@ -1887,9 +1911,10 @@ document.addEventListener('click', (e) => {
 
 function logout() {
   closeUserDropdown();
-  localStorage.removeItem('hs_token');
-  localStorage.removeItem('hs_user');
-  localStorage.removeItem('hs_tenant');
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch (e) {}
   currentUser = null;
   populateSavedCredentials();
   window.location.href = '/';

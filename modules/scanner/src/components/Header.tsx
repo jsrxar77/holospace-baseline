@@ -63,7 +63,7 @@ export const Header: React.FC<HeaderProps> = ({
         window.sessionStorage.clear();
       } catch (e) {}
       // Forzar navegación dura e inmediata a la Landing Page oficial sin disparar re-render de React
-      window.location.replace('https://holospace.com.ar/');
+      window.location.replace('https://holospace.com.ar/?logout=true');
       return;
     }
     logout();
