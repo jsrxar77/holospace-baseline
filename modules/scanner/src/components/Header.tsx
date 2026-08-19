@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
       window.localStorage.removeItem('hs_token');
       window.localStorage.removeItem('hs_user');
       window.localStorage.removeItem('hs_tenant');
-      window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(window.location.href);
+      window.location.href = 'https://holospace.com.ar/';
       return;
     }
     if (onLogout) onLogout();

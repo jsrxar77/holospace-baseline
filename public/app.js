@@ -1892,7 +1892,7 @@ function logout() {
   localStorage.removeItem('hs_tenant');
   currentUser = null;
   populateSavedCredentials();
-  window.location.href = '/login';
+  window.location.href = '/';
 }
 
 // ============================================================
