@@ -88,7 +88,7 @@ services:
       dockerfile: Dockerfile
     container_name: holospace_mobile
     restart: unless-stopped
-    command: ["npx", "expo", "start", "--web", "--host", "lan", "--port", "8081"]
+    command: ["npx", "expo", "start", "--web", "--host", "lan", "--port", "8081", "-c"]
     ports:
       - "8081:8081"
       - "19000:19000"
