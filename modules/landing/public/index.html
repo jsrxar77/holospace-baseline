@@ -441,5 +441,65 @@
       event.target.classList.add('active');
     }
   </script>
+
+  <script>
+    // Enlaces dinámicos a los 4 módulos de la plataforma
+    document.addEventListener('DOMContentLoaded', () => {
+      const moduleCards = document.querySelectorAll('.module-card');
+      const moduleUrls = [
+        '/tenant',
+        '/core',
+        '/kanban',
+        'https://m.holospace.com.ar'
+      ];
+      const moduleTitles = [
+        'Abrir Módulo Tenant',
+        'Abrir Módulo Core',
+        'Abrir Módulo Kanban',
+        'Abrir Scanner Móvil'
+      ];
+      const moduleColors = [
+        'var(--accent-amber)',
+        'var(--accent-primary)',
+        'var(--accent-emerald)',
+        'var(--accent-peach)'
+      ];
+
+      moduleCards.forEach((card, idx) => {
+        if (moduleUrls[idx]) {
+          card.classList.add('module-link');
+          card.style.cursor = 'pointer';
+          card.setAttribute('title', moduleTitles[idx]);
+          card.setAttribute('tabindex', '0');
+          card.setAttribute('role', 'link');
+
+          // Agregar texto ACCEDER -> si no lo tiene
+          if (!card.querySelector('.module-cta-link')) {
+            const cta = document.createElement('div');
+            cta.className = 'module-cta-link pixel-font';
+            cta.style.color = moduleColors[idx];
+            cta.innerText = 'ACCEDER →';
+            card.appendChild(cta);
+          }
+
+          card.addEventListener('click', (e) => {
+            if (moduleUrls[idx].startsWith('http')) {
+              window.location.href = moduleUrls[idx];
+            } else {
+              window.location.href = moduleUrls[idx];
+            }
+          });
+
+          card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              window.location.href = moduleUrls[idx];
+            }
+          });
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>
