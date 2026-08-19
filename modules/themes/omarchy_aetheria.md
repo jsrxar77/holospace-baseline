@@ -1,6 +1,6 @@
-# Tema Omarchy Aetheria — Especificación Visual
+# Tema Omarchy Aetherial — Especificación Visual
 
-> **Nombre:** Omarchy Aetheria  
+> **Nombre:** Omarchy Aetherial  
 > **Clave Interna:** `omarchy_aetheria`  
 > **Tipografía:** `JetBrains Mono`  
 > **Radio de Bordes:** `4px`

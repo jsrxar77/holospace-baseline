@@ -1,6 +1,6 @@
-# Tema Soft Minimal Pastel — Especificación Visual
+# Tema Soft Pastel — Especificación Visual
 
-> **Nombre:** Soft Minimal Pastel  
+> **Nombre:** Soft Pastel  
 > **Clave Interna:** `soft_minimal_pastel`  
 > **Tipografía:** `Plus Jakarta Sans`  
 > **Radio de Bordes:** `16px`

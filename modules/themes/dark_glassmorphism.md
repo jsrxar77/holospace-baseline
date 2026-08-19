@@ -1,6 +1,6 @@
-# Tema Dark Glassmorphism — Especificación Visual
+# Tema Dark Glass — Especificación Visual
 
-> **Nombre:** Dark Glassmorphism  
+> **Nombre:** Dark Glass  
 > **Clave Interna:** `dark_glassmorphism`  
 > **Tipografía:** `Outfit`  
 > **Radio de Bordes:** `24px`

@@ -1,7 +1,7 @@
 {
   "omarchy_tiling": {
     "key": "omarchy_tiling",
-    "name": "Omarchy Tiling WM (Dracula)",
+    "name": "Omarchy Tiling",
     "background": "#121317",
     "cardBg": "#1A1B22",
     "cardBorder": "#2E303E",
@@ -23,7 +23,7 @@
   },
   "omarchy_aetheria": {
     "key": "omarchy_aetheria",
-    "name": "Omarchy Aetheria",
+    "name": "Omarchy Aetherial",
     "background": "#0E091D",
     "cardBg": "#170F2E",
     "cardBorder": "#3D256D",
@@ -45,7 +45,7 @@
   },
   "soft_minimal_pastel": {
     "key": "soft_minimal_pastel",
-    "name": "Soft Minimal Pastel",
+    "name": "Soft Pastel",
     "background": "#1E1E2E",
     "cardBg": "#252538",
     "cardBorder": "#36364F",
@@ -67,7 +67,7 @@
   },
   "dark_glassmorphism": {
     "key": "dark_glassmorphism",
-    "name": "Dark Glassmorphism",
+    "name": "Dark Glass",
     "background": "#0B0E14",
     "cardBg": "rgba(18, 24, 38, 0.55)",
     "cardBorder": "rgba(255, 255, 255, 0.12)",
@@ -89,7 +89,7 @@
   },
   "cyberpunk_glassmorphism": {
     "key": "cyberpunk_glassmorphism",
-    "name": "Cyberpunk Glassmorphism",
+    "name": "Cyberpunk Glass",
     "background": "#05050A",
     "cardBg": "rgba(20, 10, 35, 0.70)",
     "cardBorder": "rgba(255, 0, 127, 0.45)",

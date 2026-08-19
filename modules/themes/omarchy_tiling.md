@@ -1,6 +1,6 @@
-# Tema Omarchy Tiling WM (Dracula) — Especificación Visual
+# Tema Omarchy Tiling — Especificación Visual
 
-> **Nombre:** Omarchy Tiling WM (Dracula)  
+> **Nombre:** Omarchy Tiling  
 > **Clave Interna:** `omarchy_tiling`  
 > **Tipografía:** `JetBrains Mono`  
 > **Radio de Bordes:** `4px`

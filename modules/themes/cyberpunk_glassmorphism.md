@@ -1,6 +1,6 @@
-# Tema Cyberpunk Glassmorphism — Especificación Visual
+# Tema Cyberpunk Glass — Especificación Visual
 
-> **Nombre:** Cyberpunk Glassmorphism  
+> **Nombre:** Cyberpunk Glass  
 > **Clave Interna:** `cyberpunk_glassmorphism`  
 > **Tipografía:** `Press Start 2P`  
 > **Radio de Bordes:** `8px`
