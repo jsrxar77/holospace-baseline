@@ -9,28 +9,28 @@ import { SupervisorModal } from '../components/SupervisorModal';
 
 interface OrderSummaryScreenProps {
   onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
-  handleGoScanner?: () => void;
-  handleGoDispatch?: () => void;
+  onNavigateToScanner?: () => void;
+  onNavigateToDispatch?: () => void;
   onBack?: () => void;
 }
 
 export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   onNavigate,
-  handleGoScanner,
-  handleGoDispatch,
+  onNavigateToScanner,
+  onNavigateToDispatch,
   onBack
 }) => {
   const handleGoBack = () => {
     if (onNavigate) onNavigate('HOME');
-    else if (onBack) handleGoBack();
+    else if (onBack) onBack();
   };
   const handleGoScanner = () => {
     if (onNavigate) onNavigate('SCANNER');
-    else if (handleGoScanner) handleGoScanner();
+    else if (onNavigateToScanner) onNavigateToScanner();
   };
   const handleGoDispatch = () => {
     if (onNavigate) onNavigate('DISPATCH');
-    else if (handleGoDispatch) handleGoDispatch();
+    else if (onNavigateToDispatch) onNavigateToDispatch();
   };
   const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
   const { theme } = useThemeStore();
