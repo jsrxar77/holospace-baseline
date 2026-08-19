@@ -1228,3 +1228,28 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
     transform: translate(95vw, -80vh) rotate(720deg);
   }
 }
+
+
+/* ============================================================ */
+/* CLEAN RETRO SPACE LOGIN VIEW (HIDE APP SHELL DURING LOGIN)   */
+/* ============================================================ */
+body:has(#loginModal:not(.hidden)) .app-header-shell,
+body:has(#loginModal:not(.hidden)) main,
+body:has(#loginModal:not(.hidden)) .app-status-bar,
+body:has(#loginModal:not(.hidden)) #mobileNavDrawer,
+body:has(#loginModal:not(.hidden)) #mobileDrawerOverlay {
+  display: none !important;
+}
+
+#loginModal:not(.hidden) {
+  position: fixed !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: 100vw !important; height: 100vh !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 100 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}

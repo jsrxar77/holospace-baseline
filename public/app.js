@@ -138,6 +138,7 @@ async function loadAppConfig() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.add('state-logged-out');
   loadActiveTheme();
   loadAppConfig();
   populateSavedCredentials();
@@ -146,6 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const userJson = localStorage.getItem('hs_user');
   const tenantJson = localStorage.getItem('hs_tenant');
   if (token && userJson) {
+    document.body.classList.remove('state-logged-out');
+    document.body.classList.add('state-logged-in');
     currentUser = JSON.parse(userJson);
     const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'Drink Lovers Argentina' };
     document.getElementById('loginModal').classList.add('hidden');
@@ -180,6 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('hs_saved_email', email);
 
+        document.body.classList.remove('state-logged-out');
+        document.body.classList.add('state-logged-in');
         const loginModalEl = document.getElementById('loginModal');
         if (loginModalEl) {
           loginModalEl.classList.add('hidden');
