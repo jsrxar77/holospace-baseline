@@ -1,38 +1,77 @@
 #!/usr/bin/env bash
-# devops-git-push-verify.sh - Script de automatización para commit, push y verificación de sincronización Git
+# ==============================================================================
+# HOLOSPACE - CONFIRMACION, SUBIDA Y VERIFICACION DE DESPLIEGUE (GIT -> PROD)
+# ==============================================================================
 
-set -e
+REMOTE_IP="5.161.237.189"
+LOG_FILE="/opt/holospace/logs/deploy.log"
+TIMEOUT=180
+INTERVAL=10
 
-COMMIT_MSG="${1:-"feat: updates and fixes $(date '+%Y-%m-%d %H:%M:%S')"}"
+echo "======================================================================"
+echo "🚀 INICIANDO PROCESO DE PUBLICACION Y VERIFICACION DE DESPLIEGUE"
+echo "======================================================================"
 
-echo "======================================================"
-echo "🚀 DevOps Git Push & Verification Tool"
-echo "======================================================"
+echo ""
+echo "🔍 Analizando el estado de Git..."
+git status --short
 
-echo "📦 1. Agregando archivos al área de preparación (git add .)..."
-git add .
-
-if git diff-index --quiet HEAD --; then
-  echo "ℹ️ No hay cambios nuevos para commitear."
-else
-  echo "✍️ 2. Creando commit: '$COMMIT_MSG'..."
-  git commit -m "$COMMIT_MSG"
+HAS_CHANGES=false
+if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git status --porcelain)" ]; then
+    HAS_CHANGES=true
 fi
 
-echo "⬆️ 3. Enviando cambios al repositorio remoto (git push origin main)..."
+UNPUSHED_COMMITS=$(git log origin/main..HEAD --oneline 2>/dev/null)
+
+if [ "$HAS_CHANGES" = false ] && [ -z "$UNPUSHED_COMMITS" ]; then
+    echo "✔️ No hay cambios pendientes ni commits por subir. Tu copia local esta al dia."
+    exit 0
+fi
+
+if [ "$HAS_CHANGES" = true ]; then
+    echo ""
+    echo "📦 Se detectaron cambios locales."
+    COMMIT_MSG=$1
+    if [ -z "$COMMIT_MSG" ]; then
+        read -p "✍️ Introduce el mensaje del commit: " COMMIT_MSG
+    fi
+    
+    if [ -z "$COMMIT_MSG" ]; then
+        echo "❌ Error: El mensaje del commit no puede estar vacio."
+        exit 1
+    fi
+    
+    echo "➕ Agregando cambios a Git..."
+    git add -A
+    git commit -m "$COMMIT_MSG"
+    if [ $? -ne 0 ]; then
+        echo "❌ Error al realizar el commit local."
+        exit 1
+    fi
+fi
+
+CURRENT_HASH=$(git rev-parse HEAD)
+echo "🔑 Hash del commit a desplegar: $CURRENT_HASH"
+
+echo ""
+echo "⬆️ Subiendo cambios a GitHub (origin/main)..."
 git push origin main
-
-echo "🔍 4. Verificando estado de sincronización con origin/main..."
-git fetch origin main
-
-STATUS_OUTPUT=$(git status)
-echo "$STATUS_OUTPUT"
-
-if echo "$STATUS_OUTPUT" | grep -q "working tree clean" && echo "$STATUS_OUTPUT" | grep -q "up to date"; then
-  echo ""
-  echo "✅ ¡VERIFICACIÓN EXITOSA! El repositorio local y remoto están 100% sincronizados y limpios."
-else
-  echo ""
-  echo "⚠️ Advertencia: Hay diferencias o archivos pendientes."
+if [ $? -ne 0 ]; then
+    echo "❌ Error al subir cambios a GitHub."
+    exit 1
 fi
-echo "======================================================"
+
+echo "✔️ Cambios subidos a GitHub exitosamente."
+
+echo ""
+echo "======================================================================"
+echo "⏳ ESPERANDO APLICACION EN SERVIDOR REMOTO ($REMOTE_IP)..."
+echo "======================================================================"
+
+# Ejecutar deploy de inmediato en el remoto
+ssh "root@$REMOTE_IP" "bash /opt/holospace/bin/helper/deploy.sh"
+
+echo ""
+echo "======================================================================"
+echo "🎉 DESPLIEGUE EN PRODUCCION VERIFICADO Y COMPLETADO EXITOSAMENTE"
+echo "======================================================================"
