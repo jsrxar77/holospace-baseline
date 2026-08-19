@@ -43,10 +43,12 @@ body.theme-omarchy_tiling .brand-title * {
 
 body.theme-omarchy_tiling .logo-holo {
   color: #F8F8F2 !important;
+  text-shadow: 2px 2px 0px #313244, 4px 4px 0px #11111B !important;
 }
 
 body.theme-omarchy_tiling .logo-space {
   color: #50FA7B !important;
+  text-shadow: 2px 2px 0px #1E4620, 4px 4px 0px #11111B, 0 0 8px rgba(80, 250, 123, 0.4) !important;
 }
 
 body.theme-omarchy_tiling #activeContextBadge {

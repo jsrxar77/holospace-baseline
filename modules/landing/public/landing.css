@@ -130,7 +130,6 @@ body {
   letter-spacing: 0px;
   font-family: 'Press Start 2P', monospace !important;
   font-size: 22px !important;
-  text-shadow: 2px 2px 0px #000;
 }
 
 .brand-badge span.logo-holo {
@@ -139,6 +138,9 @@ body {
   font-size: 22px !important;
   margin: 0;
   padding: 0;
+  text-shadow: 
+    2px 2px 0px #363A4F,
+    4px 4px 0px #0F101A;
 }
 
 .brand-badge span.logo-space {
@@ -147,7 +149,10 @@ body {
   font-size: 22px !important;
   margin: 0;
   padding: 0;
-  text-shadow: 2px 2px 0px #000, 0 0 10px rgba(166, 218, 149, 0.4);
+  text-shadow: 
+    2px 2px 0px #2D4F3B,
+    4px 4px 0px #0F101A,
+    0 0 12px rgba(166, 218, 149, 0.35);
 }
 
 .status-pill {
@@ -228,15 +233,19 @@ body {
   color: var(--accent-mauve);
   border-radius: 4px;
   margin-bottom: 24px;
-  box-shadow: var(--pixel-shadow-sm);
+  box-shadow: var(--pixel-shadow);
+  text-shadow: 1px 1px 0px #0F101A;
 }
 
 .hero-title {
-  font-size: 34px;
-  line-height: 1.3;
-  color: #FFF;
+  font-size: 32px;
+  line-height: 1.4;
+  color: #FFFFFF;
   max-width: 900px;
   margin: 0 auto 24px;
+  text-shadow: 
+    3px 3px 0px var(--border-color),
+    6px 6px 0px #0F101A;
 }
 
 .hero-subtitle {
@@ -401,9 +410,12 @@ body {
 
 .section-title {
   text-align: center;
-  font-size: 24px;
-  color: #FFF;
+  font-size: 22px;
+  color: #FFFFFF;
   margin-bottom: 12px;
+  text-shadow: 
+    2px 2px 0px var(--border-color),
+    4px 4px 0px #0F101A;
 }
 
 .section-subtitle {
@@ -506,12 +518,14 @@ body {
   color: #FFFFFF !important;
   font-family: 'Press Start 2P', monospace !important;
   font-size: 20px !important;
+  text-shadow: 2px 2px 0px #363A4F, 4px 4px 0px #0F101A;
 }
 
 .footer-logo span.logo-space {
   color: var(--accent-emerald) !important;
   font-family: 'Press Start 2P', monospace !important;
   font-size: 20px !important;
+  text-shadow: 2px 2px 0px #2D4F3B, 4px 4px 0px #0F101A, 0 0 10px rgba(166, 218, 149, 0.35);
 }
 
 .footer-platform-label {
