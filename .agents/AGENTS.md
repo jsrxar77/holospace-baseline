@@ -113,3 +113,18 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
 4. **Pilar 4 — Trazabilidad & Roadmap:**
    - Sincronizar el estado en `roadmap/SAAS_MULTITENANT_ROADMAP.md` y documentar en `walkthrough.md`.
 
+
+
+---
+
+## 🎨 Regla de Oro Obligatoria: Centralización Estricta del Sistema de Temas (Single Source of Truth)
+
+1. **Definición Única en `/modules/themes/`:** Queda terminantemente prohibido crear, hardcodear o duplicar definiciones de temas, tokens de color o archivos de estilo específicos dentro de las subcarpetas de módulos individuales (`modules/core`, `modules/kanban`, `modules/scanner`, etc.).
+2. **5 Temas Oficiales de Plataforma:** Toda la plataforma (`server.js`, Web App y Mobile Scanner) debe operar exclusivamente con los 5 temas oficiales definidos en `modules/themes/themes.json`:
+   - `omarchy_tiling` (Omarchy Tiling WM Dracula - Predeterminado)
+   - `omarchy_aetheria` (Omarchy Aetheria Teal & Violet)
+   - `soft_minimal_pastel` (Soft Minimal Pastel)
+   - `dark_glassmorphism` (Dark Glassmorphism)
+   - `cyberpunk_glassmorphism` (Cyberpunk Glassmorphism)
+3. **Consumo Universal vía API `/api/theme`:** Todos los componentes Web y pantallas de React Native deben consumir los tokens dinámicos entregados por el endpoint central `/api/theme`, respetando colores, radios de borde, tipografías y sombras del tema activo.
+4. **Aislamiento de Fondos Dinámicos:** Los fondos animados con estrellas y asteroides son exclusivos del **Landing** y del **Login**. Las vistas autenticadas (`Tenant`, `Core`, `Kanban`, `Scanner`) deben permanecer con fondos sólidos estáticos.
