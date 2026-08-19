@@ -995,19 +995,19 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 /* 8-BIT RETRO ANIMATED PIXEL BACKGROUND FOR LOGIN MODAL        */
 /* ============================================================ */
 #loginModal:not(.hidden) {
-  background-color: #0F101A !important;
+  background-color: var(--bg-main, #181926) !important;
   background-image: 
     radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 40px 70px, #A6DA95, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 50px 160px, #8AADF4, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 90px 40px, #C6A0F6, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 130px 80px, #F5A97F, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 160px 120px, #EED49F, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 80px 140px, #A6DA95, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 150px 70px, #8AADF4, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 240px 190px, #C6A0F6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 320px 110px, #EED49F, rgba(0,0,0,0)),
+    radial-gradient(4px 4px at 400px 260px, #F5A97F, rgba(0,0,0,0)),
     linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
     linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
-  background-size: 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 200px 200px, 32px 32px, 32px 32px !important;
+  background-size: 350px 350px, 450px 450px, 300px 300px, 400px 400px, 320px 320px, 500px 500px, 32px 32px, 32px 32px !important;
   background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
-  animation: pixelStarfieldMove 40s linear infinite !important;
+  animation: spaceStarfieldSlow 60s linear infinite !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -1064,13 +1064,13 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
 /* MULTICOLOR 8-BIT PIXEL ROCKET ICON STYLING                   */
 /* ============================================================ */
 .pixel-rocket-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   margin-left: 10px;
   display: inline-block;
   vertical-align: middle;
   image-rendering: pixelated;
-  filter: drop-shadow(3px 3px 0px #000000) drop-shadow(0 0 8px rgba(237, 135, 150, 0.4));
+  filter: drop-shadow(2px 2px 0px #000000) drop-shadow(0 0 10px rgba(243, 139, 168, 0.5));
   animation: rocketPulse 2s steps(2) infinite;
   transform-origin: center;
 }
