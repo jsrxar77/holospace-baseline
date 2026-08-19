@@ -660,13 +660,13 @@ body {
 /* MULTICOLOR 8-BIT PIXEL ROCKET ICON STYLING                   */
 /* ============================================================ */
 .pixel-rocket-icon {
-  width: 34px;
-  height: 34px;
-  margin-left: 10px;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
   display: inline-block;
   vertical-align: middle;
   image-rendering: pixelated;
-  filter: drop-shadow(2px 2px 0px #000000) drop-shadow(0 0 10px rgba(243, 139, 168, 0.5));
+  filter: drop-shadow(2px 2px 0px #000000);
   animation: rocketPulse 2s steps(2) infinite;
   transform-origin: center;
 }
