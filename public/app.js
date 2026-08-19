@@ -147,16 +147,30 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = localStorage.getItem('hs_token');
   const userJson = localStorage.getItem('hs_user');
   const tenantJson = localStorage.getItem('hs_tenant');
+  const currentPath = window.location.pathname.toLowerCase();
+
   if (token && userJson) {
     document.body.classList.remove('state-logged-out');
     document.body.classList.add('state-logged-in');
     currentUser = JSON.parse(userJson);
-    const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'Drink Lovers Argentina' };
-    document.getElementById('loginModal').classList.add('hidden');
-    document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${tenant.name || 'Drink Lovers'})`;
+    const tenant = tenantJson ? JSON.parse(tenantJson) : { name: 'HoloSpace' };
+    const loginModalEl = document.getElementById('loginModal');
+    if (loginModalEl) {
+      loginModalEl.classList.add('hidden');
+      loginModalEl.style.display = 'none';
+    }
+    const userBadgeEl = document.getElementById('userBadge');
+    if (userBadgeEl) {
+      userBadgeEl.innerText = `${currentUser.role}: ${currentUser.email} (${tenant.name || 'HoloSpace'})`;
+    }
     applyRoleVisibility();
-    loadKanbanData();
-    setInterval(loadKanbanData, 3000);
+  } else {
+    // Si no está autenticado y accede a una ruta interna, abrir modal de login
+    const loginModalEl = document.getElementById('loginModal');
+    if (loginModalEl) {
+      loginModalEl.classList.remove('hidden');
+      loginModalEl.style.display = 'flex';
+    }
   }
 
   document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -206,11 +220,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const orgName = data.tenant ? data.tenant.name : 'Drink Lovers';
         document.getElementById('userBadge').innerText = `${currentUser.role}: ${currentUser.email} (${orgName})`;
         applyRoleVisibility();
-        if (currentUser.role === 'SUPERADMIN') {
-          loadTenantDirectory();
+        const currentPath = window.location.pathname.toLowerCase();
+        if (currentPath.includes('core')) {
+          switchModule('core');
+        } else if (currentPath.includes('tenant')) {
+          switchModule('tenant');
+        } else if (currentPath.includes('orders')) {
+          switchModule('kanban');
+          switchTab('orders');
+        } else if (currentPath.includes('kanban')) {
+          switchModule('kanban');
+          switchTab('kanban');
         } else {
-          loadKanbanData();
-          setInterval(loadKanbanData, 3000);
+          if (currentUser.role === 'SUPERADMIN') {
+            switchModule('tenant');
+          } else {
+            switchModule('kanban');
+          }
         }
 
       } else {
@@ -1863,9 +1889,10 @@ function logout() {
   closeUserDropdown();
   localStorage.removeItem('hs_token');
   localStorage.removeItem('hs_user');
+  localStorage.removeItem('hs_tenant');
   currentUser = null;
   populateSavedCredentials();
-  document.getElementById('loginModal').classList.remove('hidden');
+  window.location.href = '/login';
 }
 
 // ============================================================

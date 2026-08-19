@@ -339,7 +339,7 @@ const server = http.createServer(async (req, res) => {
 
   // Rutas estáticas & Rutas directas de Módulos (SPA routing: /login, /tenant, /core, /kanban, /scanner)
   const isSpaModuleRoute = ['/login', '/app', '/tenant', '/tenants', '/core', '/kanban', '/scanner', '/orders', '/stockflow', '/scanban', '/scanflow'].includes(reqPath);
-  if (reqPath === '/' || reqPath === '/index.html' || isSpaModuleRoute) {
+  if (isSpaModuleRoute) {
     let indexPath = path.join(__dirname, 'public', 'index.html');
     if (!fs.existsSync(indexPath)) {
       indexPath = path.join(__dirname, 'modules', 'core', 'public', 'index.html');
