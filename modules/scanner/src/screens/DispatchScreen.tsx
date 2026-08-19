@@ -160,9 +160,9 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    backgroundColor: 'rgba(166, 218, 149, 0.15)',
     borderWidth: 2,
-    borderColor: '#00E676',
+    borderColor: '#A6DA95',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 32,
-    color: '#00E676',
+    color: '#A6DA95',
     fontWeight: '900'
   },
   iconTextPartial: {
@@ -234,19 +234,19 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace'
   },
   textEmerald: {
-    color: '#00E676'
+    color: '#A6DA95'
   },
   textAmber: {
     color: '#F59E0B'
   },
   btnHome: {
     width: '100%',
-    backgroundColor: '#00E676',
+    backgroundColor: '#A6DA95',
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#00E676',
+    shadowColor: '#A6DA95',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

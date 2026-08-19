@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
     lineHeight: 24
   },
   btnPermission: {
-    backgroundColor: '#00E676',
+    backgroundColor: '#A6DA95',
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 16
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     elevation: 8
   },
   toastSuccess: {
-    backgroundColor: '#00E676'
+    backgroundColor: '#A6DA95'
   },
   toastError: {
     backgroundColor: '#FF5252'
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     width: 280,
     height: 180,
     borderWidth: 3,
-    borderColor: '#00E676',
+    borderColor: '#A6DA95',
     borderRadius: 20,
     alignSelf: 'center',
     justifyContent: 'center',
@@ -340,12 +340,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#161B22',
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: '#00E676',
+    borderColor: '#A6DA95',
     padding: 24,
     gap: 16
   },
   modalTitle: {
-    color: '#00E676',
+    color: '#A6DA95',
     fontSize: 18,
     fontWeight: '900',
     textAlign: 'center'
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
   btnModalSubmit: {
     flex: 1,
     minHeight: 56,
-    backgroundColor: '#00E676',
+    backgroundColor: '#A6DA95',
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',

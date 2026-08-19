@@ -51,7 +51,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
               borderRadius: badgeRadius,
               borderWidth: borderWidthVal,
               borderColor: isCompleted ? theme.emerald : theme.cardBorder,
-              backgroundColor: isCompleted ? 'rgba(0, 230, 118, 0.15)' : 'rgba(255, 255, 255, 0.05)'
+              backgroundColor: isCompleted ? 'rgba(166, 218, 149, 0.15)' : 'rgba(255, 255, 255, 0.05)'
             }
           ]}
         >
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     borderWidth: 1
   },
   badgeCompleted: {
-    backgroundColor: 'rgba(0, 230, 118, 0.15)',
+    backgroundColor: 'rgba(166, 218, 149, 0.15)',
     borderColor: '#00E676'
   },
   badgePending: {

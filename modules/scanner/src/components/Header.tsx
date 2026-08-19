@@ -91,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({
             Holo<Text style={[
               styles.titleSpace,
               {
-                color: isOmarchy ? '#50FA7B' : theme.emerald,
+                color: theme.emerald,
                 textShadowColor: isOmarchy ? '#1E4620' : 'transparent',
                 textShadowOffset: isOmarchy ? { width: 2, height: 2 } : { width: 0, height: 0 },
                 textShadowRadius: 0

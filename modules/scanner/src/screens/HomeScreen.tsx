@@ -163,7 +163,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                       PEDIDO #{doingItem.orderNumber}
                     </Text>
                     {isFocused && (
-                      <View style={{ backgroundColor: 'rgba(0, 230, 118, 0.15)', borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
+                      <View style={{ backgroundColor: 'rgba(166, 218, 149, 0.15)', borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
                         <Text style={{ color: theme.emerald, fontSize: 11, fontWeight: '900', fontFamily: fontFamilyMono }}>EN FOCO</Text>
                       </View>
                     )}
@@ -183,7 +183,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                       onPress={() => handleSelectOrderToAudit(doingItem.id, doingItem.orderNumber)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.btnContinueText, { fontFamily: fontFamilyMain }]}>
+                      <Text style={[styles.btnContinueText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>
                         {isFocused ? 'CONTINUAR ESCANEO' : 'AUDITAR ESTE PEDIDO'}
                       </Text>
                     </TouchableOpacity>
