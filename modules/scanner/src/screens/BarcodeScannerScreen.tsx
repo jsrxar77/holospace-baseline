@@ -124,31 +124,31 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
       {/* Top Floating Action Controls */}
       <View style={styles.topControls}>
+        {/* Botón Linterna / Flash */}
         <TouchableOpacity
-          style={[styles.btnCircle, { backgroundColor: isOmarchy ? '#181825' : '#161B22', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          style={[styles.btnCircle, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={() => setTorch(!torch)}
           activeOpacity={0.8}
         >
-          <Text style={styles.btnIcon}>{torch ? '🔦' : '💡'}</Text>
+          <Text style={[styles.btnCircleText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
         </TouchableOpacity>
 
+        {/* Botón Ingreso Manual */}
         <TouchableOpacity
-          style={[styles.btnCircle, { backgroundColor: isOmarchy ? '#181825' : '#161B22', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          style={[styles.btnCircle, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={() => setManualModalOpen(true)}
           activeOpacity={0.8}
         >
-          <Text style={styles.btnIcon}>⌨️</Text>
+          <Text style={[styles.btnCircleText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
         </TouchableOpacity>
-      </View>
 
-      {/* Bottom Sticky Action: Finalizar Escaneo */}
-      <View style={styles.bottomControls}>
+        {/* Botón Cerrar / Volver a Resumen */}
         <TouchableOpacity
-          style={[styles.btnClose, { backgroundColor: isOmarchy ? '#1E1E2E' : '#21262D', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          style={[styles.btnClose, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={handleCloseScanner}
           activeOpacity={0.8}
         >
-          <Text style={[styles.btnCloseText, { color: theme.textMain, fontFamily: fontFamilyMain }]}>FINALIZAR ESCANEO</Text>
+          <Text style={[styles.btnCloseText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>VOLVER AL RESUMEN</Text>
         </TouchableOpacity>
       </View>
 

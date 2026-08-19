@@ -65,7 +65,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.modalCard, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: isPartial ? theme.amber : theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+        <View style={[styles.modalCard, { backgroundColor: theme.cardBg, borderColor: isPartial ? theme.amber : theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
           {/* Top Checkmark Icon */}
           <View style={[styles.iconCircle, { borderColor: isPartial ? theme.amber : theme.emerald, backgroundColor: isPartial ? 'rgba(245, 158, 11, 0.15)' : 'rgba(166, 218, 149, 0.15)', borderRadius: badgeRadius, borderWidth: borderWidthVal }]}>
             <Text style={[styles.iconText, { color: isPartial ? theme.amber : theme.emerald, fontFamily: fontFamilyMono }]}>
