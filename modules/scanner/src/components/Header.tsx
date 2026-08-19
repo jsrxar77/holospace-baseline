@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 // Icono Nave Retro Multicolor Oficial
-const RetroShipIcon: React.FC<{ size?: number }> = ({ size = 20 }) => (
+const RetroShipIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
   <Svg width={size} height={size} viewBox="0 0 28 28">
     <G transform="rotate(45, 14, 14)">
       <Rect x="12" y="3" width="4" height="4" fill="#8AADF4" />
@@ -35,15 +35,20 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { user, logout } = useAuthStore();
   const { theme } = useThemeStore();
-  const displayBadge = badgeText || (user ? `OP: ${(user as any).username || user.email}` : 'OP: Desconectado');
-  const orgName = user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'POKE';
 
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : 4;
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : 4;
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : 2;
+  const isOmarchy = theme.borderRadius === 4;
+  const isSoftMinimal = theme.borderRadius === 16;
+
+  const orgName = user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'POKE';
+  const displayUser = (user as any)?.username || (user?.email ? user.email.split('@')[0] : 'operario');
+
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : (isSoftMinimal ? 16 : 24));
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : (isSoftMinimal ? 20 : 16));
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 4 : (isSoftMinimal ? 20 : 8));
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+
+  const logoFontFamily = isOmarchy ? 'Press Start 2P' : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit');
+  const fontFamilyMono = isOmarchy ? 'JetBrains Mono' : 'monospace';
 
   const handleLogoutPress = () => {
     logout();
@@ -56,44 +61,62 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={[
       styles.container,
       {
-        backgroundColor: theme.cardBg,
-        borderBottomColor: theme.cardBorder,
-        borderBottomWidth: borderWidthVal,
+        backgroundColor: isOmarchy ? '#11111B' : theme.cardBg,
+        borderBottomColor: isOmarchy ? '#313244' : theme.cardBorder,
+        borderBottomWidth: isOmarchy ? 2 : borderWidthVal,
         paddingTop: paddingTopVal
       }
     ]}>
       <View style={styles.brandGroup}>
         <View style={styles.titleRow}>
-          <Text style={[styles.titleHolo, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
-            Holo<Text style={[styles.titleSpace, { color: theme.emerald }]}>Space</Text>
+          <Text style={[
+            styles.titleHolo,
+            {
+              color: isOmarchy ? '#F8F8F2' : theme.textMain,
+              fontFamily: logoFontFamily,
+              fontSize: isOmarchy ? 18 : 22,
+              letterSpacing: isOmarchy ? 1 : -0.5,
+              textShadowColor: isOmarchy ? '#313244' : 'transparent',
+              textShadowOffset: isOmarchy ? { width: 2, height: 2 } : { width: 0, height: 0 },
+              textShadowRadius: 0
+            }
+          ]}>
+            Holo<Text style={[
+              styles.titleSpace,
+              {
+                color: isOmarchy ? '#50FA7B' : theme.emerald,
+                textShadowColor: isOmarchy ? '#1E4620' : 'transparent',
+                textShadowOffset: isOmarchy ? { width: 2, height: 2 } : { width: 0, height: 0 },
+                textShadowRadius: 0
+              }
+            ]}>Space</Text>
           </Text>
           <View style={styles.shipWrapper}>
-            <RetroShipIcon size={20} />
+            <RetroShipIcon size={26} />
           </View>
           <View style={[
             styles.moduleBadge,
             {
-              backgroundColor: 'rgba(189, 147, 249, 0.15)',
-              borderColor: theme.cobalt || '#BD93F9',
+              backgroundColor: 'rgba(203, 166, 247, 0.15)',
+              borderColor: '#CBA6F7',
               borderRadius: badgeRadius,
               borderWidth: borderWidthVal
             }
           ]}>
-            <Text style={[styles.moduleBadgeText, { color: theme.cobalt || '#BD93F9', fontFamily: fontFamilyMono }]}>
+            <Text style={[styles.moduleBadgeText, { color: '#CBA6F7', fontFamily: fontFamilyMono }]}>
               {orgName}
             </Text>
           </View>
         </View>
-        <Text style={[styles.operatorText, { color: theme.textMuted, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="tail">
-          {displayBadge}
-        </Text>
       </View>
+
+      {/* Botón de Usuario / Salida idéntico al control de Header Web */}
       <TouchableOpacity
         style={[
-          styles.btnLogout,
+          styles.btnUserPill,
           {
-            backgroundColor: 'rgba(255, 85, 85, 0.12)',
-            borderColor: theme.red,
+            backgroundColor: isOmarchy ? '#181825' : '#21262D',
+            borderColor: isOmarchy ? '#313244' : theme.cardBorder,
             borderRadius: btnRadius,
             borderWidth: borderWidthVal
           }
@@ -101,9 +124,10 @@ export const Header: React.FC<HeaderProps> = ({
         onPress={handleLogoutPress}
         activeOpacity={0.7}
       >
-        <Text style={[styles.btnLogoutText, { color: theme.red, fontFamily: fontFamilyMono }]}>
-          CERRAR SESIÓN
+        <Text style={[styles.btnUserText, { color: isOmarchy ? '#CDD6F4' : '#FFFFFF', fontFamily: fontFamilyMono }]}>
+          {displayUser}
         </Text>
+        <Text style={[styles.btnExitTag, { color: theme.red, fontFamily: fontFamilyMono }]}>✕</Text>
       </TouchableOpacity>
     </View>
   );
@@ -111,8 +135,8 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center'
@@ -125,39 +149,41 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6
+    gap: 8
   },
   titleHolo: {
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.5
+    fontWeight: '900'
   },
   titleSpace: {
     fontWeight: '900'
   },
   shipWrapper: {
-    marginRight: 2
+    marginLeft: 2,
+    marginRight: 4
   },
   moduleBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     alignSelf: 'center'
   },
   moduleBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800'
   },
-  operatorText: {
+  btnUserPill: {
+    height: 34,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  btnUserText: {
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  btnExitTag: {
     fontSize: 11,
-    marginTop: 2
-  },
-  btnLogout: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    flexShrink: 0
-  },
-  btnLogoutText: {
-    fontSize: 10,
-    fontWeight: '900'
+    fontWeight: '900',
+    marginLeft: 2
   }
 });
