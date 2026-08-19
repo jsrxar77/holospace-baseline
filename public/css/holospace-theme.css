@@ -1058,3 +1058,30 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
   color: #A6DA95 !important;
   text-shadow: 2px 2px 0px #2D4F3B, 4px 4px 0px #0F101A, 0 0 10px rgba(166, 218, 149, 0.35) !important;
 }
+
+
+/* ============================================================ */
+/* MULTICOLOR 8-BIT PIXEL ROCKET ICON STYLING                   */
+/* ============================================================ */
+.pixel-rocket-icon {
+  width: 24px;
+  height: 24px;
+  margin-left: 8px;
+  display: inline-block;
+  vertical-align: middle;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 2px 0px #000000);
+  animation: rocketPulse 2s steps(2) infinite;
+}
+
+@keyframes rocketPulse {
+  0% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(2px, -2px);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
