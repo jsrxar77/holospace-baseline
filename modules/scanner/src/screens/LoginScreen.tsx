@@ -282,6 +282,18 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <Text style={styles.btnSubmitText}>Iniciar Sesión</Text>
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.backToHomeWrapper}
+          onPress={() => {
+            if (typeof window !== 'undefined') {
+              window.location.href = 'https://holospace.com.ar/';
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backToHomeText}>Volver a Inicio →</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -427,5 +439,15 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     fontFamily: Platform.OS === 'web' ? 'Press Start 2P, monospace' : 'monospace',
     letterSpacing: 0.5
+  },
+  backToHomeWrapper: {
+    marginTop: 14,
+    alignItems: 'flex-end'
+  },
+  backToHomeText: {
+    color: '#A5ADCB',
+    fontSize: 12,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'web' ? 'JetBrains Mono, monospace' : 'monospace'
   }
 });
