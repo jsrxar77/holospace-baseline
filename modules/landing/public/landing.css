@@ -120,8 +120,9 @@ body {
   text-decoration: none;
 }
 
-.brand-badge span.logo-holo { color: #FFF; font-size: 15px; }
-.brand-badge span.logo-space { color: var(--accent-emerald); font-size: 15px; }
+.brand-badge span.logo-holo { color: #FFF; font-size: 15px; margin: 0; padding: 0; }
+.brand-badge span.logo-space { color: var(--accent-emerald); font-size: 15px; margin: 0; padding: 0; }
+.brand-badge { display: inline-flex; align-items: center; text-decoration: none; }
 
 .status-pill {
   font-size: 11px;
