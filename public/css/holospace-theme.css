@@ -1,3 +1,16 @@
+
+/* ============================================================ */
+/* SPACE STARFIELD SLOW MOVING ANIMATION KEYFRAMES             */
+/* ============================================================ */
+@keyframes spaceStarfieldSlow {
+  0% {
+    background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 700px, 40px 960px, 130px 870px, 70px 900px, -50px 740px, 120px 1040px, 0 640px, 640px 0;
+  }
+}
+
 /* ============================================================ */
 /* HOLOSPACE BASELINE — CENTRALIZED DESIGN SYSTEM (HW-DS)        */
 /* Authoritative Theme System & Token Injection                 */
