@@ -53,7 +53,7 @@ function clearAuthSession() {
 }
 
 function populateSavedCredentials() {
-  const savedEmail = localStorage.getItem('hs_saved_email') || '';
+  const savedEmail = (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('hs_saved_email') : '') || (typeof localStorage !== 'undefined' ? localStorage.getItem('hs_saved_email') : '') || '';
   const emailInput = document.getElementById('loginEmail');
   const passwordInput = document.getElementById('loginPassword');
 
@@ -261,7 +261,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.success) {
         currentUser = data.user;
         setAuthSession(data.token, data.user, data.tenant);
-        localStorage.setItem('hs_saved_email', email);
+        try {
+          sessionStorage.setItem('hs_saved_email', email);
+        } catch (e) {}
 
         document.body.classList.remove('state-logged-out');
         document.body.classList.add('state-logged-in');
@@ -1955,7 +1957,7 @@ function logout() {
   clearAuthSession();
   currentUser = null;
   populateSavedCredentials();
-  window.location.href = '/login?logout=true';
+  window.location.href = '/';
 }
 
 // ============================================================

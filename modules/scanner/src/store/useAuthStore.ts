@@ -35,23 +35,29 @@ const CREDENTIALS_KEY_TENANT = 'hs_saved_mobile_tenant';
 
 export const saveSavedCredentials = (email: string, pass: string = '', tenantSlug: string = '') => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(CREDENTIALS_KEY_EMAIL, email);
-      if (pass) {
-        window.localStorage.setItem(CREDENTIALS_KEY_PASS, pass);
+    if (typeof window !== 'undefined') {
+      const storage = window.sessionStorage || window.localStorage;
+      if (storage) {
+        storage.setItem(CREDENTIALS_KEY_EMAIL, email);
+        if (pass) {
+          storage.setItem(CREDENTIALS_KEY_PASS, pass);
+        }
+        if (tenantSlug) storage.setItem(CREDENTIALS_KEY_TENANT, tenantSlug);
       }
-      if (tenantSlug) window.localStorage.setItem(CREDENTIALS_KEY_TENANT, tenantSlug);
     }
   } catch (e) { }
 };
 
 export const getSavedCredentials = () => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const email = window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) || '';
-      const password = window.localStorage.getItem(CREDENTIALS_KEY_PASS) || '';
-      const tenantSlug = window.localStorage.getItem(CREDENTIALS_KEY_TENANT) || 'poke';
-      return { email, password, tenantSlug };
+    if (typeof window !== 'undefined') {
+      const storage = window.sessionStorage || window.localStorage;
+      if (storage) {
+        const email = storage.getItem(CREDENTIALS_KEY_EMAIL) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_EMAIL) : '') || '';
+        const password = storage.getItem(CREDENTIALS_KEY_PASS) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_PASS) : '') || '';
+        const tenantSlug = storage.getItem(CREDENTIALS_KEY_TENANT) || (window.localStorage ? window.localStorage.getItem(CREDENTIALS_KEY_TENANT) : '') || 'poke';
+        return { email, password, tenantSlug };
+      }
     }
   } catch (e) { }
   return { email: '', password: '', tenantSlug: 'poke' };

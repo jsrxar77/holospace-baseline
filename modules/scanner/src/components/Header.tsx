@@ -58,13 +58,14 @@ export const Header: React.FC<HeaderProps> = ({
 
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
       try {
-        window.localStorage.clear();
-        window.sessionStorage.clear();
+        window.sessionStorage.removeItem('hs_token');
+        window.sessionStorage.removeItem('hs_user');
+        window.sessionStorage.removeItem('hs_tenant');
       } catch (e) {}
       if (typeof window.location.replace === 'function') {
-        window.location.replace('https://holospace.com.ar/login?logout=true');
+        window.location.replace('https://holospace.com.ar/');
       } else {
-        window.location.href = 'https://holospace.com.ar/login?logout=true';
+        window.location.href = 'https://holospace.com.ar/';
       }
     }
   };
