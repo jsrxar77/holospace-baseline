@@ -7,7 +7,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { SERVER_URL } from '../config';
 
 interface HomeScreenProps {
-  onNavigateToSummary: () => void;
+  onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
+  onNavigateToSummary?: () => void;
 }
 
 interface ReadyOrder {
@@ -16,7 +17,11 @@ interface ReadyOrder {
   totalItems: number;
 }
 
-export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) => {
+export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateToSummary }) => {
+  const goToSummary = () => {
+    if (onNavigate) onNavigate('SUMMARY');
+    else if (onNavigateToSummary) onNavigateToSummary();
+  };
   const { activeOrder, myDoingOrders, operatorId, loadInitialOrders, releaseOrder, focusDoingOrder } = useOrderStore();
   const { theme, fetchTheme } = useThemeStore();
   const [readyOrders, setReadyOrders] = useState<ReadyOrder[]>([]);
@@ -73,7 +78,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
     const success = await claimOrder(orderNumber);
     if (success) {
       await syncData();
-      onNavigateToSummary();
+      goToSummary();
     } else {
       Alert.alert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.');
     }
@@ -81,10 +86,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
 
   const handleSelectOrderToAudit = async (orderId: string, orderNumber: string) => {
     await focusDoingOrder(orderId || orderNumber);
-    onNavigateToSummary();
+    goToSummary();
   };
 
   const handleReleaseOrder = async (orderId: string, orderNumber: string) => {
+    // Si estamos en navegador Web
+    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+      const ok = window.confirm(`¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`);
+      if (ok) {
+        await releaseOrder(orderId || orderNumber);
+        await syncData();
+      }
+      return;
+    }
+
     Alert.alert(
       'Liberar Pedido',
       `¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`,
@@ -96,7 +111,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToSummary }) =
           onPress: async () => {
             await releaseOrder(orderId || orderNumber);
             await syncData();
-            Alert.alert('Pedido Liberado', `El Pedido #${orderNumber} fue devuelto a la columna LISTO (READY).`);
           }
         }
       ]
