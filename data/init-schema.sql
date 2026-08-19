@@ -312,7 +312,7 @@ CREATE POLICY rls_audit_logs_isolation ON platform_audit_logs
 
 -- Tenant 0: HoloSpace Cloud Platform (Tenant Proveedor Global)
 INSERT INTO tenants (id, slug, name, status)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace Cloud Platform', 'active')
+VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
@@ -369,7 +369,7 @@ ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Tenant 1: Drink Lovers Argentina
 INSERT INTO tenants (id, slug, name, status)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', 'drinklovers', 'Drink Lovers Argentina', 'active')
+VALUES ('550e8400-e29b-41d4-a716-446655440000', 'drinklovers', 'Drink Lovers', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
@@ -400,7 +400,7 @@ ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Tenant 2: Poke Argentina
 INSERT INTO tenants (id, slug, name, status)
-VALUES ('550e8400-e29b-41d4-a716-446655440001', 'poke', 'Poke Argentina', 'active')
+VALUES ('550e8400-e29b-41d4-a716-446655440001', 'poke', 'Poke', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
