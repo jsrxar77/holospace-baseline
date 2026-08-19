@@ -33,7 +33,8 @@ async function loadActiveTheme() {
     const data = await res.json();
     if (data && data.theme) {
       const activeKey = data.themeKey || 'omarchy_tiling';
-      document.body.className = 'theme-' + activeKey;
+      const isLoggedOut = !document.getElementById('loginModal') || !document.getElementById('loginModal').classList.contains('hidden');
+      document.body.className = 'theme-' + activeKey + (isLoggedOut ? ' state-logged-out' : ' state-logged-in');
       const root = document.documentElement;
       const t = data.theme;
 

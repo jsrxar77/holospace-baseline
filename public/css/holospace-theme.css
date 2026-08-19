@@ -1,5 +1,39 @@
 
 /* ============================================================ */
+/* BULLETPROOF MOVING SPACE STARFIELD FOR LOGIN                 */
+/* ============================================================ */
+html,
+body,
+body.state-logged-out,
+body:has(#loginModal:not(.hidden)),
+html:has(#loginModal:not(.hidden)) {
+  background-color: #181926 !important;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 80px 140px, #A6DA95, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 150px 70px, #8AADF4, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 240px 190px, #C6A0F6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 320px 110px, #EED49F, rgba(0,0,0,0)),
+    radial-gradient(4px 4px at 400px 260px, #F5A97F, rgba(0,0,0,0)),
+    linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
+  background-size: 350px 350px, 450px 450px, 300px 300px, 400px 400px, 320px 320px, 500px 500px, 32px 32px, 32px 32px !important;
+  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
+  animation: spaceStarfieldSlow 60s linear infinite !important;
+  min-height: 100vh !important;
+}
+
+@keyframes spaceStarfieldSlow {
+  0% {
+    background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0;
+  }
+  100% {
+    background-position: 0 700px, 40px 960px, 130px 870px, 70px 900px, -50px 740px, 120px 1040px, 0 640px, 640px 0;
+  }
+}
+
+
+/* ============================================================ */
 /* SPACE STARFIELD SLOW MOVING ANIMATION KEYFRAMES             */
 /* ============================================================ */
 @keyframes spaceStarfieldSlow {
@@ -260,7 +294,7 @@ html.theme-soft_minimal_pastel,
 body.theme-soft_minimal_pastel {
   font-family: 'Plus Jakarta Sans', sans-serif !important;
   background-color: #1E1E2E !important;
-  background-image: none !important;
+  /* background-image: none */
 }
 
 body.theme-soft_minimal_pastel * {
@@ -809,7 +843,7 @@ html.theme-omarchy_aetheria,
 body.theme-omarchy_aetheria {
   font-family: 'JetBrains Mono', monospace !important;
   background-color: #0E091D !important;
-  background-image: none !important;
+  /* background-image: none */
 }
 
 /* Universal Wildcard Enforcement: ALL elements in Omarchy Aetheria MUST be 4px square tiling */
