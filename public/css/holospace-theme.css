@@ -880,7 +880,7 @@ body.theme-omarchy_aetheria #brandLogoText *,
 body.theme-omarchy_aetheria .brand-title,
 body.theme-omarchy_aetheria .brand-title * {
   font-family: 'Press Start 2P', monospace !important;
-  font-size: 13px !important;
+  font-size: 18px !important;
   letter-spacing: 1px !important;
   line-height: 1 !important;
   border-radius: 0px !important;
@@ -888,10 +888,12 @@ body.theme-omarchy_aetheria .brand-title * {
 
 body.theme-omarchy_aetheria .logo-holo {
   color: #F3EEFF !important;
+  text-shadow: 2px 2px 0px #3D256D, 4px 4px 0px #090514 !important;
 }
 
 body.theme-omarchy_aetheria .logo-space {
   color: #14B9B5 !important;
+  text-shadow: 2px 2px 0px #0D5C5A, 4px 4px 0px #090514, 0 0 8px rgba(20, 185, 181, 0.4) !important;
 }
 
 body.theme-omarchy_aetheria #activeContextBadge {
