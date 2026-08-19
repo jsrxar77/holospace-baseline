@@ -58,7 +58,7 @@ export const ThemedAlertModal: React.FC = () => {
       <View style={styles.overlay}>
         <View
           style={[
-            styles.modalContent,
+            styles.modalCard,
             {
               backgroundColor: theme.cardBg,
               borderColor: theme.cardBorder,
@@ -95,7 +95,7 @@ export const ThemedAlertModal: React.FC = () => {
             {message}
           </Text>
 
-          <View style={styles.actions}>
+          <View style={styles.buttonRow}>
             {buttons.map((btn, index) => {
               let bg = theme.emerald;
               let textColor = theme.background;
@@ -115,7 +115,7 @@ export const ThemedAlertModal: React.FC = () => {
                 <TouchableOpacity
                   key={index}
                   style={[
-                    styles.btn,
+                    styles.button,
                     {
                       backgroundColor: bg,
                       borderColor: borderColor,
@@ -129,7 +129,7 @@ export const ThemedAlertModal: React.FC = () => {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.btnText, { color: textColor, fontFamily: fontFamilyMain }]}>
+                  <Text style={[styles.buttonText, { color: textColor, fontFamily: fontFamilyMain }]}>
                     {btn.text}
                   </Text>
                 </TouchableOpacity>
