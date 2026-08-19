@@ -143,6 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
   loadActiveTheme();
   loadAppConfig();
   populateSavedCredentials();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const redirectTarget = urlParams.get('redirect');
+
   // Si viene con ?logout=true desde mobile, limpiar todo en el dominio principal
   if (urlParams.get('logout') === 'true') {
     try {
@@ -155,14 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-
   const token = localStorage.getItem('hs_token');
   const userJson = localStorage.getItem('hs_user');
   const tenantJson = localStorage.getItem('hs_tenant');
   const currentPath = window.location.pathname.toLowerCase();
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const redirectTarget = urlParams.get('redirect');
 
   if (token && userJson) {
     currentUser = JSON.parse(userJson);
