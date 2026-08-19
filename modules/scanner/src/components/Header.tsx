@@ -37,23 +37,19 @@ export const Header: React.FC<HeaderProps> = ({
   const { theme } = useThemeStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const isOmarchy = theme.borderRadius === 4;
-  const isSoftMinimal = theme.borderRadius === 16;
-
   const orgName = (tenant && tenant.name) || (user && (user as any).tenantName) || (user && (user as any).tenantSlug ? ((user as any).tenantSlug).toUpperCase() : 'POKE ARGENTINA');
-  const displayUser = (user as any)?.username || (user?.email ? user.email.split('@')[0] : 'juan');
-  const userFullName = user?.name || `Juan (Operario ${orgName})`;
+  const displayUser = (user as any)?.username || (user?.email ? user.email.split('@')[0] : 'operario');
+  const userFullName = user?.name || `Operario (${orgName})`;
   const userRole = user?.role || 'OPERATOR';
-  const userEmail = user?.email || 'juan@poke.com.ar';
+  const userEmail = user?.email || 'operario@holospace.com.ar';
 
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : (isSoftMinimal ? 20 : 12));
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : (isSoftMinimal ? 20 : 8));
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius || 2);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
 
-  const logoFontFamily = isOmarchy ? (Platform.OS === 'web' ? '"Press Start 2P", monospace' : 'Press Start 2P') : (isSoftMinimal ? 'Plus Jakarta Sans' : 'Outfit');
-  const fontFamilyMain = theme.fontFamily || (isOmarchy ? (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono') : 'Outfit');
-  const fontFamilyMono = isOmarchy ? (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono') : 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   const handleLogoutPress = () => {
     setIsDropdownOpen(false);
@@ -77,9 +73,9 @@ export const Header: React.FC<HeaderProps> = ({
       <View style={[
         styles.container,
         {
-          backgroundColor: isOmarchy ? '#11111B' : theme.cardBg,
-          borderBottomColor: isOmarchy ? '#313244' : theme.cardBorder,
-          borderBottomWidth: isOmarchy ? 2 : borderWidthVal,
+          backgroundColor: theme.cardBg,
+          borderBottomColor: theme.cardBorder,
+          borderBottomWidth: borderWidthVal,
           paddingTop: paddingTopVal
         }
       ]}>
@@ -88,22 +84,16 @@ export const Header: React.FC<HeaderProps> = ({
             <Text style={[
               styles.titleHolo,
               {
-                color: isOmarchy ? '#F8F8F2' : theme.textMain,
-                fontFamily: logoFontFamily as any,
-                fontSize: isOmarchy ? 18 : 22,
-                letterSpacing: isOmarchy ? 1 : -0.5,
-                textShadowColor: isOmarchy ? '#313244' : 'transparent',
-                textShadowOffset: isOmarchy ? { width: 2, height: 2 } : { width: 0, height: 0 },
-                textShadowRadius: 0
+                color: theme.textMain,
+                fontFamily: (Platform.OS === 'web' ? '"Press Start 2P", monospace' : 'Press Start 2P') as any,
+                fontSize: 18,
+                letterSpacing: 1
               }
             ]}>
               Holo<Text style={[
                 styles.titleSpace,
                 {
-                  color: theme.emerald,
-                  textShadowColor: isOmarchy ? '#1E4620' : 'transparent',
-                  textShadowOffset: isOmarchy ? { width: 2, height: 2 } : { width: 0, height: 0 },
-                  textShadowRadius: 0
+                  color: theme.emerald
                 }
               ]}>Space</Text>
             </Text>
@@ -113,26 +103,26 @@ export const Header: React.FC<HeaderProps> = ({
             <View style={[
               styles.moduleBadge,
               {
-                backgroundColor: 'rgba(203, 166, 247, 0.15)',
-                borderColor: '#CBA6F7',
+                backgroundColor: `${theme.cobalt}20`,
+                borderColor: theme.cobalt,
                 borderRadius: badgeRadius,
                 borderWidth: borderWidthVal
               }
             ]}>
-              <Text style={[styles.moduleBadgeText, { color: '#CBA6F7', fontFamily: fontFamilyMono as any }]}>
+              <Text style={[styles.moduleBadgeText, { color: theme.cobalt, fontFamily: fontFamilyMono as any }]}>
                 {orgName.split(' ')[0]}
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Botón de Usuario Desplegable idéntico a Web */}
+        {/* Botón de Usuario Desplegable */}
         <TouchableOpacity
           style={[
             styles.btnUserPill,
             {
-              backgroundColor: isOmarchy ? '#181825' : '#21262D',
-              borderColor: isOmarchy ? (isDropdownOpen ? theme.emerald : '#313244') : (isDropdownOpen ? theme.emerald : theme.cardBorder),
+              backgroundColor: theme.background,
+              borderColor: isDropdownOpen ? theme.emerald : theme.cardBorder,
               borderRadius: btnRadius,
               borderWidth: borderWidthVal
             }
@@ -140,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
           onPress={() => setIsDropdownOpen(!isDropdownOpen)}
           activeOpacity={0.7}
         >
-          <Text style={[styles.btnUserText, { color: isOmarchy ? (theme.primary || '#FF79C6') : '#FF79C6', fontFamily: fontFamilyMono as any }]}>
+          <Text style={[styles.btnUserText, { color: theme.cobalt, fontFamily: fontFamilyMono as any }]}>
             {displayUser}
           </Text>
           <Text style={[styles.btnUserArrow, { color: theme.textMuted, fontFamily: fontFamilyMono as any }]}>
@@ -149,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Modal / Popover de Usuario Idéntico al de Web */}
+      {/* Modal / Popover de Usuario */}
       <Modal
         visible={isDropdownOpen}
         transparent
@@ -162,8 +152,8 @@ export const Header: React.FC<HeaderProps> = ({
               <View style={[
                 styles.dropdownCard,
                 {
-                  backgroundColor: isOmarchy ? '#181825' : theme.cardBg,
-                  borderColor: isOmarchy ? (theme.primary || '#FF79C6') : theme.cardBorder,
+                  backgroundColor: theme.cardBg,
+                  borderColor: theme.cardBorder,
                   borderRadius: cardRadius,
                   borderWidth: borderWidthVal,
                   shadowColor: '#000000',
@@ -186,7 +176,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <View style={[
                     styles.roleBadge,
                     {
-                      backgroundColor: 'rgba(166, 218, 149, 0.15)',
+                      backgroundColor: `${theme.emerald}20`,
                       borderColor: theme.emerald,
                       borderRadius: badgeRadius,
                       borderWidth: borderWidthVal
@@ -209,15 +199,15 @@ export const Header: React.FC<HeaderProps> = ({
                 </Text>
 
                 {/* Línea Divisoria */}
-                <View style={[styles.divider, { backgroundColor: isOmarchy ? '#313244' : theme.cardBorder }]} />
+                <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
 
                 {/* Botón Rojo de Cerrar Sesión */}
                 <TouchableOpacity
                   style={[
                     styles.btnLogout,
                     {
-                      borderColor: isOmarchy ? (theme.red || '#FF5555') : '#FF5252',
-                      backgroundColor: 'rgba(255, 85, 85, 0.08)',
+                      borderColor: theme.red,
+                      backgroundColor: `${theme.red}18`,
                       borderRadius: btnRadius,
                       borderWidth: borderWidthVal
                     }
@@ -225,7 +215,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onPress={handleLogoutPress}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.btnLogoutText, { color: isOmarchy ? (theme.red || '#FF5555') : '#FF5252', fontFamily: fontFamilyMain as any }]}>
+                  <Text style={[styles.btnLogoutText, { color: theme.red, fontFamily: fontFamilyMain as any }]}>
                     Cerrar Sesión
                   </Text>
                 </TouchableOpacity>

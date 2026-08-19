@@ -106,12 +106,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
   };
 
   const hasDoingOrders = myDoingOrders && myDoingOrders.length > 0;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 24));
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 20 : 16));
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius === 4 ? 2 : 8);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius || 2);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'System';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   // Ordenar para que el pedido actualmente en foco / abierto aparezca siempre primero en la lista
   const sortedDoingOrders = [...myDoingOrders].sort((a, b) => {
@@ -163,7 +163,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                       PEDIDO #{doingItem.orderNumber}
                     </Text>
                     {isFocused && (
-                      <View style={{ backgroundColor: 'rgba(166, 218, 149, 0.15)', borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
+                      <View style={{ backgroundColor: `${theme.emerald}25`, borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
                         <Text style={{ color: theme.emerald, fontSize: 11, fontWeight: '900', fontFamily: fontFamilyMono }}>EN FOCO</Text>
                       </View>
                     )}
@@ -177,19 +177,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                     Verificado: {doingItem.totalItemsScanned || 0} / {doingItem.totalItemsRequired || 0} U ({percent}%)
                   </Text>
 
-                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4, width: '100%' }}>
                     <TouchableOpacity
                       style={[styles.btnContinue, { backgroundColor: theme.emerald, borderRadius: btnRadius, flex: 1 }]}
                       onPress={() => handleSelectOrderToAudit(doingItem.id, doingItem.orderNumber)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.btnContinueText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>
+                      <Text style={[styles.btnContinueText, { fontFamily: fontFamilyMain, color: theme.background }]}>
                         {isFocused ? 'CONTINUAR ESCANEO' : 'AUDITAR ESTE PEDIDO'}
                       </Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.btnReleaseHome, { borderColor: theme.amber, borderWidth: borderWidthVal, borderRadius: btnRadius, paddingHorizontal: 12 }]}
+                      style={[styles.btnReleaseHome, { borderColor: theme.amber, borderWidth: borderWidthVal, borderRadius: btnRadius, paddingHorizontal: 14 }]}
                       onPress={() => handleReleaseOrder(doingItem.id, doingItem.orderNumber)}
                       activeOpacity={0.8}
                     >
@@ -204,7 +204,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
         {/* SECCIÓN 2: PEDIDOS DISPONIBLES EN LISTO (READY) */}
         <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: borderWidthVal, borderRadius: cardRadius }]}>
-          <Text style={[styles.uploadTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Pedidos Listos para Tomar</Text>
+          <Text style={[styles.uploadTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>
+            PEDIDOS LISTOS PARA TOMAR {readyOrders.length > 0 ? `(${readyOrders.length})` : ''}
+          </Text>
 
           {readyOrders.length > 0 && (
             <Text style={[styles.uploadSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
@@ -225,16 +227,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
               onPress={() => handleClaimOrder(item.orderNumber)}
               activeOpacity={hasDoingOrders ? 1 : 0.8}
             >
-              <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain }, hasDoingOrders && styles.textDisabled]}>
+              <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain, color: theme.background }, hasDoingOrders && { color: theme.textMuted }]}>
                 TOMAR PEDIDO #{item.orderNumber} ({item.clientName} - {item.totalItems} U)
               </Text>
             </TouchableOpacity>
           ))}
 
-          {readyOrders.length === 0 && !hasDoingOrders && (
+          {readyOrders.length === 0 && (
             <View style={styles.emptyBox}>
               <Text style={[styles.emptyText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
-                No hay pedidos en estado LISTO. Espera a que el Administrador valide un comprobante desde ScanBan Board.
+                No hay pedidos en estado LISTO en este momento.
               </Text>
             </View>
           )}

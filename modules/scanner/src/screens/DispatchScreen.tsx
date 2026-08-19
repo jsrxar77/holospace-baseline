@@ -17,20 +17,19 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
   const { activeOrder, setActiveOrder, closeOrder } = useOrderStore();
   const { theme } = useThemeStore();
 
-  const isOmarchy = theme.borderRadius === 4;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : 8);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius || 2);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   if (!activeOrder) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay orden seleccionada.</Text>
         <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={goHome}>
-          <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>Volver al Inicio</Text>
+          <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: theme.background }]}>Volver al Inicio</Text>
         </TouchableOpacity>
       </View>
     );
@@ -88,11 +87,11 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
           </Text>
 
           {/* Audit Summary Details Box */}
-          <View style={[styles.detailsBox, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+          <View style={[styles.detailsBox, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
             <View style={styles.detailRow}>
               <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Operario Auditador:</Text>
               <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="tail">
-                {activeOrder.operatorEmail || 'jsrxar@gmail.com'}
+                {activeOrder.operatorEmail || 'operario@holospace.com.ar'}
               </Text>
             </View>
 
@@ -133,7 +132,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
           {/* Action Button */}
           <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal, borderColor: theme.emerald }]} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
-            <Text style={[styles.btnHomeText, { color: '#11111B', fontFamily: fontFamilyMain }]}>VOLVER A LISTA DE PEDIDOS</Text>
+            <Text style={[styles.btnHomeText, { color: theme.background, fontFamily: fontFamilyMain }]}>VOLVER A LISTA DE PEDIDOS</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

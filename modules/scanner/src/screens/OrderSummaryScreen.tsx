@@ -37,13 +37,12 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'READY'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
 
-  const isOmarchy = theme.borderRadius === 4;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : 8);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius || 2);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   React.useEffect(() => {
     loadInitialOrders();
@@ -142,7 +141,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       {/* Top Header Row */}
       <View style={[styles.headerRow, { backgroundColor: theme.cardBg, borderBottomColor: theme.cardBorder, borderBottomWidth: borderWidthVal }]}>
         <TouchableOpacity
-          style={[styles.backBtn, { borderColor: theme.cardBorder, backgroundColor: isOmarchy ? '#181825' : '#21262D', borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          style={[styles.backBtn, { borderColor: theme.cardBorder, backgroundColor: theme.background, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={handleGoBack}
           activeOpacity={0.7}
         >
@@ -159,9 +158,9 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         <TouchableOpacity
           style={[styles.releaseBtn, { borderColor: theme.amber, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
           onPress={handleReleaseOrder}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.releaseIcon, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR</Text>
+          <Text style={[styles.releaseBtnText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR</Text>
         </TouchableOpacity>
       </View>
 

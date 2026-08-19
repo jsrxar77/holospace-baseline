@@ -41,66 +41,73 @@ export const showThemedAlert = (title: string, message: string, buttons?: AlertB
 };
 
 export const ThemedAlertModal: React.FC = () => {
-  const { visible, title, message, buttons, hideAlert } = useThemedAlertStore();
+  const modalState = useThemedAlertStore();
+  const { visible, title, message, buttons, hideAlert } = modalState;
   const { theme } = useThemeStore();
 
   if (!visible) return null;
 
-  const isOmarchy = theme.borderRadius === 4;
-  const isSoftMinimal = theme.borderRadius === 16;
-  const cardRadius = isOmarchy ? 4 : (isSoftMinimal ? 16 : 24);
-  const btnRadius = isOmarchy ? 4 : (isSoftMinimal ? 20 : 16);
-  const borderWidthVal = isOmarchy ? 2 : (theme.borderWidth || 1);
-  const fontFamilyMono = isOmarchy ? 'JetBrains Mono' : 'monospace';
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={hideAlert}>
       <View style={styles.overlay}>
-        <View style={[
-          styles.modalCard,
-          {
-            backgroundColor: isOmarchy ? '#181825' : theme.cardBg,
-            borderColor: isOmarchy ? '#313244' : theme.cardBorder,
-            borderRadius: cardRadius,
-            borderWidth: borderWidthVal
-          }
-        ]}>
-          <Text style={[
-            styles.title,
+        <View
+          style={[
+            styles.modalContent,
             {
-              color: isOmarchy ? '#F8F8F2' : theme.textMain,
-              fontFamily: fontFamilyMono
+              backgroundColor: theme.cardBg,
+              borderColor: theme.cardBorder,
+              borderRadius: cardRadius,
+              borderWidth: borderWidthVal,
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.5,
+              shadowRadius: 16
             }
-          ]}>
+          ]}
+        >
+          <Text
+            style={[
+              styles.title,
+              {
+                color: theme.textMain,
+                fontFamily: fontFamilyMain
+              }
+            ]}
+          >
             {title}
           </Text>
 
-          <Text style={[
-            styles.message,
-            {
-              color: isOmarchy ? '#CDD6F4' : theme.textMuted,
-              fontFamily: fontFamilyMono
-            }
-          ]}>
+          <Text
+            style={[
+              styles.message,
+              {
+                color: theme.textMuted,
+                fontFamily: fontFamilyMono
+              }
+            ]}
+          >
             {message}
           </Text>
 
-          <View style={styles.buttonRow}>
+          <View style={styles.actions}>
             {buttons.map((btn, index) => {
-              const isCancel = btn.style === 'cancel';
-              const isDestructive = btn.style === 'destructive';
-
               let bg = theme.emerald;
-              let textColor = '#000000';
+              let textColor = theme.background;
               let borderColor = theme.emerald;
 
-              if (isCancel) {
-                bg = isOmarchy ? '#1E1E2E' : theme.cardBg;
-                textColor = isOmarchy ? '#CDD6F4' : theme.textMuted;
-                borderColor = isOmarchy ? '#313244' : theme.cardBorder;
-              } else if (isDestructive) {
+              if (btn.style === 'cancel') {
+                bg = theme.cardBg;
+                textColor = theme.textMuted;
+                borderColor = theme.cardBorder;
+              } else if (btn.style === 'destructive') {
                 bg = theme.red;
-                textColor = '#FFFFFF';
+                textColor = theme.background;
                 borderColor = theme.red;
               }
 
@@ -108,12 +115,12 @@ export const ThemedAlertModal: React.FC = () => {
                 <TouchableOpacity
                   key={index}
                   style={[
-                    styles.button,
+                    styles.btn,
                     {
                       backgroundColor: bg,
                       borderColor: borderColor,
                       borderRadius: btnRadius,
-                      borderWidth: 1
+                      borderWidth: borderWidthVal
                     }
                   ]}
                   onPress={() => {
@@ -122,7 +129,7 @@ export const ThemedAlertModal: React.FC = () => {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.buttonText, { color: textColor, fontFamily: fontFamilyMono }]}>
+                  <Text style={[styles.btnText, { color: textColor, fontFamily: fontFamilyMain }]}>
                     {btn.text}
                   </Text>
                 </TouchableOpacity>

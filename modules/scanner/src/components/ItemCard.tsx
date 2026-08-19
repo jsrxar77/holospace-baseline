@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { OrderItem } from '../types';
 import { useThemeStore } from '../store/useThemeStore';
 
@@ -13,12 +13,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   const isCompleted = item.quantityScanned >= item.quantityRequired;
   const isPending = item.quantityScanned === 0;
 
-  const isOmarchy = theme.borderRadius === 4;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : 6);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius || 2);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   return (
     <TouchableOpacity
@@ -51,8 +50,8 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
             {
               borderRadius: badgeRadius,
               borderWidth: borderWidthVal,
-              borderColor: isCompleted ? theme.emerald : theme.cardBorder,
-              backgroundColor: isCompleted ? 'rgba(166, 218, 149, 0.15)' : 'rgba(255, 255, 255, 0.05)'
+              borderColor: isCompleted ? theme.emerald : (isPending ? theme.cardBorder : theme.cobalt),
+              backgroundColor: isCompleted ? `${theme.emerald}20` : (isPending ? `${theme.cardBorder}40` : `${theme.cobalt}20`)
             }
           ]}
         >

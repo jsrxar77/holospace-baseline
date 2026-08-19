@@ -18,14 +18,13 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
   const [reason, setReason] = useState('');
   const { theme } = useThemeStore();
 
-  const isOmarchy = theme.borderRadius === 4;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
-  const handleSubmit = () => {
+  const handleConfirm = () => {
     if (pin.trim() !== '9999') {
       showThemedAlert('PIN Incorrecto', 'El PIN de supervisor ingresado no es válido.', [{ text: 'Entendido', style: 'default' }]);
       return;
@@ -42,31 +41,31 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={[styles.modalContent, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: theme.amber, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+        <View style={[styles.modalContent, { backgroundColor: theme.cardBg, borderColor: theme.amber, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
           <Text style={[styles.title, { color: theme.amber, fontFamily: fontFamilyMain }]}>Autorización de Supervisor</Text>
           <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-            El pedido no alcanza el 100% verificado. Ingrese el PIN de supervisor para autorizar el despacho parcial.
+            Se detectaron unidades pendientes. Ingresa el PIN maestro para autorizar el despacho parcial:
           </Text>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.textMain, fontFamily: fontFamilyMain }]}>PIN de Supervisor (Demo: 9999)</Text>
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>PIN de Supervisor (4 dígitos)</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
-              placeholder="****"
+              style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
+              placeholder="••••"
               placeholderTextColor={theme.textMuted}
-              secureTextEntry
               keyboardType="numeric"
               maxLength={4}
+              secureTextEntry
               value={pin}
               onChangeText={setPin}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: theme.textMain, fontFamily: fontFamilyMain }]}>Motivo del Faltante / Excepción</Text>
+          <View style={styles.formGroup}>
+            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Motivo / Justificación</Text>
             <TextInput
-              style={[styles.input, styles.textArea, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
-              placeholder="Ej: Mercadería faltante o rotura en depósito pasillo B-14..."
+              style={[styles.input, styles.textArea, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
+              placeholder="Ej: Quiebre de stock en bodega, falta de producto..."
               placeholderTextColor={theme.textMuted}
               multiline
               numberOfLines={3}
@@ -75,9 +74,9 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
             />
           </View>
 
-          <View style={styles.buttonRow}>
+          <View style={styles.actions}>
             <TouchableOpacity
-              style={[styles.btnCancel, { backgroundColor: isOmarchy ? '#1E1E2E' : theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+              style={[styles.btnCancel, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
               onPress={onClose}
               activeOpacity={0.8}
             >
@@ -86,10 +85,10 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
 
             <TouchableOpacity
               style={[styles.btnConfirm, { backgroundColor: theme.amber, borderColor: theme.amber, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-              onPress={handleSubmit}
+              onPress={handleConfirm}
               activeOpacity={0.8}
             >
-              <Text style={[styles.btnConfirmText, { color: '#11111B', fontFamily: fontFamilyMain }]}>Autorizar Cierre</Text>
+              <Text style={[styles.btnConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Autorizar Cierre</Text>
             </TouchableOpacity>
           </View>
         </View>

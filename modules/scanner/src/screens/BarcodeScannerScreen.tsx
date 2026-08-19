@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useOrderStore } from '../store/useOrderStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -22,12 +22,11 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const { scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
   const { theme } = useThemeStore();
 
-  const isOmarchy = theme.borderRadius === 4;
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
-  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
-  const fontFamilyMono = theme.fontMono || 'monospace';
+  const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
+  const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   React.useEffect(() => {
     loadInitialOrders();
@@ -54,7 +53,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
           Se requiere permiso de cámara para escanear los códigos de barras de depósito.
         </Text>
         <TouchableOpacity style={[styles.btnPermission, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={requestPermission}>
-          <Text style={[styles.btnPermissionText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>Otorgar Permiso de Cámara</Text>
+          <Text style={[styles.btnPermissionText, { fontFamily: fontFamilyMain, color: theme.background }]}>Otorgar Permiso de Cámara</Text>
         </TouchableOpacity>
       </View>
     );
@@ -156,14 +155,14 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
       {/* Manual Barcode Input Modal */}
       <Modal visible={isManualModalOpen} transparent animationType="fade" onRequestClose={() => setManualModalOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
             <Text style={[styles.modalTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Ingreso Manual de EAN-13</Text>
             <Text style={[styles.modalSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
               Ingresa los dígitos del código de barras si la etiqueta está dañada:
             </Text>
 
             <TextInput
-              style={[styles.modalInput, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
+              style={[styles.modalInput, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
               placeholder="Ej: 7791234567890"
               placeholderTextColor={theme.textMuted}
               keyboardType="numeric"
@@ -174,7 +173,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={[styles.btnModalCancel, { backgroundColor: isOmarchy ? '#1E1E2E' : theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+                style={[styles.btnModalCancel, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
                 onPress={() => setManualModalOpen(false)}
                 activeOpacity={0.8}
               >
@@ -186,7 +185,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
                 onPress={handleManualSubmit}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.btnModalConfirmText, { color: '#11111B', fontFamily: fontFamilyMain }]}>Procesar Código</Text>
+                <Text style={[styles.btnModalConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Procesar Código</Text>
               </TouchableOpacity>
             </View>
           </View>
