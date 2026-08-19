@@ -29,12 +29,26 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
   React.useEffect(() => {
+    clearToast();
     loadInitialOrders();
     const interval = setInterval(() => {
       loadInitialOrders();
     }, 3000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearToast();
+    };
   }, []);
+
+  // Auto-dismiss del toast tras 2.5 segundos para no trabar el flujo de escaneo
+  React.useEffect(() => {
+    if (lastScanToast) {
+      const timer = setTimeout(() => {
+        clearToast();
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [lastScanToast]);
 
   React.useEffect(() => {
     if (unassignedOrderNotification) {
@@ -107,7 +121,9 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
       {/* Scan Toast Feedback */}
       {lastScanToast && (
-        <View
+        <TouchableOpacity
+          onPress={clearToast}
+          activeOpacity={0.9}
           style={[
             styles.toastContainer,
             {
@@ -119,7 +135,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
           <Text style={[styles.toastText, { fontFamily: fontFamilyMain, color: lastScanToast.type === 'SUCCESS' ? '#11111B' : '#FFFFFF' }]}>
             {lastScanToast.message}
           </Text>
-        </View>
+        </TouchableOpacity>
       )}
 
       {/* Top Floating Action Controls */}
