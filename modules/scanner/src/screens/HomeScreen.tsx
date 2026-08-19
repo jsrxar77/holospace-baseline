@@ -72,13 +72,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
       return;
     }
 
-    const { claimOrder } = useOrderStore.getState();
-    const success = await claimOrder(orderNumber);
-    if (success) {
-      await syncData();
-      goToSummary();
-    } else {
-      showThemedAlert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.', [{ text: 'Entendido', style: 'default' }]);
+    try {
+      const { claimOrder } = useOrderStore.getState();
+      const claimed = await claimOrder(orderNumber);
+      if (claimed) {
+        await syncData();
+        goToSummary();
+      } else {
+        showThemedAlert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.', [{ text: 'Entendido', style: 'default' }]);
+      }
+    } catch (e) {
+      console.log('Error claiming order:', e);
+      showThemedAlert('Error al Tomar Pedido', 'No se pudo tomar el pedido.', [{ text: 'Entendido', style: 'default' }]);
     }
   };
 

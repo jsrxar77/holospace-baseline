@@ -129,7 +129,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando Email
   claimOrder: async (orderNumber: string) => {
-    const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
+    const currentUserEmail = useAuthStore.getState().user?.email || '';
     try {
       const { claimOrder: claimFile } = fileWorkflowService;
       const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
@@ -164,7 +164,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   // Acción: Liberar Pedido de /delivery/doing a /delivery/ready
   releaseOrder: async (orderNumber: string) => {
-    const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
+    const currentUserEmail = useAuthStore.getState().user?.email || '';
     const { releaseOrder: releaseFile } = fileWorkflowService;
     const { success } = await releaseFile(orderNumber, currentUserEmail);
 
