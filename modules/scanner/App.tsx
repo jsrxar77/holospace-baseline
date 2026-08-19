@@ -1,21 +1,13 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { useAuthStore } from './src/store/useAuthStore';
 import { useThemeStore } from './src/store/useThemeStore';
-
-const HomeScreen = React.lazy(() =>
-  import('./src/screens/HomeScreen').then(m => ({ default: m.HomeScreen }))
-);
-const OrderSummaryScreen = React.lazy(() =>
-  import('./src/screens/OrderSummaryScreen').then(m => ({ default: m.OrderSummaryScreen }))
-);
-const BarcodeScannerScreen = React.lazy(() =>
-  import('./src/screens/BarcodeScannerScreen').then(m => ({ default: m.BarcodeScannerScreen }))
-);
-const DispatchScreen = React.lazy(() =>
-  import('./src/screens/DispatchScreen').then(m => ({ default: m.DispatchScreen }))
-);
+import { HomeScreen } from './src/screens/HomeScreen';
+import { OrderSummaryScreen } from './src/screens/OrderSummaryScreen';
+import { BarcodeScannerScreen } from './src/screens/BarcodeScannerScreen';
+import { DispatchScreen } from './src/screens/DispatchScreen';
+import { ThemedAlertModal } from './src/components/ThemedAlertModal';
 
 type ScreenName = 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH';
 
@@ -91,9 +83,9 @@ export default function App() {
 
   if (!isAuthenticated) {
     return (
-      <View style={[styles.container, { backgroundColor: '#181926', alignItems: 'center', justifyContent: 'center' }]}>
-        <StatusBar style="light" backgroundColor="#181926" />
-        <ActivityIndicator size="large" color="#A6DA95" />
+      <View style={[styles.container, { backgroundColor: '#121317', alignItems: 'center', justifyContent: 'center' }]}>
+        <StatusBar style="light" backgroundColor="#121317" />
+        <ActivityIndicator size="large" color="#50FA7B" />
       </View>
     );
   }
@@ -101,32 +93,26 @@ export default function App() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style="light" backgroundColor={theme.background} />
-      <Suspense fallback={
-        <View style={[styles.container, { backgroundColor: theme.background, alignItems: 'center', justifyContent: 'center' }]}>
-          <ActivityIndicator size="large" color={theme.emerald} />
-        </View>
-      }>
-        {currentScreen === 'HOME' && (
-          <HomeScreen
-            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
-          />
-        )}
-        {currentScreen === 'SUMMARY' && (
-          <OrderSummaryScreen
-            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
-          />
-        )}
-        {currentScreen === 'SCANNER' && (
-          <BarcodeScannerScreen
-            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
-          />
-        )}
-        {currentScreen === 'DISPATCH' && (
-          <DispatchScreen
-            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
-          />
-        )}
-      </Suspense>
+      {currentScreen === 'HOME' && (
+        <HomeScreen
+          onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+        />
+      )}
+      {currentScreen === 'SUMMARY' && (
+        <OrderSummaryScreen
+          onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+        />
+      )}
+      {currentScreen === 'SCANNER' && (
+        <BarcodeScannerScreen
+          onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+        />
+      )}
+      {currentScreen === 'DISPATCH' && (
+        <DispatchScreen
+          onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+        />
+      )}
       <ThemedAlertModal />
     </View>
   );
