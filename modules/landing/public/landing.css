@@ -77,6 +77,10 @@
   image-rendering: pixelated;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background-color: var(--bg-main);
   color: var(--text-main);
@@ -114,28 +118,19 @@ body {
 }
 
 .brand-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-}
-
-.brand-badge {
   display: inline-flex;
   align-items: center;
   text-decoration: none;
   line-height: 1;
 }
 
-.brand-badge .logo-wrapper,
-.brand-badge .pixel-logo-text {
-  font-family: 'Press Start 2P', monospace !important;
-  font-size: 22px !important;
-  font-weight: 900;
-  letter-spacing: -1px;
-  text-shadow: 2px 2px 0px #000;
+.brand-badge .logo-wrapper {
   display: inline-flex;
   align-items: center;
+  letter-spacing: 0px;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 22px !important;
+  text-shadow: 2px 2px 0px #000;
 }
 
 .brand-badge span.logo-holo {
@@ -218,12 +213,6 @@ body {
   box-shadow: var(--pixel-shadow);
 }
 
-.btn-pixel-accent {
-  background: var(--accent-primary);
-  color: var(--text-inverse);
-  border-color: var(--accent-primary);
-}
-
 /* HERO SECTION */
 .hero-section {
   padding: 80px 0 60px;
@@ -291,12 +280,79 @@ body {
   font-weight: bold;
 }
 
+/* SECCIÓN MÓDULOS CON SPRITES PIXEL ART */
+.modules-section {
+  padding: 60px 0;
+}
+
+.grid-modules {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 24px;
+  margin-top: 36px;
+}
+
+.module-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: var(--pixel-shadow);
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.module-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: var(--pixel-shadow-hover);
+  border-color: var(--border-accent);
+}
+
+.sprite-container {
+  width: 56px;
+  height: 56px;
+  background: var(--bg-surface-raised);
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  box-shadow: var(--pixel-shadow-sm);
+}
+
+.sprite-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.module-badge {
+  font-size: 10px;
+  margin-bottom: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.module-title {
+  font-size: 18px;
+  color: #FFF;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.module-desc {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  flex-grow: 1;
+}
+
 /* CARDS GRID & PILLARS */
 .grid-pillars {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 24px;
-  margin: 60px 0;
+  margin: 36px 0 60px;
 }
 
 .pixel-card {
@@ -306,7 +362,6 @@ body {
   padding: 24px;
   box-shadow: var(--pixel-shadow);
   transition: all 0.15s ease;
-  position: relative;
 }
 
 .pixel-card:hover {
@@ -346,7 +401,7 @@ body {
 
 .section-title {
   text-align: center;
-  font-size: 26px;
+  font-size: 24px;
   color: #FFF;
   margin-bottom: 12px;
 }
@@ -387,14 +442,16 @@ body {
 }
 
 .plan-price {
-  font-size: 32px;
+  font-size: 28px;
   color: #FFF;
   margin: 12px 0 16px;
+  font-weight: 800;
 }
 
 .plan-price span {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-muted);
+  font-weight: normal;
 }
 
 .plan-features {
@@ -418,13 +475,54 @@ body {
   font-size: 10px;
 }
 
-/* FOOTER */
+/* FOOTER RETRO ALINEADO */
 .pixel-footer {
   background: var(--bg-surface);
   border-top: 2px solid var(--border-color);
-  padding: 40px 0;
+  padding: 48px 0;
   margin-top: 80px;
   text-align: center;
+}
+
+.footer-brand-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-logo {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 20px !important;
+  display: inline-flex;
+  align-items: center;
+  letter-spacing: 0px;
+  text-shadow: 2px 2px 0px #000;
+}
+
+.footer-logo span.logo-holo {
+  color: #FFFFFF !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 20px !important;
+}
+
+.footer-logo span.logo-space {
+  color: var(--accent-emerald) !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 20px !important;
+}
+
+.footer-platform-label {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 14px;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+}
+
+.footer-meta-text {
   font-size: 13px;
   color: var(--text-muted);
+  margin-top: 8px;
 }

@@ -9,7 +9,7 @@
   <!-- Google Fonts: Press Start 2P & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="/landing/landing.css">
 </head>
@@ -18,7 +18,7 @@
   <!-- HEADER WAYBAR RETRO -->
   <header class="waybar-header">
     <a href="/" class="brand-badge">
-      <span class="pixel-font logo-wrapper" style="letter-spacing: 0px; display: inline-flex;"><span class="logo-holo" style="color: #FFF;">Holo</span><span class="logo-space" style="color: var(--accent-emerald);">Space</span></span>
+      <span class="logo-wrapper"><span class="logo-holo">Holo</span><span class="logo-space">Space</span></span>
     </a>
     
     <div class="status-pill">
@@ -59,10 +59,109 @@
       </div>
     </section>
 
-    <!-- LOS 4 PILARES DE INGENIERÍA -->
-    <section style="margin-top: 40px;">
-      <h2 class="section-title pixel-font" style="font-size: 20px;">Los 4 Pilares de la Plataforma</h2>
-      <p class="section-subtitle">Arquitectura modular de alto rendimiento diseñada para depósitos exigentes.</p>
+    <!-- SECCIÓN: LOS 4 MÓDULOS DE LA PLATAFORMA (SPRITES PIXEL ART) -->
+    <section id="modulos" class="modules-section">
+      <h2 class="section-title pixel-font">Los 4 Módulos de la Plataforma</h2>
+      <p class="section-subtitle">Arquitectura modular inspirada en componentes independientes y soberanía multi-organización.</p>
+
+      <div class="grid-modules">
+        
+        <!-- MÓDULO 1: TENANT -->
+        <div class="module-card">
+          <div class="sprite-container" style="border-color: var(--accent-amber);">
+            <!-- SPRITE CASTILLO / GOBIERNO PIXEL ART -->
+            <svg class="sprite-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="6" width="2" height="2" fill="var(--accent-amber)" />
+              <rect x="6" y="6" width="2" height="2" fill="var(--accent-amber)" />
+              <rect x="10" y="6" width="2" height="2" fill="var(--accent-amber)" />
+              <rect x="14" y="6" width="2" height="2" fill="var(--accent-amber)" />
+              <rect x="2" y="8" width="14" height="6" fill="var(--accent-amber)" opacity="0.8" />
+              <rect x="7" y="10" width="4" height="4" fill="#181926" />
+              <rect x="7" y="2" width="4" height="2" fill="var(--accent-amber)" />
+              <rect x="8" y="4" width="2" height="2" fill="var(--accent-amber)" />
+            </svg>
+          </div>
+          <div class="module-badge pixel-font" style="color: var(--accent-amber);">MÓDULO ADMIN</div>
+          <h3 class="module-title">1. Tenant</h3>
+          <p class="module-desc">
+            Panel de gobierno exclusivo SuperAdmin. Aprovisionamiento instantáneo de empresas, suspensión, asignación de planes y cuotas, y licenciamiento modular en vivo.
+          </p>
+        </div>
+
+        <!-- MÓDULO 2: CORE -->
+        <div class="module-card">
+          <div class="sprite-container" style="border-color: var(--accent-primary);">
+            <!-- SPRITE CHIP / NÚCLEO PIXEL ART -->
+            <svg class="sprite-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="4" y="4" width="8" height="8" fill="var(--accent-primary)" />
+              <rect x="6" y="6" width="4" height="4" fill="#181926" />
+              <rect x="2" y="5" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="2" y="8" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="2" y="11" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="12" y="5" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="12" y="8" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="12" y="11" width="2" height="1" fill="var(--accent-primary)" />
+              <rect x="5" y="2" width="1" height="2" fill="var(--accent-primary)" />
+              <rect x="8" y="2" width="1" height="2" fill="var(--accent-primary)" />
+              <rect x="11" y="2" width="1" height="2" fill="var(--accent-primary)" />
+              <rect x="5" y="12" width="1" height="2" fill="var(--accent-primary)" />
+              <rect x="8" y="12" width="1" height="2" fill="var(--accent-primary)" />
+              <rect x="11" y="12" width="1" height="2" fill="var(--accent-primary)" />
+            </svg>
+          </div>
+          <div class="module-badge pixel-font" style="color: var(--accent-primary);">MÓDULO CORE</div>
+          <h3 class="module-title">2. Core</h3>
+          <p class="module-desc">
+            Motor base de la plataforma. Aislamiento PostgreSQL 16 RLS, autenticación scrypt con tokens JWT, auditoría de eventos y sistema de temas visuales jerárquico.
+          </p>
+        </div>
+
+        <!-- MÓDULO 3: KANBAN -->
+        <div class="module-card">
+          <div class="sprite-container" style="border-color: var(--accent-emerald);">
+            <!-- SPRITE TABLERO LOGÍSTICO PIXEL ART -->
+            <svg class="sprite-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="12" height="12" fill="var(--accent-emerald)" opacity="0.3" stroke="var(--accent-emerald)" stroke-width="1"/>
+              <rect x="4" y="4" width="3" height="4" fill="var(--accent-emerald)" />
+              <rect x="4" y="9" width="3" height="3" fill="var(--accent-emerald)" />
+              <rect x="9" y="4" width="3" height="2" fill="var(--accent-emerald)" />
+              <rect x="9" y="7" width="3" height="5" fill="var(--accent-emerald)" />
+            </svg>
+          </div>
+          <div class="module-badge pixel-font" style="color: var(--accent-emerald);">MÓDULO OPERATIVO</div>
+          <h3 class="module-title">3. Kanban</h3>
+          <p class="module-desc">
+            Tablero logístico web de 4 columnas en tiempo real. Ingesta y parseo automático de facturas PDF, asignación de pedidos a operarios y auditoría de despacho.
+          </p>
+        </div>
+
+        <!-- MÓDULO 4: SCANNER -->
+        <div class="module-card">
+          <div class="sprite-container" style="border-color: var(--accent-peach);">
+            <!-- SPRITE GAMEBOY / ESCÁNER PIXEL ART -->
+            <svg class="sprite-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="1" width="10" height="14" rx="1" fill="var(--accent-peach)" />
+              <rect x="5" y="3" width="6" height="4" fill="#181926" />
+              <rect x="5" y="9" width="3" height="1" fill="#181926" />
+              <rect x="6" y="8" width="1" height="3" fill="#181926" />
+              <circle cx="10" cy="9.5" r="0.8" fill="#181926" />
+              <circle cx="11.5" cy="8.5" r="0.8" fill="#181926" />
+            </svg>
+          </div>
+          <div class="module-badge pixel-font" style="color: var(--accent-peach);">MÓDULO MÓVIL</div>
+          <h3 class="module-title">4. Scanner</h3>
+          <p class="module-desc">
+            Aplicación móvil PWA / Expo. Escaneo de códigos de barra EAN-13 con la cámara del celular, soporte offline en SQLite y feedback sensorial háptico.
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SECCIÓN: LOS 4 PILARES TÉCNICOS -->
+    <section id="pilares" style="margin-top: 20px;">
+      <h2 class="section-title pixel-font">Pilares de Ingeniería</h2>
+      <p class="section-subtitle">Construido para garantizar disponibilidad, velocidad y privacidad absoluta.</p>
 
       <div class="grid-pillars">
         
@@ -127,10 +226,10 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE PRECIOS Y PLANES -->
+    <!-- SECCIÓN DE PRECIOS Y PLANES (EN ARS) -->
     <section id="planes" class="pricing-section">
-      <h2 class="section-title pixel-font" style="font-size: 20px;">Planes Claros y Transparentes</h2>
-      <p class="section-subtitle">Escala tu operación logística sin costos ocultos.</p>
+      <h2 class="section-title pixel-font">Planes y Precios Transparentes</h2>
+      <p class="section-subtitle">Inversión clara en moneda local para escalar tu operación logística sin costos ocultos.</p>
 
       <div class="pricing-grid">
         
@@ -138,7 +237,7 @@
         <div class="pricing-card">
           <div class="plan-badge pixel-font">STARTER</div>
           <h3 class="card-title" style="font-size: 20px;">Plan Inicial</h3>
-          <div class="plan-price">$49 <span>/ mes USD</span></div>
+          <div class="plan-price">$ 65.000 <span>/ mes ARS</span></div>
           <p style="font-size: 13px; color: var(--text-muted);">Para pequeños depósitos o pilotos operativos.</p>
           
           <ul class="plan-features">
@@ -149,14 +248,14 @@
             <li>Aislamiento RLS en PostgreSQL</li>
           </ul>
 
-          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Elegir Starter</a>
+          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Comenzar Starter</a>
         </div>
 
         <!-- PLAN PRO -->
         <div class="pricing-card featured">
           <div class="plan-badge pixel-font" style="color: var(--accent-emerald);">★ RECOMENDADO ★</div>
           <h3 class="card-title" style="font-size: 20px;">Plan Pro</h3>
-          <div class="plan-price" style="color: var(--accent-emerald);">$149 <span>/ mes USD</span></div>
+          <div class="plan-price" style="color: var(--accent-emerald);">$ 195.000 <span>/ mes ARS</span></div>
           <p style="font-size: 13px; color: var(--text-muted);">Para centros de distribución y pymes en crecimiento.</p>
           
           <ul class="plan-features">
@@ -174,7 +273,7 @@
         <div class="pricing-card">
           <div class="plan-badge pixel-font">ENTERPRISE</div>
           <h3 class="card-title" style="font-size: 20px;">Ilimitado</h3>
-          <div class="plan-price">$499 <span>/ mes USD</span></div>
+          <div class="plan-price">$ 590.000 <span>/ mes ARS</span></div>
           <p style="font-size: 13px; color: var(--text-muted);">Capacidad ilimitada y gobierno multi-organización.</p>
           
           <ul class="plan-features">
@@ -193,13 +292,16 @@
 
   </main>
 
-  <!-- FOOTER -->
+  <!-- FOOTER RETRO PERFECTAMENTE ALINEADO -->
   <footer class="pixel-footer">
     <div class="container">
-      <div class="pixel-font" style="font-size: 12px; margin-bottom: 12px;">
-        <span class="logo-wrapper" style="letter-spacing: 0px; display: inline-flex;"><span class="logo-holo" style="color: #FFF;">Holo</span><span class="logo-space" style="color: var(--accent-emerald);">Space</span></span> SaaS Platform
+      <div class="footer-brand-container">
+        <div class="footer-logo">
+          <span class="logo-holo">Holo</span><span class="logo-space">Space</span>
+        </div>
+        <span class="footer-platform-label">SaaS Platform</span>
       </div>
-      <p>© 2026 HoloSpace. Todos los derechos reservados. Arquitectura Soberana Multi-Tenant.</p>
+      <p class="footer-meta-text">© 2026 HoloSpace. Todos los derechos reservados. Arquitectura Soberana Multi-Tenant.</p>
     </div>
   </footer>
 
