@@ -1,12 +1,10 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Platform } from 'react-native';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { useAuthStore } from './src/store/useAuthStore';
 import { useThemeStore } from './src/store/useThemeStore';
 
-// Lazy imports para screens que usan modulos nativos pesados (expo-camera, expo-av, useOrderStore)
-// Esto evita que el startup del app se bloquee en web por modulos nativos
 const HomeScreen = React.lazy(() =>
   import('./src/screens/HomeScreen').then(m => ({ default: m.HomeScreen }))
 );
@@ -24,35 +22,52 @@ type ScreenName = 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenName>('HOME');
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, token } = useAuthStore();
   const { theme, fetchTheme } = useThemeStore();
 
   useEffect(() => {
-    // Sincronizar URL en Expo Web si corre en navegador
-    if (typeof window !== 'undefined' && window.location) {
-      if (window.location.pathname === '/' || window.location.pathname === '') {
-        if (window.history && window.history.replaceState) {
-          window.history.replaceState(null, '', '/scanner');
-        }
+    // Sincronizar token compartido de Web si existe en localStorage
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const webToken = window.localStorage.getItem('hs_token');
+      const webUser = window.localStorage.getItem('hs_user');
+      const webTenant = window.localStorage.getItem('hs_tenant');
+      if (webToken && webUser && !isAuthenticated) {
+        try {
+          useAuthStore.setState({
+            token: webToken,
+            user: JSON.parse(webUser),
+            tenant: webTenant ? JSON.parse(webTenant) : null,
+            isAuthenticated: true
+          });
+        } catch (e) {}
       }
     }
   }, []);
 
   useEffect(() => {
-    const token = useAuthStore.getState().token;
-    fetchTheme(token);
+    // Si no está autenticado en navegador web, redirigir al Login Web Oficial
+    if (!isAuthenticated && typeof window !== 'undefined' && window.location) {
+      if (window.location.pathname.startsWith('/scanner') || window.location.hostname.startsWith('m.')) {
+        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+      }
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    const currentToken = useAuthStore.getState().token;
+    fetchTheme(currentToken);
     const interval = setInterval(() => {
-      const currentToken = useAuthStore.getState().token;
-      fetchTheme(currentToken);
+      const activeToken = useAuthStore.getState().token;
+      fetchTheme(activeToken);
     }, 3000);
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar style="light" backgroundColor={theme.background} />
-        <LoginScreen onLoginSuccess={() => setCurrentScreen('HOME')} />
+      <View style={[styles.container, { backgroundColor: '#181926', alignItems: 'center', justifyContent: 'center' }]}>
+        <StatusBar style="light" backgroundColor="#181926" />
+        <ActivityIndicator size="large" color="#A6DA95" />
       </View>
     );
   }
@@ -66,23 +81,24 @@ export default function App() {
         </View>
       }>
         {currentScreen === 'HOME' && (
-          <HomeScreen onNavigateToSummary={() => setCurrentScreen('SUMMARY')} />
-        )}
-
-        {currentScreen === 'SUMMARY' && (
-          <OrderSummaryScreen
-            onNavigateToScanner={() => setCurrentScreen('SCANNER')}
-            onNavigateToDispatch={() => setCurrentScreen('DISPATCH')}
-            onBack={() => setCurrentScreen('HOME')}
+          <HomeScreen
+            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
           />
         )}
-
-        {currentScreen === 'SCANNER' && (
-          <BarcodeScannerScreen onClose={() => setCurrentScreen('SUMMARY')} />
+        {currentScreen === 'SUMMARY' && (
+          <OrderSummaryScreen
+            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+          />
         )}
-
+        {currentScreen === 'SCANNER' && (
+          <BarcodeScannerScreen
+            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+          />
+        )}
         {currentScreen === 'DISPATCH' && (
-          <DispatchScreen onBackToHome={() => setCurrentScreen('HOME')} />
+          <DispatchScreen
+            onNavigate={(screen) => setCurrentScreen(screen as ScreenName)}
+          />
         )}
       </Suspense>
     </View>
