@@ -42,7 +42,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   myDoingOrders: [],
   activeOrder: null,
   isScannerOpen: false,
-  operatorId: useAuthStore.getState().user?.email || 'jsrxar@gmail.com',
+  operatorId: useAuthStore.getState().user?.email || '',
   unassignedOrderNotification: null,
   lastScanToast: null,
   lastScanTimestamp: 0,
@@ -67,10 +67,16 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   loadInitialOrders: async () => {
     try {
       const savedOrders = await dbService.getAllOrders();
-      const currentUserEmail = useAuthStore.getState().user?.email || 'jsrxar@gmail.com';
+      const currentUser = useAuthStore.getState().user;
+      const currentUserEmail = currentUser?.email || '';
+
+      // Actualizar operatorId en el store
+      if (currentUserEmail) {
+        set({ operatorId: currentUserEmail });
+      }
 
       // 1. Obtener todos los pedidos asignados a este operario
-      const myDoing = await fileWorkflowService.getMyDoingOrders(currentUserEmail);
+      const myDoing = currentUserEmail ? await fileWorkflowService.getMyDoingOrders(currentUserEmail) : [];
 
       // 2. Determinar cuál pedido está en foco
       const currentActive = get().activeOrder;

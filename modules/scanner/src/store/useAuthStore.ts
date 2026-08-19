@@ -133,6 +133,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       const data = await response.json();
       if (data.success && data.user) {
         saveSavedCredentials(email, pass, data.tenant?.slug || '');
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            if (data.token) window.localStorage.setItem('hs_token', data.token);
+            window.localStorage.setItem('hs_user', JSON.stringify(data.user));
+            if (data.tenant) window.localStorage.setItem('hs_tenant', JSON.stringify(data.tenant));
+          } catch (e) {}
+        }
         set({
           user: data.user,
           tenant: data.tenant || null,
@@ -150,6 +157,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.removeItem('hs_token');
+        window.localStorage.removeItem('hs_user');
+        window.localStorage.removeItem('hs_tenant');
+      } catch (e) {}
+    }
     set({
       user: null,
       tenant: null,
