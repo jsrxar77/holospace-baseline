@@ -1,6 +1,7 @@
 let currentUser = null;
 let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
+let kanbanAutoRefreshInterval = null; // Auto-refresco en tiempo real del tablero Kanban
 
 // Helper de sesión multi-tab: prioriza sessionStorage (aislado por pestaña) con fallback a localStorage
 function getAuthToken() {
@@ -627,6 +628,12 @@ function switchTab(tabName) {
     if (mMod) mMod.classList.add('active');
   }
 
+  // Detener polling de kanban si salimos del tab
+  if (tabName !== 'kanban' && kanbanAutoRefreshInterval) {
+    clearInterval(kanbanAutoRefreshInterval);
+    kanbanAutoRefreshInterval = null;
+  }
+
   ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
@@ -648,6 +655,15 @@ function switchTab(tabName) {
     const view = document.getElementById('viewKanban');
     if (view) view.classList.remove('hidden');
     loadKanbanData();
+    // Auto-refresco en tiempo real cada 3 segundos constante
+    if (!kanbanAutoRefreshInterval) {
+      kanbanAutoRefreshInterval = setInterval(() => {
+        const kanbanView = document.getElementById('viewKanban');
+        if (kanbanView && !kanbanView.classList.contains('hidden')) {
+          loadKanbanData();
+        }
+      }, 3000);
+    }
   } else if (tabName === 'orders') {
     const tab = document.getElementById('tabOrders');
     if (tab) tab.classList.add('active');
@@ -1945,6 +1961,10 @@ document.addEventListener('click', (e) => {
 });
 
 function logout() {
+  if (kanbanAutoRefreshInterval) {
+    clearInterval(kanbanAutoRefreshInterval);
+    kanbanAutoRefreshInterval = null;
+  }
   closeUserDropdown();
   clearAuthSession();
   currentUser = null;
