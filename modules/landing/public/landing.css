@@ -695,7 +695,7 @@ body {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 10;
+  z-index: 0 !important;
   overflow: hidden;
 }
 
@@ -818,4 +818,37 @@ body {
   100% {
     transform: translate(95vw, -80vh) rotate(720deg);
   }
+}
+
+
+/* ============================================================ */
+/* STRICT FOREGROUND ELEVATION (ABOVE AMBIENT ASTEROIDS)        */
+/* ============================================================ */
+.waybar-header,
+.hero-section,
+.modules-section,
+.pricing-section,
+.retro-footer,
+.module-card,
+.pricing-card,
+.hero-title,
+.hero-subtitle,
+.section-title,
+.section-subtitle,
+.cta-group,
+.btn-primary,
+.btn-secondary,
+.theme-switcher-bar {
+  position: relative;
+  z-index: 2;
+}
+
+.waybar-header {
+  z-index: 100 !important;
+}
+
+.module-card,
+.pricing-card {
+  background-color: var(--bg-surface) !important;
+  z-index: 5 !important;
 }

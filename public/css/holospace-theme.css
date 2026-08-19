@@ -1163,7 +1163,7 @@ body.theme-omarchy_aetheria .mobile-nav-tab {
   width: 100vw;
   height: 100vh;
   pointer-events: none;
-  z-index: 10 !important;
+  z-index: 0 !important;
   overflow: hidden;
 }
 
@@ -1330,4 +1330,29 @@ body:has(#loginModal:not(.hidden)) {
   background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
   animation: spaceStarfieldSlow 60s linear infinite !important;
   min-height: 100vh !important;
+}
+
+
+/* ============================================================ */
+/* STRICT FOREGROUND ELEVATION FOR APP & LOGIN                  */
+/* ============================================================ */
+.app-header-shell,
+main,
+.view-panel,
+.kanban-col,
+.kanban-card,
+.module-card,
+.modal-content,
+.app-status-bar,
+#loginModal .modal-content {
+  position: relative;
+  z-index: 5 !important;
+}
+
+#loginModal {
+  z-index: 100 !important;
+}
+
+.app-header-shell {
+  z-index: 50 !important;
 }
