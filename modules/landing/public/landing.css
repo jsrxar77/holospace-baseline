@@ -120,9 +120,40 @@ body {
   text-decoration: none;
 }
 
-.brand-badge span.logo-holo { color: #FFF; font-size: 15px; margin: 0; padding: 0; }
-.brand-badge span.logo-space { color: var(--accent-emerald); font-size: 15px; margin: 0; padding: 0; }
-.brand-badge { display: inline-flex; align-items: center; text-decoration: none; }
+.brand-badge {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.brand-badge .logo-wrapper,
+.brand-badge .pixel-logo-text {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 22px !important;
+  font-weight: 900;
+  letter-spacing: -1px;
+  text-shadow: 2px 2px 0px #000;
+  display: inline-flex;
+  align-items: center;
+}
+
+.brand-badge span.logo-holo {
+  color: #FFFFFF !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 22px !important;
+  margin: 0;
+  padding: 0;
+}
+
+.brand-badge span.logo-space {
+  color: var(--accent-emerald) !important;
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 22px !important;
+  margin: 0;
+  padding: 0;
+  text-shadow: 2px 2px 0px #000, 0 0 10px rgba(166, 218, 149, 0.4);
+}
 
 .status-pill {
   font-size: 11px;
