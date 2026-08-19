@@ -1216,8 +1216,21 @@ const server = http.createServer(async (req, res) => {
       // 9. GESTIÓN DE USUARIOS
       if (req.url.startsWith('/api/users')) {
         if (req.method === 'GET') {
+          const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+          const filterTenantId = urlObj.searchParams.get('tenantId') || (currentUser && currentUser.role !== 'SUPERADMIN' ? tenantId : null);
+          const filterRole = urlObj.searchParams.get('role');
+
           let userList;
-          if (currentUser && currentUser.role === 'SUPERADMIN') {
+          if (filterTenantId) {
+            let sql = 'SELECT id, username, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ?';
+            const params = [filterTenantId];
+            if (filterRole) {
+              sql += ' AND role = ?';
+              params.push(filterRole.toUpperCase());
+            }
+            sql += ' ORDER BY name';
+            userList = await query(sql, params, { tenantId: filterTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' });
+          } else if (currentUser && currentUser.role === 'SUPERADMIN') {
             userList = await query(`
               SELECT u.id, u.username, u.email, u.name, u.role, u.is_active as active, u.tenant_id,
                      t.name as tenant_name, t.slug as tenant_slug
