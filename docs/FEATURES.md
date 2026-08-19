@@ -4,24 +4,31 @@
 
 ---
 
-## 1. Matriz de Funcionalidades por Rol
+## 1. Matriz de Control de Acceso y Segregación de Roles (RBAC)
 
-| Característica / Capacidad | SUPERADMIN | ADMIN (Cliente) | OPERATOR (Cliente) |
+HoloSpace implementa el principio de **Mínimo Privilegio (PoLP)** y **Segregación Estricta de Funciones (SoD)**:
+
+| Módulo / Capacidad | SUPERADMIN (HoloSpace Global) | ADMIN (Cliente: Drink Lovers, Poke) | OPERATOR (Operario Depósito) |
 | :--- | :---: | :---: | :---: |
-| **Directorio de Organizaciones (Tenants)** | ✅ Total | ❌ | ❌ |
-| **Aprovisionamiento y Suspensión de Tenants** | ✅ Total | ❌ | ❌ |
-| **Licenciamiento Modular en Vivo** | ✅ Total | ❌ | ❌ |
-| **Catálogo de Planes y Modificación de Cuotas** | ✅ Total | ❌ | ❌ |
-| **Auditoría Global de Plataforma** | ✅ Total | ❌ | ❌ |
-| **Tablero Kanban Web de Logística** | ❌ (Separación estricta) | ✅ | ✅ |
-| **Carga y Procesamiento Inteligente de PDF** | ❌ | ✅ | ❌ |
-| **Asignación de Pedidos a Operarios** | ❌ | ✅ | ❌ |
-| **Escaneo Móvil de Códigos EAN-13 (Cámara)** | ❌ | ✅ | ✅ |
-| **Sincronización Offline en Celular (SQLite)** | ❌ | ✅ | ✅ |
-| **Selección de Tema Visual Personal** | ✅ | ✅ | ✅ |
-| **Definición de Tema Base del Tenant** | ✅ | ✅ | ❌ |
-
----
+| **MÓDULO TENANT (Gobierno SaaS)** | | | |
+| ├── Directorio de Organizaciones | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| ├── Alta, Edición y Suspensión | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| └── Toggle Dinámico de Licencias | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| **MÓDULO CORE (Plataforma Base)** | | | |
+| ├── Catálogo de Planes y Cuotas | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| ├── Auditoría Global de Sistema | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| └── ABM Global de Usuarios | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
+| **MÓDULO KANBAN (Logística)** | | | |
+| ├── Tablero Kanban 4 Columnas | ❌ **Bloqueado (Separación)** | ✅ **Acceso Total** | ✅ **Solo Lectura / Mover** |
+| ├── Ingesta & Parseo de PDF | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
+| ├── Asignación de Operarios | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
+| └── Explorador de Pedidos | ❌ **Bloqueado** | ✅ **Acceso Total** | ✅ **Solo pedidos asignados** |
+| **MÓDULO SCANNER (Móvil)** | | | |
+| ├── Escaneo EAN-13 con Cámara | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| └── Sincronización Offline SQLite | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| **SISTEMA DE DISEÑO / TEMAS** | | | |
+| ├── Selección de Tema Personal | ✅ (Scope: User) | ✅ (Scope: User) | ✅ (Scope: User) |
+| └── Definición de Tema Base Tenant | ✅ (HoloSpace Global) | ✅ (Su Organización) | ❌ **Bloqueado** |
 
 ## 2. Catálogo Oficial de Planes SaaS y Facturación B2B (lib/billing.js)
 

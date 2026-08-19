@@ -263,8 +263,6 @@ function applyRoleVisibility() {
     const path = window.location.pathname.toLowerCase();
     if (path.includes('core')) {
       switchModule('core');
-    } else if (path.includes('kanban')) {
-      switchModule('kanban');
     } else {
       switchModule('tenant');
     }
@@ -378,12 +376,22 @@ function redirectAllowedModule() {
 function switchModule(moduleName, updateUrl = true) {
   const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
 
-  // Control estricto de acceso (RBAC):
+  // Control estricto de acceso y segregación de responsabilidades (RBAC):
   // 1. Tenant y Core son exclusivos para SUPERADMIN
   if ((normMod === 'tenant' || normMod === 'core') && (!currentUser || currentUser.role !== 'SUPERADMIN')) {
-    console.warn(`[SECURITY] Acceso denegado a módulo ${normMod} para usuario ${currentUser ? currentUser.email : 'anónimo'} (${currentUser ? currentUser.role : 'sin rol'})`);
+    console.warn(`[SECURITY] Acceso denegado a módulo ${normMod} para usuario ${currentUser ? currentUser.email : 'anónimo'}`);
     if (updateUrl && window.history && window.history.pushState) {
       window.history.pushState({ module: normMod }, '', '/' + normMod);
+    }
+    showForbiddenView(normMod);
+    return;
+  }
+
+  // 2. SUPERADMIN NO tiene acceso a los módulos operativos de los clientes (Kanban, Scanner)
+  if ((normMod === 'kanban' || normMod === 'scanner') && (currentUser && currentUser.role === 'SUPERADMIN')) {
+    console.warn(`[SECURITY] SUPERADMIN no puede operar en módulo de cliente: ${normMod}`);
+    if (updateUrl && window.history && window.history.pushState) {
+      window.history.pushState({ module: 'tenant' }, '', '/tenant');
     }
     showForbiddenView(normMod);
     return;
