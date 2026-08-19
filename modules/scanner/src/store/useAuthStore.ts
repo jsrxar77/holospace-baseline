@@ -57,12 +57,69 @@ export const getSavedCredentials = () => {
   return { email: '', password: '', tenantSlug: 'poke' };
 };
 
+
+const getInitialAuthState = () => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      // 1. Si viene con token SSO en URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const authToken = urlParams.get('auth_token');
+      const authUserStr = urlParams.get('auth_user');
+      const authTenantStr = urlParams.get('auth_tenant');
+
+      if (authToken && authUserStr) {
+        const authUser = JSON.parse(authUserStr);
+        const authTenant = authTenantStr ? JSON.parse(authTenantStr) : null;
+        window.localStorage.setItem('hs_token', authToken);
+        window.localStorage.setItem('hs_user', authUserStr);
+        if (authTenant) window.localStorage.setItem('hs_tenant', JSON.stringify(authTenant));
+
+        return {
+          user: authUser,
+          tenant: authTenant,
+          entitlements: authUser.entitlements || ['core', 'scanban'],
+          token: authToken,
+          isAuthenticated: true
+        };
+      }
+
+      // 2. Si ya existe sesión guardada en localStorage
+      const savedToken = window.localStorage.getItem('hs_token');
+      const savedUserStr = window.localStorage.getItem('hs_user');
+      const savedTenantStr = window.localStorage.getItem('hs_tenant');
+
+      if (savedToken && savedUserStr) {
+        const user = JSON.parse(savedUserStr);
+        const tenant = savedTenantStr ? JSON.parse(savedTenantStr) : null;
+        return {
+          user,
+          tenant,
+          entitlements: user.entitlements || ['core', 'scanban'],
+          token: savedToken,
+          isAuthenticated: true
+        };
+      }
+    } catch (e) {}
+  }
+
+  return {
+    user: null,
+    tenant: null,
+    entitlements: ['core', 'scanban'],
+    token: null,
+    isAuthenticated: false
+  };
+};
+
+const initialAuth = getInitialAuthState();
+
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  tenant: null,
-  entitlements: ['core', 'scanban'],
-  token: null,
-  isAuthenticated: false,
+  user: initialAuth.user,
+  tenant: initialAuth.tenant,
+  entitlements: initialAuth.entitlements,
+  token: initialAuth.token,
+  isAuthenticated: initialAuth.isAuthenticated,
+
 
   login: async (email: string, pass: string) => {
     try {

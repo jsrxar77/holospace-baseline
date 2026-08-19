@@ -12,7 +12,12 @@ import { ThemedAlertModal } from './src/components/ThemedAlertModal';
 type ScreenName = 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH';
 
 export default function App() {
+  const { isAuthenticated, token } = useAuthStore();
+  const { theme, fetchTheme } = useThemeStore();
+  const [currentScreen, setCurrentScreen] = useState<ScreenName>('HOME');
+
   useEffect(() => {
+    // 1. Ocultar loader HTML
     if (typeof document !== 'undefined') {
       const loader = document.getElementById('expo-loader');
       if (loader) {
@@ -20,81 +25,37 @@ export default function App() {
         setTimeout(() => { loader.style.display = 'none'; }, 200);
       }
     }
-  }, []);
-  const [currentScreen, setCurrentScreen] = useState<ScreenName>('HOME');
-  const { isAuthenticated } = useAuthStore();
-  const { theme, fetchTheme } = useThemeStore();
 
-  useEffect(() => {
-    // 1. Revisar si viene autenticado por parámetros URL (SSO Universal desde Login Web)
-    if (typeof window !== 'undefined' && window.location) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const authToken = urlParams.get('auth_token');
-      const authUserStr = urlParams.get('auth_user');
-      const authTenantStr = urlParams.get('auth_tenant');
-
-      if (authToken && authUserStr) {
-        try {
-          const authUser = JSON.parse(authUserStr);
-          const authTenant = authTenantStr ? JSON.parse(authTenantStr) : null;
-          window.localStorage.setItem('hs_token', authToken);
-          window.localStorage.setItem('hs_user', JSON.stringify(authUser));
-          if (authTenant) window.localStorage.setItem('hs_tenant', JSON.stringify(authTenant));
-
-          useAuthStore.setState({
-            token: authToken,
-            user: authUser,
-            tenant: authTenant,
-            isAuthenticated: true
-          });
-
-          // Limpiar parámetros de la URL para que quede limpia /scanner
-          if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', window.location.pathname);
-          }
-          return;
-        } catch (e) {}
+    // 2. Limpiar query params de SSO en la URL
+    if (typeof window !== 'undefined' && window.location && window.history && window.history.replaceState) {
+      if (window.location.search.includes('auth_token=')) {
+        window.history.replaceState(null, '', window.location.pathname);
       }
+    }
 
-      // 2. Revisar si ya existe sesión guardada en localStorage
-      const webToken = window.localStorage.getItem('hs_token');
-      const webUser = window.localStorage.getItem('hs_user');
-      const webTenant = window.localStorage.getItem('hs_tenant');
-      if (webToken && webUser) {
-        try {
-          useAuthStore.setState({
-            token: webToken,
-            user: JSON.parse(webUser),
-            tenant: webTenant ? JSON.parse(webTenant) : null,
-            isAuthenticated: true
-          });
-          return;
-        } catch (e) {}
-      }
-
-      // 3. Si no hay sesión, redirigir de inmediato al ÚNICO Login Web Oficial
-      const returnUrl = window.location.href;
+    // 3. Si no está autenticado, redirigir al login unificado
+    if (!isAuthenticated && typeof window !== 'undefined') {
+      const returnUrl = window.location.origin + window.location.pathname;
       window.location.href = 'https://holospace.com.ar/login?redirect=' + encodeURIComponent(returnUrl);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      const activeToken = useAuthStore.getState().token;
-      fetchTheme(activeToken);
+    if (isAuthenticated && token) {
+      fetchTheme(token);
       const interval = setInterval(() => {
         const currentToken = useAuthStore.getState().token;
         fetchTheme(currentToken);
       }, 3000);
       return () => clearInterval(interval);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, token]);
 
   if (!isAuthenticated) {
     return (
       <View style={[styles.container, { backgroundColor: '#121317', alignItems: 'center', justifyContent: 'center' }]}>
         <StatusBar style="light" backgroundColor="#121317" />
-        <ActivityIndicator size="large" color="#50FA7B" />
+        <ActivityIndicator size="large" color="#A6DA95" />
       </View>
     );
   }
