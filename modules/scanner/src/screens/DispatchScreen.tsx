@@ -11,7 +11,7 @@ interface DispatchScreenProps {
 export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBackToHome }) => {
   const goHome = () => {
     if (onNavigate) onNavigate('HOME');
-    else if (onBackToHome) goHome();
+    else if (onBackToHome) onBackToHome();
   };
   const { activeOrder, setActiveOrder, closeOrder } = useOrderStore();
 
@@ -42,11 +42,6 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
             style: 'default',
             onPress: () => {
               setActiveOrder(null);
-              goHome();
-            }
-          }
-        ]
-      );
               goHome();
             }
           }
@@ -150,29 +145,34 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     backgroundColor: '#161B22',
-    borderWidth: 2,
-    borderColor: '#00E676',
     borderRadius: 24,
-    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 24,
     alignItems: 'center',
-    gap: 16
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10
   },
   iconCircle: {
-    width: 72,
-    height: 72,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: 'rgba(0, 230, 118, 0.15)',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#00E676',
-    borderRadius: 36,
     alignItems: 'center',
-    justifyContent: 'center'
+    justifyContent: 'center',
+    marginBottom: 16
   },
   iconCirclePartial: {
     backgroundColor: 'rgba(245, 158, 11, 0.15)',
     borderColor: '#F59E0B'
   },
   iconText: {
-    fontSize: 36,
+    fontSize: 32,
     color: '#00E676',
     fontWeight: '900'
   },
@@ -180,84 +180,82 @@ const styles = StyleSheet.create({
     color: '#F59E0B'
   },
   title: {
-    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '900',
+    color: '#FFFFFF',
     textAlign: 'center',
+    marginBottom: 8,
     lineHeight: 26
   },
   subtitle: {
-    color: '#8B949E',
     fontSize: 13,
+    color: '#8B949E',
     textAlign: 'center',
-    lineHeight: 18
+    marginBottom: 24,
+    lineHeight: 18,
+    paddingHorizontal: 8
   },
   detailsBox: {
     width: '100%',
     backgroundColor: '#0B0E14',
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.05)',
     padding: 16,
     gap: 12,
-    borderWidth: 1,
-    borderColor: '#30363D'
+    marginBottom: 24
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6
+    alignItems: 'center'
   },
   detailBlock: {
-    flexDirection: 'column',
     gap: 4
   },
   detailLabel: {
+    fontSize: 12,
     color: '#8B949E',
-    fontSize: 13,
-    fontWeight: '700'
+    fontWeight: '600'
   },
   detailValue: {
+    fontSize: 13,
     color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-    flexShrink: 1
+    fontWeight: '700'
   },
   detailValueBlock: {
-    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '800',
-    lineHeight: 20
+    color: '#FFFFFF',
+    fontWeight: '800'
   },
   detailValuePath: {
-    color: '#3B82F6',
-    fontSize: 13,
-    fontWeight: '800',
-    lineHeight: 18
+    fontSize: 12,
+    color: '#8B949E',
+    fontFamily: 'monospace'
   },
   textEmerald: {
-    color: '#00E676',
-    fontWeight: '900'
+    color: '#00E676'
   },
   textAmber: {
-    color: '#F59E0B',
-    fontWeight: '900'
+    color: '#F59E0B'
   },
   btnHome: {
     width: '100%',
-    minHeight: 64, // Ergonomía > 64px
     backgroundColor: '#00E676',
     borderRadius: 16,
+    paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    marginTop: 8
+    shadowColor: '#00E676',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
   },
   btnHomeText: {
-    color: '#000000',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
+    color: '#000000',
+    letterSpacing: 0.5
   }
 });
