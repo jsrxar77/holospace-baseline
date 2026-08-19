@@ -95,11 +95,9 @@ services:
       - "19001:19001"
     environment:
       - EXPO_NO_TELEMETRY=1
-      # IP LAN del host Mac: permite que config.ts resuelva SERVER_URL correctamente
-      # desde el browser externo y desde Expo Go en dispositivos fisicos.
-      # Actualizar este valor si cambia la IP de la maquina en la red local.
-      - EXPO_PUBLIC_SERVER_IP=192.168.100.247
-      - REACT_NATIVE_PACKAGER_HOSTNAME=192.168.100.247
+      # Host público o IP del servidor para el packager de Expo / Metro
+      - EXPO_PUBLIC_SERVER_IP=${EXPO_PACKAGER_HOST:-5.161.237.189}
+      - REACT_NATIVE_PACKAGER_HOSTNAME=${EXPO_PACKAGER_HOST:-5.161.237.189}
     volumes:
       - ./App.tsx:/app/App.tsx
       - ./package.json:/app/package.json
