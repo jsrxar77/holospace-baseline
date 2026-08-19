@@ -13,10 +13,11 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
   const isCompleted = item.quantityScanned >= item.quantityRequired;
   const isPending = item.quantityScanned === 0;
 
-  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius === 4 ? 4 : (theme.borderRadius === 12 ? 12 : 24));
-  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (theme.borderRadius === 4 ? 2 : 8);
+  const isOmarchy = theme.borderRadius === 4;
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : 6);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
-  const fontFamilyMain = theme.fontFamily || 'System';
+  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
   const fontFamilyMono = theme.fontMono || 'monospace';
 
   return (
@@ -58,10 +59,13 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
           <Text
             style={[
               styles.badgeText,
-              { color: isCompleted ? theme.emerald : theme.textMuted, fontFamily: fontFamilyMono }
+              {
+                fontFamily: fontFamilyMono,
+                color: isCompleted ? theme.emerald : (isPending ? theme.textMuted : theme.cobalt)
+              }
             ]}
           >
-            {isCompleted ? 'COMPLETADO' : 'PENDIENTE'}
+            {isCompleted ? 'LISTO' : (isPending ? 'PENDIENTE' : 'EN CURSO')}
           </Text>
         </View>
       </View>
@@ -71,78 +75,39 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#161B22',
-    borderWidth: 2,
-    borderColor: '#30363D',
-    borderRadius: 20,
-    padding: 16,
-    minHeight: 88, // Ergonomía industrial > 64px
+    padding: 14,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12
-  },
-  cardCompleted: {
-    borderColor: '#00E676',
-    backgroundColor: 'rgba(0, 230, 118, 0.05)'
-  },
-  cardInProgress: {
-    borderColor: '#3B82F6',
-    backgroundColor: 'rgba(59, 130, 246, 0.05)'
+    alignItems: 'center'
   },
   details: {
     flex: 1,
+    marginRight: 12,
     gap: 4
   },
   skuText: {
-    color: '#8B949E',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5
+    fontSize: 11,
+    fontWeight: '700'
   },
   descriptionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    lineHeight: 20
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18
   },
   rightGroup: {
     alignItems: 'flex-end',
     gap: 6
   },
   countText: {
-    fontSize: 32, // Giant 32pt font para visibilidad a 1 metro
+    fontSize: 18,
     fontWeight: '900'
   },
-  textCompleted: {
-    color: '#00E676'
-  },
-  textPending: {
-    color: '#FFFFFF'
-  },
   badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1
-  },
-  badgeCompleted: {
-    backgroundColor: 'rgba(166, 218, 149, 0.15)',
-    borderColor: '#00E676'
-  },
-  badgePending: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderColor: '#F59E0B'
+    paddingHorizontal: 8,
+    paddingVertical: 3
   },
   badgeText: {
-    fontSize: 12,
-    fontWeight: '900',
-    letterSpacing: 0.5
-  },
-  badgeTextCompleted: {
-    color: '#00E676'
-  },
-  badgeTextPending: {
-    color: '#F59E0B'
+    fontSize: 10,
+    fontWeight: '900'
   }
 });

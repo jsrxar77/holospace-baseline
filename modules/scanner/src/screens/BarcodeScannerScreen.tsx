@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useOrderStore } from '../store/useOrderStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface BarcodeScannerScreenProps {
   onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
@@ -11,7 +12,7 @@ interface BarcodeScannerScreenProps {
 export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNavigate, onClose }) => {
   const handleCloseScanner = () => {
     if (onNavigate) onNavigate('SUMMARY');
-    else if (onClose) handleCloseScanner();
+    else if (onClose) onClose();
   };
   const [permission, requestPermission] = useCameraPermissions();
   const [torch, setTorch] = useState(false);
@@ -19,6 +20,14 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const [manualCode, setManualCode] = useState('');
 
   const { scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
+  const { theme } = useThemeStore();
+
+  const isOmarchy = theme.borderRadius === 4;
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
+  const fontFamilyMono = theme.fontMono || 'monospace';
 
   React.useEffect(() => {
     loadInitialOrders();
@@ -35,17 +44,17 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   }, [unassignedOrderNotification]);
 
   if (!permission) {
-    return <View style={styles.container} />;
+    return <View style={[styles.container, { backgroundColor: theme.background }]} />;
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.permissionContainer}>
-        <Text style={styles.permissionText}>
+      <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.permissionText, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
           Se requiere permiso de cámara para escanear los códigos de barras de depósito.
         </Text>
-        <TouchableOpacity style={styles.btnPermission} onPress={requestPermission}>
-          <Text style={styles.btnPermissionText}>Otorgar Permiso de Cámara</Text>
+        <TouchableOpacity style={[styles.btnPermission, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={requestPermission}>
+          <Text style={[styles.btnPermissionText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>Otorgar Permiso de Cámara</Text>
         </TouchableOpacity>
       </View>
     );
@@ -64,9 +73,10 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
   const handleManualSubmit = async () => {
     if (manualCode.trim()) {
-      const result = await scanBarcode(manualCode.trim());
-      setManualCode('');
+      const codeToScan = manualCode.trim();
       setManualModalOpen(false);
+      setManualCode('');
+      const result = await scanBarcode(codeToScan);
       if (result === 'SUCCESS') {
         setTimeout(() => {
           handleCloseScanner();
@@ -81,80 +91,81 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
         style={StyleSheet.absoluteFillObject}
         enableTorch={torch}
         barcodeScannerSettings={{
-          barcodeTypes: ['ean13', 'code128', 'qr', 'ean8', 'code39']
+          barcodeTypes: ['ean13', 'ean8', 'code128', 'code39', 'upc_a', 'upc_e', 'qr']
         }}
         onBarcodeScanned={handleBarcodeScanned}
       />
-      <View style={styles.overlay}>
-          {/* Top Real-Time Notification Toast */}
-          {lastScanToast && (
-            <View
-              style={[
-                styles.toast,
-                lastScanToast.type === 'SUCCESS' && styles.toastSuccess,
-                lastScanToast.type === 'ERROR' && styles.toastError,
-                lastScanToast.type === 'EXCESS' && styles.toastExcess
-              ]}
-            >
-              <Text style={styles.toastIcon}>
-                {lastScanToast.type === 'SUCCESS' ? '✓' : '⚠️'}
-              </Text>
-              <View style={styles.toastTextGroup}>
-                <Text style={styles.toastMessage}>{lastScanToast.message}</Text>
-                <Text style={styles.toastCode}>{lastScanToast.code}</Text>
-              </View>
-              <TouchableOpacity style={styles.toastClose} onPress={clearToast}>
-                <Text style={styles.toastCloseText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
-          {/* Reticle Box Box Frame */}
-          <View style={styles.reticleFrame}>
-            <View style={styles.laserLine} />
-          </View>
-
-          {/* Bottom Control Bar */}
-          <View style={styles.controlBar}>
-            <View style={styles.tacticalRow}>
-              <TouchableOpacity
-                style={[styles.btnTactical, torch && styles.btnTacticalActive]}
-                onPress={() => setTorch(!torch)}
-              >
-                <Text style={styles.tacticalIcon}>💡</Text>
-                <Text style={styles.tacticalText}>
-                  {torch ? 'Linterna ON' : 'Flash Linterna'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.btnTactical}
-                onPress={() => setManualModalOpen(true)}
-              >
-                <Text style={styles.tacticalIcon}>⌨️</Text>
-                <Text style={styles.tacticalText}>Entrada Manual</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.btnClose} onPress={handleCloseScanner}>
-              <Text style={styles.btnCloseText}>CERRAR ESCÁNER</Text>
-            </TouchableOpacity>
-          </View>
+      {/* Target Reticle */}
+      <View style={styles.overlayCenter}>
+        <View style={[styles.scanFrame, { borderColor: theme.emerald, borderRadius: cardRadius }]}>
+          <View style={[styles.cornerTopLeft, { borderColor: theme.emerald }]} />
+          <View style={[styles.cornerTopRight, { borderColor: theme.emerald }]} />
+          <View style={[styles.cornerBottomLeft, { borderColor: theme.emerald }]} />
+          <View style={[styles.cornerBottomRight, { borderColor: theme.emerald }]} />
         </View>
+      </View>
 
-      {/* Manual Input Backup Modal */}
-      <Modal visible={isManualModalOpen} transparent animationType="slide">
+      {/* Scan Toast Feedback */}
+      {lastScanToast && (
+        <View
+          style={[
+            styles.toastContainer,
+            {
+              backgroundColor: lastScanToast.type === 'SUCCESS' ? theme.emerald : theme.red,
+              borderRadius: btnRadius
+            }
+          ]}
+        >
+          <Text style={[styles.toastText, { fontFamily: fontFamilyMain, color: lastScanToast.type === 'SUCCESS' ? '#11111B' : '#FFFFFF' }]}>
+            {lastScanToast.message}
+          </Text>
+        </View>
+      )}
+
+      {/* Top Floating Action Controls */}
+      <View style={styles.topControls}>
+        <TouchableOpacity
+          style={[styles.btnCircle, { backgroundColor: isOmarchy ? '#181825' : '#161B22', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          onPress={() => setTorch(!torch)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.btnIcon}>{torch ? '🔦' : '💡'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.btnCircle, { backgroundColor: isOmarchy ? '#181825' : '#161B22', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          onPress={() => setManualModalOpen(true)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.btnIcon}>⌨️</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Bottom Sticky Action: Finalizar Escaneo */}
+      <View style={styles.bottomControls}>
+        <TouchableOpacity
+          style={[styles.btnClose, { backgroundColor: isOmarchy ? '#1E1E2E' : '#21262D', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+          onPress={handleCloseScanner}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.btnCloseText, { color: theme.textMain, fontFamily: fontFamilyMain }]}>FINALIZAR ESCANEO</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Manual Barcode Input Modal */}
+      <Modal visible={isManualModalOpen} transparent animationType="fade" onRequestClose={() => setManualModalOpen(false)}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Entrada Manual por Teclado</Text>
-            <Text style={styles.modalSubtitle}>
-              Ingresa el código EAN-13 o SKU del producto impreso en la caja:
+          <View style={[styles.modalContent, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+            <Text style={[styles.modalTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Ingreso Manual de EAN-13</Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
+              Ingresa los dígitos del código de barras si la etiqueta está dañada:
             </Text>
 
             <TextInput
-              style={styles.modalInput}
-              placeholder="Ej: 7794450008275"
-              placeholderTextColor="#8B949E"
+              style={[styles.modalInput, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
+              placeholder="Ej: 7791234567890"
+              placeholderTextColor={theme.textMuted}
               keyboardType="numeric"
               value={manualCode}
               onChangeText={setManualCode}
@@ -163,14 +174,19 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.btnModalCancel}
+                style={[styles.btnModalCancel, { backgroundColor: isOmarchy ? '#1E1E2E' : theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
                 onPress={() => setManualModalOpen(false)}
+                activeOpacity={0.8}
               >
-                <Text style={styles.btnModalCancelText}>Cancelar</Text>
+                <Text style={[styles.btnModalCancelText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Cancelar</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.btnModalSubmit} onPress={handleManualSubmit}>
-                <Text style={styles.btnModalSubmitText}>Validar EAN</Text>
+              <TouchableOpacity
+                style={[styles.btnModalConfirm, { backgroundColor: theme.emerald, borderColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+                onPress={handleManualSubmit}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.btnModalConfirmText, { color: '#11111B', fontFamily: fontFamilyMain }]}>Procesar Código</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -187,148 +203,117 @@ const styles = StyleSheet.create({
   },
   permissionContainer: {
     flex: 1,
-    backgroundColor: '#0B0E14',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    gap: 20
+    gap: 16
   },
   permissionText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 14,
     textAlign: 'center',
-    lineHeight: 24
+    lineHeight: 20
   },
   btnPermission: {
-    backgroundColor: '#A6DA95',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 16
+    paddingVertical: 14,
+    paddingHorizontal: 24
   },
   btnPermissionText: {
-    color: '#000000',
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '900'
+  },
+  overlayCenter: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  scanFrame: {
+    width: 260,
+    height: 180,
+    borderWidth: 2,
+    position: 'relative'
+  },
+  cornerTopLeft: {
+    position: 'absolute',
+    top: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 4,
+    borderLeftWidth: 4
+  },
+  cornerTopRight: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderTopWidth: 4,
+    borderRightWidth: 4
+  },
+  cornerBottomLeft: {
+    position: 'absolute',
+    bottom: -2,
+    left: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4
+  },
+  cornerBottomRight: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderBottomWidth: 4,
+    borderRightWidth: 4
+  },
+  toastContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    zIndex: 100
+  },
+  toastText: {
+    fontSize: 13,
     fontWeight: '900',
     textAlign: 'center'
   },
-  camera: {
-    flex: 1
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: 'space-between',
-    padding: 20
-  },
-  toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 18,
-    gap: 12,
-    marginTop: 40,
-    elevation: 8
-  },
-  toastSuccess: {
-    backgroundColor: '#A6DA95'
-  },
-  toastError: {
-    backgroundColor: '#FF5252'
-  },
-  toastExcess: {
-    backgroundColor: '#F59E0B'
-  },
-  toastIcon: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#000000'
-  },
-  toastTextGroup: {
-    flex: 1
-  },
-  toastMessage: {
-    color: '#000000',
-    fontSize: 15,
-    fontWeight: '900'
-  },
-  toastCode: {
-    color: '#000000',
-    fontSize: 13,
-    fontWeight: '700'
-  },
-  toastClose: {
-    padding: 8
-  },
-  toastCloseText: {
-    color: '#000000',
-    fontSize: 18,
-    fontWeight: '900'
-  },
-  reticleFrame: {
-    width: 280,
-    height: 180,
-    borderWidth: 3,
-    borderColor: '#A6DA95',
-    borderRadius: 20,
-    alignSelf: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden'
-  },
-  laserLine: {
-    width: '100%',
-    height: 3,
-    backgroundColor: '#FF5252'
-  },
-  controlBar: {
-    backgroundColor: '#161B22',
-    borderRadius: 24,
-    padding: 16,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#30363D'
-  },
-  tacticalRow: {
+  topControls: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
     flexDirection: 'row',
     gap: 12
   },
-  btnTactical: {
-    flex: 1,
-    minHeight: 64, // Ergonomía > 64px
-    backgroundColor: '#21262D',
-    borderWidth: 1,
-    borderColor: '#30363D',
-    borderRadius: 16,
+  btnCircle: {
+    width: 44,
+    height: 44,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    gap: 4
+    justifyContent: 'center'
   },
-  btnTacticalActive: {
-    borderColor: '#F59E0B',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)'
+  btnIcon: {
+    fontSize: 18
   },
-  tacticalIcon: {
-    fontSize: 20
-  },
-  tacticalText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-    textAlign: 'center'
+  bottomControls: {
+    position: 'absolute',
+    bottom: 30,
+    left: 20,
+    right: 20
   },
   btnClose: {
-    minHeight: 64, // Ergonomía > 64px
-    backgroundColor: '#FF5252',
-    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12
+    justifyContent: 'center'
   },
   btnCloseText: {
-    color: '#FFFFFF',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 0.5,
-    textAlign: 'center'
+    letterSpacing: 0.5
   },
   modalOverlay: {
     flex: 1,
@@ -337,66 +322,47 @@ const styles = StyleSheet.create({
     padding: 20
   },
   modalContent: {
-    backgroundColor: '#161B22',
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: '#A6DA95',
     padding: 24,
-    gap: 16
+    gap: 14
   },
   modalTitle: {
-    color: '#A6DA95',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     textAlign: 'center'
   },
   modalSubtitle: {
-    color: '#8B949E',
-    fontSize: 14,
-    textAlign: 'center'
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18
   },
   modalInput: {
-    backgroundColor: '#0B0E14',
-    borderWidth: 1,
-    borderColor: '#30363D',
-    borderRadius: 14,
-    padding: 16,
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '900'
+    padding: 14,
+    fontSize: 16,
+    fontWeight: '700'
   },
   modalActions: {
     flexDirection: 'row',
-    gap: 12
+    gap: 10,
+    marginTop: 4
   },
   btnModalCancel: {
     flex: 1,
-    minHeight: 56,
-    backgroundColor: '#21262D',
-    borderRadius: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8
+    justifyContent: 'center'
   },
   btnModalCancelText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center'
+    fontSize: 13,
+    fontWeight: '800'
   },
-  btnModalSubmit: {
+  btnModalConfirm: {
     flex: 1,
-    minHeight: 56,
-    backgroundColor: '#A6DA95',
-    borderRadius: 14,
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8
+    justifyContent: 'center'
   },
-  btnModalSubmitText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '900',
-    textAlign: 'center'
+  btnModalConfirmText: {
+    fontSize: 13,
+    fontWeight: '900'
   }
 });

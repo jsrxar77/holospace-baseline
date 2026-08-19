@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { showThemedAlert } from '../components/ThemedAlertModal';
 import { useOrderStore } from '../store/useOrderStore';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface DispatchScreenProps {
   onNavigate?: (screen: 'HOME' | 'SUMMARY' | 'SCANNER' | 'DISPATCH') => void;
@@ -14,13 +15,22 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
     else if (onBackToHome) onBackToHome();
   };
   const { activeOrder, setActiveOrder, closeOrder } = useOrderStore();
+  const { theme } = useThemeStore();
+
+  const isOmarchy = theme.borderRadius === 4;
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
+  const badgeRadius = theme.radiusBadge !== undefined ? theme.radiusBadge : (isOmarchy ? 2 : 8);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
+  const fontFamilyMono = theme.fontMono || 'monospace';
 
   if (!activeOrder) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.title}>No hay orden seleccionada.</Text>
-        <TouchableOpacity style={styles.btnHome} onPress={goHome}>
-          <Text style={styles.btnHomeText}>Volver al Inicio</Text>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay orden seleccionada.</Text>
+        <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={goHome}>
+          <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>Volver al Inicio</Text>
         </TouchableOpacity>
       </View>
     );
@@ -54,76 +64,76 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: isPartial ? theme.amber : theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
           {/* Top Checkmark Icon */}
-          <View style={[styles.iconCircle, isPartial && styles.iconCirclePartial]}>
-            <Text style={[styles.iconText, isPartial && styles.iconTextPartial]}>
+          <View style={[styles.iconCircle, { borderColor: isPartial ? theme.amber : theme.emerald, backgroundColor: isPartial ? 'rgba(245, 158, 11, 0.15)' : 'rgba(166, 218, 149, 0.15)', borderRadius: badgeRadius, borderWidth: borderWidthVal }]}>
+            <Text style={[styles.iconText, { color: isPartial ? theme.amber : theme.emerald, fontFamily: fontFamilyMono }]}>
               {isPartial ? '⚠️' : '✓'}
             </Text>
           </View>
 
           {/* Title */}
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
             {isPartial
               ? `¡Pedido #${activeOrder.orderNumber} Despachado Parcialmente!`
               : `¡Pedido #${activeOrder.orderNumber} Verificado al 100%!`}
           </Text>
 
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
             {isPartial
               ? 'El pedido fue verificado con autorización de supervisor por faltantes físicos.'
               : 'La auditoría de stock ha finalizado con éxito. Todas las unidades han sido confirmadas.'}
           </Text>
 
           {/* Audit Summary Details Box */}
-          <View style={styles.detailsBox}>
+          <View style={[styles.detailsBox, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Operario Auditador:</Text>
-              <Text style={[styles.detailValue, styles.textEmerald]} numberOfLines={1} ellipsizeMode="tail">
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Operario Auditador:</Text>
+              <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="tail">
                 {activeOrder.operatorEmail || 'jsrxar@gmail.com'}
               </Text>
             </View>
 
             <View style={styles.detailBlock}>
-              <Text style={styles.detailLabel}>Cliente / Razón Social:</Text>
-              <Text style={styles.detailValueBlock}>{activeOrder.clientName}</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Cliente / Razón Social:</Text>
+              <Text style={[styles.detailValueBlock, { color: theme.textMain, fontFamily: fontFamilyMain }]}>{activeOrder.clientName}</Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Unidades Verificadas:</Text>
-              <Text style={[styles.detailValue, styles.textEmerald]}>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Unidades Verificadas:</Text>
+              <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
                 {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
                 {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
               </Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Estado Auditoría:</Text>
-              <Text style={[styles.detailValue, isPartial ? styles.textAmber : styles.textEmerald]}>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Estado Auditoría:</Text>
+              <Text style={[styles.detailValue, { color: isPartial ? theme.amber : theme.emerald, fontFamily: fontFamilyMono }]}>
                 {isPartial ? 'DESPACHO PARCIAL OK' : 'APROBADO AL 100%'}
               </Text>
             </View>
 
             <View style={styles.detailBlock}>
-              <Text style={styles.detailLabel}>Comprobante Registrado:</Text>
-              <Text style={styles.detailValuePath} numberOfLines={1} ellipsizeMode="middle">
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Comprobante Registrado:</Text>
+              <Text style={[styles.detailValuePath, { color: theme.textMuted, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="middle">
                 {activeOrder.pdfFileName || `Pedido #${activeOrder.orderNumber}`}
               </Text>
             </View>
 
             {activeOrder.exceptionReason && (
               <View style={styles.detailBlock}>
-                <Text style={styles.detailLabel}>Marca de Agua / Auditoría:</Text>
-                <Text style={styles.textEmerald}>{activeOrder.exceptionReason}</Text>
+                <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Marca de Agua / Auditoría:</Text>
+                <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]}>{activeOrder.exceptionReason}</Text>
               </View>
             )}
           </View>
 
-          {/* Single Action Button: Corroborar y Finalizar */}
-          <TouchableOpacity style={styles.btnHome} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
-            <Text style={styles.btnHomeText}>VOLVER A LISTA DE PEDIDOS</Text>
+          {/* Action Button */}
+          <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal, borderColor: theme.emerald }]} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
+            <Text style={[styles.btnHomeText, { color: '#11111B', fontFamily: fontFamilyMain }]}>VOLVER A LISTA DE PEDIDOS</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -133,8 +143,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0B0E14'
+    flex: 1
   },
   scrollContent: {
     padding: 16,
@@ -144,66 +153,39 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    backgroundColor: '#161B22',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10
+    padding: 20,
+    alignItems: 'center'
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(166, 218, 149, 0.15)',
-    borderWidth: 2,
-    borderColor: '#A6DA95',
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16
-  },
-  iconCirclePartial: {
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    borderColor: '#F59E0B'
+    marginBottom: 14
   },
   iconText: {
-    fontSize: 32,
-    color: '#A6DA95',
+    fontSize: 22,
     fontWeight: '900'
   },
-  iconTextPartial: {
-    color: '#F59E0B'
-  },
   title: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '900',
-    color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 8,
-    lineHeight: 26
+    marginBottom: 6,
+    lineHeight: 22
   },
   subtitle: {
-    fontSize: 13,
-    color: '#8B949E',
+    fontSize: 12,
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 18,
+    marginBottom: 20,
+    lineHeight: 16,
     paddingHorizontal: 8
   },
   detailsBox: {
     width: '100%',
-    backgroundColor: '#0B0E14',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    padding: 16,
-    gap: 12,
-    marginBottom: 24
+    padding: 14,
+    gap: 10,
+    marginBottom: 20
   },
   detailRow: {
     flexDirection: 'row',
@@ -211,51 +193,32 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   detailBlock: {
-    gap: 4
+    gap: 2
   },
   detailLabel: {
-    fontSize: 12,
-    color: '#8B949E',
+    fontSize: 11,
     fontWeight: '600'
   },
   detailValue: {
-    fontSize: 13,
-    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700'
   },
   detailValueBlock: {
-    fontSize: 14,
-    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '800'
   },
   detailValuePath: {
-    fontSize: 12,
-    color: '#8B949E',
-    fontFamily: 'monospace'
-  },
-  textEmerald: {
-    color: '#A6DA95'
-  },
-  textAmber: {
-    color: '#F59E0B'
+    fontSize: 11
   },
   btnHome: {
     width: '100%',
-    backgroundColor: '#A6DA95',
-    borderRadius: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#A6DA95',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4
+    justifyContent: 'center'
   },
   btnHomeText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
-    color: '#000000',
     letterSpacing: 0.5
   }
 });

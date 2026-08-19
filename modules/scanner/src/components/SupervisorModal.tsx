@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { showThemedAlert } from './ThemedAlertModal';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface SupervisorModalProps {
   visible: boolean;
@@ -15,6 +16,14 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
 }) => {
   const [pin, setPin] = useState('');
   const [reason, setReason] = useState('');
+  const { theme } = useThemeStore();
+
+  const isOmarchy = theme.borderRadius === 4;
+  const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (isOmarchy ? 4 : 16);
+  const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (isOmarchy ? 4 : 12);
+  const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
+  const fontFamilyMain = theme.fontFamily || 'JetBrains Mono';
+  const fontFamilyMono = theme.fontMono || 'monospace';
 
   const handleSubmit = () => {
     if (pin.trim() !== '9999') {
@@ -31,20 +40,20 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.title}>Autorización de Supervisor</Text>
-          <Text style={styles.subtitle}>
+        <View style={[styles.modalContent, { backgroundColor: isOmarchy ? '#181825' : theme.cardBg, borderColor: theme.amber, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+          <Text style={[styles.title, { color: theme.amber, fontFamily: fontFamilyMain }]}>Autorización de Supervisor</Text>
+          <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
             El pedido no alcanza el 100% verificado. Ingrese el PIN de supervisor para autorizar el despacho parcial.
           </Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>PIN de Supervisor (Demo: 9999)</Text>
+            <Text style={[styles.label, { color: theme.textMain, fontFamily: fontFamilyMain }]}>PIN de Supervisor (Demo: 9999)</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
               placeholder="****"
-              placeholderTextColor="#8B949E"
+              placeholderTextColor={theme.textMuted}
               secureTextEntry
               keyboardType="numeric"
               maxLength={4}
@@ -54,11 +63,11 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Motivo del Faltante / Excepción</Text>
+            <Text style={[styles.label, { color: theme.textMain, fontFamily: fontFamilyMain }]}>Motivo del Faltante / Excepción</Text>
             <TextInput
-              style={[styles.input, styles.textArea]}
+              style={[styles.input, styles.textArea, { backgroundColor: isOmarchy ? '#11111B' : '#0B0E14', borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
               placeholder="Ej: Mercadería faltante o rotura en depósito pasillo B-14..."
-              placeholderTextColor="#8B949E"
+              placeholderTextColor={theme.textMuted}
               multiline
               numberOfLines={3}
               value={reason}
@@ -67,12 +76,20 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
           </View>
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.btnCancel} onPress={onClose}>
-              <Text style={styles.btnCancelText}>Cancelar</Text>
+            <TouchableOpacity
+              style={[styles.btnCancel, { backgroundColor: isOmarchy ? '#1E1E2E' : theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+              onPress={onClose}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.btnCancelText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Cancelar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.btnConfirm} onPress={handleSubmit}>
-              <Text style={styles.btnConfirmText}>Autorizar Cierre</Text>
+            <TouchableOpacity
+              style={[styles.btnConfirm, { backgroundColor: theme.amber, borderColor: theme.amber, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+              onPress={handleSubmit}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.btnConfirmText, { color: '#11111B', fontFamily: fontFamilyMain }]}>Autorizar Cierre</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -89,80 +106,62 @@ const styles = StyleSheet.create({
     padding: 20
   },
   modalContent: {
-    backgroundColor: '#161B22',
-    borderWidth: 2,
-    borderColor: '#F59E0B',
-    borderRadius: 24,
     padding: 24,
     gap: 16
   },
   title: {
-    color: '#F59E0B',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
     textAlign: 'center'
   },
   subtitle: {
-    color: '#8B949E',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18,
     textAlign: 'center'
   },
   inputGroup: {
-    gap: 8
+    gap: 6
   },
   label: {
-    color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700'
   },
   input: {
-    backgroundColor: '#0B0E14',
-    borderWidth: 1,
-    borderColor: '#30363D',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    color: '#FFFFFF',
-    fontSize: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
     fontWeight: '700'
   },
   textArea: {
-    height: 80,
+    height: 70,
     textAlignVertical: 'top'
   },
   buttonRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginTop: 8
   },
   btnCancel: {
     flex: 1,
-    minHeight: 56,
-    backgroundColor: '#21262D',
-    borderRadius: 14,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8
   },
   btnCancelText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '800',
     textAlign: 'center'
   },
   btnConfirm: {
     flex: 1,
-    minHeight: 56,
-    backgroundColor: '#F59E0B',
-    borderRadius: 14,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8
   },
   btnConfirmText: {
-    color: '#000000',
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '900',
     textAlign: 'center'
   }
