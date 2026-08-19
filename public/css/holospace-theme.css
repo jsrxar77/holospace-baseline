@@ -1,5 +1,41 @@
 
 /* ============================================================ */
+/* STRICT STARFIELD ISOLATION (LOGIN ONLY)                      */
+/* ============================================================ */
+body.state-logged-out {
+  background-color: #181926 !important;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 80px 140px, #A6DA95, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 150px 70px, #8AADF4, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 240px 190px, #C6A0F6, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 320px 110px, #EED49F, rgba(0,0,0,0)),
+    radial-gradient(4px 4px at 400px 260px, #F5A97F, rgba(0,0,0,0)),
+    linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
+  background-size: 350px 350px, 450px 450px, 300px 300px, 400px 400px, 320px 320px, 500px 500px, 32px 32px, 32px 32px !important;
+  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
+  animation: spaceStarfieldSlow 60s linear infinite !important;
+  min-height: 100vh !important;
+}
+
+body.state-logged-in,
+body.state-logged-in *,
+body.theme-omarchy_tiling.state-logged-in,
+body.theme-omarchy_aetheria.state-logged-in,
+body.theme-soft_minimal_pastel.state-logged-in,
+body.theme-dark_glassmorphism.state-logged-in,
+body.theme-cyberpunk_glassmorphism.state-logged-in {
+  animation: none !important;
+  background-image: none !important;
+}
+
+body.state-logged-in .space-ambient-layer {
+  display: none !important;
+}
+
+
+/* ============================================================ */
 /* MOVING SPACE STARFIELD EXCLUSIVELY FOR LOGIN VIEW            */
 /* ============================================================ */
 body.state-logged-out,
@@ -53,36 +89,15 @@ body:has(#loginModal:not(.hidden)) {
 html.theme-omarchy_tiling,
 body.theme-omarchy_tiling {
   font-family: 'JetBrains Mono', monospace !important;
-  background-color: #181926 !important;
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 80px 140px, #A6DA95, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 150px 70px, #8AADF4, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 240px 190px, #C6A0F6, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 320px 110px, #EED49F, rgba(0,0,0,0)),
-    radial-gradient(4px 4px at 400px 260px, #F5A97F, rgba(0,0,0,0)),
-    linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
-  background-size: 350px 350px, 450px 450px, 300px 300px, 400px 400px, 320px 320px, 500px 500px, 32px 32px, 32px 32px !important;
-  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
-  animation: spaceStarfieldSlow 60s linear infinite !important;
-  min-height: 100vh !important;
+  background-color: #121317 !important;
+  background-image: none !important;
+  animation: none !important;
 }
 
 body {
-  background-color: #181926 !important;
-  background-image: 
-    radial-gradient(2px 2px at 20px 30px, #CAD3F5, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 80px 140px, #A6DA95, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 150px 70px, #8AADF4, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 240px 190px, #C6A0F6, rgba(0,0,0,0)),
-    radial-gradient(2px 2px at 320px 110px, #EED49F, rgba(0,0,0,0)),
-    radial-gradient(4px 4px at 400px 260px, #F5A97F, rgba(0,0,0,0)),
-    linear-gradient(rgba(54, 58, 79, 0.3) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(54, 58, 79, 0.3) 1px, transparent 1px) !important;
-  background-size: 350px 350px, 450px 450px, 300px 300px, 400px 400px, 320px 320px, 500px 500px, 32px 32px, 32px 32px !important;
-  background-position: 0 0, 40px 60px, 130px 270px, 70px 100px, -50px 140px, 120px 40px, 0 0, 0 0 !important;
-  animation: spaceStarfieldSlow 60s linear infinite !important;
+  background-color: #121317 !important;
+  background-image: none !important;
+  animation: none !important;
   min-height: 100vh !important;
 }
 
