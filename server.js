@@ -545,6 +545,12 @@ const server = http.createServer(async (req, res) => {
           );
 
           await execute(
+            'UPDATE users SET theme_preference = NULL WHERE tenant_id = ?',
+            [destTenantId],
+            { tenantId: destTenantId, isSuperAdmin: true }
+          );
+
+          await execute(
             'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
             [destTenantId, currentUser.email, 'TENANT_THEME_CHANGED', JSON.stringify({ themeKey: targetKey, themeName: THEMES[targetKey].name, tenantId: destTenantId })],
             { tenantId: destTenantId, isSuperAdmin: true }
@@ -887,11 +893,17 @@ const server = http.createServer(async (req, res) => {
           );
         }
 
-        // 3. Actualizar Tema Base del Tenant
+        // 3. Actualizar Tema Base del Tenant y alinear a los usuarios
         if (activeTheme && THEMES[activeTheme]) {
           await execute(
             'INSERT INTO app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
             [targetTenant.id, 'active_theme', activeTheme],
+            { tenantId: targetTenant.id, isSuperAdmin: true }
+          );
+          // Limpiar o alinear preferencias individuales para que todos los usuarios hereden el nuevo tema corporativo
+          await execute(
+            'UPDATE users SET theme_preference = NULL WHERE tenant_id = ?',
+            [targetTenant.id],
             { tenantId: targetTenant.id, isSuperAdmin: true }
           );
         }
