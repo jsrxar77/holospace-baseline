@@ -221,7 +221,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     // Debounce de 500ms para evitar lecturas repetidas en ráfaga
     if (now - lastScanTimestamp < 500) {
-      return 'SUCCESS';
+      return 'IGNORED';
     }
 
     if (!activeOrder) {

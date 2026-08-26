@@ -29,6 +29,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
     isMatch: boolean;
     timestamp: number;
   } | null>(null);
+  const [isScanningPaused, setIsScanningPaused] = useState(false);
 
   const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
   const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
@@ -53,7 +54,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
   // Auto-dismiss del toast tras 2.5 segundos para no trabar el flujo de escaneo
   React.useEffect(() => {
-    if (lastScanToast) {
+    if (lastScanToast && lastScanToast.type === 'SUCCESS') {
       const timer = setTimeout(() => {
         clearToast();
       }, 2500);
@@ -85,24 +86,36 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   }
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
-    if (data) {
-      const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
-      const result = await scanBarcode(data);
-      const isSuccess = result === 'SUCCESS';
-      
+    if (!data || isScanningPaused) return;
+
+    const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
+    const result = await scanBarcode(data);
+
+    if (result === 'IGNORED') return;
+
+    const isSuccess = result === 'SUCCESS';
+
+    if (isSuccess) {
       setScanComparison({
         expectedCode: currentTarget?.code || 'N/A',
         scannedCode: data,
         description: currentTarget?.description || 'Producto',
-        isMatch: isSuccess,
+        isMatch: true,
         timestamp: Date.now()
       });
-
-      if (isSuccess) {
-        setTimeout(() => {
-          handleCloseScanner();
-        }, 500);
-      }
+      setTimeout(() => {
+        handleCloseScanner();
+      }, 400);
+    } else {
+      // Pausa la cámara ante error para no ciclar lecturas espurias y permitir ver la discrepancia o tomar screenshot
+      setIsScanningPaused(true);
+      setScanComparison({
+        expectedCode: currentTarget?.code || 'N/A',
+        scannedCode: data,
+        description: currentTarget?.description || 'Producto',
+        isMatch: false,
+        timestamp: Date.now()
+      });
     }
   };
 
@@ -113,20 +126,31 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
       setManualCode('');
       const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
       const result = await scanBarcode(codeToScan);
+
+      if (result === 'IGNORED') return;
+
       const isSuccess = result === 'SUCCESS';
 
-      setScanComparison({
-        expectedCode: currentTarget?.code || 'N/A',
-        scannedCode: codeToScan,
-        description: currentTarget?.description || 'Producto',
-        isMatch: isSuccess,
-        timestamp: Date.now()
-      });
-
       if (isSuccess) {
+        setScanComparison({
+          expectedCode: currentTarget?.code || 'N/A',
+          scannedCode: codeToScan,
+          description: currentTarget?.description || 'Producto',
+          isMatch: true,
+          timestamp: Date.now()
+        });
         setTimeout(() => {
           handleCloseScanner();
-        }, 500);
+        }, 400);
+      } else {
+        setIsScanningPaused(true);
+        setScanComparison({
+          expectedCode: currentTarget?.code || 'N/A',
+          scannedCode: codeToScan,
+          description: currentTarget?.description || 'Producto',
+          isMatch: false,
+          timestamp: Date.now()
+        });
       }
     }
   };
@@ -139,7 +163,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
         barcodeScannerSettings={{
           barcodeTypes: ['ean13', 'ean8', 'code128', 'code39', 'upc_a', 'upc_e', 'qr']
         }}
-        onBarcodeScanned={handleBarcodeScanned}
+        onBarcodeScanned={isScanningPaused ? undefined : handleBarcodeScanned}
       />
 
       {/* Top Floating Controls Container */}
@@ -224,7 +248,13 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
               ]}>
                 {scanComparison.isMatch ? 'LECTURA CORRECTA' : 'DISCREPANCIA DE CODIGO'}
               </Text>
-              <TouchableOpacity onPress={() => setScanComparison(null)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  setScanComparison(null);
+                  setIsScanningPaused(false);
+                }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
                 <Text style={[styles.comparisonClose, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>✕</Text>
               </TouchableOpacity>
             </View>
@@ -246,9 +276,36 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
             </View>
 
             {!scanComparison.isMatch && (
-              <Text style={[styles.comparisonHelpText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-                Verifica los digitos o toma una captura de pantalla para auditoria.
-              </Text>
+              <>
+                <Text style={[styles.comparisonHelpText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
+                  Verifica los digitos o toma una captura de pantalla para auditoria.
+                </Text>
+                <View style={styles.comparisonActionsRow}>
+                  <TouchableOpacity
+                    style={[styles.btnComparisonRetry, { backgroundColor: theme.emerald, borderRadius: btnRadius }]}
+                    onPress={() => {
+                      setScanComparison(null);
+                      setIsScanningPaused(false);
+                      clearToast();
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.btnComparisonRetryText, { color: theme.background, fontFamily: fontFamilyMain }]}>
+                      REINTENTAR
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.btnComparisonClose, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: borderWidthVal, borderRadius: btnRadius }]}
+                    onPress={handleCloseScanner}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.btnComparisonCloseText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
+                      SALIR
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
           </View>
         )}
@@ -498,6 +555,35 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
     lineHeight: 14
+  },
+  comparisonActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4
+  },
+  btnComparisonRetry: {
+    flex: 2,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  btnComparisonRetryText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5
+  },
+  btnComparisonClose: {
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  btnComparisonCloseText: {
+    fontSize: 11,
+    fontWeight: '800'
   },
   toastContainer: {
     position: 'absolute',

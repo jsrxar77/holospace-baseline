@@ -2,7 +2,7 @@ export type OrderStatus = 'DRAFT' | 'PARSED' | 'SCANNING' | 'VERIFIED' | 'CLOSED
 
 export type ItemStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVER_SCANNED';
 
-export type ScanResult = 'SUCCESS' | 'UNMATCHED_CODE' | 'EXCESS_QUANTITY';
+export type ScanResult = 'SUCCESS' | 'UNMATCHED_CODE' | 'EXCESS_QUANTITY' | 'IGNORED';
 
 export interface OrderItem {
   id: string;
