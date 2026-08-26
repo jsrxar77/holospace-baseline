@@ -24,7 +24,15 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     if (onNavigate) onNavigate('HOME');
     else if (onBack) onBack();
   };
-  const handleGoScanner = () => {
+  const handleGoScanner = (clearSelection = true) => {
+    if (clearSelection) {
+      useOrderStore.getState().setSelectedItemId(null);
+    }
+    if (onNavigate) onNavigate('SCANNER');
+    else if (onNavigateToScanner) onNavigateToScanner();
+  };
+  const handleSelectItemToScan = (itemId: string) => {
+    useOrderStore.getState().setSelectedItemId(itemId);
     if (onNavigate) onNavigate('SCANNER');
     else if (onNavigateToScanner) onNavigateToScanner();
   };
@@ -32,7 +40,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     if (onNavigate) onNavigate('DISPATCH');
     else if (onNavigateToDispatch) onNavigateToDispatch();
   };
-  const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification } = useOrderStore();
+  const { activeOrder, closeOrder, loadInitialOrders, unassignedOrderNotification, clearUnassignedNotification, setSelectedItemId } = useOrderStore();
   const { theme } = useThemeStore();
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED' | 'READY'>('ALL');
   const [isSupervisorModalOpen, setSupervisorModalOpen] = useState(false);
@@ -250,7 +258,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       {/* Items Scrollable List */}
       <ScrollView contentContainerStyle={styles.itemsList}>
         {filteredItems.map((item) => (
-          <ItemCard key={item.id} item={item} onPress={handleGoScanner} />
+          <ItemCard key={item.id} item={item} onPress={() => handleSelectItemToScan(item.id)} />
         ))}
       </ScrollView>
 
@@ -259,7 +267,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         {!isClosed && (
           <TouchableOpacity
             style={[styles.btnScan, { backgroundColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal, borderColor: theme.emerald }]}
-            onPress={handleGoScanner}
+            onPress={() => handleGoScanner(true)}
             activeOpacity={0.8}
           >
             <Text style={[styles.btnScanText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>INICIAR ESCANEO</Text>

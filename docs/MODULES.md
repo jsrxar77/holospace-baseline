@@ -34,6 +34,7 @@ modules/
 - Lector de códigos EAN-13, sincronización offline SQLite local (`holospace.db`) y respuesta háptica.
 - Interfaz de escaneo asistido con tarjeta superior de producto pendiente, retículo con línea central láser y panel comparativo de código esperado vs. escaneado para control de calidad y captura de pantalla.
 - Flujo interactivo dual: salida automática inmediata ante lectura exitosa (zero-clicks) y retención con pausa de cámara, visualización de discrepancia EAN, botón de reintento y salida manual ante errores.
+- Selección enfocada de ítems: permite al operario tocar un ítem puntual del resumen para escanearlo específicamente o usar el botón general para escaneo secuencial.
 
 ---
 

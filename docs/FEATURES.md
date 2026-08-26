@@ -28,6 +28,7 @@ HoloSpace implementa el principio de **Mínimo Privilegio (PoLP)** y **Segregaci
 | ├── Guía de Producto Asistido & Retículo Láser | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | ├── Diagnóstico Comparativo Esperado vs Leído | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | ├── Pausa y Reintento Interactivo ante Discrepancia | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| ├── Selección Enfocada de Ítems en Resumen | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | └── Sincronización Offline SQLite | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | **SISTEMA DE DISEÑO / TEMAS** | | | |
 | ├── Selección de Tema Personal | ✅ (Scope: User) | ✅ (Scope: User) | ✅ (Scope: User) |

@@ -19,7 +19,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const [isManualModalOpen, setManualModalOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
 
-  const { activeOrder, scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
+  const { activeOrder, selectedItemId, scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
   const { theme } = useThemeStore();
 
   const [scanComparison, setScanComparison] = useState<{
@@ -37,8 +37,10 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
   const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
 
-  // Determinar el producto pendiente prioritario a escanear
-  const pendingItem = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
+  // Determinar el producto objetivo respetando la selección puntual o el primer pendiente
+  const pendingItem = (selectedItemId && activeOrder?.items.find((i) => i.id === selectedItemId))
+    || activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired)
+    || activeOrder?.items[0];
 
   React.useEffect(() => {
     clearToast();
@@ -88,7 +90,9 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (!data || isScanningPaused) return;
 
-    const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
+    const currentTarget = (selectedItemId && activeOrder?.items.find((i) => i.id === selectedItemId))
+      || activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired)
+      || activeOrder?.items[0];
     const result = await scanBarcode(data);
 
     if (result === 'IGNORED') return;
@@ -124,7 +128,9 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
       const codeToScan = manualCode.trim();
       setManualModalOpen(false);
       setManualCode('');
-      const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
+      const currentTarget = (selectedItemId && activeOrder?.items.find((i) => i.id === selectedItemId))
+        || activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired)
+        || activeOrder?.items[0];
       const result = await scanBarcode(codeToScan);
 
       if (result === 'IGNORED') return;
@@ -202,7 +208,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
           <View style={[styles.targetProductCard, { backgroundColor: theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
             <View style={styles.targetHeaderRow}>
               <Text style={[styles.targetBadge, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
-                PRODUCTO A ESCANEAR
+                {selectedItemId ? 'ITEM SELECCIONADO' : 'PRODUCTO A ESCANEAR'}
               </Text>
               <Text style={[styles.targetQty, { color: theme.amber, fontFamily: fontFamilyMono }]}>
                 {pendingItem.quantityScanned} / {pendingItem.quantityRequired} U

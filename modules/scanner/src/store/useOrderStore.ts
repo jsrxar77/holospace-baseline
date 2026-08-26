@@ -13,6 +13,7 @@ interface OrderState {
   orders: Order[];
   myDoingOrders: DoingOrderSummary[];
   activeOrder: Order | null;
+  selectedItemId: string | null;
   isScannerOpen: boolean;
   operatorId: string;
   unassignedOrderNotification: string | null;
@@ -30,6 +31,7 @@ interface OrderState {
   claimOrder: (orderNumber: string) => Promise<Order>;
   releaseOrder: (orderNumber: string) => Promise<boolean>;
   setActiveOrder: (order: Order | null) => void;
+  setSelectedItemId: (id: string | null) => void;
   setScannerOpen: (isOpen: boolean) => void;
   clearUnassignedNotification: () => void;
   scanBarcode: (barcode: string) => Promise<ScanResult>;
@@ -41,11 +43,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   myDoingOrders: [],
   activeOrder: null,
+  selectedItemId: null,
   isScannerOpen: false,
   operatorId: useAuthStore.getState().user?.email || '',
   unassignedOrderNotification: null,
   lastScanToast: null,
   lastScanTimestamp: 0,
+
+  setSelectedItemId: (id: string | null) => set({ selectedItemId: id }),
 
   clearUnassignedNotification: () => {
     set({ unassignedOrderNotification: null });
@@ -201,9 +206,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     if (success) {
       set((state) => ({
-        activeOrder: state.activeOrder?.orderNumber === orderNumber ? null : state.activeOrder,
-        orders: state.orders.filter((o) => o.orderNumber !== orderNumber)
+        activeOrder: (state.activeOrder?.orderNumber === orderNumber || state.activeOrder?.id === orderNumber) ? null : state.activeOrder,
+        selectedItemId: null,
+        myDoingOrders: state.myDoingOrders.filter((o) => o.orderNumber !== orderNumber && o.id !== orderNumber),
+        orders: state.orders.filter((o) => o.orderNumber !== orderNumber && o.id !== orderNumber)
       }));
+      await get().loadInitialOrders();
     }
 
     return success;
