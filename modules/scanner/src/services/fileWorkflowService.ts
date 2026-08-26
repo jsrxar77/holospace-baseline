@@ -138,16 +138,20 @@ export const fileWorkflowService = {
         headers: getAuthHeaders(),
         body: JSON.stringify({ orderNumber, userEmail })
       });
+      if (!response.ok) {
+        console.log(`Error en servidor al tomar pedido #${orderNumber}: HTTP ${response.status}`);
+        return { success: false, targetFileName: '' };
+      }
       const data = await response.json();
       console.log('[BASE DE DATOS] claimOrder estado a DOING:', data);
-      if (data && data.order) {
+      if (data && data.success && data.order) {
         return { success: true, targetFileName, order: data.order };
       }
     } catch (e) {
       console.log('Error llamando a claimOrder en DB:', e);
     }
 
-    return { success: true, targetFileName };
+    return { success: false, targetFileName: '' };
   },
 
   // Acción: Liberar Pedido (Cambio de estado a READY en DB) — desde operario móvil

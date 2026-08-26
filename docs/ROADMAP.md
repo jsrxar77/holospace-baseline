@@ -60,6 +60,8 @@
 - [x] **8.1** Soporte de persistencia en base de datos para Tema Base de Organización y Preferencia Personal de Usuario.
 - [x] **8.2** Endpoints `GET /api/theme` y `POST /api/theme` con soporte de scopes.
 - [x] **8.3** Suite de pruebas jerárquicas (`tests/test-theme-hierarchy.js`).
+- [x] **8.4** Sincronización atómica y consistencia en asignación/toma de pedidos entre ScanBan y Scanner Mobile (`operator_email` + `assigned_operator_email`).
+- [x] **8.5** Escaneo asistido con tarjeta de producto pendiente, retículo con línea central láser y diagnóstico comparativo esperado vs. escaneado en Mobile Scanner.
 
 ---
 

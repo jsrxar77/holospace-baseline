@@ -1512,8 +1512,8 @@ const server = http.createServer(async (req, res) => {
         }
 
         const doingRows = await query(
-          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
-          [opEmail.toLowerCase(), tenantId],
+          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
+          [opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
           { tenantId }
         );
 
@@ -1537,16 +1537,16 @@ const server = http.createServer(async (req, res) => {
         let activeRow = null;
         if (requestedId) {
           activeRow = await getOne(
-            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ?",
-            [requestedId, requestedId, requestedId, opEmail.toLowerCase(), tenantId],
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ?",
+            [requestedId, requestedId, requestedId, opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
             { tenantId }
           );
         }
 
         if (!activeRow) {
           activeRow = await getOne(
-            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE LOWER(operator_email) = ? AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
-            [opEmail.toLowerCase(), tenantId],
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
+            [opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
             { tenantId }
           );
         }
@@ -1612,7 +1612,7 @@ const server = http.createServer(async (req, res) => {
         const existingOrder = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (existingOrder) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ? WHERE id = ?", [opEmail, existingOrder.id], { tenantId });
+          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ?", [opEmail, opEmail, existingOrder.id], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [existingOrder.id, tenantId, now, opEmail, 'TOMAR_PEDIDO', `Pedido tomado por ${opEmail}.`],

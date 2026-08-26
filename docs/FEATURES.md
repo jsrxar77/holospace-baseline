@@ -25,6 +25,8 @@ HoloSpace implementa el principio de **Mínimo Privilegio (PoLP)** y **Segregaci
 | └── Explorador de Pedidos | ❌ **Bloqueado** | ✅ **Acceso Total** | ✅ **Solo pedidos asignados** |
 | **MÓDULO SCANNER (Móvil)** | | | |
 | ├── Escaneo EAN-13 con Cámara | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| ├── Guía de Producto Asistido & Retículo Láser | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| ├── Diagnóstico Comparativo Esperado vs Leído | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | └── Sincronización Offline SQLite | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | **SISTEMA DE DISEÑO / TEMAS** | | | |
 | ├── Selección de Tema Personal | ✅ (Scope: User) | ✅ (Scope: User) | ✅ (Scope: User) |

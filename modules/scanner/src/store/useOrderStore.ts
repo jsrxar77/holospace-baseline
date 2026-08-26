@@ -92,21 +92,48 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         if (activeDoing.hasActive && activeDoing.order) {
           focusedOrder = activeDoing.order;
           await dbService.saveOrder(focusedOrder);
+        } else if (currentActive) {
+          focusedOrder = currentActive;
         }
       } else {
+        // Si myDoing viene vacío, NO asumimos ciegamente desasignación.
+        // Validamos puntualmente con el servidor si la orden específica fue devuelta a READY o reasignada.
         if (currentActive && currentActive.status !== 'CLOSED' && currentActive.status !== 'PARTIAL_DISPATCH') {
-          console.log(`[STORE] Pedido #${currentActive.orderNumber} fue desasignado por el Administrador desde ScanBan Board.`);
-          unassignedNum = currentActive.orderNumber;
-          focusedOrder = null;
+          try {
+            const serverDetail = await fileWorkflowService.getOrderDetails(currentActive.orderNumber);
+            if (serverDetail && serverDetail.status === 'READY') {
+              console.log(`[STORE] Pedido #${currentActive.orderNumber} confirmado como liberado a LISTO por el Administrador.`);
+              unassignedNum = currentActive.orderNumber;
+              focusedOrder = null;
+            } else if (serverDetail && serverDetail.status === 'DOING' && serverDetail.operatorEmail && serverDetail.operatorEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
+              console.log(`[STORE] Pedido #${currentActive.orderNumber} fue reasignado a otro operario (${serverDetail.operatorEmail}).`);
+              unassignedNum = currentActive.orderNumber;
+              focusedOrder = null;
+            } else {
+              // Si el servidor confirma que sigue en DOING o ante retardo transitorio, mantenemos la orden activa
+              focusedOrder = currentActive;
+            }
+          } catch (err) {
+            // Error de red: preservamos la orden activa de forma segura
+            focusedOrder = currentActive;
+          }
         }
       }
 
       set({
         orders: savedOrders,
-        myDoingOrders: myDoing,
+        myDoingOrders: myDoing.length > 0 ? myDoing : (focusedOrder ? [{
+          id: focusedOrder.id,
+          uuid: focusedOrder.uuid || focusedOrder.id,
+          orderNumber: focusedOrder.orderNumber,
+          clientName: focusedOrder.clientName,
+          totalItemsRequired: focusedOrder.totalItemsRequired,
+          totalItemsScanned: focusedOrder.totalItemsScanned,
+          status: focusedOrder.status || 'DOING'
+        }] : []),
         activeOrder: focusedOrder,
         isScannerOpen: unassignedNum ? false : get().isScannerOpen,
-        unassignedOrderNotification: unassignedNum || get().unassignedOrderNotification,
+        unassignedOrderNotification: unassignedNum,
         operatorId: currentUserEmail
       });
     } catch (e) {
@@ -132,26 +159,30 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const currentUserEmail = useAuthStore.getState().user?.email || '';
     try {
       const { claimOrder: claimFile } = fileWorkflowService;
-      const { targetFileName, order: serverOrder } = await claimFile(orderNumber, currentUserEmail);
+      const claimRes = await claimFile(orderNumber, currentUserEmail);
 
-      // Obtener la orden real con sus ítems reales parsed del servidor
-      let realOrder = serverOrder || (await fileWorkflowService.getOrderDetails(orderNumber));
-
-      if (!realOrder) {
-        const parsed = await parsePdfVoucher(targetFileName);
-        realOrder = {
-          ...parsed,
-          orderNumber,
-          pdfFileName: targetFileName,
-          status: 'SCANNING'
-        };
+      if (!claimRes || !claimRes.success || !claimRes.order) {
+        throw new Error('No se pudo confirmar la toma del pedido en el servidor.');
       }
 
+      const realOrder = claimRes.order;
       await dbService.saveOrder(realOrder);
 
       set((state) => ({
         activeOrder: realOrder,
         operatorId: currentUserEmail,
+        myDoingOrders: [
+          {
+            id: realOrder.id,
+            uuid: realOrder.uuid || realOrder.id,
+            orderNumber: realOrder.orderNumber,
+            clientName: realOrder.clientName,
+            totalItemsRequired: realOrder.totalItemsRequired,
+            totalItemsScanned: realOrder.totalItemsScanned,
+            status: realOrder.status
+          },
+          ...state.myDoingOrders.filter((o) => o.orderNumber !== realOrder.orderNumber)
+        ],
         orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
       }));
 

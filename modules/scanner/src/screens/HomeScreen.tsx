@@ -76,7 +76,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
       const { claimOrder } = useOrderStore.getState();
       const claimed = await claimOrder(orderNumber);
       if (claimed) {
-        await syncData();
         goToSummary();
       } else {
         showThemedAlert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.', [{ text: 'Entendido', style: 'default' }]);

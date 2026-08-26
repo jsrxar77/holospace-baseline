@@ -19,14 +19,25 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
   const [isManualModalOpen, setManualModalOpen] = useState(false);
   const [manualCode, setManualCode] = useState('');
 
-  const { scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
+  const { activeOrder, scanBarcode, lastScanToast, clearToast, loadInitialOrders, unassignedOrderNotification } = useOrderStore();
   const { theme } = useThemeStore();
+
+  const [scanComparison, setScanComparison] = useState<{
+    expectedCode: string;
+    scannedCode: string;
+    description: string;
+    isMatch: boolean;
+    timestamp: number;
+  } | null>(null);
 
   const cardRadius = theme.radiusCard !== undefined ? theme.radiusCard : (theme.borderRadius || 4);
   const btnRadius = theme.radiusBtn !== undefined ? theme.radiusBtn : (theme.borderRadius || 4);
   const borderWidthVal = theme.borderWidth !== undefined ? theme.borderWidth : 1;
   const fontFamilyMain = theme.fontFamily || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'JetBrains Mono');
   const fontFamilyMono = theme.fontMono || (Platform.OS === 'web' ? '"JetBrains Mono", monospace' : 'monospace');
+
+  // Determinar el producto pendiente prioritario a escanear
+  const pendingItem = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
 
   React.useEffect(() => {
     clearToast();
@@ -75,11 +86,22 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
   const handleBarcodeScanned = async ({ data }: { data: string }) => {
     if (data) {
+      const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
       const result = await scanBarcode(data);
-      if (result === 'SUCCESS') {
+      const isSuccess = result === 'SUCCESS';
+      
+      setScanComparison({
+        expectedCode: currentTarget?.code || 'N/A',
+        scannedCode: data,
+        description: currentTarget?.description || 'Producto',
+        isMatch: isSuccess,
+        timestamp: Date.now()
+      });
+
+      if (isSuccess) {
         setTimeout(() => {
           handleCloseScanner();
-        }, 400);
+        }, 500);
       }
     }
   };
@@ -89,11 +111,22 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
       const codeToScan = manualCode.trim();
       setManualModalOpen(false);
       setManualCode('');
+      const currentTarget = activeOrder?.items.find((i) => (i.quantityScanned || 0) < i.quantityRequired) || activeOrder?.items[0];
       const result = await scanBarcode(codeToScan);
-      if (result === 'SUCCESS') {
+      const isSuccess = result === 'SUCCESS';
+
+      setScanComparison({
+        expectedCode: currentTarget?.code || 'N/A',
+        scannedCode: codeToScan,
+        description: currentTarget?.description || 'Producto',
+        isMatch: isSuccess,
+        timestamp: Date.now()
+      });
+
+      if (isSuccess) {
         setTimeout(() => {
           handleCloseScanner();
-        }, 400);
+        }, 500);
       }
     }
   };
@@ -109,14 +142,116 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
         onBarcodeScanned={handleBarcodeScanned}
       />
 
-      {/* Target Reticle */}
+      {/* Top Floating Controls Container */}
+      <View style={styles.topSection}>
+        {/* Fila de Botones: Volver, Flash, Manual */}
+        <View style={styles.topControlsRow}>
+          <TouchableOpacity
+            style={[styles.btnHeaderBack, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+            onPress={handleCloseScanner}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.btnHeaderBackText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>← RESUMEN</Text>
+          </TouchableOpacity>
+
+          <View style={styles.topRightActions}>
+            <TouchableOpacity
+              style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: torch ? theme.amber : theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+              onPress={() => setTorch(!torch)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.btnPillText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
+              onPress={() => setManualModalOpen(true)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.btnPillText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Tarjeta de Producto Objetivo (Debajo de Resumen) */}
+        {pendingItem && (
+          <View style={[styles.targetProductCard, { backgroundColor: theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
+            <View style={styles.targetHeaderRow}>
+              <Text style={[styles.targetBadge, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
+                PRODUCTO A ESCANEAR
+              </Text>
+              <Text style={[styles.targetQty, { color: theme.amber, fontFamily: fontFamilyMono }]}>
+                {pendingItem.quantityScanned} / {pendingItem.quantityRequired} U
+              </Text>
+            </View>
+            <Text style={[styles.targetDescription, { color: theme.textMain, fontFamily: fontFamilyMain }]} numberOfLines={2}>
+              {pendingItem.description}
+            </Text>
+            <Text style={[styles.targetCode, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
+              EAN Requerido: {pendingItem.code}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      {/* Target Reticle (Cuadrado con Línea Central Láser) */}
       <View style={styles.overlayCenter}>
         <View style={[styles.scanFrame, { borderColor: theme.emerald, borderRadius: cardRadius }]}>
           <View style={[styles.cornerTopLeft, { borderColor: theme.emerald }]} />
           <View style={[styles.cornerTopRight, { borderColor: theme.emerald }]} />
           <View style={[styles.cornerBottomLeft, { borderColor: theme.emerald }]} />
           <View style={[styles.cornerBottomRight, { borderColor: theme.emerald }]} />
+
+          {/* Línea Central de Alineación Láser */}
+          <View style={[styles.centerLaserLine, { backgroundColor: theme.emerald }]} />
         </View>
+
+        {/* Panel Comparativo Post-Lectura (Esperado vs. Escaneado) */}
+        {scanComparison && (
+          <View style={[
+            styles.comparisonCard,
+            {
+              backgroundColor: theme.cardBg,
+              borderColor: scanComparison.isMatch ? theme.emerald : theme.red,
+              borderRadius: cardRadius,
+              borderWidth: borderWidthVal
+            }
+          ]}>
+            <View style={styles.comparisonHeader}>
+              <Text style={[
+                styles.comparisonStatusText,
+                { color: scanComparison.isMatch ? theme.emerald : theme.red, fontFamily: fontFamilyMain }
+              ]}>
+                {scanComparison.isMatch ? 'LECTURA CORRECTA' : 'DISCREPANCIA DE CODIGO'}
+              </Text>
+              <TouchableOpacity onPress={() => setScanComparison(null)} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+                <Text style={[styles.comparisonClose, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.comparisonRow}>
+              <View style={styles.comparisonCol}>
+                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>ESPERADO</Text>
+                <Text style={[styles.comparisonVal, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
+                  {scanComparison.expectedCode}
+                </Text>
+              </View>
+              <View style={[styles.comparisonColDivider, { backgroundColor: theme.cardBorder }]} />
+              <View style={styles.comparisonCol}>
+                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>ESCANEADO</Text>
+                <Text style={[styles.comparisonVal, { color: scanComparison.isMatch ? theme.emerald : theme.red, fontFamily: fontFamilyMono }]}>
+                  {scanComparison.scannedCode}
+                </Text>
+              </View>
+            </View>
+
+            {!scanComparison.isMatch && (
+              <Text style={[styles.comparisonHelpText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
+                Verifica los digitos o toma una captura de pantalla para auditoria.
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Scan Toast Feedback */}
@@ -137,39 +272,6 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
           </Text>
         </TouchableOpacity>
       )}
-
-      {/* Top Floating Action Controls */}
-      <View style={styles.topControls}>
-        {/* Botón Volver (Izquierda) */}
-        <TouchableOpacity
-          style={[styles.btnHeaderBack, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-          onPress={handleCloseScanner}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.btnHeaderBackText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>← RESUMEN</Text>
-        </TouchableOpacity>
-
-        {/* Botones de Acción (Derecha) */}
-        <View style={styles.topRightActions}>
-          {/* Botón Linterna / Flash */}
-          <TouchableOpacity
-            style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: torch ? theme.amber : theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-            onPress={() => setTorch(!torch)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.btnPillText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
-          </TouchableOpacity>
-
-          {/* Botón Ingreso Manual */}
-          <TouchableOpacity
-            style={[styles.btnPill, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal }]}
-            onPress={() => setManualModalOpen(true)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.btnPillText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* Bottom Sticky Action: Finalizar Escaneo */}
       <View style={styles.bottomControls}>
@@ -297,30 +399,120 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderRightWidth: 4
   },
+  centerLaserLine: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    top: '50%',
+    height: 2,
+    opacity: 0.85
+  },
+  topSection: {
+    position: 'absolute',
+    top: Platform.OS === 'web' ? 16 : 48,
+    left: 16,
+    right: 16,
+    gap: 10,
+    zIndex: 100
+  },
+  topControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  targetProductCard: {
+    padding: 12,
+    gap: 4
+  },
+  targetHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  targetBadge: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5
+  },
+  targetQty: {
+    fontSize: 12,
+    fontWeight: '900'
+  },
+  targetDescription: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18
+  },
+  targetCode: {
+    fontSize: 11,
+    letterSpacing: 0.5
+  },
+  comparisonCard: {
+    marginTop: 16,
+    width: 280,
+    padding: 12,
+    gap: 8,
+    zIndex: 100
+  },
+  comparisonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  comparisonStatusText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.5
+  },
+  comparisonClose: {
+    fontSize: 14,
+    fontWeight: '900',
+    paddingHorizontal: 4
+  },
+  comparisonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  comparisonCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2
+  },
+  comparisonColDivider: {
+    width: 1,
+    height: 28,
+    marginHorizontal: 8
+  },
+  comparisonLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5
+  },
+  comparisonVal: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.5
+  },
+  comparisonHelpText: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14
+  },
   toastContainer: {
     position: 'absolute',
-    top: 60,
+    top: 50,
     left: 20,
     right: 20,
     paddingVertical: 12,
     paddingHorizontal: 16,
     alignItems: 'center',
-    zIndex: 100
+    zIndex: 110
   },
   toastText: {
     fontSize: 13,
     fontWeight: '900',
     textAlign: 'center'
-  },
-  topControls: {
-    position: 'absolute',
-    top: Platform.OS === 'web' ? 24 : 54,
-    left: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 100
   },
   btnHeaderBack: {
     paddingVertical: 10,
