@@ -288,26 +288,21 @@ async function getFullOrderFromDb(identifier, context = {}) {
   if (!identifier) return null;
   let order = null;
   const tenantId = context.tenantId || (context.user && context.user.tenant_id) || null;
+  const idStr = String(identifier).trim();
 
   if (tenantId) {
-    if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
-      order = await getOne('SELECT * FROM orders WHERE id::text = ? AND tenant_id = ?', [String(identifier), tenantId], context);
-    }
+    // 1. Buscar prioritariamente por ID interno (UUID) o uuid
+    order = await getOne('SELECT * FROM orders WHERE (id::text = ? OR uuid = ?) AND tenant_id = ?', [idStr, idStr, tenantId], context);
+    // 2. Si no se encuentra por UUID, buscar por número comercial externo de comprobante
     if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE uuid = ? AND tenant_id = ?', [String(identifier), tenantId], context);
-    }
-    if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE order_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1', [String(identifier), tenantId], context);
+      order = await getOne('SELECT * FROM orders WHERE order_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1', [idStr, tenantId], context);
     }
   } else {
-    if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
-      order = await getOne('SELECT * FROM orders WHERE id::text = ?', [String(identifier)], context);
-    }
+    // 1. Buscar prioritariamente por ID interno (UUID) o uuid
+    order = await getOne('SELECT * FROM orders WHERE id::text = ? OR uuid = ?', [idStr, idStr], context);
+    // 2. Si no se encuentra por UUID, buscar por número comercial externo de comprobante
     if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE uuid = ?', [String(identifier)], context);
-    }
-    if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [String(identifier)], context);
+      order = await getOne('SELECT * FROM orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [idStr], context);
     }
   }
   if (!order) return null;
