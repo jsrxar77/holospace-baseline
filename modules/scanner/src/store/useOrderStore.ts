@@ -101,41 +101,27 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           focusedOrder = currentActive;
         }
       } else {
-        // Si myDoing viene vacío, NO asumimos ciegamente desasignación.
-        // Validamos puntualmente con el servidor si la orden específica fue devuelta a READY o reasignada.
+        // Si myDoing viene vacío, el operario NO tiene pedidos en proceso en el servidor.
         if (currentActive && currentActive.status !== 'CLOSED' && currentActive.status !== 'PARTIAL_DISPATCH') {
           try {
             const serverDetail = await fileWorkflowService.getOrderDetails(currentActive.orderNumber);
             if (serverDetail && serverDetail.status === 'READY') {
-              console.log(`[STORE] Pedido #${currentActive.orderNumber} confirmado como liberado a LISTO por el Administrador.`);
+              console.log(`[STORE] Pedido #${currentActive.orderNumber} confirmado como liberado a LISTO.`);
               unassignedNum = currentActive.orderNumber;
-              focusedOrder = null;
-            } else if (serverDetail && serverDetail.status === 'DOING' && serverDetail.operatorEmail && serverDetail.operatorEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
-              console.log(`[STORE] Pedido #${currentActive.orderNumber} fue reasignado a otro operario (${serverDetail.operatorEmail}).`);
+            } else if (serverDetail && serverDetail.operatorEmail && serverDetail.operatorEmail.toLowerCase() !== currentUserEmail.toLowerCase()) {
+              console.log(`[STORE] Pedido #${currentActive.orderNumber} asignado a otro operario (${serverDetail.operatorEmail}).`);
               unassignedNum = currentActive.orderNumber;
-              focusedOrder = null;
-            } else {
-              // Si el servidor confirma que sigue en DOING o ante retardo transitorio, mantenemos la orden activa
-              focusedOrder = currentActive;
             }
           } catch (err) {
-            // Error de red: preservamos la orden activa de forma segura
-            focusedOrder = currentActive;
+            console.log('[STORE] Error validando detalle de orden desasignada:', err);
           }
         }
+        focusedOrder = null;
       }
 
       set({
         orders: savedOrders,
-        myDoingOrders: myDoing.length > 0 ? myDoing : (focusedOrder ? [{
-          id: focusedOrder.id,
-          uuid: focusedOrder.uuid || focusedOrder.id,
-          orderNumber: focusedOrder.orderNumber,
-          clientName: focusedOrder.clientName,
-          totalItemsRequired: focusedOrder.totalItemsRequired,
-          totalItemsScanned: focusedOrder.totalItemsScanned,
-          status: focusedOrder.status || 'DOING'
-        }] : []),
+        myDoingOrders: myDoing,
         activeOrder: focusedOrder,
         isScannerOpen: unassignedNum ? false : get().isScannerOpen,
         unassignedOrderNotification: unassignedNum,
