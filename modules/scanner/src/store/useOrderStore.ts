@@ -101,10 +101,14 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           focusedOrder = currentActive;
         }
       } else {
-        // Si myDoing viene vacío, el operario NO tiene pedidos en proceso en el servidor.
-        if (currentActive && currentActive.status !== 'CLOSED' && currentActive.status !== 'PARTIAL_DISPATCH') {
+        // Si myDoing viene vacío:
+        // Caso A: El operario está viendo una orden que ya fue despachada / completada (CLOSED, DONE o PARTIAL_DISPATCH)
+        if (currentActive && (currentActive.status === 'CLOSED' || currentActive.status === 'PARTIAL_DISPATCH' || currentActive.status === 'DONE')) {
+          focusedOrder = currentActive;
+        } else if (currentActive) {
+          // Caso B: El pedido estaba en escaneo activo y fue desasignado o liberado desde el tablero Kanban
           try {
-            const serverDetail = await fileWorkflowService.getOrderDetails(currentActive.orderNumber);
+            const serverDetail = await fileWorkflowService.getOrderDetails(currentActive.id || currentActive.orderNumber);
             if (serverDetail && serverDetail.status === 'READY') {
               console.log(`[STORE] Pedido #${currentActive.orderNumber} confirmado como liberado a LISTO.`);
               unassignedNum = currentActive.orderNumber;
@@ -115,8 +119,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           } catch (err) {
             console.log('[STORE] Error validando detalle de orden desasignada:', err);
           }
+          focusedOrder = null;
+        } else {
+          focusedOrder = null;
         }
-        focusedOrder = null;
       }
 
       set({
