@@ -118,7 +118,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
