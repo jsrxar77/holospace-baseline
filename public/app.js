@@ -1074,7 +1074,9 @@ async function handleDropToListo(event) {
   const orderId = event.dataTransfer.getData('text/plain');
   if (orderId) {
     try {
-      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
+      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+      });
       const data = await res.json();
       if (data.success && data.order && (data.order.status === 'DOING' || data.order.status === 'SCANNING')) {
         await resetOrderDoingToReady(data.order.id, data.order.orderNumber, event);
@@ -1099,7 +1101,9 @@ async function handleDropToDoing(event) {
   const orderId = event.dataTransfer.getData('text/plain');
   if (orderId) {
     try {
-      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
+      const res = await fetch(`/api/scanban/order-detail?id=${orderId}`, {
+        headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+      });
       const data = await res.json();
       if (data.success && data.order) {
         await openAssignOperatorModal(data.order.id, data.order.orderNumber, event);
@@ -1122,7 +1126,9 @@ async function markOrderBacklogAndCloseModal(orderId) {
 // DETALLE COMPLETO DE COMPROBANTE Y MARCA DE AGUA
 async function openInvoiceModal(orderId) {
   try {
-    const res = await fetch(`/api/scanban/order-detail?id=${orderId}`);
+    const res = await fetch(`/api/scanban/order-detail?id=${orderId}`, {
+      headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+    });
     const data = await res.json();
     if (!data.success || !data.order) {
       await showCustomAlert('Error', 'No se pudo cargar el detalle del comprobante.');

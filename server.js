@@ -1635,8 +1635,10 @@ const server = http.createServer(async (req, res) => {
       if (req.url.startsWith('/api/scanban/order-detail') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
+        const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+        const orderCtx = isSuperAdmin ? { isSuperAdmin: true } : (tenantId ? { tenantId } : {});
 
-        const fullOrder = await getFullOrderFromDb(identifier, { tenantId });
+        const fullOrder = await getFullOrderFromDb(identifier, orderCtx);
         if (fullOrder) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, order: fullOrder }));
