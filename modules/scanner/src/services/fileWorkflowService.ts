@@ -78,9 +78,14 @@ export const fileWorkflowService = {
   },
 
   // Obtener detalle 100% REAL de la orden desde el servidor
-  getOrderDetails: async (orderNumber: string): Promise<Order | null> => {
+  getOrderDetails: async (orderId: string, orderNumber?: string): Promise<Order | null> => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/scanban/order-detail?orderNumber=${orderNumber}`, {
+      const params = new URLSearchParams();
+      if (orderId) params.append('id', orderId);
+      if (orderNumber) params.append('orderNumber', orderNumber);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+
+      const response = await fetch(`${SERVER_URL}/api/scanban/order-detail${queryString}`, {
         headers: getAuthHeaders()
       });
       const data = await response.json();
@@ -128,18 +133,18 @@ export const fileWorkflowService = {
     return false;
   },
 
-  // Acción: Tomar Pedido (Cambio de estado a DOING en DB)
-  claimOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean; targetFileName: string; order?: Order }> => {
-    const targetFileName = `${orderNumber}.pdf`;
+  // Acción: Tomar Pedido (Cambio de estado a DOING en DB usando UUID como clave primaria)
+  claimOrder: async (orderId: string, orderNumber?: string, userEmail?: string): Promise<{ success: boolean; targetFileName: string; order?: Order }> => {
+    const targetFileName = `${orderNumber || orderId}.pdf`;
 
     try {
       const response = await fetch(`${SERVER_URL}/api/scanban/claim-order`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ orderNumber, userEmail })
+        body: JSON.stringify({ orderId, orderNumber, userEmail })
       });
       if (!response.ok) {
-        console.log(`Error en servidor al tomar pedido #${orderNumber}: HTTP ${response.status}`);
+        console.log(`Error en servidor al tomar pedido #${orderNumber || orderId}: HTTP ${response.status}`);
         return { success: false, targetFileName: '' };
       }
       const data = await response.json();
@@ -155,12 +160,12 @@ export const fileWorkflowService = {
   },
 
   // Acción: Liberar Pedido (Cambio de estado a READY en DB) — desde operario móvil
-  releaseOrder: async (orderNumber: string, userEmail?: string): Promise<{ success: boolean }> => {
+  releaseOrder: async (orderId: string, orderNumber?: string, userEmail?: string): Promise<{ success: boolean }> => {
     try {
       const response = await fetch(`${SERVER_URL}/api/scanban/release-order`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ orderNumber, userEmail })
+        body: JSON.stringify({ orderId, orderNumber, userEmail })
       });
       const data = await response.json();
       console.log('[BASE DE DATOS] releaseOrder estado a READY:', data);
@@ -173,6 +178,7 @@ export const fileWorkflowService = {
 
   // Acción: Finalizar Pedido (Cambio de estado a DONE en DB con Marca de Agua)
   completeOrderWithWatermark: async (
+    orderId: string,
     orderNumber: string,
     scannedCount: number,
     totalCount: number,
@@ -188,7 +194,7 @@ export const fileWorkflowService = {
       await fetch(`${SERVER_URL}/api/scanban/complete-order`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ orderNumber, userEmail: email, watermarkText })
+        body: JSON.stringify({ orderId, orderNumber, userEmail: email, watermarkText })
       });
     } catch (e) {
       console.log('Error enviando completeOrder al servidor:', e);

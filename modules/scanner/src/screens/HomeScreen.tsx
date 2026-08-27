@@ -62,7 +62,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
     return () => clearInterval(interval);
   }, []);
 
-  const handleClaimOrder = async (orderNumber: string) => {
+  const handleClaimOrder = async (orderId: string, orderNumber: string) => {
     if (myDoingOrders.length > 0) {
       showThemedAlert(
         'Límite de Pedidos Activos',
@@ -74,7 +74,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
     try {
       const { claimOrder } = useOrderStore.getState();
-      const claimed = await claimOrder(orderNumber);
+      const claimed = await claimOrder(orderId, orderNumber);
       if (claimed) {
         goToSummary();
       } else {
@@ -228,7 +228,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                 { backgroundColor: theme.emerald, borderColor: theme.emerald, borderWidth: borderWidthVal, borderRadius: btnRadius },
                 hasDoingOrders && styles.btnDisabled
               ]}
-              onPress={() => handleClaimOrder(item.orderNumber)}
+              onPress={() => handleClaimOrder(item.id, item.orderNumber)}
               activeOpacity={hasDoingOrders ? 1 : 0.8}
             >
               <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain, color: theme.background }, hasDoingOrders && { color: theme.textMuted }]}>

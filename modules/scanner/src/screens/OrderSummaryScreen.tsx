@@ -136,7 +136,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           style: 'destructive',
           onPress: async () => {
             const { releaseOrder } = useOrderStore.getState();
-            await releaseOrder(activeOrder.orderNumber);
+            await releaseOrder(activeOrder.id, activeOrder.orderNumber);
             handleGoBack();
           }
         }

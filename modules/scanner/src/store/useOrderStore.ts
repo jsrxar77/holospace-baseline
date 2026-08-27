@@ -28,8 +28,8 @@ interface OrderState {
   loadInitialOrders: () => Promise<void>;
   focusDoingOrder: (orderIdOrNumber: string) => Promise<void>;
   loadPdfOrder: (fileName: string, pdfText?: string) => Promise<Order>;
-  claimOrder: (orderNumber: string) => Promise<Order>;
-  releaseOrder: (orderNumber: string) => Promise<boolean>;
+  claimOrder: (orderId: string, orderNumber?: string) => Promise<Order>;
+  releaseOrder: (orderId: string, orderNumber?: string) => Promise<boolean>;
   setActiveOrder: (order: Order | null) => void;
   setSelectedItemId: (id: string | null) => void;
   setScannerOpen: (isOpen: boolean) => void;
@@ -145,12 +145,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     return order;
   },
 
-  // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando Email
-  claimOrder: async (orderNumber: string) => {
+  // Acción: Tomar Pedido REAL desde la Base de Datos del Servidor usando UUID como clave primaria
+  claimOrder: async (orderId: string, orderNumber?: string) => {
     const currentUserEmail = useAuthStore.getState().user?.email || '';
     try {
       const { claimOrder: claimFile } = fileWorkflowService;
-      const claimRes = await claimFile(orderNumber, currentUserEmail);
+      const claimRes = await claimFile(orderId, orderNumber, currentUserEmail);
 
       if (!claimRes || !claimRes.success || !claimRes.order) {
         throw new Error('No se pudo confirmar la toma del pedido en el servidor.');
@@ -172,30 +172,30 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             totalItemsScanned: realOrder.totalItemsScanned,
             status: realOrder.status
           },
-          ...state.myDoingOrders.filter((o) => o.orderNumber !== realOrder.orderNumber)
+          ...state.myDoingOrders.filter((o) => o.id !== realOrder.id && o.orderNumber !== realOrder.orderNumber)
         ],
         orders: [realOrder, ...state.orders.filter((o) => o.id !== realOrder.id)]
       }));
 
       return realOrder;
     } catch (e) {
-      loggerService.logError('useOrderStore.claimOrder', e, { orderNumber, currentUserEmail });
+      loggerService.logError('useOrderStore.claimOrder', e, { orderId, orderNumber, currentUserEmail });
       throw e;
     }
   },
 
   // Acción: Liberar Pedido de /delivery/doing a /delivery/ready
-  releaseOrder: async (orderNumber: string) => {
+  releaseOrder: async (orderId: string, orderNumber?: string) => {
     const currentUserEmail = useAuthStore.getState().user?.email || '';
     const { releaseOrder: releaseFile } = fileWorkflowService;
-    const { success } = await releaseFile(orderNumber, currentUserEmail);
+    const { success } = await releaseFile(orderId, orderNumber, currentUserEmail);
 
     if (success) {
       set((state) => ({
-        activeOrder: (state.activeOrder?.orderNumber === orderNumber || state.activeOrder?.id === orderNumber) ? null : state.activeOrder,
+        activeOrder: (state.activeOrder?.id === orderId || state.activeOrder?.orderNumber === orderNumber || state.activeOrder?.orderNumber === orderId) ? null : state.activeOrder,
         selectedItemId: null,
-        myDoingOrders: state.myDoingOrders.filter((o) => o.orderNumber !== orderNumber && o.id !== orderNumber),
-        orders: state.orders.filter((o) => o.orderNumber !== orderNumber && o.id !== orderNumber)
+        myDoingOrders: state.myDoingOrders.filter((o) => o.id !== orderId && o.orderNumber !== orderNumber && o.orderNumber !== orderId),
+        orders: state.orders.filter((o) => o.id !== orderId && o.orderNumber !== orderNumber && o.orderNumber !== orderId)
       }));
       await get().loadInitialOrders();
     }
@@ -349,6 +349,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     const { completeOrderWithWatermark } = fileWorkflowService;
     const finalStatus = isComplete ? 'CLOSED' : 'PARTIAL_DISPATCH';
     const { watermarkText } = await completeOrderWithWatermark(
+      activeOrder.id,
       activeOrder.orderNumber,
       activeOrder.totalItemsScanned,
       activeOrder.totalItemsRequired,
