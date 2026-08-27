@@ -367,7 +367,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     await dbService.saveOrder(closedOrder);
 
     set((state) => ({
-      activeOrder: null,
+      activeOrder: closedOrder,
       orders: state.orders.map((o) => (o.id === closedOrder.id ? closedOrder : o))
     }));
 

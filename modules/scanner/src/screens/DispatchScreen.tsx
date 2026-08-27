@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, SafeAreaView } from 'react-native';
 import { showThemedAlert } from '../components/ThemedAlertModal';
 import { useOrderStore } from '../store/useOrderStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -26,12 +26,14 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
   if (!activeOrder) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay orden seleccionada.</Text>
-        <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={goHome}>
-          <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: theme.background }]}>Volver al Inicio</Text>
-        </TouchableOpacity>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay orden seleccionada.</Text>
+          <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius, marginTop: 16 }]} onPress={goHome}>
+            <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: theme.background }]}>Volver al Inicio</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -43,8 +45,8 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={[styles.modalCard, { backgroundColor: theme.cardBg, borderColor: isPartial ? theme.amber : theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
           {/* Top Status Badge */}
           <View style={[styles.iconCircle, { borderColor: isPartial ? theme.amber : theme.emerald, backgroundColor: isPartial ? 'rgba(245, 158, 11, 0.15)' : 'rgba(166, 218, 149, 0.15)', borderRadius: badgeRadius, borderWidth: borderWidthVal }]}>
@@ -123,6 +125,12 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 const styles = StyleSheet.create({
   container: {
     flex: 1
+  },
+  emptyContainer: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   scrollContent: {
     flexGrow: 1,
