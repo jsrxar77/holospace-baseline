@@ -995,9 +995,9 @@ function showUploadDiagnosticsModal(result, fileName) {
       </div>
       ${!isSuccess ? `
         <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
-          <span style="font-size: 12px; color: #FFF; font-weight: 700;">Recomendación:</span>
+          <span style="font-size: 12px; color: #FFF; font-weight: 700;">Diagnóstico del Error:</span>
           <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
-            Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
+            ${result.error || 'Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.'}
           </p>
         </div>
       ` : `

@@ -45,6 +45,14 @@ Toda la documentación del sistema reside **única y obligatoriamente** en los s
 
 ---
 
+## 🆔 Regla de Oro Obligatoria: Prohibido Usar `order_number` como Clave Técnica o Restricción de Unicidad (Único Identificador Válido: `orders.id` UUID)
+
+1. **`order_number` es Mero Dato Informativo Externo:** El campo `order_number` (ej. 3010, 3158) es exclusivamente un atributo comercial/externo proveniente del comprobante contable o ERP del cliente. Queda TERMINANTEMENTE PROHIBIDO usar `order_number` como clave primaria, como parámetro único de mutación, o aplicar restricciones de unicidad (`UNIQUE(tenant_id, order_number)`) en la base de datos o en el código.
+2. **`orders.id` (UUID) es la Única Clave Técnica Primaria:** Toda operación en Backend (`server.js`), Frontend Web (Kanban / Explorador) y Aplicación Móvil (Scanner / Resumen / Despacho) DEBE utilizar estricta y obligatoriamente el `id` (UUID autogenerado) de la orden.
+3. **Cero Rechazos por Número Repetido:** El sistema debe permitir la subida e ingesta de múltiples comprobantes independientemente de su número de orden visible, asignando siempre a cada comprobante su propio UUID único e inmutable.
+
+---
+
 ## 🚫 Regla de Oro Obligatoria: Prohibido Absolutamente el Uso de Emoticones y Emojis en Código, UI y Documentación
 
 1. **Cero Emojis en la Plataforma:** Queda terminantemente prohibido incorporar emojis o emoticones (ej. 🏢, 📦, 📋, 📱, 🎨, 🍷, 🍣, 👑, ➕, 👤, ⚡, ⚙️, 👥, etc.) en textos de la interfaz gráfica, menús de navegación, botones, badges, modales, nombres de módulos, logs de consola, base de datos o documentación técnica del proyecto.
