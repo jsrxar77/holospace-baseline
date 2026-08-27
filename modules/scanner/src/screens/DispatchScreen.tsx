@@ -76,8 +76,8 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
           {/* Title */}
           <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
             {isPartial
-              ? `¡Pedido #${activeOrder.orderNumber} Despachado Parcialmente!`
-              : `¡Pedido #${activeOrder.orderNumber} Verificado al 100%!`}
+              ? `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} Despachado Parcialmente!`
+              : `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} Verificado al 100%!`}
           </Text>
 
           <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>

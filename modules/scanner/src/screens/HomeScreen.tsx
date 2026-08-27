@@ -164,7 +164,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Text style={[styles.activeTitle, { color: isFocused ? theme.emerald : theme.textMain, fontFamily: fontFamilyMain }]}>
-                      PEDIDO #{doingItem.orderNumber}
+                      PEDIDO #${(doingItem.id || '').substring(0, 8).toUpperCase()}
                     </Text>
                     {isFocused && (
                       <View style={{ backgroundColor: `${theme.emerald}25`, borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
@@ -174,7 +174,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                   </View>
 
                   <Text style={[styles.activeSubtitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
-                    Cliente: {doingItem.clientName || 'Cliente Logística'}
+                    Comprobante: #{doingItem.orderNumber} • {doingItem.clientName || 'Cliente Logística'}
                   </Text>
 
                   <Text style={[styles.activeProgressText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
@@ -222,7 +222,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
           {readyOrders.map((item) => (
             <TouchableOpacity
-              key={item.orderNumber}
+              key={item.id || item.orderNumber}
               style={[
                 styles.btnUpload,
                 { backgroundColor: theme.emerald, borderColor: theme.emerald, borderWidth: borderWidthVal, borderRadius: btnRadius },
@@ -232,7 +232,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
               activeOpacity={hasDoingOrders ? 1 : 0.8}
             >
               <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain, color: theme.background }, hasDoingOrders && { color: theme.textMuted }]}>
-                TOMAR PEDIDO #{item.orderNumber} ({item.clientName} - {item.totalItems} U)
+                TOMAR PEDIDO #${(item.id || '').substring(0, 8).toUpperCase()} (Comp. #${item.orderNumber} - ${item.totalItems} U)
               </Text>
             </TouchableOpacity>
           ))}

@@ -157,9 +157,11 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
         </TouchableOpacity>
 
         <View style={styles.headerTitles}>
-          <Text style={[styles.orderTitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>PEDIDO #{activeOrder.orderNumber}</Text>
+          <Text style={[styles.orderTitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
+            PEDIDO #${(activeOrder.id || '').substring(0, 8).toUpperCase()}
+          </Text>
           <Text style={[styles.clientTitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="tail">
-            Cliente: {activeOrder.clientName}
+            Comprobante: #{activeOrder.orderNumber} • {activeOrder.clientName}
           </Text>
         </View>
 

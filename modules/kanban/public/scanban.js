@@ -491,7 +491,8 @@ async function loadKanbanData() {
             <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">Pasar a Listo</button>
             <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           </div>
-          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
+          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Puedes hacer clic o arrastrar esta tarjeta a LISTO</div>
@@ -506,7 +507,8 @@ async function loadKanbanData() {
       : data.ready.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">A Backlog</button>
-          <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
+          <div class="card-order-no" style="color: var(--emerald);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
           ${currentUser && currentUser.role === 'ADMIN' ? `
@@ -539,7 +541,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
             <div class="progress-bar-bg">
@@ -587,7 +590,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--amber);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--amber);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
             <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
           </div>
@@ -1389,7 +1393,10 @@ async function fetchExplorerOrders() {
 
         return `
           <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.id}')">
-            <td><strong style="color: var(--emerald);">#${o.orderNumber}</strong></td>
+            <td>
+              <strong style="color: var(--emerald);">#${(o.id || '').substring(0, 8).toUpperCase()}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Comp. #${o.orderNumber}</div>
+            </td>
             <td><strong>${o.clientName}</strong></td>
             <td>${o.operatorEmail || 'Sin Asignar'}</td>
             <td style="font-size: 13px; color: var(--text-muted);">${o.issueDate || 'Hoy'}</td>
