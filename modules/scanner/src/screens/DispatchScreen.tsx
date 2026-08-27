@@ -37,29 +37,9 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
   const isPartial = activeOrder.status === 'PARTIAL_DISPATCH';
 
-  const handleCorroborateAndFinish = async () => {
-    try {
-      if (activeOrder.status !== 'CLOSED' && activeOrder.status !== 'PARTIAL_DISPATCH') {
-        await closeOrder();
-      }
-      showThemedAlert(
-        'Despacho Concluido',
-        `El Pedido #${activeOrder.orderNumber} fue corroborado y archivado físicamente en ./delivery/done/.\n\nAhora puedes tomar un nuevo pedido.`,
-        [
-          {
-            text: 'Ir a Pedidos Libres',
-            style: 'default',
-            onPress: () => {
-              setActiveOrder(null);
-              goHome();
-            }
-          }
-        ]
-      );
-    } catch (e) {
-      setActiveOrder(null);
-      goHome();
-    }
+  const handleCorroborateAndFinish = () => {
+    setActiveOrder(null);
+    goHome();
   };
 
   return (
@@ -145,9 +125,9 @@ const styles = StyleSheet.create({
     flex: 1
   },
   scrollContent: {
+    flexGrow: 1,
     padding: 16,
-    paddingTop: 40,
-    paddingBottom: 40,
+    justifyContent: 'center',
     alignItems: 'center'
   },
   modalCard: {

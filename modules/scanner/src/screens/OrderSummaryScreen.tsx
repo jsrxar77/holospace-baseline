@@ -98,9 +98,18 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
     return true;
   });
 
-  const handlePressDispatch = () => {
-    if (is100Percent || isClosed) {
+  const handlePressDispatch = async () => {
+    if (isClosed) {
       handleGoDispatch();
+      return;
+    }
+
+    if (is100Percent) {
+      // Cerrar y mutar inmediatamente en base de datos a estado DONE
+      const success = await closeOrder();
+      if (success) {
+        handleGoDispatch();
+      }
     } else {
       showThemedAlert(
         'Bloqueo Estricto de Cierre',
@@ -266,13 +275,15 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 
       {/* Bottom Sticky Action Buttons */}
       <View style={[styles.bottomBar, { backgroundColor: theme.cardBg, borderTopColor: theme.cardBorder, borderTopWidth: borderWidthVal }]}>
-        {!isClosed && (
+        {!isClosed && !is100Percent && (
           <TouchableOpacity
             style={[styles.btnScan, { backgroundColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal, borderColor: theme.emerald }]}
             onPress={() => handleGoScanner(true)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.btnScanText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>INICIAR ESCANEO</Text>
+            <Text style={[styles.btnScanText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>
+              {activeOrder.totalItemsScanned > 0 ? 'CONTINUAR ESCANEO' : 'INICIAR ESCANEO'}
+            </Text>
           </TouchableOpacity>
         )}
 
@@ -306,7 +317,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
             onPress={handleReleaseOrder}
             activeOpacity={0.8}
           >
-            <Text style={[styles.btnReleaseText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR PEDIDO A BACKLOG</Text>
+            <Text style={[styles.btnReleaseText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR PEDIDO A LISTO</Text>
           </TouchableOpacity>
         )}
       </View>

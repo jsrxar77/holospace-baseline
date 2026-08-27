@@ -66,6 +66,7 @@
 - [x] **8.7** Aislamiento Multi-Tenant exhaustivo en consultas y mutaciones de pedidos (`getFullOrderFromDb`, `claim-order`, `release-order`, `pdf-raw`) con obligatoriedad de `AND tenant_id = ?`.
 - [x] **8.8** Endpoint transaccional `POST /api/scanban/update-scan-progress` para persistencia en tiempo real de ítems escaneados y audio feedback PCM WAV de 1200Hz con soporte de iOS Silent Mode.
 - [x] **8.9** Eliminación estricta de restricción UNIQUE(tenant_id, order_number) y consagración del UUID (`orders.id`) como único identificador técnico inmutable.
+- [x] **8.10** Mutación transaccional inmediata a DONE al presionar Despachar, ocultamiento contextual de botón de escaneo al 100% verificado y centrado visual de pantalla de confirmación.
 
 ---
 
