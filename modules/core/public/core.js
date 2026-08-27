@@ -488,13 +488,14 @@ async function loadKanbanData() {
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <div style="display: flex; gap: 6px; position: absolute; top: 12px; right: 12px;">
-            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">✓ Pasar a Listo</button>
-            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.id}', event)">🗑️</button>
+            <button class="btn-primary" style="font-size: 11px; padding: 4px 8px; border-radius: 6px;" onclick="markOrderReady('${item.id}', event)">Pasar a Listo</button>
+            <button class="btn-delete-card" style="position: static;" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           </div>
-          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
+          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes hacer clic o arrastrar esta tarjeta a LISTO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Puedes hacer clic o arrastrar esta tarjeta a LISTO</div>
         </div>
       `).join('');
 
@@ -505,16 +506,17 @@ async function loadKanbanData() {
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
       : data.ready.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">↩️ A Backlog</button>
-          <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
+          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">A Backlog</button>
+          <div class="card-order-no" style="color: var(--emerald);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">● Listo para tomar en celular</div>
           ${currentUser && currentUser.role === 'ADMIN' ? `
             <button class="btn-primary" style="background: var(--emerald); color: #000; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 900; cursor: pointer;" onclick="openAssignOperatorModal('${item.id}', '${item.orderNumber}', event)">
-              👤 Asignar a Operario
+              Asignar a Operario
             </button>
           ` : ''}
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a BACKLOG o EN PROCESO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Puedes arrastrar a BACKLOG o EN PROCESO</div>
         </div>
       `).join('');
 
@@ -539,7 +541,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
             <div class="progress-bar-bg">
@@ -547,17 +550,17 @@ async function loadKanbanData() {
             </div>
             ${currentUser && currentUser.role === 'ADMIN' ? `
               <button class="btn-action" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #3B82F6; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 700; cursor: pointer;" onclick="resetOrderDoingToReady('${item.id}', '${item.orderNumber}', event)">
-                ↩️ Reasignar / Liberar a Listo
+                Reasignar / Liberar a Listo
               </button>
             ` : ''}
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">🖐️ Puedes arrastrar a LISTO para liberar</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Puedes arrastrar a LISTO para liberar</div>
           </div>
         `).join('');
 
         return `
           <div class="user-group">
             <div class="user-group-header" onclick="toggleUserGroup('${groupId}')">
-              <span>👤 Operario: ${email} (${userOrders.length})</span>
+              <span>Operario: ${email} (${userOrders.length})</span>
               <span>${isCollapsed ? '►' : '▼'}</span>
             </div>
             ${!isCollapsed ? `<div class="user-group-body">${cardsHtml}</div>` : ''}
@@ -587,7 +590,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--amber);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--amber);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
             <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
           </div>
@@ -596,7 +600,7 @@ async function loadKanbanData() {
         return `
           <div class="user-group">
             <div class="user-group-header" onclick="toggleUserGroup('${groupId}')">
-              <span>👤 Auditado por: ${email} (${userOrders.length})</span>
+              <span>Auditado por: ${email} (${userOrders.length})</span>
               <span>${isCollapsed ? '►' : '▼'}</span>
             </div>
             ${!isCollapsed ? `<div class="user-group-body">${cardsHtml}</div>` : ''}

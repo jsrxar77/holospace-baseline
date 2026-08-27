@@ -762,7 +762,8 @@ async function loadKanbanData() {
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <button class="btn-delete-card" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px; border-color: rgba(255, 82, 82, 0.4); color: var(--red);" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
-          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${item.orderNumber}</div>
+          <div class="card-order-no" style="color: var(--text-muted);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
           <button class="btn-primary" style="margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 800; cursor: pointer;" onclick="markOrderReady('${item.id}', event)">
@@ -780,7 +781,8 @@ async function loadKanbanData() {
       : data.ready.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">A Backlog</button>
-          <div class="card-order-no" style="color: var(--emerald);">Pedido #${item.orderNumber}</div>
+          <div class="card-order-no" style="color: var(--emerald);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">Listo para tomar en celular</div>
           ${currentUser && currentUser.role === 'ADMIN' ? `
@@ -813,7 +815,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--cobalt);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
             <div class="progress-bar-bg">
@@ -861,7 +864,8 @@ async function loadKanbanData() {
 
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.id}')">
-            <div class="card-order-no" style="color: var(--amber);">Pedido #${item.orderNumber}</div>
+            <div class="card-order-no" style="color: var(--amber);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
+            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
             <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
           </div>
@@ -1815,8 +1819,11 @@ async function fetchExplorerOrders() {
           : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;';
 
         return `
-          <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.orderNumber}')">
-            <td><strong style="color: var(--emerald);">#${o.orderNumber}</strong></td>
+          <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.id}')">
+            <td>
+              <strong style="color: var(--emerald);">#${(o.id || '').substring(0, 8).toUpperCase()}</strong>
+              <div style="font-size: 11px; color: var(--text-muted);">Comp. #${o.orderNumber}</div>
+            </td>
             <td><strong>${o.clientName}</strong></td>
             <td>${o.operatorEmail || 'Sin Asignar'}</td>
             <td style="font-size: 13px; color: var(--text-muted);">${o.issueDate || 'Hoy'}</td>
@@ -1828,7 +1835,7 @@ async function fetchExplorerOrders() {
               </span>
             </td>
             <td style="text-align: center;">
-              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.orderNumber}')">Detalle</button>
+              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.id}')">Detalle</button>
             </td>
           </tr>
         `;
