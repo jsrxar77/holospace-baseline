@@ -287,20 +287,42 @@ async function parsePdfBuffer(pdfBuffer, fileName = 'order.pdf') {
 async function getFullOrderFromDb(identifier, context = {}) {
   if (!identifier) return null;
   let order = null;
+  const tenantId = context.tenantId || (context.user && context.user.tenant_id) || null;
 
-  if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
-    order = await getOne('SELECT * FROM orders WHERE id::text = ?', [String(identifier)], context);
-  }
-  if (!order) {
-    order = await getOne('SELECT * FROM orders WHERE uuid = ?', [String(identifier)], context);
-  }
-  if (!order) {
-    order = await getOne('SELECT * FROM orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [String(identifier)], context);
+  if (tenantId) {
+    if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
+      order = await getOne('SELECT * FROM orders WHERE id::text = ? AND tenant_id = ?', [String(identifier), tenantId], context);
+    }
+    if (!order) {
+      order = await getOne('SELECT * FROM orders WHERE uuid = ? AND tenant_id = ?', [String(identifier), tenantId], context);
+    }
+    if (!order) {
+      order = await getOne('SELECT * FROM orders WHERE order_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1', [String(identifier), tenantId], context);
+    }
+  } else {
+    if (typeof identifier === 'number' || /^\d+$/.test(String(identifier))) {
+      order = await getOne('SELECT * FROM orders WHERE id::text = ?', [String(identifier)], context);
+    }
+    if (!order) {
+      order = await getOne('SELECT * FROM orders WHERE uuid = ?', [String(identifier)], context);
+    }
+    if (!order) {
+      order = await getOne('SELECT * FROM orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [String(identifier)], context);
+    }
   }
   if (!order) return null;
 
-  const items = await query('SELECT id, order_id as "orderId", code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?', [order.id], context);
-  const auditLogs = await query('SELECT id, order_id as "orderId", timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ? ORDER BY id ASC', [order.id], context);
+  const orderTenantId = order.tenant_id || tenantId;
+  const items = await query(
+    'SELECT id, order_id as "orderId", code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : ''),
+    orderTenantId ? [order.id, orderTenantId] : [order.id],
+    context
+  );
+  const auditLogs = await query(
+    'SELECT id, order_id as "orderId", timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : '') + ' ORDER BY id ASC',
+    orderTenantId ? [order.id, orderTenantId] : [order.id],
+    context
+  );
 
   return {
     id: order.id,
@@ -398,11 +420,23 @@ const server = http.createServer(async (req, res) => {
     }
 
     try {
-      const order = await getOne(
-        'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM orders WHERE id::text = ? OR uuid = ? OR order_number = ?',
-        [identifier, identifier, identifier],
-        { isSuperAdmin: true }
-      );
+      const authUser = await resolveUser(req);
+      const tenantId = (authUser && authUser.role !== 'SUPERADMIN') ? authUser.tenant_id : null;
+      let order = null;
+
+      if (tenantId) {
+        order = await getOne(
+          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND tenant_id = ?',
+          [identifier, identifier, identifier, tenantId],
+          { tenantId }
+        );
+      } else {
+        order = await getOne(
+          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM orders WHERE id::text = ? OR uuid = ? OR order_number = ?',
+          [identifier, identifier, identifier],
+          { isSuperAdmin: true }
+        );
+      }
 
       if (!order || !order.pdfBlob) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -1313,12 +1347,12 @@ const server = http.createServer(async (req, res) => {
       // 10.1 VALIDAR COMPROBANTE (BACKLOG -> READY)
       if (req.url === '/api/scanban/mark-ready' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
-        const email = (userEmail || 'admin@drinklovers.com.ar').toLowerCase();
+        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'READY' WHERE id = ?", [order.id], { tenantId });
+          await execute("UPDATE orders SET status = 'READY' WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${order.orderNumber} validado a Listo por ${email}.`],
@@ -1334,12 +1368,12 @@ const server = http.createServer(async (req, res) => {
       // 10.2 DEVOLVER A BACKLOG
       if (req.url === '/api/scanban/mark-backlog' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
-        const email = (userEmail || 'admin@drinklovers.com.ar').toLowerCase();
+        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'BACKLOG', operator_email = NULL WHERE id = ?", [order.id], { tenantId });
+          await execute("UPDATE orders SET status = 'BACKLOG', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, email, 'DEVOLVER_BACKLOG', `Pedido #${order.orderNumber} devuelto a Backlog por ${email}.`],
@@ -1355,13 +1389,13 @@ const server = http.createServer(async (req, res) => {
       // 10.3 ASIGNAR OPERARIO
       if (req.url === '/api/scanban/assign-order' && req.method === 'POST') {
         const { orderId, orderNumber, operatorEmail, userEmail } = data;
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
         const targetOperator = (operatorEmail || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ?", [targetOperator, targetOperator, order.id], { tenantId });
+          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [targetOperator, targetOperator, order.id, tenantId], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, adminEmail, 'ASIGNAR_OPERARIO', `Pedido #${order.orderNumber} asignado a ${targetOperator}.`],
@@ -1377,12 +1411,12 @@ const server = http.createServer(async (req, res) => {
       // 10.3.1 REASIGNAR Y LIBERAR A LISTO (DOING -> READY)
       if (req.url === '/api/scanban/release-order-admin' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ?", [order.id], { tenantId });
+          await execute("UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, adminEmail, 'LIBERAR_PEDIDO', `Pedido #${order.orderNumber} liberado a Listo por Administrador (${adminEmail}).`],
@@ -1398,7 +1432,7 @@ const server = http.createServer(async (req, res) => {
       // 10.3.2 ELIMINAR PEDIDO DE BACKLOG
       if (req.url === '/api/scanban/delete-order' && (req.method === 'POST' || req.method === 'DELETE')) {
         const { orderId, orderNumber, userEmail } = data || {};
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || 'admin@drinklovers.com.ar').toLowerCase();
+        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1423,7 +1457,7 @@ const server = http.createServer(async (req, res) => {
 
         const buffer = Buffer.from(pdfBase64, 'base64');
         const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-        const email = (userEmail || 'admin@drinklovers.com.ar').toLowerCase();
+        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
         const parsed = await parsePdfBuffer(buffer, cleanName);
         if (!parsed.success || !parsed.items || parsed.items.length === 0) {
@@ -1503,7 +1537,7 @@ const server = http.createServer(async (req, res) => {
       // 10.5.1 APP MÓVIL: PEDIDOS EN PROCESO (DOING) ASIGNADOS AL OPERARIO
       if (req.url.startsWith('/api/scanban/my-doing-orders') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const opEmail = urlParams.get('userEmail') || (currentUser && currentUser.email) || '';
+        const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
         if (!opEmail) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1513,7 +1547,7 @@ const server = http.createServer(async (req, res) => {
 
         const doingRows = await query(
           "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
-          [opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
+          [opEmail, opEmail, tenantId],
           { tenantId }
         );
 
@@ -1525,7 +1559,7 @@ const server = http.createServer(async (req, res) => {
       // 10.5.1.B APP MÓVIL: PEDIDO ACTIVO EN FOCO DE ESCANEO
       if (req.url.startsWith('/api/scanban/active-order') && req.method === 'GET') {
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const opEmail = urlParams.get('userEmail') || (currentUser && currentUser.email) || '';
+        const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
         const requestedId = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
 
         if (!opEmail) {
@@ -1538,7 +1572,7 @@ const server = http.createServer(async (req, res) => {
         if (requestedId) {
           activeRow = await getOne(
             "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ?",
-            [requestedId, requestedId, requestedId, opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
+            [requestedId, requestedId, requestedId, opEmail, opEmail, tenantId],
             { tenantId }
           );
         }
@@ -1546,7 +1580,7 @@ const server = http.createServer(async (req, res) => {
         if (!activeRow) {
           activeRow = await getOne(
             "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
-            [opEmail.toLowerCase(), opEmail.toLowerCase(), tenantId],
+            [opEmail, opEmail, tenantId],
             { tenantId }
           );
         }
@@ -1607,12 +1641,12 @@ const server = http.createServer(async (req, res) => {
       // 10.6 TOMAR Y ESCANEAR PEDIDO
       if (req.url === '/api/scanban/claim-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;
-        const opEmail = (userEmail || 'juan@drinklovers.com.ar').trim().toLowerCase();
+        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const existingOrder = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (existingOrder) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ?", [opEmail, opEmail, existingOrder.id], { tenantId });
+          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [opEmail, opEmail, existingOrder.id, tenantId], { tenantId });
           await execute(
             'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [existingOrder.id, tenantId, now, opEmail, 'TOMAR_PEDIDO', `Pedido tomado por ${opEmail}.`],
@@ -1633,7 +1667,7 @@ const server = http.createServer(async (req, res) => {
       // 10.7 COMPLETAR Y DESPACHAR PEDIDO
       if (req.url === '/api/scanban/complete-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail, watermarkText } = data;
-        const opEmail = (userEmail || 'juan@drinklovers.com.ar').trim().toLowerCase();
+        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1641,8 +1675,8 @@ const server = http.createServer(async (req, res) => {
           const auditStamp = watermarkText || `EXPEDIDO POR ${opEmail} | ${now}`;
 
           await execute(
-            "UPDATE orders SET status = 'DONE', operator_email = ?, audit_stamp = ?, total_items_scanned = total_items_required WHERE id = ?",
-            [opEmail, auditStamp, order.id],
+            "UPDATE orders SET status = 'DONE', operator_email = ?, audit_stamp = ?, total_items_scanned = total_items_required WHERE id = ? AND tenant_id = ?",
+            [opEmail, auditStamp, order.id, tenantId],
             { tenantId }
           );
 

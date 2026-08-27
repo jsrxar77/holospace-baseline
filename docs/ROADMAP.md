@@ -63,6 +63,7 @@
 - [x] **8.4** Sincronización atómica y consistencia en asignación/toma de pedidos entre ScanBan y Scanner Mobile (`operator_email` + `assigned_operator_email`).
 - [x] **8.5** Escaneo asistido con tarjeta de producto pendiente, retículo láser, diagnóstico comparativo esperado vs. escaneado y modo de reintento/pausa interactivo en Mobile Scanner.
 - [x] **8.6** Modo de escaneo enfocado selectivo al tocar cualquier tarjeta de ítem en la pantalla de resumen del pedido.
+- [x] **8.7** Aislamiento Multi-Tenant exhaustivo en consultas y mutaciones de pedidos (`getFullOrderFromDb`, `claim-order`, `release-order`, `pdf-raw`) con obligatoriedad de `AND tenant_id = ?`.
 
 ---
 
