@@ -1638,6 +1638,51 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 10.5.3 APP MÓVIL: ACTUALIZAR AVANCE DE ESCANEO EN TIEMPO REAL
+      if (req.url === '/api/scanban/update-scan-progress' && req.method === 'POST') {
+        const { orderId, orderNumber, items, totalItemsScanned, userEmail } = data || {};
+        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+
+        const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
+        if (order) {
+          const qtyTotal = Number(totalItemsScanned) || 0;
+          await execute(
+            'UPDATE orders SET total_items_scanned = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+            [qtyTotal, order.id, tenantId],
+            { tenantId }
+          );
+
+          if (Array.isArray(items)) {
+            for (const it of items) {
+              const qtyScanned = Number(it.quantityScanned) || 0;
+              const itStatus = qtyScanned >= (it.quantityRequired || 1) ? 'COMPLETED' : (qtyScanned > 0 ? 'IN_PROGRESS' : 'PENDING');
+              
+              if (it.id && !String(it.id).startsWith('item_')) {
+                await execute(
+                  'UPDATE order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id::text = ? AND order_id = ? AND tenant_id = ?',
+                  [qtyScanned, itStatus, String(it.id), order.id, tenantId],
+                  { tenantId }
+                );
+              } else if (it.code) {
+                await execute(
+                  'UPDATE order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE code = ? AND order_id = ? AND tenant_id = ?',
+                  [qtyScanned, itStatus, String(it.code), order.id, tenantId],
+                  { tenantId }
+                );
+              }
+            }
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, orderId: order.id, totalItemsScanned: qtyTotal }));
+          return;
+        }
+
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Pedido no encontrado' }));
+        return;
+      }
+
       // 10.6 TOMAR Y ESCANEAR PEDIDO
       if (req.url === '/api/scanban/claim-order' && req.method === 'POST') {
         const { orderId, orderNumber, userEmail } = data;

@@ -119,12 +119,12 @@ export const fileWorkflowService = {
   },
 
   // Guardar avance de escaneo en tiempo real en la base de datos del servidor
-  updateScanProgress: async (orderNumber: string, items: any[], totalItemsScanned: number): Promise<boolean> => {
+  updateScanProgress: async (orderId: string, orderNumber: string, items: any[], totalItemsScanned: number, userEmail?: string): Promise<boolean> => {
     try {
       await fetch(`${SERVER_URL}/api/scanban/update-scan-progress`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ orderNumber, items, totalItemsScanned })
+        body: JSON.stringify({ orderId, orderNumber, items, totalItemsScanned, userEmail })
       });
       return true;
     } catch (e) {

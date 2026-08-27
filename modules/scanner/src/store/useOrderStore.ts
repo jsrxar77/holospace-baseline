@@ -317,7 +317,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     await dbService.saveOrder(updatedOrder);
 
     // Enviar avance de escaneo al servidor en tiempo real para persistencia permanente
-    fileWorkflowService.updateScanProgress(activeOrder.orderNumber, updatedItems, newTotalScanned);
+    const currentUserEmail = useAuthStore.getState().user?.email || '';
+    fileWorkflowService.updateScanProgress(activeOrder.id, activeOrder.orderNumber, updatedItems, newTotalScanned, currentUserEmail);
 
     set((state) => ({
       activeOrder: updatedOrder,
