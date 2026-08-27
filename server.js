@@ -367,7 +367,12 @@ const server = http.createServer(async (req, res) => {
       indexPath = path.join(__dirname, 'modules', 'core', 'public', 'index.html');
     }
     const content = fs.readFileSync(indexPath, 'utf8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(content);
     return;
   }
@@ -383,7 +388,12 @@ const server = http.createServer(async (req, res) => {
         res.end('Error cargando app.js');
         return;
       }
-      res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8' });
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
       res.end(content);
     });
     return;
@@ -401,7 +411,12 @@ const server = http.createServer(async (req, res) => {
           res.end('Error cargando CSS');
           return;
         }
-        res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' });
+        res.writeHead(200, {
+          'Content-Type': 'text/css; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
         res.end(content);
       });
       return;
