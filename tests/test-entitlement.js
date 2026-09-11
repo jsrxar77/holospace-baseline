@@ -65,12 +65,13 @@ async function runTests() {
   console.log('\n======================================================');
   console.log(`📊 RESULTADOS: ${passed} Aprobados | ${failed} Fallidos`);
   if (failed === 0) {
-    console.log('🎉 FASE 3: MOTOR DE LICENCIAMIENTO MODULAR 100% OPERATIVO.');
+    console.log('FASE 3: MOTOR DE LICENCIAMIENTO MODULAR 100% OPERATIVO.');
   } else {
-    console.error('⚠️ ALGUNOS TESTS DE LICENCIAMIENTO FALLARON.');
+    console.error('ALGUNOS TESTS DE LICENCIAMIENTO FALLARON.');
     process.exit(1);
   }
   console.log('======================================================');
+  process.exit(0);
 }
 
 runTests();

@@ -66,10 +66,10 @@ async function runTests() {
   // 4. Verificación de Base de Datos (si PostgreSQL esta activo)
   console.log('\n--- 4. Integridad en Base de Datos PostgreSQL 16 ---');
   try {
-    const mod = await getOne("SELECT * FROM modules WHERE key = '4see'", [], { isSuperAdmin: true });
-    assert(mod && mod.key === '4see', 'Modulo 4see registrado en tabla modules');
+    const mod = await getOne("SELECT * FROM tenant_modules_catalog WHERE key = '4see'", [], { isSuperAdmin: true });
+    assert(mod && mod.key === '4see', 'Modulo 4see registrado en tabla tenant_modules_catalog');
   } catch (dbErr) {
-    console.log('[INFO] Base de datos no conectada en host local (5434). Las migraciones se aplicaran al levantar Docker Compose.');
+    console.log('[INFO] Base de datos no conectada o error: ' + dbErr.message);
   }
 
   console.log('\n======================================================================');

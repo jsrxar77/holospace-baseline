@@ -124,12 +124,14 @@ async function runTests() {
   console.log('\n======================================================');
   console.log(`📊 RESULTADOS: ${passed} Aprobados | ${failed} Fallidos`);
   if (failed === 0) {
-    console.log('🎉 FASE 8: MOTOR DE TEMAS HIERÁRQUICO (TENANT VS USUARIO) 100% OPERATIVO.');
+    console.log('FASE 8: MOTOR DE TEMAS HIERÁRQUICO (TENANT VS USUARIO) 100% OPERATIVO.');
+    console.log('======================================================');
+    process.exit(0);
   } else {
-    console.error('⚠️ ALGUNOS TESTS FALLARON.');
+    console.error('ALGUNOS TESTS FALLARON.');
+    console.log('======================================================');
     process.exit(1);
   }
-  console.log('======================================================');
 }
 
 runTests();

@@ -141,22 +141,26 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ---
 
-## 🧪 Batería de Pruebas y Validación Automatizada
+## Batería de Pruebas y Validación Automatizada
 
-El proyecto incluye suites de testing automatizadas para verificar la integridad de todos los subsistemas:
+El proyecto incluye un runner unificado que ejecuta secuencialmente todas las suites de prueba para cada uno de los módulos de la plataforma dentro del contenedor Docker de aplicación:
 
 ```bash
-# 1. Auditoría de integridad de base de datos multi-tenant
-node bin/verify-db-integrity.js
+# Ejecutar la suite completa consolidada (11 suites, todos los módulos)
+docker compose exec app node tests/run-all-tests.js
 
-# 2. Pruebas de autenticación JWT, criptografía scrypt y RBAC
-node bin/test-auth-jwt.js
-
-# 3. Pruebas de motor de licenciamiento modular (Entitlements) y cuotas
-node bin/test-entitlement.js
-
-# 4. Pruebas de pasarela de pagos, webhooks y auto-onboarding B2B
-node bin/test-billing-onboarding.js
+# O ejecutar suites individuales por módulo:
+docker compose exec app node tests/verify-db-integrity.js      # Integridad PostgreSQL 16 y RLS
+docker compose exec app node tests/test-auth-jwt.js            # Core: Autenticación JWT y scrypt
+docker compose exec app node tests/test-rbac-granular.js       # Core: Permisos granulares y roles
+docker compose exec app node tests/test-theme-hierarchy.js     # Core: Jerarquía de temas HW-DS
+docker compose exec app node tests/test-tenants-module.js      # Tenant: Gobierno y aislamiento
+docker compose exec app node tests/test-entitlement.js         # Tenant: Entitlements y cuotas
+docker compose exec app node tests/test-billing-onboarding.js  # Tenant: Facturación y onboarding
+docker compose exec app node tests/test-modules-toggle.js      # Tenant: Activación dinámica de módulos
+docker compose exec app node tests/test-kanban-module.js       # Kanban: Ciclo de vida y logística
+docker compose exec app node tests/test-scanner-module.js      # Scanner: Picking móvil y EAN-13
+docker compose exec app node bin/test-4see.js                 # 4see: Rentabilidad, extractor y repricing
 ```
 
 O ejecutar toda la batería en un solo comando:
