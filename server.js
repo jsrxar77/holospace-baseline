@@ -746,8 +746,8 @@ const server = http.createServer(async (req, res) => {
             success: true,
             plans: [
               { code: 'starter', name: 'Plan Starter Inicial', max_users: 5, max_orders_monthly: 500, included_modules: ['core', 'kanban'] },
-              { code: 'pro', name: 'Plan Pro Profesional', max_users: 15, max_orders_monthly: 3000, included_modules: ['core', 'kanban', 'scanner'] },
-              { code: 'enterprise', name: 'Plan Enterprise Ilimitado', max_users: 999, max_orders_monthly: 999999, included_modules: ['tenant', 'core', 'kanban', 'scanner'] }
+              { code: 'pro', name: 'Plan Pro Profesional', max_users: 15, max_orders_monthly: 3000, included_modules: ['core', 'kanban', 'scanner', '4see'] },
+              { code: 'enterprise', name: 'Plan Enterprise Ilimitado', max_users: 999, max_orders_monthly: 999999, included_modules: ['tenant', 'core', 'kanban', 'scanner', '4see'] }
             ]
           }));
         }

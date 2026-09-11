@@ -37,20 +37,20 @@ Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentr
 #### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@poke.com.ar` | `poke2026!` | **Kanban (Web `3001`):** Tablero Kanban operativo y explorador de pedidos de Poke. |
+| **ADMIN** | `admin@poke.com.ar` | `poke2026` | **Kanban & 4see (Web `3001`):** Tablero operativo, explorador de pedidos e inteligencia e-commerce de Poke. |
 | **OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 | **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 #### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026!` | **Kanban (Web `3001`):** Tablero Kanban operativo y explorador de pedidos de DrinkLovers. |
+| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026` | **Kanban & 4see (Web `3001`):** Tablero operativo, explorador de pedidos e inteligencia e-commerce de DrinkLovers. |
 | **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 | **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 ---
 
-## 🚀 Ejecución del Proyecto (100% Dockerizado con Hot-Reload)
+## Ejecución del Proyecto (100% Dockerizado con Hot-Reload)
 
 El proyecto está completamente dockerizado. **Con un solo comando se levanta todo el ecosistema** en contenedores con sincronización de código en vivo (*Hot-Reload*):
 
