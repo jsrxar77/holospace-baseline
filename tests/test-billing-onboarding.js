@@ -81,10 +81,10 @@ async function runTests() {
 
   // Limpieza estricta de datos de prueba
   const { execute } = require('../lib/db');
-  await execute('DELETE FROM users WHERE tenant_id = ?', [regResult.tenant.id], { isSuperAdmin: true });
+  await execute('DELETE FROM core_users WHERE tenant_id = ?', [regResult.tenant.id], { isSuperAdmin: true });
   await execute('DELETE FROM tenant_modules WHERE tenant_id = ?', [regResult.tenant.id], { isSuperAdmin: true });
   await execute('DELETE FROM tenant_subscriptions WHERE tenant_id = ?', [regResult.tenant.id], { isSuperAdmin: true });
-  await execute('DELETE FROM tenants WHERE id = ?', [regResult.tenant.id], { isSuperAdmin: true });
+  await execute('DELETE FROM tenant_tenants WHERE id = ?', [regResult.tenant.id], { isSuperAdmin: true });
 
   console.log('\n======================================================');
   console.log(`📊 RESULTADOS: ${passed} Aprobados | ${failed} Fallidos`);

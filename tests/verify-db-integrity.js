@@ -104,17 +104,6 @@ async function runAudit() {
     };
   });
 
-  // 9. Verificar vistas de compatibilidad retroactiva
-  await check('Vistas de Compatibilidad Retroactiva', async () => {
-    const vUsers = await query('SELECT count(*) as count FROM users', [], { isSuperAdmin: true });
-    const vOrders = await query('SELECT count(*) as count FROM orders', [], { isSuperAdmin: true });
-    const vTenants = await query('SELECT count(*) as count FROM tenants', [], { isSuperAdmin: true });
-    return {
-      passed: vUsers.length > 0 && vOrders.length > 0 && vTenants.length > 0,
-      message: 'Vistas users, orders y tenants accesibles correctamente'
-    };
-  });
-
   console.log('======================================================');
   if (allPassed) {
     console.log('🎉 RESULTADO: LA BASE DE DATOS POSTGRESQL MULTI-TENANT ESTÁ 100% SANA.');

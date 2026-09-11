@@ -117,7 +117,7 @@ async function runTests() {
     assert(hasCoreRead && hasKanbanRead && has4seeMargins, 'Permisos canonicos verificados en catalogo');
 
     // Consultar roles para tenant poke
-    const pokeTenant = await query("SELECT id FROM tenants WHERE slug = 'poke'");
+    const pokeTenant = await query("SELECT id FROM tenant_tenants WHERE slug = 'poke'");
     const pokeTenantId = (pokeTenant && pokeTenant[0]) ? pokeTenant[0].id : '550e8400-e29b-41d4-a716-446655440001';
     const pokeRoles = await getRolesForTenant(pokeTenantId);
     assert(Array.isArray(pokeRoles) && pokeRoles.length >= 5, `Roles del sistema modulares descubiertos para tenant poke (${pokeRoles.length} roles)`);

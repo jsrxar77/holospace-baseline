@@ -63,7 +63,7 @@ async function testModuleToggling() {
   console.log('✅ [PASS] Módulo scanflow desactivado con éxito.');
 
   // Verificar en DB
-  const [scanflowDb] = await query("SELECT is_active, activated_by FROM modules WHERE key = 'kanban'", [], { isSuperAdmin: true });
+  const [scanflowDb] = await query("SELECT is_active, activated_by FROM tenant_modules_catalog WHERE key = 'kanban'", [], { isSuperAdmin: true });
   assert.strictEqual(scanflowDb.is_active, false, 'En base de datos is_active debe ser false');
   console.log('✅ [PASS] Estado en PostgreSQL 16 verificado como false.');
 

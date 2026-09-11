@@ -794,18 +794,3 @@ UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000001', role = '
 UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000002', role = 'CORE_ADMIN' WHERE UPPER(role) IN ('ADMIN', 'CORE_ADMIN');
 UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000003', role = 'SCANNER_OPERATOR' WHERE UPPER(role) IN ('OPERATOR', 'SCANNER_OPERATOR');
 
--- ============================================================================
--- 8. VISTAS DE COMPATIBILIDAD RETROACTIVA
--- ============================================================================
-CREATE OR REPLACE VIEW tenants AS SELECT * FROM tenant_tenants;
-CREATE OR REPLACE VIEW modules AS SELECT * FROM tenant_modules_catalog;
-CREATE OR REPLACE VIEW plans AS SELECT * FROM tenant_plans;
-CREATE OR REPLACE VIEW permissions AS SELECT * FROM core_permissions;
-CREATE OR REPLACE VIEW roles AS SELECT * FROM core_roles;
-CREATE OR REPLACE VIEW role_permissions AS SELECT * FROM core_role_permissions;
-CREATE OR REPLACE VIEW users AS SELECT * FROM core_users;
-CREATE OR REPLACE VIEW orders AS SELECT * FROM kanban_orders;
-CREATE OR REPLACE VIEW order_items AS SELECT * FROM kanban_order_items;
-CREATE OR REPLACE VIEW audit_logs AS SELECT * FROM core_audit_logs;
-CREATE OR REPLACE VIEW platform_audit_logs AS SELECT * FROM core_platform_audit_logs;
-CREATE OR REPLACE VIEW app_settings AS SELECT * FROM core_app_settings;

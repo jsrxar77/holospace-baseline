@@ -304,29 +304,29 @@ async function getFullOrderFromDb(identifier, context = {}) {
 
   if (tenantId) {
     // 1. Buscar prioritariamente por ID interno (UUID) o uuid
-    order = await getOne('SELECT * FROM orders WHERE (id::text = ? OR uuid = ?) AND tenant_id = ?', [idStr, idStr, tenantId], context);
+    order = await getOne('SELECT * FROM kanban_orders WHERE (id::text = ? OR uuid = ?) AND tenant_id = ?', [idStr, idStr, tenantId], context);
     // 2. Si no se encuentra por UUID, buscar por número comercial externo de comprobante
     if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE order_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1', [idStr, tenantId], context);
+      order = await getOne('SELECT * FROM kanban_orders WHERE order_number = ? AND tenant_id = ? ORDER BY created_at DESC LIMIT 1', [idStr, tenantId], context);
     }
   } else {
     // 1. Buscar prioritariamente por ID interno (UUID) o uuid
-    order = await getOne('SELECT * FROM orders WHERE id::text = ? OR uuid = ?', [idStr, idStr], context);
+    order = await getOne('SELECT * FROM kanban_orders WHERE id::text = ? OR uuid = ?', [idStr, idStr], context);
     // 2. Si no se encuentra por UUID, buscar por número comercial externo de comprobante
     if (!order) {
-      order = await getOne('SELECT * FROM orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [idStr], context);
+      order = await getOne('SELECT * FROM kanban_orders WHERE order_number = ? ORDER BY created_at DESC LIMIT 1', [idStr], context);
     }
   }
   if (!order) return null;
 
   const orderTenantId = order.tenant_id || tenantId;
   const items = await query(
-    'SELECT id, order_id as "orderId", code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : ''),
+    'SELECT id, order_id as "orderId", code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM kanban_order_items WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : ''),
     orderTenantId ? [order.id, orderTenantId] : [order.id],
     context
   );
   const auditLogs = await query(
-    'SELECT id, order_id as "orderId", timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : '') + ' ORDER BY id ASC',
+    'SELECT id, order_id as "orderId", timestamp, user_email as "userEmail", action, details FROM core_audit_logs WHERE order_id = ?' + (orderTenantId ? ' AND tenant_id = ?' : '') + ' ORDER BY id ASC',
     orderTenantId ? [order.id, orderTenantId] : [order.id],
     context
   );
@@ -448,13 +448,13 @@ const server = http.createServer(async (req, res) => {
 
       if (tenantId) {
         order = await getOne(
-          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND tenant_id = ?',
+          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM kanban_orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND tenant_id = ?',
           [identifier, identifier, identifier, tenantId],
           { tenantId }
         );
       } else {
         order = await getOne(
-          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM orders WHERE id::text = ? OR uuid = ? OR order_number = ?',
+          'SELECT pdf_blob as "pdfBlob", pdf_file_name as "pdfFileName" FROM kanban_orders WHERE id::text = ? OR uuid = ? OR order_number = ?',
           [identifier, identifier, identifier],
           { isSuperAdmin: true }
         );
@@ -511,7 +511,7 @@ const server = http.createServer(async (req, res) => {
     if (emailToFind) {
       try {
         const dbUser = await getOne(
-          'SELECT email as id, email, password_hash as password, name, role, role_id, is_active as active, tenant_id, theme_preference FROM users WHERE LOWER(email) = ? AND is_active = true',
+          'SELECT email as id, email, password_hash as password, name, role, role_id, is_active as active, tenant_id, theme_preference FROM core_users WHERE LOWER(email) = ? AND is_active = true',
           [emailToFind.toLowerCase()],
           { isSuperAdmin: true }
         );
@@ -571,13 +571,13 @@ const server = http.createServer(async (req, res) => {
       if (req.url === '/api/theme' && req.method === 'GET') {
         let themeKey = null;
         if (currentUser && currentUser.email) {
-          const userRow = await getOne('SELECT theme_preference FROM users WHERE LOWER(email) = ? AND tenant_id = ?', [currentUser.email.toLowerCase(), tenantId], { tenantId, isSuperAdmin: currentUser.role === 'SUPERADMIN' });
+          const userRow = await getOne('SELECT theme_preference FROM core_users WHERE LOWER(email) = ? AND tenant_id = ?', [currentUser.email.toLowerCase(), tenantId], { tenantId, isSuperAdmin: currentUser.role === 'SUPERADMIN' });
           if (userRow && userRow.theme_preference) {
             themeKey = userRow.theme_preference;
           }
         }
         if (!themeKey) {
-          const row = await getOne("SELECT value FROM app_settings WHERE key = 'active_theme' AND tenant_id = ?", [tenantId], { tenantId });
+          const row = await getOne("SELECT value FROM core_app_settings WHERE key = 'active_theme' AND tenant_id = ?", [tenantId], { tenantId });
           themeKey = row ? row.value : 'omarchy_tiling';
         }
         const theme = THEMES[themeKey] || THEMES.omarchy_tiling;
@@ -605,19 +605,19 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'INSERT INTO app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
+            'INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
             [destTenantId, 'active_theme', targetKey],
             { tenantId: destTenantId, isSuperAdmin: true }
           );
 
           await execute(
-            'UPDATE users SET theme_preference = NULL WHERE tenant_id = ?',
+            'UPDATE core_users SET theme_preference = NULL WHERE tenant_id = ?',
             [destTenantId],
             { tenantId: destTenantId, isSuperAdmin: true }
           );
 
           await execute(
-            'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
+            'INSERT INTO core_platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
             [destTenantId, currentUser.email, 'TENANT_THEME_CHANGED', JSON.stringify({ themeKey: targetKey, themeName: THEMES[targetKey].name, tenantId: destTenantId })],
             { tenantId: destTenantId, isSuperAdmin: true }
           );
@@ -637,13 +637,13 @@ const server = http.createServer(async (req, res) => {
         // Scope por defecto: 'user' (afecta al usuario autenticado)
         if (currentUser && currentUser.email) {
           await execute(
-            'UPDATE users SET theme_preference = ? WHERE LOWER(email) = ? AND tenant_id = ?',
+            'UPDATE core_users SET theme_preference = ? WHERE LOWER(email) = ? AND tenant_id = ?',
             [targetKey, currentUser.email.toLowerCase(), tenantId],
             { tenantId, isSuperAdmin: true }
           );
           if (currentUser.role === 'SUPERADMIN') {
             await execute(
-              'INSERT INTO app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
+              'INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
               [tenantId, 'active_theme', targetKey],
               { tenantId, isSuperAdmin: true }
             );
@@ -664,7 +664,7 @@ const server = http.createServer(async (req, res) => {
       // 3. CATÁLOGO OFICIAL DE MÓDULOS DE PLATAFORMA
       if (req.url === '/api/modules' && req.method === 'GET') {
         try {
-          const rows = await query('SELECT * FROM modules ORDER BY category, key', [], { isSuperAdmin: true });
+          const rows = await query('SELECT * FROM tenant_modules_catalog ORDER BY category, key', [], { isSuperAdmin: true });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, modules: rows }));
         } catch (err) {
@@ -706,14 +706,14 @@ const server = http.createServer(async (req, res) => {
         const isActiveBool = Boolean(active);
         try {
           await execute(
-            'UPDATE modules SET is_active = ?, activated_by = ?, activated_at = CURRENT_TIMESTAMP WHERE key = ?',
+            'UPDATE tenant_modules_catalog SET is_active = ?, activated_by = ?, activated_at = CURRENT_TIMESTAMP WHERE key = ?',
             [isActiveBool, currentUser.email, key],
             { isSuperAdmin: true }
           );
 
           // Registrar en platform_audit_logs
           await execute(
-            'INSERT INTO platform_audit_logs (user_email, action, details) VALUES (?, ?, ?)',
+            'INSERT INTO core_platform_audit_logs (user_email, action, details) VALUES (?, ?, ?)',
             [currentUser.email, isActiveBool ? 'MODULE_ACTIVATED' : 'MODULE_DEACTIVATED', JSON.stringify({ moduleKey: key, active: isActiveBool, description: `Módulo '${key}' ${isActiveBool ? 'activado' : 'desactivado'} por ${currentUser.email}` })],
             { isSuperAdmin: true }
           );
@@ -733,7 +733,7 @@ const server = http.createServer(async (req, res) => {
           sendPermissionError(res, 'core:audit:read');
           return;
         }
-        const logs = await query('SELECT id, created_at as timestamp, user_email as "userEmail", action, details FROM platform_audit_logs ORDER BY created_at DESC LIMIT 100', [], { isSuperAdmin: true });
+        const logs = await query('SELECT id, created_at as timestamp, user_email as "userEmail", action, details FROM core_platform_audit_logs ORDER BY created_at DESC LIMIT 100', [], { isSuperAdmin: true });
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: true, logs }));
         return;
@@ -751,7 +751,7 @@ const server = http.createServer(async (req, res) => {
       // 5.1 SAAS: CATÁLOGO Y GESTIÓN DE PLANES (SUPERADMIN ONLY PARA CREACIÓN)
       if (req.url === '/api/plans' && req.method === 'GET') {
         try {
-          const plansList = await query('SELECT * FROM plans ORDER BY max_users ASC', [], { isSuperAdmin: true });
+          const plansList = await query('SELECT * FROM tenant_plans ORDER BY max_users ASC', [], { isSuperAdmin: true });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, plans: plansList }));
         } catch (e) {
@@ -780,7 +780,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         await execute(
-          'INSERT INTO plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active) VALUES (?, ?, ?, ?, ?, ?::jsonb, true) ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, max_users = EXCLUDED.max_users, max_orders_monthly = EXCLUDED.max_orders_monthly, included_modules = EXCLUDED.included_modules',
+          'INSERT INTO tenant_plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active) VALUES (?, ?, ?, ?, ?, ?::jsonb, true) ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, description = EXCLUDED.description, max_users = EXCLUDED.max_users, max_orders_monthly = EXCLUDED.max_orders_monthly, included_modules = EXCLUDED.included_modules',
           [code.toLowerCase().trim(), name, description || '', parseInt(maxUsers, 10), parseInt(maxOrdersMonthly, 10), JSON.stringify(includedModules)],
           { isSuperAdmin: true }
         );
@@ -798,15 +798,15 @@ const server = http.createServer(async (req, res) => {
         const tenants = await query(`
           SELECT t.id, t.slug, t.name, t.status, t.created_at,
                  s.plan_code, s.status as sub_status, s.max_users, s.max_orders_monthly
-          FROM tenants t
+          FROM tenant_tenants t
           LEFT JOIN tenant_subscriptions s ON t.id = s.tenant_id
           ORDER BY t.created_at ASC
         `, [], { isSuperAdmin: true });
 
         for (const t of tenants) {
           t.modules = await query('SELECT module_code, is_enabled FROM tenant_modules WHERE tenant_id = ?', [t.id], { isSuperAdmin: true });
-          t.users = await query('SELECT id, email, name, role, is_active, theme_preference FROM users WHERE tenant_id = ? ORDER BY role, name', [t.id], { isSuperAdmin: true });
-          const themeRow = await getOne("SELECT value FROM app_settings WHERE key = 'active_theme' AND tenant_id = ?", [t.id], { isSuperAdmin: true });
+          t.users = await query('SELECT id, email, name, role, is_active, theme_preference FROM core_users WHERE tenant_id = ? ORDER BY role, name', [t.id], { isSuperAdmin: true });
+          const themeRow = await getOne("SELECT value FROM core_app_settings WHERE key = 'active_theme' AND tenant_id = ?", [t.id], { isSuperAdmin: true });
           t.active_theme = themeRow ? themeRow.value : 'omarchy_tiling';
         }
 
@@ -827,7 +827,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9_-]/g, '').trim();
-        const existing = await getOne('SELECT id FROM tenants WHERE slug = ?', [cleanSlug], { isSuperAdmin: true });
+        const existing = await getOne('SELECT id FROM tenant_tenants WHERE slug = ?', [cleanSlug], { isSuperAdmin: true });
         if (existing) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: `El slug '${cleanSlug}' ya existe.` }));
@@ -839,7 +839,7 @@ const server = http.createServer(async (req, res) => {
         const selectedPlan = PLANS[planCode] || PLANS.starter;
 
         await execute(
-          'INSERT INTO tenants (id, slug, name, status, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
+          'INSERT INTO tenant_tenants (id, slug, name, status, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
           [newTenantId, cleanSlug, name.trim(), 'active'],
           { isSuperAdmin: true }
         );
@@ -858,7 +858,7 @@ const server = http.createServer(async (req, res) => {
           const userId = crypto.randomUUID();
           const adminUsername = (data && data.adminUsername) ? data.adminUsername.toLowerCase().trim() : adminEmail.split('@')[0].toLowerCase();
           await execute(
-            'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+            'INSERT INTO core_users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
             [userId, newTenantId, adminUsername, adminEmail.toLowerCase().trim(), hashPassword(adminPassword), adminName.trim(), 'ADMIN'],
             { isSuperAdmin: true }
           );
@@ -884,7 +884,7 @@ const server = http.createServer(async (req, res) => {
         const cleanUsername = username ? username.toLowerCase().trim() : cleanEmail.split('@')[0];
 
         const existingUser = await getOne(
-          'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(email) = ? OR LOWER(username) = ?)',
+          'SELECT id FROM core_users WHERE tenant_id = ? AND (LOWER(email) = ? OR LOWER(username) = ?)',
           [targetTenantId, cleanEmail, cleanUsername],
           { isSuperAdmin: true }
         );
@@ -896,7 +896,7 @@ const server = http.createServer(async (req, res) => {
 
         const userId = crypto.randomUUID();
         await execute(
-          'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+          'INSERT INTO core_users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
           [userId, targetTenantId, cleanUsername, cleanEmail, hashPassword(password), name.trim(), role.toUpperCase()],
           { isSuperAdmin: true }
         );
@@ -920,7 +920,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const targetTenant = await getOne('SELECT * FROM tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
+        const targetTenant = await getOne('SELECT * FROM tenant_tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
         if (!targetTenant) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Organización no encontrada.' }));
@@ -929,7 +929,7 @@ const server = http.createServer(async (req, res) => {
 
         // 1. Actualizar Nombre de Organización
         await execute(
-          'UPDATE tenants SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          'UPDATE tenant_tenants SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
           [name.trim(), targetTenant.id],
           { isSuperAdmin: true }
         );
@@ -956,13 +956,13 @@ const server = http.createServer(async (req, res) => {
         // 3. Actualizar Tema Base del Tenant y alinear a los usuarios
         if (activeTheme && THEMES[activeTheme]) {
           await execute(
-            'INSERT INTO app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
+            'INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, ?, ?) ON CONFLICT (tenant_id, key) DO UPDATE SET value = EXCLUDED.value',
             [targetTenant.id, 'active_theme', activeTheme],
             { tenantId: targetTenant.id, isSuperAdmin: true }
           );
           // Limpiar o alinear preferencias individuales para que todos los usuarios hereden el nuevo tema corporativo
           await execute(
-            'UPDATE users SET theme_preference = NULL WHERE tenant_id = ?',
+            'UPDATE core_users SET theme_preference = NULL WHERE tenant_id = ?',
             [targetTenant.id],
             { tenantId: targetTenant.id, isSuperAdmin: true }
           );
@@ -977,7 +977,7 @@ const server = http.createServer(async (req, res) => {
 
         // 5. Registrar en Auditoría de Plataforma
         await execute(
-          'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
+          'INSERT INTO core_platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
           [targetTenant.id, currentUser.email, 'TENANT_UPDATED', JSON.stringify({
             tenantName: name.trim(),
             planCode,
@@ -1010,7 +1010,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const targetTenant = await getOne('SELECT * FROM tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
+        const targetTenant = await getOne('SELECT * FROM tenant_tenants WHERE id::text = ?', [String(targetTenantId)], { isSuperAdmin: true });
         if (!targetTenant) {
           res.writeHead(404, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Organización no encontrada.' }));
@@ -1025,14 +1025,14 @@ const server = http.createServer(async (req, res) => {
 
         const newStatus = status === 'suspended' ? 'suspended' : 'active';
         await execute(
-          'UPDATE tenants SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+          'UPDATE tenant_tenants SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
           [newStatus, targetTenant.id],
           { isSuperAdmin: true }
         );
 
         // Registrar en auditoría de plataforma
         await execute(
-          'INSERT INTO platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
+          'INSERT INTO core_platform_audit_logs (tenant_id, user_email, action, details) VALUES (?, ?, ?, ?)',
           [targetTenant.id, currentUser.email, newStatus === 'suspended' ? 'TENANT_SUSPENDED' : 'TENANT_ACTIVATED', JSON.stringify({ tenantName: targetTenant.name, slug: targetTenant.slug, status: newStatus })],
           { isSuperAdmin: true }
         );
@@ -1114,7 +1114,7 @@ const server = http.createServer(async (req, res) => {
         const normalizedEmail = (email || '').toLowerCase().trim();
 
         const user = await getOne(
-          'SELECT email as id, email, username, password_hash as password, name, role, role_id, is_active as active, tenant_id FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
+          'SELECT email as id, email, username, password_hash as password, name, role, role_id, is_active as active, tenant_id FROM core_users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
           [normalizedEmail, normalizedEmail],
           { isSuperAdmin: true }
         );
@@ -1130,12 +1130,12 @@ const server = http.createServer(async (req, res) => {
         if (!user.password.includes(':')) {
           try {
             const secureHash = hashPassword(password);
-            await execute('UPDATE users SET password_hash = ? WHERE LOWER(email) = ?', [secureHash, normalizedEmail], { isSuperAdmin: true });
+            await execute('UPDATE core_users SET password_hash = ? WHERE LOWER(email) = ?', [secureHash, normalizedEmail], { isSuperAdmin: true });
           } catch (upgradeErr) { }
         }
 
         const userTenantId = user.tenant_id || DEFAULT_TENANT_ID;
-        const tenant = await getOne('SELECT * FROM tenants WHERE id = ?', [userTenantId], { isSuperAdmin: true }) || {
+        const tenant = await getOne('SELECT * FROM tenant_tenants WHERE id = ?', [userTenantId], { isSuperAdmin: true }) || {
           id: userTenantId,
           slug: 'drinklovers',
           name: 'Drink Lovers Argentina'
@@ -1273,8 +1273,8 @@ const server = http.createServer(async (req, res) => {
           if (filterTenantId) {
             let sql = `
               SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id
-              FROM users u
-              LEFT JOIN roles r ON u.role_id = r.id
+              FROM core_users u
+              LEFT JOIN core_roles r ON u.role_id = r.id
               WHERE u.tenant_id = ?
             `;
             const params = [filterTenantId];
@@ -1288,16 +1288,16 @@ const server = http.createServer(async (req, res) => {
             userList = await query(`
               SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id,
                      t.name as tenant_name, t.slug as tenant_slug
-              FROM users u
-              LEFT JOIN roles r ON u.role_id = r.id
-              LEFT JOIN tenants t ON u.tenant_id = t.id
+              FROM core_users u
+              LEFT JOIN core_roles r ON u.role_id = r.id
+              LEFT JOIN tenant_tenants t ON u.tenant_id = t.id
               ORDER BY t.slug, u.name
             `, [], { isSuperAdmin: true });
           } else {
             userList = await query(`
               SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id
-              FROM users u
-              LEFT JOIN roles r ON u.role_id = r.id
+              FROM core_users u
+              LEFT JOIN core_roles r ON u.role_id = r.id
               WHERE u.tenant_id = ?
               ORDER BY u.name
             `, [tenantId], { tenantId });
@@ -1327,16 +1327,16 @@ const server = http.createServer(async (req, res) => {
           let targetRole = (role || 'OPERATOR').toUpperCase();
 
           if (targetRoleId) {
-            const rRow = await getOne('SELECT id, code FROM roles WHERE id = ?', [targetRoleId], { isSuperAdmin: true });
+            const rRow = await getOne('SELECT id, code FROM core_roles WHERE id = ?', [targetRoleId], { isSuperAdmin: true });
             if (rRow) targetRole = rRow.code.toUpperCase();
           } else {
-            const rRow = await getOne('SELECT id FROM roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [targetRole.toLowerCase(), targetTenantId], { isSuperAdmin: true });
+            const rRow = await getOne('SELECT id FROM core_roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [targetRole.toLowerCase(), targetTenantId], { isSuperAdmin: true });
             if (rRow) targetRoleId = rRow.id;
           }
 
           // Validar username o email único dentro del tenant
           const existing = await getOne(
-            'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(username) = ? OR LOWER(email) = ?)',
+            'SELECT id FROM core_users WHERE tenant_id = ? AND (LOWER(username) = ? OR LOWER(email) = ?)',
             [targetTenantId, cleanUsername, cleanEmail],
             { tenantId: targetTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
@@ -1347,7 +1347,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'INSERT INTO users (id, tenant_id, role_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)',
+            'INSERT INTO core_users (id, tenant_id, role_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)',
             [userId, targetTenantId, targetRoleId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
             { tenantId: targetTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
@@ -1371,9 +1371,9 @@ const server = http.createServer(async (req, res) => {
 
           let targetUser = null;
           if (id) {
-            targetUser = await getOne('SELECT * FROM users WHERE id::text = ? OR email = ? OR username = ?', [String(id), String(id), String(id)], { isSuperAdmin: true });
+            targetUser = await getOne('SELECT * FROM core_users WHERE id::text = ? OR email = ? OR username = ?', [String(id), String(id), String(id)], { isSuperAdmin: true });
           } else if (email) {
-            targetUser = await getOne('SELECT * FROM users WHERE LOWER(email) = ?', [email.toLowerCase().trim()], { isSuperAdmin: true });
+            targetUser = await getOne('SELECT * FROM core_users WHERE LOWER(email) = ?', [email.toLowerCase().trim()], { isSuperAdmin: true });
           }
 
           if (!targetUser) {
@@ -1387,13 +1387,13 @@ const server = http.createServer(async (req, res) => {
           let updatedRole = role !== undefined ? role : targetUser.role;
 
           if (roleId) {
-            const rRow = await getOne('SELECT id, code FROM roles WHERE id = ?', [roleId], { isSuperAdmin: true });
+            const rRow = await getOne('SELECT id, code FROM core_roles WHERE id = ?', [roleId], { isSuperAdmin: true });
             if (rRow) {
               updatedRoleId = rRow.id;
               updatedRole = rRow.code.toUpperCase();
             }
           } else if (role !== undefined) {
-            const rRow = await getOne('SELECT id FROM roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [role.toLowerCase(), updatedTenantId], { isSuperAdmin: true });
+            const rRow = await getOne('SELECT id FROM core_roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [role.toLowerCase(), updatedTenantId], { isSuperAdmin: true });
             if (rRow) updatedRoleId = rRow.id;
           }
 
@@ -1408,7 +1408,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'UPDATE users SET tenant_id = ?, role_id = ?, username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            'UPDATE core_users SET tenant_id = ?, role_id = ?, username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
             [updatedTenantId, updatedRoleId, updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
             { isSuperAdmin: true }
           );
@@ -1435,8 +1435,8 @@ const server = http.createServer(async (req, res) => {
         const ordersContext = isSuperAdmin ? { isSuperAdmin: true } : { tenantId };
         const allOrdersInDb = await query(
           isSuperAdmin
-            ? 'SELECT * FROM orders ORDER BY created_at DESC'
-            : 'SELECT * FROM orders WHERE tenant_id = ? ORDER BY created_at DESC',
+            ? 'SELECT * FROM kanban_orders ORDER BY created_at DESC'
+            : 'SELECT * FROM kanban_orders WHERE tenant_id = ? ORDER BY created_at DESC',
           isSuperAdmin ? [] : [tenantId],
           ordersContext
         );
@@ -1444,8 +1444,8 @@ const server = http.createServer(async (req, res) => {
         const formattedOrders = [];
         for (const o of allOrdersInDb) {
           const orderTenantId = o.tenant_id || tenantId;
-          const items = await query('SELECT id, code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM order_items WHERE order_id = ?', [o.id], { tenantId: orderTenantId, isSuperAdmin });
-          const logs = await query('SELECT timestamp, user_email as "userEmail", action, details FROM audit_logs WHERE order_id = ? ORDER BY id ASC', [o.id], { tenantId: orderTenantId, isSuperAdmin });
+          const items = await query('SELECT id, code, description, quantity_required as "quantityRequired", quantity_scanned as "quantityScanned", unit_price as "unitPrice", status FROM kanban_order_items WHERE order_id = ?', [o.id], { tenantId: orderTenantId, isSuperAdmin });
+          const logs = await query('SELECT timestamp, user_email as "userEmail", action, details FROM core_audit_logs WHERE order_id = ? ORDER BY id ASC', [o.id], { tenantId: orderTenantId, isSuperAdmin });
 
           const scannedItems = o.total_items_scanned || 0;
           const totalItems = o.total_items_required || 1;
@@ -1509,9 +1509,9 @@ const server = http.createServer(async (req, res) => {
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'READY' WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
+          await execute("UPDATE kanban_orders SET status = 'READY' WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, email, 'VALIDAR_COMPROBANTE', `Pedido #${order.orderNumber} validado a Listo por ${email}.`],
             { tenantId }
           );
@@ -1534,9 +1534,9 @@ const server = http.createServer(async (req, res) => {
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'BACKLOG', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
+          await execute("UPDATE kanban_orders SET status = 'BACKLOG', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, email, 'DEVOLVER_BACKLOG', `Pedido #${order.orderNumber} devuelto a Backlog por ${email}.`],
             { tenantId }
           );
@@ -1560,9 +1560,9 @@ const server = http.createServer(async (req, res) => {
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [targetOperator, targetOperator, order.id, tenantId], { tenantId });
+          await execute("UPDATE kanban_orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [targetOperator, targetOperator, order.id, tenantId], { tenantId });
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, adminEmail, 'ASIGNAR_OPERARIO', `Pedido #${order.orderNumber} asignado a ${targetOperator}.`],
             { tenantId }
           );
@@ -1585,9 +1585,9 @@ const server = http.createServer(async (req, res) => {
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
+          await execute("UPDATE kanban_orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?", [order.id, tenantId], { tenantId });
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, adminEmail, 'LIBERAR_PEDIDO', `Pedido #${order.orderNumber} liberado a Listo por Administrador (${adminEmail}).`],
             { tenantId }
           );
@@ -1609,9 +1609,9 @@ const server = http.createServer(async (req, res) => {
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
-          await execute('DELETE FROM order_items WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
-          await execute('DELETE FROM audit_logs WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
-          await execute('DELETE FROM orders WHERE id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+          await execute('DELETE FROM kanban_order_items WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+          await execute('DELETE FROM core_audit_logs WHERE order_id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
+          await execute('DELETE FROM kanban_orders WHERE id = ? AND tenant_id = ?', [order.id, tenantId], { tenantId });
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1653,7 +1653,7 @@ const server = http.createServer(async (req, res) => {
         try {
           // Insertar siempre como nueva orden independiente identificada unívocamente por su id (UUID)
           await execute(
-            'INSERT INTO orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
+            'INSERT INTO kanban_orders (id, tenant_id, uuid, order_number, client_name, issue_date, pdf_file_name, pdf_blob, status, total_items, total_items_required, total_items_scanned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, CURRENT_TIMESTAMP)',
             [orderUuid, tenantId, orderUuid, parsed.orderNumber, parsed.clientName, parsed.issueDate, cleanName, pdfBase64, 'BACKLOG', totalItemsRequired, totalItemsRequired],
             { tenantId }
           );
@@ -1661,7 +1661,7 @@ const server = http.createServer(async (req, res) => {
           for (const item of parsed.items) {
             const itemId = crypto.randomUUID();
             await execute(
-              'INSERT INTO order_items (id, tenant_id, order_id, code, description, unit_price, quantity_required, quantity_scanned, status) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)',
+              'INSERT INTO kanban_order_items (id, tenant_id, order_id, code, description, unit_price, quantity_required, quantity_scanned, status) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)',
               [itemId, tenantId, orderUuid, item.code, item.description, item.unitPrice || 0, item.quantityRequired, 'PENDING'],
               { tenantId }
             );
@@ -1669,7 +1669,7 @@ const server = http.createServer(async (req, res) => {
 
           const now = new Date().toLocaleString('es-AR');
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [orderUuid, tenantId, now, email, 'CARGA_COMPROBANTE', `Comprobante PDF #${parsed.orderNumber} cargado e ingresado en PostgreSQL por ${email}.`],
             { tenantId }
           );
@@ -1706,7 +1706,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const readyOrders = await query(
-          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItems\" FROM orders WHERE status = 'READY' AND tenant_id = ?",
+          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItems\" FROM kanban_orders WHERE status = 'READY' AND tenant_id = ?",
           [tenantId],
           { tenantId }
         );
@@ -1731,7 +1731,7 @@ const server = http.createServer(async (req, res) => {
         }
 
         const doingRows = await query(
-          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
+          "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM kanban_orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY created_at DESC",
           [opEmail, opEmail, tenantId],
           { tenantId }
         );
@@ -1760,7 +1760,7 @@ const server = http.createServer(async (req, res) => {
         let activeRow = null;
         if (requestedId) {
           activeRow = await getOne(
-            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ?",
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM kanban_orders WHERE (id::text = ? OR uuid = ? OR order_number = ?) AND (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ?",
             [requestedId, requestedId, requestedId, opEmail, opEmail, tenantId],
             { tenantId }
           );
@@ -1768,7 +1768,7 @@ const server = http.createServer(async (req, res) => {
 
         if (!activeRow) {
           activeRow = await getOne(
-            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
+            "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItemsRequired\", total_items_scanned as \"totalItemsScanned\", status FROM kanban_orders WHERE (LOWER(operator_email) = ? OR LOWER(assigned_operator_email) = ?) AND status = 'DOING' AND tenant_id = ? ORDER BY updated_at DESC, created_at DESC LIMIT 1",
             [opEmail, opEmail, tenantId],
             { tenantId }
           );
@@ -1799,12 +1799,12 @@ const server = http.createServer(async (req, res) => {
         if (order) {
           const now = new Date().toLocaleString('es-AR');
           await execute(
-            "UPDATE orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?",
+            "UPDATE kanban_orders SET status = 'READY', operator_email = NULL, assigned_operator_email = NULL WHERE id = ? AND tenant_id = ?",
             [order.id, tenantId],
             { tenantId }
           );
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, opEmail, 'LIBERAR_PEDIDO_OPERARIO', `Pedido #${order.orderNumber} liberado a Listo por Operario (${opEmail}).`],
             { tenantId }
           );
@@ -1850,7 +1850,7 @@ const server = http.createServer(async (req, res) => {
         if (order) {
           const qtyTotal = Number(totalItemsScanned) || 0;
           await execute(
-            'UPDATE orders SET total_items_scanned = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+            'UPDATE kanban_orders SET total_items_scanned = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
             [qtyTotal, order.id, tenantId],
             { tenantId }
           );
@@ -1862,13 +1862,13 @@ const server = http.createServer(async (req, res) => {
               
               if (it.id && !String(it.id).startsWith('item_')) {
                 await execute(
-                  'UPDATE order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id::text = ? AND order_id = ? AND tenant_id = ?',
+                  'UPDATE kanban_order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE id::text = ? AND order_id = ? AND tenant_id = ?',
                   [qtyScanned, itStatus, String(it.id), order.id, tenantId],
                   { tenantId }
                 );
               } else if (it.code) {
                 await execute(
-                  'UPDATE order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE code = ? AND order_id = ? AND tenant_id = ?',
+                  'UPDATE kanban_order_items SET quantity_scanned = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE code = ? AND order_id = ? AND tenant_id = ?',
                   [qtyScanned, itStatus, String(it.code), order.id, tenantId],
                   { tenantId }
                 );
@@ -1898,9 +1898,9 @@ const server = http.createServer(async (req, res) => {
         const existingOrder = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (existingOrder) {
           const now = new Date().toLocaleString('es-AR');
-          await execute("UPDATE orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [opEmail, opEmail, existingOrder.id, tenantId], { tenantId });
+          await execute("UPDATE kanban_orders SET status = 'DOING', operator_email = ?, assigned_operator_email = ? WHERE id = ? AND tenant_id = ?", [opEmail, opEmail, existingOrder.id, tenantId], { tenantId });
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [existingOrder.id, tenantId, now, opEmail, 'TOMAR_PEDIDO', `Pedido tomado por ${opEmail}.`],
             { tenantId }
           );
@@ -1931,13 +1931,13 @@ const server = http.createServer(async (req, res) => {
           const auditStamp = watermarkText || `EXPEDIDO POR ${opEmail} | ${now}`;
 
           await execute(
-            "UPDATE orders SET status = 'DONE', operator_email = ?, audit_stamp = ?, total_items_scanned = total_items_required WHERE id = ? AND tenant_id = ?",
+            "UPDATE kanban_orders SET status = 'DONE', operator_email = ?, audit_stamp = ?, total_items_scanned = total_items_required WHERE id = ? AND tenant_id = ?",
             [opEmail, auditStamp, order.id, tenantId],
             { tenantId }
           );
 
           await execute(
-            'INSERT INTO audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
+            'INSERT INTO core_audit_logs (order_id, tenant_id, timestamp, user_email, action, details) VALUES (?, ?, ?, ?, ?, ?)',
             [order.id, tenantId, now, opEmail, 'DESPACHAR_PEDIDO', `Pedido despachado por ${opEmail}.`],
             { tenantId }
           );

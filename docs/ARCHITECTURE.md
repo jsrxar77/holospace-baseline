@@ -276,7 +276,7 @@ HoloSpace implementa un modelo de autorización desacoplado de nivel empresarial
    - Vinculación `(role_id, permission_key)`.
 4. **`core_users.role_id` (Asignación Dinámica):**
    - Columna `role_id UUID REFERENCES core_roles(id)` que reemplaza la antigua dependencia de strings fijos.
-   - Vistas de compatibilidad retroactiva (`users`, `roles`, `permissions`, `role_permissions`) activas para clientes legados.
+   - Enfoque directo sin vistas legadas: todo el stack interactúa exclusivamente con los nombres canónicos de tablas modulares (`core_*`, `kanban_*`, `tenant_*`, `fourseee_*`).
 
 ### 9.2 Contrato Canónico de Error 403 (`INSUFFICIENT_PERMISSIONS`)
 Cuando cualquier usuario intenta ejecutar una acción sin contar con el permiso correspondiente, el backend emite una respuesta unificada con código HTTP 403:

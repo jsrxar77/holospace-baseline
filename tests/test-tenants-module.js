@@ -42,7 +42,7 @@ async function runTests() {
 
   // 1. Verificar listado de Tenants por SuperAdmin
   console.log('\n--- 1. Listado y Auditoría de Tenants ---');
-  const tenants = await query('SELECT * FROM tenants ORDER BY created_at ASC', [], { isSuperAdmin: true });
+  const tenants = await query('SELECT * FROM tenant_tenants ORDER BY created_at ASC', [], { isSuperAdmin: true });
   assert(tenants.length >= 3, `Listado de tenants recupera ${tenants.length} organizaciones.`);
   assert(tenants.some(t => t.slug === 'drinklovers'), 'Tenant `drinklovers` presente.');
   assert(tenants.some(t => t.slug === 'poke'), 'Tenant `poke` presente.');
@@ -55,7 +55,7 @@ async function runTests() {
   const testSlug = `tenant_test_${Date.now()}`;
   
   await execute(
-    'INSERT INTO tenants (id, slug, name, status) VALUES (?, ?, ?, ?)',
+    'INSERT INTO tenant_tenants (id, slug, name, status) VALUES (?, ?, ?, ?)',
     [testTenantId, testSlug, 'Test Logistics Corp', 'active'],
     { isSuperAdmin: true }
   );
@@ -66,7 +66,7 @@ async function runTests() {
     { isSuperAdmin: true }
   );
 
-  const createdTenant = await getOne('SELECT * FROM tenants WHERE id = ?', [testTenantId], { isSuperAdmin: true });
+  const createdTenant = await getOne('SELECT * FROM tenant_tenants WHERE id = ?', [testTenantId], { isSuperAdmin: true });
   assert(createdTenant !== null, 'Nuevo Tenant insertado con éxito en PostgreSQL.');
   assert(createdTenant.slug === testSlug, 'Slug de organización coincide exactamente.');
 
@@ -76,12 +76,12 @@ async function runTests() {
   const testUserEmail = `operario_${Date.now()}@testcorp.com`;
   
   await execute(
-    'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
+    'INSERT INTO core_users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
     [testUserId, testTenantId, 'operario_test', testUserEmail, hashPassword('Pass123!'), 'Operario Test', 'OPERATOR'],
     { isSuperAdmin: true }
   );
 
-  const createdUser = await getOne('SELECT * FROM users WHERE id = ?', [testUserId], { isSuperAdmin: true });
+  const createdUser = await getOne('SELECT * FROM core_users WHERE id = ?', [testUserId], { isSuperAdmin: true });
   assert(createdUser !== null, 'Usuario asignado correctamente al Tenant.');
   assert(createdUser.tenant_id === testTenantId, 'tenant_id del usuario coincide con la organización.');
   assert(createdUser.role === 'OPERATOR', 'Rol asignado es OPERATOR.');
@@ -99,10 +99,10 @@ async function runTests() {
   assert(modCodes.includes('scanflow'), 'Módulo `scanflow` activado.');
 
   // Limpieza de datos de prueba
-  await execute('DELETE FROM users WHERE tenant_id = ?', [testTenantId], { isSuperAdmin: true });
+  await execute('DELETE FROM core_users WHERE tenant_id = ?', [testTenantId], { isSuperAdmin: true });
   await execute('DELETE FROM tenant_modules WHERE tenant_id = ?', [testTenantId], { isSuperAdmin: true });
   await execute('DELETE FROM tenant_subscriptions WHERE tenant_id = ?', [testTenantId], { isSuperAdmin: true });
-  await execute('DELETE FROM tenants WHERE id = ?', [testTenantId], { isSuperAdmin: true });
+  await execute('DELETE FROM tenant_tenants WHERE id = ?', [testTenantId], { isSuperAdmin: true });
 
   console.log('\n======================================================');
   console.log(`📊 RESULTADOS: ${passedCount} Aprobados | ${failedCount} Fallidos`);

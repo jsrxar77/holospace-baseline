@@ -61,7 +61,7 @@ async function runTests() {
 
   try {
     // 1. Obtener Tenant de prueba (Poke Argentina)
-    const pokeTenant = await getOne("SELECT id FROM tenants WHERE slug = 'poke'", [], { isSuperAdmin: true });
+    const pokeTenant = await getOne("SELECT id FROM tenant_tenants WHERE slug = 'poke'", [], { isSuperAdmin: true });
     assert(pokeTenant && pokeTenant.id, 'Tenant Poke Argentina recuperado');
 
     // 2. Definir tema por defecto para Poke (Cyberpunk Glassmorphism) como SuperAdmin (scope: 'tenant')
@@ -113,8 +113,8 @@ async function runTests() {
     assert(vanesaThemeRes.data.themeKey === 'cyberpunk_glassmorphism', 'Vanesa NO se ve afectada por el cambio de Juan y mantiene el tema del Tenant');
 
     // 7. Limpieza: restaurar tema base de Poke a omarchy_tiling y resetear preferencia de Juan
-    await execute("UPDATE users SET theme_preference = NULL WHERE LOWER(email) = 'juan@poke.com.ar'", [], { isSuperAdmin: true });
-    await execute("INSERT INTO app_settings (tenant_id, key, value) VALUES (?, 'active_theme', 'omarchy_tiling') ON CONFLICT (tenant_id, key) DO UPDATE SET value = 'omarchy_tiling'", [pokeTenant.id], { isSuperAdmin: true });
+    await execute("UPDATE core_users SET theme_preference = NULL WHERE LOWER(email) = 'juan@poke.com.ar'", [], { isSuperAdmin: true });
+    await execute("INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, 'active_theme', 'omarchy_tiling') ON CONFLICT (tenant_id, key) DO UPDATE SET value = 'omarchy_tiling'", [pokeTenant.id], { isSuperAdmin: true });
 
   } catch (err) {
     console.error('Error durante la ejecución de los tests:', err);
