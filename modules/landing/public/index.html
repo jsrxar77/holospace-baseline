@@ -117,25 +117,25 @@
 
     <div style="display: flex; gap: 10px; align-items: center;">
       <a href="/login" class="btn-pixel btn-pixel-secondary" style="padding: 6px 12px; font-size: 12px;">Ingresar</a>
-      <a href="#planes" class="btn-pixel btn-pixel-primary" style="padding: 6px 12px; font-size: 12px;">Comenzar</a>
+      <a href="#modulos" class="btn-pixel btn-pixel-primary" style="padding: 6px 12px; font-size: 12px;">Explorar</a>
     </div>
   </header>
 
   <!-- HERO SECTION -->
   <main class="container">
     <section class="hero-section">
-      <div class="hero-tag pixel-font">★ SAAS MULTI-TENANT B2B ★</div>
+      <div class="hero-tag pixel-font">SAAS MULTI-TENANT B2B</div>
       <h1 class="hero-title pixel-font">Logística Inteligente y Control Total de Depósitos</h1>
       <p class="hero-subtitle">
         Digitaliza la preparación de pedidos, elimina errores de despacho con escaneo móvil EAN-13 y administra múltiples empresas con aislamiento criptográfico de datos.
       </p>
 
       <div class="hero-ctas">
-        <a href="#planes" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 12px; padding: 14px 28px;">
-          ⚡ Iniciar Prueba Gratuita
+        <a href="#modulos" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 12px; padding: 14px 28px;">
+          Explorar Modulos
         </a>
         <a href="/login" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 12px; padding: 14px 28px;">
-          ▶ Ver Demo en Vivo
+          Ver Demo en Vivo
         </a>
       </div>
 
@@ -148,9 +148,9 @@
       </div>
     </section>
 
-    <!-- SECCIÓN: LOS 4 MÓDULOS DE LA PLATAFORMA (SPRITES PIXEL ART) -->
+    <!-- SECCIÓN: LOS 5 MÓDULOS DE LA PLATAFORMA (SPRITES PIXEL ART) -->
     <section id="modulos" class="modules-section">
-      <h2 class="section-title pixel-font">Los 4 Módulos de la Plataforma</h2>
+      <h2 class="section-title pixel-font">Los 5 Módulos de la Plataforma</h2>
       <p class="section-subtitle">Arquitectura modular inspirada en componentes independientes y soberanía multi-organización.</p>
 
       <div class="grid-modules">
@@ -244,6 +244,27 @@
           </p>
         </div>
 
+        <!-- MÓDULO 5: 4SEE -->
+        <div class="module-card">
+          <div class="sprite-container" style="border-color: var(--accent-mauve);">
+            <!-- SPRITE RADAR ORBITAL / OJO INTELIGENCIA PIXEL ART -->
+            <svg class="sprite-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="3" width="10" height="10" fill="var(--accent-mauve)" opacity="0.3" stroke="var(--accent-mauve)" stroke-width="1"/>
+              <rect x="6" y="6" width="4" height="4" fill="var(--accent-mauve)" />
+              <rect x="7" y="7" width="2" height="2" fill="#181926" />
+              <rect x="1" y="7" width="2" height="2" fill="var(--accent-peach)" />
+              <rect x="13" y="7" width="2" height="2" fill="var(--accent-peach)" />
+              <rect x="7" y="1" width="2" height="2" fill="var(--accent-peach)" />
+              <rect x="7" y="13" width="2" height="2" fill="var(--accent-peach)" />
+            </svg>
+          </div>
+          <div class="module-badge pixel-font" style="color: var(--accent-mauve);">MÓDULO INTELIGENCIA</div>
+          <h3 class="module-title">5. 4see</h3>
+          <p class="module-desc">
+            Inteligencia comercial y repricing táctico. Vigilancia de competidores en Mercado Libre, auditoría visual de discrepancias de catálogo y optimización de márgenes netos.
+          </p>
+        </div>
+
       </div>
     </section>
 
@@ -315,70 +336,6 @@
       </div>
     </section>
 
-    <!-- SECCIÓN DE PRECIOS Y PLANES (EN ARS) -->
-    <section id="planes" class="pricing-section">
-      <h2 class="section-title pixel-font">Planes y Precios Transparentes</h2>
-      <p class="section-subtitle">Inversión clara en moneda local para escalar tu operación logística sin costos ocultos.</p>
-
-      <div class="pricing-grid">
-        
-        <!-- PLAN STARTER -->
-        <div class="pricing-card">
-          <div class="plan-badge pixel-font">STARTER</div>
-          <h3 class="card-title" style="font-size: 20px;">Plan Inicial</h3>
-          <div class="plan-price">$ 65.000 <span>/ mes ARS</span></div>
-          <p style="font-size: 13px; color: var(--text-muted);">Para pequeños depósitos o pilotos operativos.</p>
-          
-          <ul class="plan-features">
-            <li>Hasta 5 usuarios activos</li>
-            <li>Hasta 500 órdenes mensuales</li>
-            <li>Tablero Kanban logístico</li>
-            <li>Escáner móvil EAN-13</li>
-            <li>Aislamiento RLS en PostgreSQL</li>
-          </ul>
-
-          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Comenzar Starter</a>
-        </div>
-
-        <!-- PLAN PRO -->
-        <div class="pricing-card featured">
-          <div class="plan-badge pixel-font" style="color: var(--accent-emerald);">★ RECOMENDADO ★</div>
-          <h3 class="card-title" style="font-size: 20px;">Plan Pro</h3>
-          <div class="plan-price" style="color: var(--accent-emerald);">$ 195.000 <span>/ mes ARS</span></div>
-          <p style="font-size: 13px; color: var(--text-muted);">Para centros de distribución y pymes en crecimiento.</p>
-          
-          <ul class="plan-features">
-            <li>Hasta 15 usuarios activos</li>
-            <li>Hasta 3.000 órdenes mensuales</li>
-            <li>Ingesta y parseo automático de PDF</li>
-            <li>Sincronización offline SQLite</li>
-            <li>Soporte técnico prioritario</li>
-          </ul>
-
-          <a href="/login" class="btn-pixel btn-pixel-primary" style="width: 100%;">Elegir Plan Pro</a>
-        </div>
-
-        <!-- PLAN ENTERPRISE -->
-        <div class="pricing-card">
-          <div class="plan-badge pixel-font">ENTERPRISE</div>
-          <h3 class="card-title" style="font-size: 20px;">Ilimitado</h3>
-          <div class="plan-price">$ 590.000 <span>/ mes ARS</span></div>
-          <p style="font-size: 13px; color: var(--text-muted);">Capacidad ilimitada y gobierno multi-organización.</p>
-          
-          <ul class="plan-features">
-            <li>Usuarios ilimitados (999+)</li>
-            <li>Órdenes mensuales ilimitadas</li>
-            <li>Módulo Tenant (SuperAdmin)</li>
-            <li>Panel de auditoría y métricas</li>
-            <li>SLA 99.9% y soporte dedicado 24/7</li>
-          </ul>
-
-          <a href="/login" class="btn-pixel btn-pixel-secondary" style="width: 100%;">Contactar Ventas</a>
-        </div>
-
-      </div>
-    </section>
-
   </main>
 
   <!-- FOOTER RETRO EN 3 LÍNEAS PIXELADAS -->
@@ -443,26 +400,29 @@
   </script>
 
   <script>
-    // Enlaces dinámicos a los 4 módulos de la plataforma
+    // Enlaces dinámicos a los 5 módulos de la plataforma
     document.addEventListener('DOMContentLoaded', () => {
       const moduleCards = document.querySelectorAll('.module-card');
       const moduleUrls = [
         '/tenant',
         '/core',
         '/kanban',
-        'https://m.holospace.com.ar'
+        'https://m.holospace.com.ar',
+        '/4see'
       ];
       const moduleTitles = [
         'Abrir Módulo Tenant',
         'Abrir Módulo Core',
         'Abrir Módulo Kanban',
-        'Abrir Scanner Móvil'
+        'Abrir Scanner Móvil',
+        'Abrir Módulo 4see'
       ];
       const moduleColors = [
         'var(--accent-amber)',
         'var(--accent-primary)',
         'var(--accent-emerald)',
-        'var(--accent-peach)'
+        'var(--accent-peach)',
+        'var(--accent-mauve)'
       ];
 
       moduleCards.forEach((card, idx) => {

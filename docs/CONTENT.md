@@ -59,7 +59,9 @@ graph TD
 
 ---
 
-## 3. Catálogo Oficial de Planes Comerciales (Precios en ARS)
+## 3. Catálogo Oficial de Planes Comerciales (Referencia Interna de Facturación B2B)
+
+> Nota de Despliegue: La sección visual de precios fue retirada temporalmente de la Landing Page pública para priorizar la exploración interactiva de los 5 módulos funcionales. El catálogo y cuotas se mantienen activos a nivel backend y módulo Tenant.
 
 | Característica | Plan STARTER | Plan PRO (Recomendado) | Plan ENTERPRISE |
 | :--- | :---: | :---: | :---: |
@@ -73,7 +75,6 @@ graph TD
 | **Panel Gobierno Tenant** | No disponible | No disponible | **Exclusivo SuperAdmin** |
 | **Motor de Temas UI** | Omarchy Tiling | 5 Temas Completos | Personalización Total |
 | **Soporte Técnico** | Email estándar | Prioritario | Dedicado 24/7 + SLA |
-| **CTA del Plan** | `[ Comenzar Starter ]` | `[ Elegir Plan Pro ]` | `[ Contactar Ventas ]` |
 
 ---
 
@@ -83,3 +84,4 @@ graph TD
 - **Backups Automáticos Diarios:** Daemon CRON en Docker con compresión Gzip máxima y retención de 30 días, 12 semanas y 12 meses.
 - **Data Portability (GDPR):** Exportación de datos aislada por tenant en formato JSON con un solo comando (`bin/tenant-dump.sh`).
 - **Infraestructura Contenerizada:** 100% dockerizada (Node.js 22, PostgreSQL 16, Redis 7, Nginx) lista para servidores propios (Hetzner, AWS, Bare Metal).
+
