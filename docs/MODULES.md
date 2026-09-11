@@ -19,26 +19,27 @@ modules/
 
 ### Módulo 1: Core (`modules/core/`)
 - **Clave:** `core` | **Categoría:** `system` | **Estado:** Siempre activo (Obligatorio).
+- **Roles Canónicos:** `core_admin` (Gobierno de usuarios y roles) y `superadmin`.
 - Provee autenticación JWT, perfil de usuario, administración dinámica de roles y catálogo de permisos granulares (`/api/roles`, `/api/permissions`), motor de temas, navegación SPA y auditoría.
 
 ### Módulo 2: Tenant (`modules/tenant/`)
-- **Clave:** `tenant` | **Categoría:** `admin` | **Acceso:** Exclusivo `SUPERADMIN`.
+- **Clave:** `tenant` | **Categoría:** `admin` | **Acceso:** `superadmin` y `tenant_admin`.
 - Directorio de Organizaciones, gestión de planes, asignación de cuotas y licenciamiento en vivo.
 
 ### Módulo 3: Kanban (`modules/kanban/`)
-- **Clave:** `kanban` | **Categoría:** `operational` | **Acceso:** `ADMIN` y `OPERATOR` (Tenant con módulo contratado).
+- **Clave:** `kanban` | **Categoría:** `operational` | **Acceso:** `kanban_admin` y `kanban_operator` (Tenant con módulo contratado).
 - Tablero Kanban 4 columnas (Backlog, Listo, En Proceso, Completado), parser PDF y asignaciones.
 - Sincroniza estados de pedidos actualizando `operator_email` y `assigned_operator_email`.
 
 ### Módulo 4: Scanner (`modules/scanner/`)
-- **Clave:** `scanner` | **Categoría:** `operational` | **Acceso:** App Móvil Expo (Operarios).
+- **Clave:** `scanner` | **Categoría:** `operational` | **Acceso:** `scanner_operator` (App Móvil Expo / PWA).
 - Lector de códigos EAN-13, sincronización offline SQLite local (`holospace.db`) y respuesta háptica.
 - Interfaz de escaneo asistido con tarjeta superior de producto pendiente, retículo con línea central láser y panel comparativo de código esperado vs. escaneado para control de calidad y captura de pantalla.
 - Flujo interactivo dual: salida automática inmediata ante lectura exitosa (zero-clicks) y retención con pausa de cámara, visualización de discrepancia EAN, botón de reintento y salida manual ante errores.
 - Selección enfocada de ítems: permite al operario tocar un ítem puntual del resumen para escanearlo específicamente o usar el botón general para escaneo secuencial.
 
 ### Módulo 5: 4see (`modules/4see/`)
-- **Clave:** `4see` | **Categoría:** `operational` | **Acceso:** `ADMIN` y `OPERATOR` (Planes Pro y Enterprise).
+- **Clave:** `4see` | **Categoría:** `operational` | **Acceso:** `4see_admin` y `4see_user` (Planes Pro y Enterprise).
 - **Propósito:** Torre de control unificada para e-commerce: vigilancia de competencia, auditoría de catálogo y protección de rentabilidad.
 - **Sub-herramientas integradas:**
   - **4see Monitor:** Rastreo automático de URLs de competidores, variaciones de precio y quiebres de stock mediante motor en cascada de 3 capas (Capa 1: JSON-LD y OpenGraph; Capa 2: Heurística DOM; Capa 3: API Mercado Libre directa).

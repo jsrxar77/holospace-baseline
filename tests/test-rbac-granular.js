@@ -47,22 +47,41 @@ async function runTests() {
   assert(hasPermission(superUser, '4see:pricing:write'), 'Superadmin tiene permiso de 4see:pricing:write via wildcard');
   assert(hasPermission(superUser, 'nonexistent:module:action'), 'Superadmin tiene acceso total ante cualquier clave');
 
-  const adminUser = {
-    role: 'ADMIN',
-    permissions: ['core:users:read', 'core:users:manage', 'kanban:orders:read', '4see:catalog:read']
+  const coreAdminUser = {
+    role: 'CORE_ADMIN',
+    permissions: ['core:users:read', 'core:users:manage', 'core:roles:read', 'core:roles:manage']
   };
-  assert(hasPermission(adminUser, 'core:users:read'), 'Admin con core:users:read tiene permiso');
-  assert(hasPermission(adminUser, 'kanban:orders:read'), 'Admin con kanban:orders:read tiene permiso');
-  assert(!hasPermission(adminUser, 'tenant:tenants:manage'), 'Admin sin tenant:tenants:manage es denegado');
-  assert(!hasPermission(adminUser, '4see:margins:manage'), 'Admin sin 4see:margins:manage es denegado');
+  assert(hasPermission(coreAdminUser, 'core:users:read'), 'Core Admin con core:users:read tiene permiso');
+  assert(hasPermission(coreAdminUser, 'core:users:manage'), 'Core Admin con core:users:manage tiene permiso');
+  assert(!hasPermission(coreAdminUser, 'tenant:tenants:manage'), 'Core Admin sin tenant:tenants:manage es denegado');
+  assert(!hasPermission(coreAdminUser, '4see:margins:manage'), 'Core Admin sin 4see:margins:manage es denegado');
 
-  const operatorUser = {
-    role: 'OPERATOR',
-    permissions: ['kanban:orders:read', 'scanner:items:scan']
+  const kanbanAdminUser = {
+    role: 'KANBAN_ADMIN',
+    permissions: ['kanban:orders:read', 'kanban:orders:ingest', 'kanban:orders:assign', 'kanban:orders:dispatch']
   };
-  assert(hasPermission(operatorUser, 'scanner:items:scan'), 'Operator tiene scanner:items:scan');
-  assert(!hasPermission(operatorUser, 'kanban:orders:assign'), 'Operator no puede asignar pedidos');
-  assert(!hasPermission(operatorUser, 'core:users:manage'), 'Operator no puede administrar usuarios');
+  assert(hasPermission(kanbanAdminUser, 'kanban:orders:read'), 'Kanban Admin tiene kanban:orders:read');
+  assert(hasPermission(kanbanAdminUser, 'kanban:orders:ingest'), 'Kanban Admin tiene kanban:orders:ingest');
+  assert(hasPermission(kanbanAdminUser, 'kanban:orders:assign'), 'Kanban Admin tiene kanban:orders:assign');
+  assert(!hasPermission(kanbanAdminUser, 'core:users:manage'), 'Kanban Admin no puede administrar usuarios');
+
+  const scannerOpUser = {
+    role: 'SCANNER_OPERATOR',
+    permissions: ['scanner:orders:view_assigned', 'scanner:items:scan', 'scanner:items:verify']
+  };
+  assert(hasPermission(scannerOpUser, 'scanner:items:scan'), 'Scanner Operator tiene scanner:items:scan');
+  assert(hasPermission(scannerOpUser, 'scanner:orders:view_assigned'), 'Scanner Operator tiene scanner:orders:view_assigned');
+  assert(!hasPermission(scannerOpUser, 'kanban:orders:assign'), 'Scanner Operator no puede asignar pedidos');
+  assert(!hasPermission(scannerOpUser, 'core:users:manage'), 'Scanner Operator no puede administrar usuarios');
+
+  const fourSeeUser = {
+    role: '4SEE_USER',
+    permissions: ['4see:catalog:read', '4see:catalog:audit']
+  };
+  assert(hasPermission(fourSeeUser, '4see:catalog:read'), '4see User puede leer catálogo');
+  assert(hasPermission(fourSeeUser, '4see:catalog:audit'), '4see User puede auditar catálogo');
+  assert(!hasPermission(fourSeeUser, '4see:pricing:write'), '4see User no puede modificar precios');
+  assert(!hasPermission(fourSeeUser, '4see:margins:manage'), '4see User no puede gestionar márgenes');
 
   // Test wildcard por modulo (ej: '4see:*')
   const moduleScopedUser = {
@@ -101,7 +120,11 @@ async function runTests() {
     const pokeTenant = await query("SELECT id FROM tenants WHERE slug = 'poke'");
     const pokeTenantId = (pokeTenant && pokeTenant[0]) ? pokeTenant[0].id : '550e8400-e29b-41d4-a716-446655440001';
     const pokeRoles = await getRolesForTenant(pokeTenantId);
-    assert(Array.isArray(pokeRoles) && pokeRoles.length >= 2, `Roles del sistema descubiertos para tenant poke (${pokeRoles.length} roles)`);
+    assert(Array.isArray(pokeRoles) && pokeRoles.length >= 5, `Roles del sistema modulares descubiertos para tenant poke (${pokeRoles.length} roles)`);
+    assert(pokeRoles.some(r => r.code === 'core_admin'), 'Rol core_admin presente en PostgreSQL');
+    assert(pokeRoles.some(r => r.code === 'kanban_admin'), 'Rol kanban_admin presente en PostgreSQL');
+    assert(pokeRoles.some(r => r.code === 'scanner_operator'), 'Rol scanner_operator presente en PostgreSQL');
+    assert(pokeRoles.some(r => r.code === '4see_admin'), 'Rol 4see_admin presente en PostgreSQL');
 
     // Probar ciclo de vida de rol personalizado
     console.log('\n--- 4. Ciclo de Vida de Rol Personalizado (CRUD) ---');

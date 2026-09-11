@@ -711,7 +711,7 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
       const res = await fetch('/api/users');
       const data = await res.json();
       const userList = Array.isArray(data) ? data : (data.users || []);
-      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && u.role === 'OPERATOR');
+      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && ['OPERATOR', 'SCANNER_OPERATOR', 'KANBAN_OPERATOR'].includes((u.role || '').toUpperCase()));
       if (activeUsers.length > 0) {
         selectEl.innerHTML = activeUsers.map(u => `
           <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>

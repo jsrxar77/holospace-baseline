@@ -782,7 +782,7 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
       const res = await fetch('/api/users');
       const data = await res.json();
       const userList = Array.isArray(data) ? data : (data.users || []);
-      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && u.role === 'OPERATOR');
+      const activeUsers = userList.filter(u => u.active !== 0 && u.active !== false && ['OPERATOR', 'SCANNER_OPERATOR', 'KANBAN_OPERATOR'].includes((u.role || '').toUpperCase()));
       if (activeUsers.length > 0) {
         selectEl.innerHTML = activeUsers.map(u => `
           <option value="${u.email}">${u.name} (${u.email}) [${u.role}]</option>
@@ -1260,12 +1260,20 @@ async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId
     });
     select.innerHTML = html;
   } else {
+    // Fallback estándar con roles modulares
     let options = `
-      <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
-      <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
+      <option value="SCANNER_OPERATOR">Scanner Operario (Escáner Móvil)</option>
+      <option value="KANBAN_OPERATOR">Kanban Operador (Tablero Logístico)</option>
+      <option value="KANBAN_ADMIN">Kanban Administrador (Ingesta y Asignación)</option>
+      <option value="CORE_ADMIN">Core Administrador (Gobierno de Usuarios)</option>
+      <option value="4SEE_USER">4see Analista (Consulta de Precios)</option>
+      <option value="4SEE_ADMIN">4see Administrador (Repricing y Márgenes)</option>
     `;
     if (isSuperAdmin) {
-      options += `<option value="SUPERADMIN">SUPERADMIN (Super Administrador de Plataforma)</option>`;
+      options += `
+        <option value="TENANT_ADMIN">Tenant Administrador (Gobierno SaaS)</option>
+        <option value="SUPERADMIN">SUPERADMIN (Super Administrador Global)</option>
+      `;
     }
     select.innerHTML = options;
     select.value = selectedRole;

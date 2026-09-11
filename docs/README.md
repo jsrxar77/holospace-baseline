@@ -37,16 +37,16 @@ Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentr
 #### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@poke.com.ar` | `poke2026` | **Kanban & 4see (Web `3001`):** Tablero operativo, explorador de pedidos e inteligencia e-commerce de Poke. |
-| **OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
-| **OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **CORE_ADMIN** | `admin@poke.com.ar` | `poke2026` | **Core, Kanban & 4see (Web `3001`):** Administración interna, tablero operativo e inteligencia e-commerce de Poke. |
+| **SCANNER_OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **SCANNER_OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 #### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026` | **Kanban & 4see (Web `3001`):** Tablero operativo, explorador de pedidos e inteligencia e-commerce de DrinkLovers. |
-| **OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
-| **OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **CORE_ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026` | **Core, Kanban & 4see (Web `3001`):** Administración interna, tablero operativo e inteligencia e-commerce de DrinkLovers. |
+| **SCANNER_OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+| **SCANNER_OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 ---
 

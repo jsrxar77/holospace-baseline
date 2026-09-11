@@ -560,13 +560,19 @@ ON CONFLICT (key) DO UPDATE SET
   description = EXCLUDED.description,
   category = EXCLUDED.category;
 
--- Roles Nativos del Sistema (Globales)
+-- Roles Nativos del Sistema (Globales Basados en Módulos)
 INSERT INTO roles (id, tenant_id, code, name, description, is_system)
 VALUES
   ('c0000000-0000-0000-0000-000000000001', NULL, 'superadmin', 'Super Administrador', 'Control total e irrestricto sobre la plataforma y todas las organizaciones.', true),
-  ('c0000000-0000-0000-0000-000000000002', NULL, 'admin', 'Administrador de Organización', 'Gestión integral de usuarios, configuración y módulos operativos del tenant.', true),
-  ('c0000000-0000-0000-0000-000000000003', NULL, 'operator', 'Operario de Depósito', 'Operación de escaneo, verificación de pedidos asignados y consultas de catálogo.', true)
-ON CONFLICT (tenant_id, code) DO UPDATE SET
+  ('c0000000-0000-0000-0000-000000000002', NULL, 'core_admin', 'Core Administrador', 'Gestión integral de usuarios, roles de la empresa, auditoría y temas visuales.', true),
+  ('c0000000-0000-0000-0000-000000000003', NULL, 'scanner_operator', 'Scanner Operario', 'Operación de escaneo móvil EAN-13 y verificación física de pedidos asignados.', true),
+  ('c0000000-0000-0000-0000-000000000004', NULL, 'tenant_admin', 'Tenant Administrador', 'Gestión de organizaciones, asignación de cuotas, planes y licencias modulares.', true),
+  ('c0000000-0000-0000-0000-000000000005', NULL, 'kanban_admin', 'Kanban Administrador', 'Gestión integral del tablero logístico, ingesta de PDF y asignación de pedidos.', true),
+  ('c0000000-0000-0000-0000-000000000006', NULL, 'kanban_operator', 'Kanban Operador', 'Consulta del tablero logístico, seguimiento y despacho de pedidos.', true),
+  ('c0000000-0000-0000-0000-000000000007', NULL, '4see_admin', '4see Administrador', 'Monitoreo de precios, auditoría de catálogo, repricing táctico y márgenes.', true),
+  ('c0000000-0000-0000-0000-000000000008', NULL, '4see_user', '4see Usuario / Analista', 'Consulta de catálogo y análisis de discrepancias de precios en solo lectura.', true)
+ON CONFLICT (id) DO UPDATE SET
+  code = EXCLUDED.code,
   name = EXCLUDED.name,
   description = EXCLUDED.description,
   is_system = EXCLUDED.is_system;
@@ -576,7 +582,7 @@ INSERT INTO role_permissions (role_id, permission_key)
 VALUES ('c0000000-0000-0000-0000-000000000001', '*')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
--- Permisos para Rol: ADMIN (Gestión de su organización y módulos operativos)
+-- Permisos para Rol: CORE_ADMIN
 INSERT INTO role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000002', 'core:users:read'),
@@ -584,28 +590,57 @@ VALUES
   ('c0000000-0000-0000-0000-000000000002', 'core:roles:read'),
   ('c0000000-0000-0000-0000-000000000002', 'core:roles:manage'),
   ('c0000000-0000-0000-0000-000000000002', 'core:audit:read'),
-  ('c0000000-0000-0000-0000-000000000002', 'core:theme:manage'),
-  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:read'),
-  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:ingest'),
-  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:assign'),
-  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:dispatch'),
-  ('c0000000-0000-0000-0000-000000000002', 'scanner:items:scan'),
-  ('c0000000-0000-0000-0000-000000000002', 'scanner:items:verify'),
-  ('c0000000-0000-0000-0000-000000000002', 'scanner:orders:view_assigned'),
-  ('c0000000-0000-0000-0000-000000000002', '4see:catalog:read'),
-  ('c0000000-0000-0000-0000-000000000002', '4see:catalog:audit'),
-  ('c0000000-0000-0000-0000-000000000002', '4see:pricing:write'),
-  ('c0000000-0000-0000-0000-000000000002', '4see:margins:manage')
+  ('c0000000-0000-0000-0000-000000000002', 'core:theme:manage')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
--- Permisos para Rol: OPERATOR (Operación de depósito y escaneo)
+-- Permisos para Rol: SCANNER_OPERATOR
 INSERT INTO role_permissions (role_id, permission_key)
 VALUES
-  ('c0000000-0000-0000-0000-000000000003', 'kanban:orders:read'),
-  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:scan'),
-  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:verify'),
   ('c0000000-0000-0000-0000-000000000003', 'scanner:orders:view_assigned'),
-  ('c0000000-0000-0000-0000-000000000003', '4see:catalog:read')
+  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:scan'),
+  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:verify')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: TENANT_ADMIN
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000004', 'tenant:tenants:read'),
+  ('c0000000-0000-0000-0000-000000000004', 'tenant:tenants:manage'),
+  ('c0000000-0000-0000-0000-000000000004', 'tenant:quotas:manage'),
+  ('c0000000-0000-0000-0000-000000000004', 'tenant:modules:manage'),
+  ('c0000000-0000-0000-0000-000000000004', 'core:audit:read')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: KANBAN_ADMIN
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:read'),
+  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:ingest'),
+  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:assign'),
+  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:dispatch')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: KANBAN_OPERATOR
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000006', 'kanban:orders:read'),
+  ('c0000000-0000-0000-0000-000000000006', 'kanban:orders:dispatch')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: 4SEE_ADMIN
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000007', '4see:catalog:read'),
+  ('c0000000-0000-0000-0000-000000000007', '4see:catalog:audit'),
+  ('c0000000-0000-0000-0000-000000000007', '4see:pricing:write'),
+  ('c0000000-0000-0000-0000-000000000007', '4see:margins:manage')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: 4SEE_USER
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000008', '4see:catalog:read'),
+  ('c0000000-0000-0000-0000-000000000008', '4see:catalog:audit')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 INSERT INTO tenant_modules (tenant_id, module_code, is_enabled)
@@ -657,9 +692,9 @@ ON CONFLICT (tenant_id, key) DO NOTHING;
 -- Usuarios Drink Lovers
 INSERT INTO users (tenant_id, username, email, password_hash, name, role)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@drinklovers.com.ar', 'scrypt:drinklovers2026', 'Admin DrinkLovers', 'ADMIN'),
-  ('550e8400-e29b-41d4-a716-446655440000', 'juan', 'juan@drinklovers.com.ar', 'scrypt:juan2026', 'Juan (Operario DrinkLovers)', 'OPERATOR'),
-  ('550e8400-e29b-41d4-a716-446655440000', 'vanesa', 'vanesa@drinklovers.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria DrinkLovers)', 'OPERATOR')
+  ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@drinklovers.com.ar', 'scrypt:drinklovers2026', 'Admin DrinkLovers', 'CORE_ADMIN'),
+  ('550e8400-e29b-41d4-a716-446655440000', 'juan', 'juan@drinklovers.com.ar', 'scrypt:juan2026', 'Juan (Operario DrinkLovers)', 'SCANNER_OPERATOR'),
+  ('550e8400-e29b-41d4-a716-446655440000', 'vanesa', 'vanesa@drinklovers.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria DrinkLovers)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Tenant 2: Poke Argentina
@@ -689,13 +724,13 @@ ON CONFLICT (tenant_id, key) DO NOTHING;
 -- Usuarios Poke Argentina
 INSERT INTO users (tenant_id, username, email, password_hash, name, role)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@poke.com.ar', 'scrypt:poke2026', 'Admin Poke', 'ADMIN'),
-  ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'OPERATOR'),
-  ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'OPERATOR')
+  ('550e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@poke.com.ar', 'scrypt:poke2026', 'Admin Poke', 'CORE_ADMIN'),
+  ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'SCANNER_OPERATOR'),
+  ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Sincronización automática de role_id en users
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000001' WHERE UPPER(role) = 'SUPERADMIN' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000001');
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000002' WHERE UPPER(role) = 'ADMIN' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000002');
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000003' WHERE UPPER(role) = 'OPERATOR' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000003');
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000001', role = 'SUPERADMIN' WHERE UPPER(role) IN ('SUPERADMIN');
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000002', role = 'CORE_ADMIN' WHERE UPPER(role) IN ('ADMIN', 'CORE_ADMIN');
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000003', role = 'SCANNER_OPERATOR' WHERE UPPER(role) IN ('OPERATOR', 'SCANNER_OPERATOR');
 

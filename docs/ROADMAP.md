@@ -90,6 +90,7 @@
 - [x] **10.8** Selector dinámico de roles en el modal de usuario poblado desde `/api/roles` con asignación de `role_id` UUID.
 - [x] **10.9** Interceptor global de fetch en frontend y modal centralizado de error 403 (`showPermissionDeniedModal`).
 - [x] **10.10** Actualización de reglas y workflows en `.agents/AGENTS.md` y `.agents/skills/holospace-module-creator/SKILL.md`.
+- [x] **10.11** Refactorización de roles predeterminados de sistema a 8 roles modulares desacoplados (`tenant_admin`, `core_admin`, `kanban_admin`, `kanban_operator`, `scanner_operator`, `4see_admin`, `4see_user`, `superadmin`) con migración automática y compatibilidad retroactiva.
 
 ---
 

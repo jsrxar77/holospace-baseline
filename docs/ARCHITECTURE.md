@@ -269,7 +269,7 @@ HoloSpace implementa un modelo de autorización desacoplado de nivel empresarial
    - Atributos: `module`, `resource`, `action`, `description`.
 2. **`roles` (Roles del Sistema y Personalizados):**
    - Identificador técnico: `id UUID PRIMARY KEY`.
-   - Distinción de alcance: `is_system BOOLEAN` (`true` para roles nativos `superadmin`, `admin`, `operator`; `false` para roles creados por clientes).
+   - Distinción de alcance: `is_system BOOLEAN` (`true` para roles nativos modulares: `superadmin`, `tenant_admin`, `core_admin`, `kanban_admin`, `kanban_operator`, `scanner_operator`, `4see_admin`, `4see_user`; `false` para roles creados por clientes).
    - Multi-Tenancy: `tenant_id UUID REFERENCES tenants(id)` (aislado con RLS para impedir fuga entre organizaciones).
 3. **`role_permissions` (Mapeo N:M):**
    - Vinculación `(role_id, permission_key)`.
