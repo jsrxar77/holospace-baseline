@@ -1,5 +1,6 @@
 -- ============================================================================
 -- HOLOSPACE SAAS MULTI-TENANT: POSTGRESQL 16 PRODUCTION DDL SCHEMA (WITH RLS)
+-- ESQUEMA CON TABLAS MODULARES DESACOPLADAS (HW-MODULAR-TABLES)
 -- ============================================================================
 
 -- 1. EXTENSIONES
@@ -7,11 +8,80 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================
--- 2. TABLAS MAESTRAS DE PLATAFORMA (TENANTS & FACTURACIÓN)
+-- 1.1 MIGRACIÓN AUTOMÁTICA DE TABLAS EXISTENTES A PREFIJOS MODULARES
+-- ============================================================================
+DO $$
+BEGIN
+  -- Módulo Tenant
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'tenants') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'tenant_tenants') THEN
+    ALTER TABLE tenants RENAME TO tenant_tenants;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'modules') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'tenant_modules_catalog') THEN
+    ALTER TABLE modules RENAME TO tenant_modules_catalog;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'plans') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'tenant_plans') THEN
+    ALTER TABLE plans RENAME TO tenant_plans;
+  END IF;
+
+  -- Módulo Core
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'permissions') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_permissions') THEN
+    ALTER TABLE permissions RENAME TO core_permissions;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'roles') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_roles') THEN
+    ALTER TABLE roles RENAME TO core_roles;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'role_permissions') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_role_permissions') THEN
+    ALTER TABLE role_permissions RENAME TO core_role_permissions;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'users') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_users') THEN
+    ALTER TABLE users RENAME TO core_users;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'audit_logs') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_audit_logs') THEN
+    ALTER TABLE audit_logs RENAME TO core_audit_logs;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'platform_audit_logs') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_platform_audit_logs') THEN
+    ALTER TABLE platform_audit_logs RENAME TO core_platform_audit_logs;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'app_settings') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'core_app_settings') THEN
+    ALTER TABLE app_settings RENAME TO core_app_settings;
+  END IF;
+
+  -- Módulo Kanban / Scanner
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'orders') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'kanban_orders') THEN
+    ALTER TABLE orders RENAME TO kanban_orders;
+  END IF;
+
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'order_items') AND
+     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'kanban_order_items') THEN
+    ALTER TABLE order_items RENAME TO kanban_order_items;
+  END IF;
+END $$;
+
+-- ============================================================================
+-- 2. TABLAS MAESTRAS DE PLATAFORMA (MÓDULO TENANT & FACTURACIÓN)
 -- ============================================================================
 
--- Tabla de Organizaciones / Empresas (Tenants)
-CREATE TABLE IF NOT EXISTS tenants (
+-- Tabla de Organizaciones / Empresas (Tenant)
+CREATE TABLE IF NOT EXISTS tenant_tenants (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(64) NOT NULL UNIQUE,
   name VARCHAR(255) NOT NULL,
@@ -22,13 +92,13 @@ CREATE TABLE IF NOT EXISTS tenants (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_tenants_slug ON tenants(slug);
-CREATE INDEX IF NOT EXISTS idx_tenants_status ON tenants(status);
+CREATE INDEX IF NOT EXISTS idx_tenant_tenants_slug ON tenant_tenants(slug);
+CREATE INDEX IF NOT EXISTS idx_tenant_tenants_status ON tenant_tenants(status);
 
 -- Tabla de Suscripciones & Planes por Tenant
 CREATE TABLE IF NOT EXISTS tenant_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   plan_code VARCHAR(64) NOT NULL DEFAULT 'starter' CHECK (plan_code IN ('starter', 'pro', 'enterprise')),
   status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'past_due', 'canceled', 'trialing')),
   max_users INT NOT NULL DEFAULT 5,
@@ -45,7 +115,7 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON tenant_subscriptions(tena
 -- Tabla de Entitlement / Módulos Habilitados por Tenant
 CREATE TABLE IF NOT EXISTS tenant_modules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   module_code VARCHAR(64) NOT NULL CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics', '4see')),
   is_enabled BOOLEAN NOT NULL DEFAULT true,
   quota_limit INT DEFAULT NULL,
@@ -57,13 +127,8 @@ CREATE TABLE IF NOT EXISTS tenant_modules (
 
 CREATE INDEX IF NOT EXISTS idx_tenant_modules_lookup ON tenant_modules(tenant_id, module_code);
 
--- Asegurar actualización de restricción en tenant_modules si la tabla ya existía
-ALTER TABLE tenant_modules DROP CONSTRAINT IF EXISTS tenant_modules_module_code_check;
-ALTER TABLE tenant_modules ADD CONSTRAINT tenant_modules_module_code_check 
-  CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics', '4see'));
-
 -- Catálogo Oficial de Módulos de la Plataforma
-CREATE TABLE IF NOT EXISTS modules (
+CREATE TABLE IF NOT EXISTS tenant_modules_catalog (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   key VARCHAR(64) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -75,10 +140,10 @@ CREATE TABLE IF NOT EXISTS modules (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_modules_key ON modules(key);
+CREATE INDEX IF NOT EXISTS idx_modules_catalog_key ON tenant_modules_catalog(key);
 
 -- Catálogo Oficial de Planes SaaS
-CREATE TABLE IF NOT EXISTS plans (
+CREATE TABLE IF NOT EXISTS tenant_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(64) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -90,14 +155,14 @@ CREATE TABLE IF NOT EXISTS plans (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_plans_code ON plans(code);
+CREATE INDEX IF NOT EXISTS idx_tenant_plans_code ON tenant_plans(code);
 
 -- ============================================================================
--- 2.1 SISTEMA DINÁMICO DE ROLES Y PERMISOS GRANULARES (RBAC)
+-- 3. MÓDULO CORE: ROLES, PERMISOS, USUARIOS Y AUDITORÍA
 -- ============================================================================
 
 -- Catálogo Universal de Permisos Granulares
-CREATE TABLE IF NOT EXISTS permissions (
+CREATE TABLE IF NOT EXISTS core_permissions (
   key VARCHAR(64) PRIMARY KEY,
   module_code VARCHAR(64) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -106,12 +171,12 @@ CREATE TABLE IF NOT EXISTS permissions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_permissions_module ON permissions(module_code);
+CREATE INDEX IF NOT EXISTS idx_core_permissions_module ON core_permissions(module_code);
 
 -- Definición Dinámica de Roles (Soporta roles de sistema y roles por tenant)
-CREATE TABLE IF NOT EXISTS roles (
+CREATE TABLE IF NOT EXISTS core_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   code VARCHAR(64) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -121,29 +186,25 @@ CREATE TABLE IF NOT EXISTS roles (
   UNIQUE(tenant_id, code)
 );
 
-CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_roles_code ON roles(code);
+CREATE INDEX IF NOT EXISTS idx_core_roles_tenant ON core_roles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_core_roles_code ON core_roles(code);
 
 -- Matriz Rol - Permisos (N a M)
-CREATE TABLE IF NOT EXISTS role_permissions (
-  role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-  permission_key VARCHAR(64) NOT NULL REFERENCES permissions(key) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS core_role_permissions (
+  role_id UUID NOT NULL REFERENCES core_roles(id) ON DELETE CASCADE,
+  permission_key VARCHAR(64) NOT NULL REFERENCES core_permissions(key) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (role_id, permission_key)
 );
 
-CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON role_permissions(role_id);
-CREATE INDEX IF NOT EXISTS idx_role_permissions_key ON role_permissions(permission_key);
-
--- ============================================================================
--- 3. TABLAS TRANSACCIONALES CON AISLAMIENTO MULTI-TENANT (RLS)
--- ============================================================================
+CREATE INDEX IF NOT EXISTS idx_core_role_permissions_role ON core_role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_core_role_permissions_key ON core_role_permissions(permission_key);
 
 -- Tabla de Usuarios por Tenant
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS core_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  role_id UUID REFERENCES core_roles(id) ON DELETE SET NULL,
   username VARCHAR(64) NOT NULL,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
@@ -157,19 +218,46 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE(tenant_id, username)
 );
 
--- Asegurar actualización de columna role_id y restricción si users ya existía
-ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id UUID REFERENCES roles(id) ON DELETE SET NULL;
-ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+CREATE INDEX IF NOT EXISTS idx_core_users_tenant_email ON core_users(tenant_id, email);
+CREATE INDEX IF NOT EXISTS idx_core_users_tenant_username ON core_users(tenant_id, username);
+CREATE INDEX IF NOT EXISTS idx_core_users_role ON core_users(role);
+CREATE INDEX IF NOT EXISTS idx_core_users_role_id ON core_users(role_id);
 
-CREATE INDEX IF NOT EXISTS idx_users_tenant_email ON users(tenant_id, email);
-CREATE INDEX IF NOT EXISTS idx_users_tenant_username ON users(tenant_id, username);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
-
--- Tabla de Pedidos / Comprobantes (ScanBan)
-CREATE TABLE IF NOT EXISTS orders (
+-- Tabla de Auditoría & Logs de Plataforma
+CREATE TABLE IF NOT EXISTS core_platform_audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  user_email VARCHAR(255) DEFAULT NULL,
+  action VARCHAR(128) NOT NULL,
+  module_code VARCHAR(64) DEFAULT 'core',
+  details JSONB DEFAULT '{}'::jsonb,
+  ip_address VARCHAR(64) DEFAULT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_core_audit_tenant_date ON core_platform_audit_logs(tenant_id, created_at DESC);
+
+-- Tabla de Configuraciones Globales de Tenant (Temas, UI)
+CREATE TABLE IF NOT EXISTS core_app_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  key VARCHAR(128) NOT NULL,
+  value TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_core_settings_tenant_key ON core_app_settings(tenant_id, key);
+
+-- ============================================================================
+-- 4. MÓDULO KANBAN / SCANNER: PEDIDOS, ÍTEMS Y TRAZABILIDAD
+-- ============================================================================
+
+-- Tabla de Pedidos / Comprobantes (Kanban)
+CREATE TABLE IF NOT EXISTS kanban_orders (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   uuid VARCHAR(64) DEFAULT NULL,
   order_number VARCHAR(64) NOT NULL,
   status VARCHAR(32) NOT NULL DEFAULT 'BACKLOG' CHECK (status IN ('BACKLOG', 'READY', 'DOING', 'DONE', 'CLOSED', 'PARTIAL_DISPATCH')),
@@ -191,14 +279,14 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_orders_tenant_status ON orders(tenant_id, status);
-CREATE INDEX IF NOT EXISTS idx_orders_tenant_number ON orders(tenant_id, order_number);
+CREATE INDEX IF NOT EXISTS idx_kanban_orders_tenant_status ON kanban_orders(tenant_id, status);
+CREATE INDEX IF NOT EXISTS idx_kanban_orders_tenant_number ON kanban_orders(tenant_id, order_number);
 
--- Tabla de Ítems / EANs de Pedido (ScanBan)
-CREATE TABLE IF NOT EXISTS order_items (
+-- Tabla de Ítems / EANs de Pedido (Kanban & Scanner)
+CREATE TABLE IF NOT EXISTS kanban_order_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  order_id UUID NOT NULL REFERENCES kanban_orders(id) ON DELETE CASCADE,
   code VARCHAR(64) NOT NULL,
   description TEXT NOT NULL,
   unit_price NUMERIC(12,2) DEFAULT 0,
@@ -210,14 +298,14 @@ CREATE TABLE IF NOT EXISTS order_items (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_items_tenant_order ON order_items(tenant_id, order_id);
-CREATE INDEX IF NOT EXISTS idx_items_code ON order_items(code);
+CREATE INDEX IF NOT EXISTS idx_kanban_items_tenant_order ON kanban_order_items(tenant_id, order_id);
+CREATE INDEX IF NOT EXISTS idx_kanban_items_code ON kanban_order_items(code);
 
--- Tabla de Trazabilidad y Logs Operativos de Pedidos (ScanBan)
-CREATE TABLE IF NOT EXISTS audit_logs (
+-- Tabla de Trazabilidad y Logs Operativos de Pedidos
+CREATE TABLE IF NOT EXISTS core_audit_logs (
   id SERIAL PRIMARY KEY,
   order_id UUID NOT NULL,
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   timestamp VARCHAR(64) NOT NULL,
   user_email VARCHAR(255) NOT NULL,
   action VARCHAR(64) NOT NULL,
@@ -225,40 +313,17 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_audit_logs_order ON audit_logs(order_id);
-CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_core_audit_logs_order ON core_audit_logs(order_id);
+CREATE INDEX IF NOT EXISTS idx_core_audit_logs_tenant ON core_audit_logs(tenant_id, created_at DESC);
 
--- Tabla de Auditoría & Logs de Plataforma
-CREATE TABLE IF NOT EXISTS platform_audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
-  user_email VARCHAR(255) DEFAULT NULL,
-  action VARCHAR(128) NOT NULL,
-  module_code VARCHAR(64) DEFAULT 'core',
-  details JSONB DEFAULT '{}'::jsonb,
-  ip_address VARCHAR(64) DEFAULT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
+-- ============================================================================
+-- 5. MÓDULO 4SEE: MONITORES, AUDITORÍA Y MARGENES
+-- ============================================================================
 
-CREATE INDEX IF NOT EXISTS idx_audit_tenant_date ON platform_audit_logs(tenant_id, created_at DESC);
-
--- Tabla de Configuraciones Globales de Tenant (Temas, UI)
-CREATE TABLE IF NOT EXISTS app_settings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  key VARCHAR(128) NOT NULL,
-  value TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(tenant_id, key)
-);
-
-CREATE INDEX IF NOT EXISTS idx_settings_tenant_key ON app_settings(tenant_id, key);
-
--- Tabla de Monitores de Competidores (Módulo 4see)
+-- Tabla de Monitores de Competidores
 CREATE TABLE IF NOT EXISTS fourseee_competitor_monitors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   product_name VARCHAR(255) NOT NULL,
   competitor_url TEXT NOT NULL,
   competitor_name VARCHAR(128) NOT NULL DEFAULT 'Competidor',
@@ -272,10 +337,10 @@ CREATE TABLE IF NOT EXISTS fourseee_competitor_monitors (
 
 CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_tenant ON fourseee_competitor_monitors(tenant_id);
 
--- Tabla de Auditoría de Catálogo / Feeds (Módulo 4see)
+-- Tabla de Auditoría de Catálogo / Feeds
 CREATE TABLE IF NOT EXISTS fourseee_catalog_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   sku VARCHAR(128) NOT NULL,
   original_title TEXT NOT NULL,
   current_title TEXT NOT NULL,
@@ -292,10 +357,10 @@ CREATE TABLE IF NOT EXISTS fourseee_catalog_items (
 
 CREATE INDEX IF NOT EXISTS idx_fourseee_catalog_tenant ON fourseee_catalog_items(tenant_id);
 
--- Tabla de Reglas de Margen y Repricing (Módulo 4see)
+-- Tabla de Reglas de Margen y Repricing
 CREATE TABLE IF NOT EXISTS fourseee_margin_rules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
   product_sku VARCHAR(128) NOT NULL,
   product_name VARCHAR(255) NOT NULL,
   cost_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
@@ -315,25 +380,24 @@ CREATE TABLE IF NOT EXISTS fourseee_margin_rules (
 CREATE INDEX IF NOT EXISTS idx_fourseee_margins_tenant ON fourseee_margin_rules(tenant_id);
 
 -- ============================================================================
--- 4. POLÍTICAS DE ROW-LEVEL SECURITY (RLS) - AISLAMIENTO CRIPTOGRÁFICO
+-- 6. POLÍTICAS DE ROW-LEVEL SECURITY (RLS) - AISLAMIENTO MULTI-TENANT
 -- ============================================================================
 
--- Habilitar RLS en todas las tablas con datos de clientes
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kanban_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kanban_order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE platform_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_platform_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
-ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
--- Política RLS para roles (visibilidad de roles de sistema y roles del tenant)
-DROP POLICY IF EXISTS rls_roles_tenant_isolation ON roles;
-CREATE POLICY rls_roles_tenant_isolation ON roles
+-- Política RLS para core_roles
+DROP POLICY IF EXISTS rls_roles_tenant_isolation ON core_roles;
+CREATE POLICY rls_roles_tenant_isolation ON core_roles
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true'
@@ -382,9 +446,9 @@ CREATE POLICY rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 1. Política RLS para users
-DROP POLICY IF EXISTS rls_users_tenant_isolation ON users;
-CREATE POLICY rls_users_tenant_isolation ON users
+-- Política RLS para core_users
+DROP POLICY IF EXISTS rls_users_tenant_isolation ON core_users;
+CREATE POLICY rls_users_tenant_isolation ON core_users
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -395,9 +459,9 @@ CREATE POLICY rls_users_tenant_isolation ON users
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 2. Política RLS para orders
-DROP POLICY IF EXISTS rls_orders_tenant_isolation ON orders;
-CREATE POLICY rls_orders_tenant_isolation ON orders
+-- Política RLS para kanban_orders
+DROP POLICY IF EXISTS rls_orders_tenant_isolation ON kanban_orders;
+CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -408,9 +472,9 @@ CREATE POLICY rls_orders_tenant_isolation ON orders
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 3. Política RLS para order_items
-DROP POLICY IF EXISTS rls_order_items_tenant_isolation ON order_items;
-CREATE POLICY rls_order_items_tenant_isolation ON order_items
+-- Política RLS para kanban_order_items
+DROP POLICY IF EXISTS rls_order_items_tenant_isolation ON kanban_order_items;
+CREATE POLICY rls_order_items_tenant_isolation ON kanban_order_items
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -421,9 +485,9 @@ CREATE POLICY rls_order_items_tenant_isolation ON order_items
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 4. Política RLS para audit_logs
-DROP POLICY IF EXISTS rls_audit_logs_tenant_isolation ON audit_logs;
-CREATE POLICY rls_audit_logs_tenant_isolation ON audit_logs
+-- Política RLS para core_audit_logs
+DROP POLICY IF EXISTS rls_audit_logs_tenant_isolation ON core_audit_logs;
+CREATE POLICY rls_audit_logs_tenant_isolation ON core_audit_logs
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -434,7 +498,7 @@ CREATE POLICY rls_audit_logs_tenant_isolation ON audit_logs
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 5. Política RLS para tenant_modules
+-- Política RLS para tenant_modules
 DROP POLICY IF EXISTS rls_tenant_modules_isolation ON tenant_modules;
 CREATE POLICY rls_tenant_modules_isolation ON tenant_modules
   FOR ALL
@@ -447,9 +511,9 @@ CREATE POLICY rls_tenant_modules_isolation ON tenant_modules
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 6. Política RLS para app_settings
-DROP POLICY IF EXISTS rls_app_settings_isolation ON app_settings;
-CREATE POLICY rls_app_settings_isolation ON app_settings
+-- Política RLS para core_app_settings
+DROP POLICY IF EXISTS rls_app_settings_isolation ON core_app_settings;
+CREATE POLICY rls_app_settings_isolation ON core_app_settings
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -460,9 +524,9 @@ CREATE POLICY rls_app_settings_isolation ON app_settings
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- 7. Política RLS para platform_audit_logs
-DROP POLICY IF EXISTS rls_audit_logs_isolation ON platform_audit_logs;
-CREATE POLICY rls_audit_logs_isolation ON platform_audit_logs
+-- Política RLS para core_platform_audit_logs
+DROP POLICY IF EXISTS rls_audit_logs_isolation ON core_platform_audit_logs;
+CREATE POLICY rls_audit_logs_isolation ON core_platform_audit_logs
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -474,11 +538,11 @@ CREATE POLICY rls_audit_logs_isolation ON platform_audit_logs
   );
 
 -- ============================================================================
--- 5. SEED INICIAL MULTI-TENANT POR DEFECTO
+-- 7. SEED INICIAL MULTI-TENANT POR DEFECTO
 -- ============================================================================
 
 -- Tenant 0: HoloSpace Cloud Platform (Tenant Proveedor Global)
-INSERT INTO tenants (id, slug, name, status)
+INSERT INTO tenant_tenants (id, slug, name, status)
 VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
@@ -487,7 +551,7 @@ VALUES ('a0000000-0000-0000-0000-000000000001', 'enterprise', 'active', 999, 999
 ON CONFLICT (tenant_id) DO NOTHING;
 
 -- Catálogo de Módulos Oficiales de la Plataforma HoloSpace
-INSERT INTO modules (key, name, description, category, is_active, activated_by)
+INSERT INTO tenant_modules_catalog (key, name, description, category, is_active, activated_by)
 VALUES
   ('landing', 'Landing', 'Portal comercial público y catálogo SaaS con precios en ARS y vitrina interactiva.', 'marketing', true, 'system'),
   ('tenant', 'Tenant', 'Panel exclusivo SUPERADMIN para administración de organizaciones, cuotas y licencias.', 'admin', true, 'system'),
@@ -502,7 +566,7 @@ ON CONFLICT (key) DO UPDATE SET
   is_active = EXCLUDED.is_active;
 
 -- Catálogo de Planes Oficiales SaaS
-INSERT INTO plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active)
+INSERT INTO tenant_plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active)
 VALUES
   ('starter', 'Plan Starter Inicial', 'Plan esencial para pequeños depósitos y operaciones ágiles.', 5, 500, '["core", "kanban", "scanner"]'::jsonb, true),
   ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner", "4see"]'::jsonb, true),
@@ -515,12 +579,8 @@ ON CONFLICT (code) DO UPDATE SET
   included_modules = EXCLUDED.included_modules,
   is_active = EXCLUDED.is_active;
 
--- ============================================================================
--- CATÁLOGO DE PERMISOS GRANULARES Y ROLES DEL SISTEMA (RBAC)
--- ============================================================================
-
 -- Catálogo Universal de Permisos Granulares de la Plataforma
-INSERT INTO permissions (key, module_code, name, description, category)
+INSERT INTO core_permissions (key, module_code, name, description, category)
 VALUES
   -- Comodín universal de plataforma
   ('*', 'platform', 'Acceso Total Irrestricto', 'Superadministración completa de la plataforma y todas sus organizaciones.', 'admin'),
@@ -561,7 +621,7 @@ ON CONFLICT (key) DO UPDATE SET
   category = EXCLUDED.category;
 
 -- Roles Nativos del Sistema (Globales Basados en Módulos)
-INSERT INTO roles (id, tenant_id, code, name, description, is_system)
+INSERT INTO core_roles (id, tenant_id, code, name, description, is_system)
 VALUES
   ('c0000000-0000-0000-0000-000000000001', NULL, 'superadmin', 'Super Administrador', 'Control total e irrestricto sobre la plataforma y todas las organizaciones.', true),
   ('c0000000-0000-0000-0000-000000000002', NULL, 'core_admin', 'Core Administrador', 'Gestión integral de usuarios, roles de la empresa, auditoría y temas visuales.', true),
@@ -578,12 +638,12 @@ ON CONFLICT (id) DO UPDATE SET
   is_system = EXCLUDED.is_system;
 
 -- Permisos para Rol: SUPERADMIN (Wildcard total)
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES ('c0000000-0000-0000-0000-000000000001', '*')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: CORE_ADMIN
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000002', 'core:users:read'),
   ('c0000000-0000-0000-0000-000000000002', 'core:users:manage'),
@@ -594,7 +654,7 @@ VALUES
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: SCANNER_OPERATOR
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000003', 'scanner:orders:view_assigned'),
   ('c0000000-0000-0000-0000-000000000003', 'scanner:items:scan'),
@@ -602,7 +662,7 @@ VALUES
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: TENANT_ADMIN
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000004', 'tenant:tenants:read'),
   ('c0000000-0000-0000-0000-000000000004', 'tenant:tenants:manage'),
@@ -612,7 +672,7 @@ VALUES
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: KANBAN_ADMIN
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:read'),
   ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:ingest'),
@@ -621,14 +681,14 @@ VALUES
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: KANBAN_OPERATOR
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000006', 'kanban:orders:read'),
   ('c0000000-0000-0000-0000-000000000006', 'kanban:orders:dispatch')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: 4SEE_ADMIN
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:read'),
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:audit'),
@@ -637,7 +697,7 @@ VALUES
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: 4SEE_USER
-INSERT INTO role_permissions (role_id, permission_key)
+INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
   ('c0000000-0000-0000-0000-000000000008', '4see:catalog:read'),
   ('c0000000-0000-0000-0000-000000000008', '4see:catalog:audit')
@@ -657,16 +717,16 @@ VALUES
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
 -- ÚNICO SuperAdmin Global de la Plataforma
-INSERT INTO users (tenant_id, username, email, password_hash, name, role)
+INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
 VALUES ('a0000000-0000-0000-0000-000000000001', 'superadmin', 'superadmin@holospace.com.ar', 'scrypt:BrunaSeRelambe22!', 'Super Administrador Global', 'SUPERADMIN')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
-INSERT INTO app_settings (tenant_id, key, value)
+INSERT INTO core_app_settings (tenant_id, key, value)
 VALUES ('a0000000-0000-0000-0000-000000000001', 'active_theme', 'omarchy_tiling')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Tenant 1: Drink Lovers Argentina
-INSERT INTO tenants (id, slug, name, status)
+INSERT INTO tenant_tenants (id, slug, name, status)
 VALUES ('550e8400-e29b-41d4-a716-446655440000', 'drinklovers', 'Drink Lovers', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
@@ -685,12 +745,12 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440000', '4see', true)
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
-INSERT INTO app_settings (tenant_id, key, value)
+INSERT INTO core_app_settings (tenant_id, key, value)
 VALUES ('550e8400-e29b-41d4-a716-446655440000', 'active_theme', 'omarchy_tiling')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Usuarios Drink Lovers
-INSERT INTO users (tenant_id, username, email, password_hash, name, role)
+INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
 VALUES 
   ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@drinklovers.com.ar', 'scrypt:drinklovers2026', 'Admin DrinkLovers', 'CORE_ADMIN'),
   ('550e8400-e29b-41d4-a716-446655440000', 'juan', 'juan@drinklovers.com.ar', 'scrypt:juan2026', 'Juan (Operario DrinkLovers)', 'SCANNER_OPERATOR'),
@@ -698,7 +758,7 @@ VALUES
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Tenant 2: Poke Argentina
-INSERT INTO tenants (id, slug, name, status)
+INSERT INTO tenant_tenants (id, slug, name, status)
 VALUES ('550e8400-e29b-41d4-a716-446655440001', 'poke', 'Poke', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
@@ -717,20 +777,35 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440001', '4see', true)
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
-INSERT INTO app_settings (tenant_id, key, value)
+INSERT INTO core_app_settings (tenant_id, key, value)
 VALUES ('550e8400-e29b-41d4-a716-446655440001', 'active_theme', 'omarchy_tiling')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Usuarios Poke Argentina
-INSERT INTO users (tenant_id, username, email, password_hash, name, role)
+INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
 VALUES 
   ('550e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@poke.com.ar', 'scrypt:poke2026', 'Admin Poke', 'CORE_ADMIN'),
   ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'SCANNER_OPERATOR'),
   ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
--- Sincronización automática de role_id en users
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000001', role = 'SUPERADMIN' WHERE UPPER(role) IN ('SUPERADMIN');
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000002', role = 'CORE_ADMIN' WHERE UPPER(role) IN ('ADMIN', 'CORE_ADMIN');
-UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000003', role = 'SCANNER_OPERATOR' WHERE UPPER(role) IN ('OPERATOR', 'SCANNER_OPERATOR');
+-- Sincronización automática de role_id en core_users
+UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000001', role = 'SUPERADMIN' WHERE UPPER(role) IN ('SUPERADMIN');
+UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000002', role = 'CORE_ADMIN' WHERE UPPER(role) IN ('ADMIN', 'CORE_ADMIN');
+UPDATE core_users SET role_id = 'c0000000-0000-0000-0000-000000000003', role = 'SCANNER_OPERATOR' WHERE UPPER(role) IN ('OPERATOR', 'SCANNER_OPERATOR');
 
+-- ============================================================================
+-- 8. VISTAS DE COMPATIBILIDAD RETROACTIVA
+-- ============================================================================
+CREATE OR REPLACE VIEW tenants AS SELECT * FROM tenant_tenants;
+CREATE OR REPLACE VIEW modules AS SELECT * FROM tenant_modules_catalog;
+CREATE OR REPLACE VIEW plans AS SELECT * FROM tenant_plans;
+CREATE OR REPLACE VIEW permissions AS SELECT * FROM core_permissions;
+CREATE OR REPLACE VIEW roles AS SELECT * FROM core_roles;
+CREATE OR REPLACE VIEW role_permissions AS SELECT * FROM core_role_permissions;
+CREATE OR REPLACE VIEW users AS SELECT * FROM core_users;
+CREATE OR REPLACE VIEW orders AS SELECT * FROM kanban_orders;
+CREATE OR REPLACE VIEW order_items AS SELECT * FROM kanban_order_items;
+CREATE OR REPLACE VIEW audit_logs AS SELECT * FROM core_audit_logs;
+CREATE OR REPLACE VIEW platform_audit_logs AS SELECT * FROM core_platform_audit_logs;
+CREATE OR REPLACE VIEW app_settings AS SELECT * FROM core_app_settings;

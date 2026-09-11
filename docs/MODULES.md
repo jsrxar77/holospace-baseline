@@ -65,6 +65,18 @@ if (req.url.startsWith('/api/kanban/')) {
 ## 3. Guía Oficial para Desarrolladores: Creación de Nuevos Módulos
 
 1. Crear carpetas `modules/<key>/public` y `modules/<key>/routes`.
-2. Registrar en base de datos en tabla `modules`.
+2. Registrar en base de datos en tabla `tenant_modules_catalog`.
 3. Definir rutas con prefijo `/api/<key>/`.
 4. Vincular al catálogo de planes en `lib/billing.js` y `data/init-schema.sql`.
+5. Nombrar las tablas con el prefijo oficial del módulo (ej: `<modulo>_<tabla>`) y configurar políticas RLS.
+
+---
+
+## 4. Catálogo de Tablas de Base de Datos por Módulo (PostgreSQL 16)
+
+| Módulo Oficial | Tablas de Base de Datos | Responsabilidad |
+| :--- | :--- | :--- |
+| **Tenant** | `tenant_tenants`, `tenant_subscriptions`, `tenant_modules`, `tenant_modules_catalog`, `tenant_plans` | Gobierno SaaS, facturación, planes y cuotas |
+| **Core** | `core_users`, `core_roles`, `core_permissions`, `core_role_permissions`, `core_audit_logs`, `core_platform_audit_logs`, `core_app_settings` | Identidad, autenticación, RBAC dinámico y configuración |
+| **Kanban & Scanner** | `kanban_orders`, `kanban_order_items` | Pedidos, comprobantes, trazabilidad y picking de depósito |
+| **4see** | `fourseee_competitor_monitors`, `fourseee_catalog_items`, `fourseee_margin_rules` | Monitores de competidores, auditoría de catálogo y rentabilidad neta |

@@ -28,9 +28,9 @@ async function check(title, testFn) {
 }
 
 async function runAudit() {
-  // 1. Verificar existencia de tabla tenants
-  await check('Tabla `tenants`', async () => {
-    const tenants = await query('SELECT * FROM tenants', [], { isSuperAdmin: true });
+  // 1. Verificar existencia de tabla tenant_tenants
+  await check('Tabla `tenant_tenants`', async () => {
+    const tenants = await query('SELECT * FROM tenant_tenants', [], { isSuperAdmin: true });
     return {
       passed: tenants.length > 0,
       message: `${tenants.length} tenants encontrados (${tenants.map(t => t.slug).join(', ')})`
@@ -55,9 +55,9 @@ async function runAudit() {
     };
   });
 
-  // 4. Verificar usuarios y columna tenant_id
-  await check('Tabla `users` con `tenant_id`', async () => {
-    const users = await query('SELECT * FROM users', [], { isSuperAdmin: true });
+  // 4. Verificar usuarios en core_users y columna tenant_id
+  await check('Tabla `core_users` con `tenant_id`', async () => {
+    const users = await query('SELECT * FROM core_users', [], { isSuperAdmin: true });
     const nullTenant = users.filter(u => !u.tenant_id);
     return {
       passed: users.length > 0 && nullTenant.length === 0,
@@ -65,9 +65,19 @@ async function runAudit() {
     };
   });
 
-  // 5. Verificar pedidos y columna tenant_id
-  await check('Tabla `orders` con `tenant_id`', async () => {
-    const orders = await query('SELECT * FROM orders', [], { isSuperAdmin: true });
+  // 5. Verificar roles en core_roles y permisos en core_permissions
+  await check('Tablas `core_roles` y `core_permissions`', async () => {
+    const roles = await query('SELECT * FROM core_roles', [], { isSuperAdmin: true });
+    const perms = await query('SELECT * FROM core_permissions', [], { isSuperAdmin: true });
+    return {
+      passed: roles.length >= 8 && perms.length >= 22,
+      message: `${roles.length} roles y ${perms.length} permisos auditados`
+    };
+  });
+
+  // 6. Verificar pedidos en kanban_orders y columna tenant_id
+  await check('Tabla `kanban_orders` con `tenant_id`', async () => {
+    const orders = await query('SELECT * FROM kanban_orders', [], { isSuperAdmin: true });
     const nullTenant = orders.filter(o => !o.tenant_id);
     return {
       passed: nullTenant.length === 0,
@@ -75,9 +85,9 @@ async function runAudit() {
     };
   });
 
-  // 6. Verificar ítems de pedidos y consistencia relacional
-  await check('Tabla `order_items` con `tenant_id`', async () => {
-    const items = await query('SELECT * FROM order_items', [], { isSuperAdmin: true });
+  // 7. Verificar ítems de pedidos en kanban_order_items
+  await check('Tabla `kanban_order_items` con `tenant_id`', async () => {
+    const items = await query('SELECT * FROM kanban_order_items', [], { isSuperAdmin: true });
     const nullTenant = items.filter(i => !i.tenant_id);
     return {
       passed: nullTenant.length === 0,
@@ -85,12 +95,23 @@ async function runAudit() {
     };
   });
 
-  // 7. Verificar logs de auditoría y settings
-  await check('Logs de Auditoría y Settings', async () => {
-    const settings = await query('SELECT * FROM app_settings', [], { isSuperAdmin: true });
+  // 8. Verificar configuración en core_app_settings
+  await check('Tabla `core_app_settings`', async () => {
+    const settings = await query('SELECT * FROM core_app_settings', [], { isSuperAdmin: true });
     return {
       passed: settings.length > 0,
       message: `${settings.length} settings globales configurados`
+    };
+  });
+
+  // 9. Verificar vistas de compatibilidad retroactiva
+  await check('Vistas de Compatibilidad Retroactiva', async () => {
+    const vUsers = await query('SELECT count(*) as count FROM users', [], { isSuperAdmin: true });
+    const vOrders = await query('SELECT count(*) as count FROM orders', [], { isSuperAdmin: true });
+    const vTenants = await query('SELECT count(*) as count FROM tenants', [], { isSuperAdmin: true });
+    return {
+      passed: vUsers.length > 0 && vOrders.length > 0 && vTenants.length > 0,
+      message: 'Vistas users, orders y tenants accesibles correctamente'
     };
   });
 

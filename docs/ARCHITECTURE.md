@@ -99,18 +99,19 @@ services:
 ## 4. Aislamiento Multi-Tenant con PostgreSQL 16 (Row Level Security)
 
 ```sql
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kanban_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kanban_order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules ENABLE ROW LEVEL SECURITY;
-ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE platform_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_platform_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY rls_tenant_isolation ON orders
+CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true' 
@@ -121,7 +122,7 @@ CREATE POLICY rls_tenant_isolation ON orders
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- Políticas RLS idénticas aplicadas sobre fourseee_competitor_monitors, fourseee_catalog_items y fourseee_margin_rules.
+-- Políticas RLS idénticas aplicadas sobre fourseee_competitor_monitors, fourseee_catalog_items, fourseee_margin_rules, core_users, core_roles, core_audit_logs, core_app_settings y core_platform_audit_logs.
 ```
 
 ---
@@ -264,17 +265,18 @@ Para garantizar consistencia atómica e impedir falsos positivos de desasignaci�
 HoloSpace implementa un modelo de autorización desacoplado de nivel empresarial (NIST RBAC Nivel 2):
 
 ### 9.1 Modelo de Datos Relacional (`init-schema.sql`)
-1. **`permissions` (Catálogo Inmutable de Capacidades):**
+1. **`core_permissions` (Catálogo Inmutable de Capacidades):**
    - Clave primaria natural: `key VARCHAR(100)` con formato estandarizado `<modulo>:<recurso>:<accion>` (ej: `kanban:orders:read`, `4see:pricing:write`, `core:roles:manage`).
-   - Atributos: `module`, `resource`, `action`, `description`.
-2. **`roles` (Roles del Sistema y Personalizados):**
+   - Atributos: `module_code`, `name`, `description`, `category`.
+2. **`core_roles` (Roles del Sistema y Personalizados):**
    - Identificador técnico: `id UUID PRIMARY KEY`.
    - Distinción de alcance: `is_system BOOLEAN` (`true` para roles nativos modulares: `superadmin`, `tenant_admin`, `core_admin`, `kanban_admin`, `kanban_operator`, `scanner_operator`, `4see_admin`, `4see_user`; `false` para roles creados por clientes).
-   - Multi-Tenancy: `tenant_id UUID REFERENCES tenants(id)` (aislado con RLS para impedir fuga entre organizaciones).
-3. **`role_permissions` (Mapeo N:M):**
+   - Multi-Tenancy: `tenant_id UUID REFERENCES tenant_tenants(id)` (aislado con RLS para impedir fuga entre organizaciones).
+3. **`core_role_permissions` (Mapeo N:M):**
    - Vinculación `(role_id, permission_key)`.
-4. **`users.role_id` (Asignación Dinámica):**
-   - Columna `role_id UUID REFERENCES roles(id)` que reemplaza la antigua dependencia de strings fijos.
+4. **`core_users.role_id` (Asignación Dinámica):**
+   - Columna `role_id UUID REFERENCES core_roles(id)` que reemplaza la antigua dependencia de strings fijos.
+   - Vistas de compatibilidad retroactiva (`users`, `roles`, `permissions`, `role_permissions`) activas para clientes legados.
 
 ### 9.2 Contrato Canónico de Error 403 (`INSUFFICIENT_PERMISSIONS`)
 Cuando cualquier usuario intenta ejecutar una acción sin contar con el permiso correspondiente, el backend emite una respuesta unificada con código HTTP 403:
