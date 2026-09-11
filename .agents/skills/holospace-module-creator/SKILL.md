@@ -101,11 +101,20 @@ CREATE POLICY rls_<tabla_modulo>_tenant_isolation ON <tabla_modulo>
 3. **Proteger endpoints en `routes/`**:
    Validar permisos con `hasPermission(req.user, '<modulo>:<recurso>:<accion>')`. Si no lo posee, emitir el error canónico 403 `INSUFFICIENT_PERMISSIONS`.
 
-### Paso 6: Sincronizacion Mandatoria de Documentacion en `/docs`
+### Paso 6: Redactar Suite de Pruebas Automatizadas y Registrar en el Runner Maestro
+1. **Crear archivo de test**: En `tests/test-<modulo>-module.js` cubriendo endpoints, mutaciones y aislamiento multi-tenant RLS.
+2. **Registrar en el runner**: Incorporar la suite a `tests/run-all-tests.js` dentro del array `SUITES`.
+3. **Ejecutar verificación completa**:
+   ```bash
+   docker compose exec app node tests/run-all-tests.js
+   ```
+   Validar que todas las suites pasen con 0 errores antes de dar por terminado el módulo.
+
+### Paso 7: Sincronizacion Mandatoria de Documentacion en `/docs`
 Actualizar obligatoriamente los 6 archivos canonicos:
 1. `docs/MODULES.md`: Especificar el modulo, clave, endpoints y proposito.
 2. `docs/FEATURES.md`: Anadir a la matriz RBAC de roles y al catalogo de planes.
 3. `docs/ARCHITECTURE.md`: Registrar nuevas tablas, politicas RLS y permisos del modulo.
-4. `docs/README.md` (y raiz `README.md`): Agregar URL de acceso, rol permitido y credenciales de prueba.
+4. `docs/README.md`: Agregar URL de acceso, rol permitido, credenciales y comandos de test.
 5. `docs/CONTENT.md`: Naming oficial y textos de interfaz.
 6. `docs/ROADMAP.md`: Marcar hito de creacion y estado de entrega.

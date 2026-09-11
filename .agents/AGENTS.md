@@ -130,15 +130,27 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
 
 1. **Pilar 1 — Código Fuente & Configuración:**
    - Mantener coherencia estricta en Backend (`server.js`, `lib/`), Frontend Web (`public/`, `modules/*/public/`), App Móvil (`modules/*/src/`), y Configuración Docker (`Dockerfile`, `docker-compose.yml`, `nginx/`).
-2. **Pilar 2 — Batería de Pruebas & Tests:**
-   - Cada nueva funcionalidad o modificación debe contar con su suite de pruebas automatizada en `bin/` o verificar que los tests existentes pasen al 100% (`bin/verify-db-integrity.js`, `bin/test-auth-jwt.js`, `bin/test-entitlement.js`, `bin/test-billing-onboarding.js`).
+2. **Pilar 2 — Batería de Pruebas & Tests (Cobertura Total Obligatoria):**
+   - **Test por cada Módulo o Feature:** Toda nueva funcionalidad, endpoint, mutación o nuevo módulo DEBE crearse obligatoriamente con su respectivo archivo de pruebas automatizadas en `tests/` o `bin/`.
+   - **Registro en el Runner Unificado:** Cada nueva suite debe incorporarse de inmediato en `tests/run-all-tests.js` dentro del arreglo `SUITES`.
+   - **Ejecución y Verificación Pre-Finalización:** Antes de dar por finalizada cualquier tarea o proponer un commit, el agente DEBE ejecutar obligatoriamente la suite completa (`docker compose exec app node tests/run-all-tests.js`) y verificar que el 100% de las suites pasen sin errores (0 fallos).
 3. **Pilar 3 — Documentación & Manuales de Usuario (Sincronización Mandatoria de README.md):**
-   - **Obligación Estricta:** Ante **CADA cambio**, nueva característica, comando, endpoint o ajuste de infraestructura/Docker, el [`README.md`](file:///Users/javier/Projects/holospace-baseline/README.md) y los archivos en `/docs/` **DEBEN ser actualizados inmediatamente**.
-   - El [`README.md`](file:///Users/javier/Projects/holospace-baseline/README.md) debe contener siempre las instrucciones precisas de acceso a cada módulo Web y Mobile, comandos de Docker y credenciales vigentes sin dejar instrucciones contradictorias o desactualizadas.
+   - **Obligación Estricta:** Ante **CADA cambio**, nueva característica, comando, endpoint o ajuste de infraestructura/Docker, los archivos en `/docs/` y el [`docs/README.md`](file:///Users/javier/Projects/holospace-baseline/docs/README.md) **DEBEN ser actualizados inmediatamente**.
+   - [`docs/README.md`](file:///Users/javier/Projects/holospace-baseline/docs/README.md) debe contener siempre las instrucciones precisas de acceso a cada módulo Web y Mobile, comandos de Docker y credenciales vigentes sin dejar instrucciones contradictorias o desactualizadas.
 4. **Pilar 4 — Trazabilidad & Roadmap:**
-   - Sincronizar el estado en `roadmap/SAAS_MULTITENANT_ROADMAP.md` y documentar en `walkthrough.md`.
+   - Sincronizar el estado en `roadmap/SAAS_MULTITENANT_ROADMAP.md` y `docs/ROADMAP.md`, documentando en `walkthrough.md`.
 
+---
 
+## Regla de Oro Obligatoria: Creación Mandatoria de Tests por Feature/Módulo y Validación de Cobertura Total
+
+1. **Cero Módulos o Features sin Test:** Queda estrictamente prohibido dar por terminada una tarea, agregar un nuevo módulo o implementar una nueva funcionalidad sin su correspondiente suite de pruebas automatizadas en `tests/` o `bin/`.
+2. **Inclusión Inmediata en el Orquestador:** Toda suite creada debe agregarse inmediatamente a `tests/run-all-tests.js`.
+3. **Corridas Completas de Verificación:** Al terminar de implementar cualquier funcionalidad, mutación de base de datos o endpoint, el agente DEBE ejecutar obligatoriamente el orquestador unificado:
+   ```bash
+   docker compose exec app node tests/run-all-tests.js
+   ```
+4. **Cero Tolerancia a Regresiones:** Si cualquiera de las suites falla, la tarea NO puede considerarse finalizada y el agente debe corregir la regresión antes de continuar o desplegar a producción.
 
 ---
 
