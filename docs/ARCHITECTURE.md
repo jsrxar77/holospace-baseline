@@ -256,3 +256,38 @@ Para garantizar consistencia atómica e impedir falsos positivos de desasignaci�
 5. **Persistencia Transaccional de Avance de Escaneo (`/api/scanban/update-scan-progress`):** Cada lectura de código (cámara o manual) actualiza inmediatamente `orders.total_items_scanned` y `order_items.quantity_scanned` en PostgreSQL, previniendo reversiones a cero durante la sincronización periódica, complementado con retroalimentación acústica PCM WAV de 1200Hz y compatibilidad con Silent Mode en iOS.
 6. **Transición Atómica Directa `DOING -> DONE` y Optimización Visual:** Al presionar `CERRAR Y DESPACHAR PEDIDO` en `OrderSummaryScreen`, la mutación en PostgreSQL se ejecuta inmediatamente, ocultando el botón de escaneo ante verificación completa (100%) y presentando una pantalla de confirmación centrada puramente informativa.
 7. **Estabilización de Ciclo de Vida de Órdenes Despachadas:** La sincronización periódica en segundo plano (`loadInitialOrders`) protege y preserva órdenes en estado `CLOSED`, `DONE` y `PARTIAL_DISPATCH` de ser sobreescritas a `null`, garantizando que `DispatchScreen` permanezca visible y centrada hasta que el operario toque `VOLVER A LISTA DE PEDIDOS`.
+
+---
+
+## 9. Subsistema de Control de Acceso Basado en Roles (RBAC) y Permisos Granulares
+
+HoloSpace implementa un modelo de autorización desacoplado de nivel empresarial (NIST RBAC Nivel 2):
+
+### 9.1 Modelo de Datos Relacional (`init-schema.sql`)
+1. **`permissions` (Catálogo Inmutable de Capacidades):**
+   - Clave primaria natural: `key VARCHAR(100)` con formato estandarizado `<modulo>:<recurso>:<accion>` (ej: `kanban:orders:read`, `4see:pricing:write`, `core:roles:manage`).
+   - Atributos: `module`, `resource`, `action`, `description`.
+2. **`roles` (Roles del Sistema y Personalizados):**
+   - Identificador técnico: `id UUID PRIMARY KEY`.
+   - Distinción de alcance: `is_system BOOLEAN` (`true` para roles nativos `superadmin`, `admin`, `operator`; `false` para roles creados por clientes).
+   - Multi-Tenancy: `tenant_id UUID REFERENCES tenants(id)` (aislado con RLS para impedir fuga entre organizaciones).
+3. **`role_permissions` (Mapeo N:M):**
+   - Vinculación `(role_id, permission_key)`.
+4. **`users.role_id` (Asignación Dinámica):**
+   - Columna `role_id UUID REFERENCES roles(id)` que reemplaza la antigua dependencia de strings fijos.
+
+### 9.2 Contrato Canónico de Error 403 (`INSUFFICIENT_PERMISSIONS`)
+Cuando cualquier usuario intenta ejecutar una acción sin contar con el permiso correspondiente, el backend emite una respuesta unificada con código HTTP 403:
+```json
+{
+  "error": "Acceso denegado: Permisos insuficientes",
+  "code": "INSUFFICIENT_PERMISSIONS",
+  "required_permission": "4see:pricing:write",
+  "module": "4see",
+  "message": "Se requiere el permiso '4see:pricing:write' para realizar esta acción.",
+  "timestamp": "2026-09-11T18:00:00.000Z"
+}
+```
+
+### 9.3 Interceptor Centralizado y Modal UI/UX
+En el frontend (`public/app.js`), el cliente intercepta respuestas 403 con `code === 'INSUFFICIENT_PERMISSIONS'`, renderizando el modal de advertencia (`permissionDeniedModal`) con el chip destacado del permiso faltante y el módulo afectado sin interrumpir la sesión del usuario.

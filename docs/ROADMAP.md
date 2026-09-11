@@ -79,10 +79,22 @@
 - [x] **9.6** Suite de pruebas automatizada en `bin/test-4see.js` validando fórmulas de margen, extracción de datos y entitlements.
 - [x] **9.7** Documentación canónica sincronizada en los 6 archivos de `/docs`.
 
+### FASE 10: Subsistema Integral de Roles Dinámicos y Permisos Granulares (RBAC Nivel 2)
+- [x] **10.1** Desacople de strings fijos de roles y creación de tablas relacionales `permissions`, `roles` y `role_permissions` con RLS.
+- [x] **10.2** Catálogo canónico de 22 permisos granulares a nivel de acción (`modulo:recurso:accion`) y roles de sistema base (`superadmin`, `admin`, `operator`).
+- [x] **10.3** Motor backend de validación de permisos en `lib/rbac.js` (`hasPermission`, `formatPermissionError`, `getUserPermissions`, etc.).
+- [x] **10.4** Contrato centralizado de error HTTP 403 con código `INSUFFICIENT_PERMISSIONS` y campo `required_permission`.
+- [x] **10.5** Endpoints de administración de roles y permisos (`GET /api/permissions`, `GET /api/roles`, `POST /api/roles`, `PUT /api/roles/:id`, `DELETE /api/roles/:id`).
+- [x] **10.6** Refactorización y blindaje de todos los módulos (`tenant`, `core`, `kanban`, `scanner`, `4see`) con validaciones de permisos granulares.
+- [x] **10.7** Interfaz Web SPA en Módulo Core (`/core`) con vista de Roles y Permisos, tabla de roles con contador de usuarios y modal con checkboxes agrupados por módulo.
+- [x] **10.8** Selector dinámico de roles en el modal de usuario poblado desde `/api/roles` con asignación de `role_id` UUID.
+- [x] **10.9** Interceptor global de fetch en frontend y modal centralizado de error 403 (`showPermissionDeniedModal`).
+- [x] **10.10** Actualización de reglas y workflows en `.agents/AGENTS.md` y `.agents/skills/holospace-module-creator/SKILL.md`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 10:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 11:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 12:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 11:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 12:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 13:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.

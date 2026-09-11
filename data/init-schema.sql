@@ -93,6 +93,49 @@ CREATE TABLE IF NOT EXISTS plans (
 CREATE INDEX IF NOT EXISTS idx_plans_code ON plans(code);
 
 -- ============================================================================
+-- 2.1 SISTEMA DINÁMICO DE ROLES Y PERMISOS GRANULARES (RBAC)
+-- ============================================================================
+
+-- Catálogo Universal de Permisos Granulares
+CREATE TABLE IF NOT EXISTS permissions (
+  key VARCHAR(64) PRIMARY KEY,
+  module_code VARCHAR(64) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT NOT NULL,
+  category VARCHAR(32) NOT NULL DEFAULT 'operation',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_permissions_module ON permissions(module_code);
+
+-- Definición Dinámica de Roles (Soporta roles de sistema y roles por tenant)
+CREATE TABLE IF NOT EXISTS roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
+  code VARCHAR(64) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  is_system BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(tenant_id, code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_roles_tenant ON roles(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_roles_code ON roles(code);
+
+-- Matriz Rol - Permisos (N a M)
+CREATE TABLE IF NOT EXISTS role_permissions (
+  role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+  permission_key VARCHAR(64) NOT NULL REFERENCES permissions(key) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (role_id, permission_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role ON role_permissions(role_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_key ON role_permissions(permission_key);
+
+-- ============================================================================
 -- 3. TABLAS TRANSACCIONALES CON AISLAMIENTO MULTI-TENANT (RLS)
 -- ============================================================================
 
@@ -100,11 +143,12 @@ CREATE INDEX IF NOT EXISTS idx_plans_code ON plans(code);
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
   username VARCHAR(64) NOT NULL,
   email VARCHAR(255) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  role VARCHAR(32) NOT NULL DEFAULT 'OPERATOR' CHECK (role IN ('SUPERADMIN', 'ADMIN', 'OPERATOR')),
+  role VARCHAR(64) NOT NULL DEFAULT 'OPERATOR',
   is_active BOOLEAN NOT NULL DEFAULT true,
   theme_preference VARCHAR(64) DEFAULT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -113,9 +157,14 @@ CREATE TABLE IF NOT EXISTS users (
   UNIQUE(tenant_id, username)
 );
 
+-- Asegurar actualización de columna role_id y restricción si users ya existía
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id UUID REFERENCES roles(id) ON DELETE SET NULL;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+
 CREATE INDEX IF NOT EXISTS idx_users_tenant_email ON users(tenant_id, email);
 CREATE INDEX IF NOT EXISTS idx_users_tenant_username ON users(tenant_id, username);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
 
 -- Tabla de Pedidos / Comprobantes (ScanBan)
 CREATE TABLE IF NOT EXISTS orders (
@@ -280,6 +329,21 @@ ALTER TABLE platform_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+
+-- Política RLS para roles (visibilidad de roles de sistema y roles del tenant)
+DROP POLICY IF EXISTS rls_roles_tenant_isolation ON roles;
+CREATE POLICY rls_roles_tenant_isolation ON roles
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id IS NULL
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
 
 -- Políticas RLS para módulo 4see
 DROP POLICY IF EXISTS rls_fourseee_monitors_tenant_isolation ON fourseee_competitor_monitors;
@@ -451,6 +515,99 @@ ON CONFLICT (code) DO UPDATE SET
   included_modules = EXCLUDED.included_modules,
   is_active = EXCLUDED.is_active;
 
+-- ============================================================================
+-- CATÁLOGO DE PERMISOS GRANULARES Y ROLES DEL SISTEMA (RBAC)
+-- ============================================================================
+
+-- Catálogo Universal de Permisos Granulares de la Plataforma
+INSERT INTO permissions (key, module_code, name, description, category)
+VALUES
+  -- Comodín universal de plataforma
+  ('*', 'platform', 'Acceso Total Irrestricto', 'Superadministración completa de la plataforma y todas sus organizaciones.', 'admin'),
+  
+  -- Módulo Core
+  ('core:users:read', 'core', 'Visualizar Usuarios', 'Permite consultar el listado de usuarios de la organización.', 'read'),
+  ('core:users:manage', 'core', 'Gestionar Usuarios', 'Permite crear, editar, suspender y reasignar roles a usuarios.', 'write'),
+  ('core:roles:read', 'core', 'Visualizar Roles y Permisos', 'Permite consultar el directorio de roles y matriz de permisos.', 'read'),
+  ('core:roles:manage', 'core', 'Gestionar Roles y Permisos', 'Permite crear, editar y eliminar roles personalizados.', 'write'),
+  ('core:audit:read', 'core', 'Consultar Auditoría', 'Permite visualizar los registros y logs de auditoría.', 'read'),
+  ('core:theme:manage', 'core', 'Configurar Tema Corporativo', 'Permite cambiar el tema visual predeterminado del tenant.', 'write'),
+
+  -- Módulo Tenant (Gobierno SaaS)
+  ('tenant:tenants:read', 'tenant', 'Visualizar Organizaciones', 'Permite consultar el directorio de tenants registrados.', 'read'),
+  ('tenant:tenants:manage', 'tenant', 'Gestionar Organizaciones', 'Permite dar de alta, editar y suspender organizaciones.', 'write'),
+  ('tenant:quotas:manage', 'tenant', 'Gestionar Cuotas y Planes', 'Permite modificar límites y asignaciones de planes SaaS.', 'write'),
+  ('tenant:modules:manage', 'tenant', 'Gestionar Entitlements', 'Permite habilitar o deshabilitar módulos a organizaciones.', 'write'),
+
+  -- Módulo Kanban (Logística)
+  ('kanban:orders:read', 'kanban', 'Visualizar Tablero y Pedidos', 'Permite consultar el tablero Kanban y el explorador de comprobantes.', 'read'),
+  ('kanban:orders:ingest', 'kanban', 'Ingesta y Parseo de PDF', 'Permite subir remitos y comprobantes para su procesamiento.', 'write'),
+  ('kanban:orders:assign', 'kanban', 'Asignación de Operarios', 'Permite asignar pedidos a operarios de depósito.', 'write'),
+  ('kanban:orders:dispatch', 'kanban', 'Despacho y Cierre de Pedidos', 'Permite despachar órdenes y cerrar pedidos completados.', 'write'),
+
+  -- Módulo Scanner (Móvil Depósito)
+  ('scanner:items:scan', 'scanner', 'Escanear Código EAN-13', 'Permite registrar lecturas de códigos de barra en depósito.', 'write'),
+  ('scanner:items:verify', 'scanner', 'Verificar Discrepancias', 'Permite auditar diferencias entre leído y esperado en picking.', 'write'),
+  ('scanner:orders:view_assigned', 'scanner', 'Ver Órdenes Asignadas', 'Permite acceder a los pedidos asignados para escaneo.', 'read'),
+
+  -- Módulo 4see (Inteligencia E-Commerce)
+  ('4see:catalog:read', '4see', 'Consultar Catálogo y Monitores', 'Permite ver productos y competidores monitoreados.', 'read'),
+  ('4see:catalog:audit', '4see', 'Auditoría de Catálogo', 'Permite analizar diferencias y cambios de atributos en productos.', 'read'),
+  ('4see:pricing:write', '4see', 'Gestión de Precios y Repricing', 'Permite ajustar reglas de precios sugeridos y alertas.', 'write'),
+  ('4see:margins:manage', '4see', 'Gestión de Márgenes Mínimos', 'Permite configurar umbrales de rentabilidad y alertas de quiebre.', 'write')
+ON CONFLICT (key) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  category = EXCLUDED.category;
+
+-- Roles Nativos del Sistema (Globales)
+INSERT INTO roles (id, tenant_id, code, name, description, is_system)
+VALUES
+  ('c0000000-0000-0000-0000-000000000001', NULL, 'superadmin', 'Super Administrador', 'Control total e irrestricto sobre la plataforma y todas las organizaciones.', true),
+  ('c0000000-0000-0000-0000-000000000002', NULL, 'admin', 'Administrador de Organización', 'Gestión integral de usuarios, configuración y módulos operativos del tenant.', true),
+  ('c0000000-0000-0000-0000-000000000003', NULL, 'operator', 'Operario de Depósito', 'Operación de escaneo, verificación de pedidos asignados y consultas de catálogo.', true)
+ON CONFLICT (tenant_id, code) DO UPDATE SET
+  name = EXCLUDED.name,
+  description = EXCLUDED.description,
+  is_system = EXCLUDED.is_system;
+
+-- Permisos para Rol: SUPERADMIN (Wildcard total)
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES ('c0000000-0000-0000-0000-000000000001', '*')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: ADMIN (Gestión de su organización y módulos operativos)
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000002', 'core:users:read'),
+  ('c0000000-0000-0000-0000-000000000002', 'core:users:manage'),
+  ('c0000000-0000-0000-0000-000000000002', 'core:roles:read'),
+  ('c0000000-0000-0000-0000-000000000002', 'core:roles:manage'),
+  ('c0000000-0000-0000-0000-000000000002', 'core:audit:read'),
+  ('c0000000-0000-0000-0000-000000000002', 'core:theme:manage'),
+  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:read'),
+  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:ingest'),
+  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:assign'),
+  ('c0000000-0000-0000-0000-000000000002', 'kanban:orders:dispatch'),
+  ('c0000000-0000-0000-0000-000000000002', 'scanner:items:scan'),
+  ('c0000000-0000-0000-0000-000000000002', 'scanner:items:verify'),
+  ('c0000000-0000-0000-0000-000000000002', 'scanner:orders:view_assigned'),
+  ('c0000000-0000-0000-0000-000000000002', '4see:catalog:read'),
+  ('c0000000-0000-0000-0000-000000000002', '4see:catalog:audit'),
+  ('c0000000-0000-0000-0000-000000000002', '4see:pricing:write'),
+  ('c0000000-0000-0000-0000-000000000002', '4see:margins:manage')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
+-- Permisos para Rol: OPERATOR (Operación de depósito y escaneo)
+INSERT INTO role_permissions (role_id, permission_key)
+VALUES
+  ('c0000000-0000-0000-0000-000000000003', 'kanban:orders:read'),
+  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:scan'),
+  ('c0000000-0000-0000-0000-000000000003', 'scanner:items:verify'),
+  ('c0000000-0000-0000-0000-000000000003', 'scanner:orders:view_assigned'),
+  ('c0000000-0000-0000-0000-000000000003', '4see:catalog:read')
+ON CONFLICT (role_id, permission_key) DO NOTHING;
+
 INSERT INTO tenant_modules (tenant_id, module_code, is_enabled)
 VALUES 
   ('a0000000-0000-0000-0000-000000000001', 'tenant', true),
@@ -536,3 +693,9 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'OPERATOR'),
   ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
+
+-- Sincronización automática de role_id en users
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000001' WHERE UPPER(role) = 'SUPERADMIN' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000001');
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000002' WHERE UPPER(role) = 'ADMIN' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000002');
+UPDATE users SET role_id = 'c0000000-0000-0000-0000-000000000003' WHERE UPPER(role) = 'OPERATOR' AND (role_id IS NULL OR role_id != 'c0000000-0000-0000-0000-000000000003');
+

@@ -2,6 +2,65 @@ let currentUser = null;
 let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
 let kanbanAutoRefreshInterval = null; // Auto-refresco en tiempo real del tablero Kanban
+let cachedRoles = [];
+let cachedPermissions = [];
+
+// Helper de comprobación de permisos en el Frontend (RBAC)
+function hasFrontendPermission(permissionKey) {
+  if (!currentUser) return false;
+  if (currentUser.role === 'SUPERADMIN') return true;
+  if (!currentUser.permissions || !Array.isArray(currentUser.permissions)) return false;
+  if (currentUser.permissions.includes('*')) return true;
+  if (currentUser.permissions.includes(permissionKey)) return true;
+  const [mod] = permissionKey.split(':');
+  if (currentUser.permissions.includes(`${mod}:*`)) return true;
+  return false;
+}
+
+// Modal Centralizado de Acceso Denegado 403
+function showPermissionDeniedModal(data = {}) {
+  const modal = document.getElementById('permissionDeniedModal');
+  if (!modal) {
+    if (typeof showCustomAlert === 'function') {
+      showCustomAlert('Acceso Restringido (403)', data.message || data.error || 'Permisos insuficientes.');
+    }
+    return;
+  }
+  const permChip = document.getElementById('deniedPermissionChip');
+  const modChip = document.getElementById('deniedModuleChip');
+  const msgEl = document.getElementById('deniedMessageText');
+  
+  if (permChip) permChip.innerText = data.required_permission || 'Permiso restringido';
+  if (modChip) modChip.innerText = (data.module || 'seguridad').toUpperCase();
+  if (msgEl) msgEl.innerText = data.message || data.error || 'No dispones de los permisos requeridos para ejecutar esta acción.';
+  
+  modal.classList.remove('hidden');
+}
+
+function closePermissionDeniedModal() {
+  const modal = document.getElementById('permissionDeniedModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+// Interceptor Global de Fetch para capturar 403 INSUFFICIENT_PERMISSIONS de manera centralizada
+if (typeof window !== 'undefined' && window.fetch) {
+  const nativeFetch = window.fetch;
+  window.fetch = async function(...args) {
+    const response = await nativeFetch.apply(this, args);
+    if (response.status === 403) {
+      try {
+        const clone = response.clone();
+        const data = await clone.json();
+        if (data && data.code === 'INSUFFICIENT_PERMISSIONS') {
+          showPermissionDeniedModal(data);
+        }
+      } catch (err) {
+        // Respuesta no es JSON o ya fue consumida
+      }
+    }
+    return response;
+  };
+}
 
 // Helper de sesión multi-tab: prioriza sessionStorage (aislado por pestaña) con fallback a localStorage
 function getAuthToken() {
@@ -606,8 +665,8 @@ function switchTabMobile(tabName) {
 // NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
   // Limpiar clase activa de todos los feature tabs
-  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeCatalog', 'tab4seeMargins',
-   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabRoles', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeCatalog', 'tab4seeMargins',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabRoles', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -637,7 +696,7 @@ function switchTab(tabName) {
   // Asegurarnos de que el módulo padre también esté activo
   let parentModule = '';
   if (tabName === 'tenants') parentModule = 'tenant';
-  if (tabName === 'platform' || tabName === 'users') parentModule = 'core';
+  if (tabName === 'platform' || tabName === 'users' || tabName === 'roles') parentModule = 'core';
   if (tabName === 'kanban' || tabName === 'orders') parentModule = 'kanban';
   if (tabName === 'scanner') parentModule = 'scanner';
   if (tabName.startsWith('4see')) parentModule = '4see';
@@ -659,7 +718,7 @@ function switchTab(tabName) {
     kanbanAutoRefreshInterval = null;
   }
 
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -720,6 +779,14 @@ function switchTab(tabName) {
     const view = document.getElementById('viewUsers');
     if (view) view.classList.remove('hidden');
     fetchUsers();
+  } else if (tabName === 'roles') {
+    const tab = document.getElementById('tabRoles');
+    if (tab) tab.classList.add('active');
+    const mobTab = document.getElementById('mobTabRoles');
+    if (mobTab) mobTab.classList.add('active');
+    const view = document.getElementById('viewRoles');
+    if (view) view.classList.remove('hidden');
+    fetchRolesManagementData();
   } else if (tabName === 'platform') {
     const platformTab = document.getElementById('tabPlatform');
     if (platformTab) platformTab.classList.add('active');
@@ -1463,8 +1530,8 @@ async function fetchUsers() {
             </span>
           </td>
           <td>
-            <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
-              ${u.role}
+            <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : (u.is_custom_role ? 'background:rgba(0,230,118,0.15); color:var(--emerald); border-color:var(--emerald);' : '')}">
+              ${u.role_name || u.role}
             </span>
           </td>
           <td>
@@ -1494,20 +1561,49 @@ async function fetchUsers() {
   }
 }
 
-function updateRoleSelectOptions(selectedRole = 'OPERATOR') {
+async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId = null) {
   const select = document.getElementById('userRoleInput');
   if (!select) return;
   const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
 
-  let options = `
-    <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
-    <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
-  `;
-  if (isSuperAdmin) {
-    options += `<option value="SUPERADMIN">SUPERADMIN (Super Administrador de Plataforma)</option>`;
+  // Si no tenemos la lista de roles cargada, la consultamos de /api/roles
+  if (!cachedRoles || cachedRoles.length === 0) {
+    try {
+      const res = await fetch('/api/roles', {
+        headers: { 'Authorization': `Bearer ${getAuthToken() || ''}` }
+      });
+      const data = await res.json();
+      if (data.roles) {
+        cachedRoles = data.roles;
+      }
+    } catch (e) {
+      console.warn('Error precargando roles:', e);
+    }
   }
-  select.innerHTML = options;
-  select.value = selectedRole;
+
+  if (cachedRoles && cachedRoles.length > 0) {
+    let html = '';
+    cachedRoles.forEach(r => {
+      // Filtrar superadmin si el usuario actual no es superadmin
+      if (r.slug === 'superadmin' && !isSuperAdmin) return;
+      
+      const isSelected = selectedRoleId ? (String(r.id) === String(selectedRoleId)) : (r.slug.toUpperCase() === String(selectedRole).toUpperCase());
+      const typeLabel = r.is_system ? 'Sistema' : 'Personalizado';
+      html += `<option value="${r.slug.toUpperCase()}" data-role-id="${r.id}" ${isSelected ? 'selected' : ''}>${r.name} (${typeLabel})</option>`;
+    });
+    select.innerHTML = html;
+  } else {
+    // Fallback estándar
+    let options = `
+      <option value="OPERATOR">OPERATOR (Operario de Escáner Móvil)</option>
+      <option value="ADMIN">ADMIN (Administrador de Tablero Web)</option>
+    `;
+    if (isSuperAdmin) {
+      options += `<option value="SUPERADMIN">SUPERADMIN (Super Administrador de Plataforma)</option>`;
+    }
+    select.innerHTML = options;
+    select.value = selectedRole;
+  }
 }
 
 function toggleUserPasswordVisibility() {
@@ -1622,7 +1718,7 @@ function fillUserModal(user) {
   if (toggleBtn) toggleBtn.innerText = 'Ver';
 
   populateUserModalTenants(user.tenant_id || user.tenantId || '');
-  updateRoleSelectOptions(user.role || 'OPERATOR');
+  updateRoleSelectOptions(user.role || 'OPERATOR', user.role_id);
   document.getElementById('userModal').classList.remove('hidden');
 }
 
@@ -1651,8 +1747,10 @@ async function saveUserSubmit(e) {
   const username = nickInput ? nickInput.value.trim().toLowerCase() : '';
   const name = document.getElementById('userNameInput').value.trim();
   const email = document.getElementById('userEmailInput').value.trim().toLowerCase();
-  const password = document.getElementById('userPasswordInput').value;
-  const role = document.getElementById('userRoleInput').value;
+  const roleSelect = document.getElementById('userRoleInput');
+  const role = roleSelect ? roleSelect.value : 'OPERATOR';
+  const selectedOpt = roleSelect && roleSelect.selectedIndex >= 0 ? roleSelect.options[roleSelect.selectedIndex] : null;
+  const role_id = selectedOpt ? selectedOpt.getAttribute('data-role-id') : null;
   
   const tenantSelect = document.getElementById('userTenantSelect');
   const targetTenantId = (tenantSelect && tenantSelect.value) ? tenantSelect.value : (currentUser.tenantId || currentUser.tenant_id);
@@ -1677,8 +1775,8 @@ async function saveUserSubmit(e) {
   const url = '/api/users';
   const method = id ? 'PUT' : 'POST';
   const payload = id ? 
-    { id, tenantId: targetTenantId, username, name, email, password: password || '', role } : 
-    { tenantId: targetTenantId, username, name, email, password, role };
+    { id, tenantId: targetTenantId, username, name, email, password: password || '', role, role_id } : 
+    { tenantId: targetTenantId, username, name, email, password, role, role_id };
 
   try {
     const res = await fetch(url, {
@@ -1726,6 +1824,237 @@ async function toggleUserStatus(id, currentActive) {
     }
   } catch (e) {
     await showCustomAlert('Error', 'Error de comunicación con el servidor.');
+  }
+}
+
+// ----------------------------------------------------
+// GESTIÓN DINÁMICA DE ROLES Y PERMISOS (RBAC)
+// ----------------------------------------------------
+async function fetchRolesManagementData() {
+  try {
+    const token = getAuthToken();
+    const [rolesRes, permsRes] = await Promise.all([
+      fetch('/api/roles', { headers: { 'Authorization': `Bearer ${token}` } }),
+      fetch('/api/permissions', { headers: { 'Authorization': `Bearer ${token}` } })
+    ]);
+    const rolesData = await rolesRes.json();
+    const permsData = await permsRes.json();
+    
+    if (rolesData.roles) cachedRoles = rolesData.roles;
+    if (permsData.permissions) cachedPermissions = permsData.permissions;
+    
+    renderRolesTable(cachedRoles);
+  } catch (err) {
+    console.error('Error cargando roles y permisos:', err);
+  }
+}
+
+function renderRolesTable(roles = []) {
+  const tbody = document.getElementById('rolesTableBody');
+  if (!tbody) return;
+
+  if (roles.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No se encontraron roles configurados.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = roles.map(r => {
+    const isSystem = !!r.is_system;
+    const typeBadge = isSystem
+      ? `<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #7C3AED;">Sistema</span>`
+      : `<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald);">Personalizado</span>`;
+
+    const permsCount = Array.isArray(r.permissions) ? r.permissions.length : 0;
+    const hasWildcard = Array.isArray(r.permissions) && r.permissions.includes('*');
+    
+    let permsDisplay = '';
+    if (hasWildcard) {
+      permsDisplay = `<code style="font-family: monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Acceso Total (*)</code>`;
+    } else {
+      const topPerms = (r.permissions || []).slice(0, 3).map(p => 
+        `<span style="font-size: 11px; font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
+      ).join(' ');
+      const extra = permsCount > 3 ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">+${permsCount - 3} más</span>` : '';
+      permsDisplay = `<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${topPerms}${extra}</div>`;
+    }
+
+    const canDelete = !isSystem;
+
+    return `
+      <tr>
+        <td><strong>${r.name}</strong></td>
+        <td><code style="font-family: monospace; color: var(--text-muted);">${r.slug}</code></td>
+        <td style="color: var(--text-muted); font-size: 13px; max-width: 240px;">${r.description || '-'}</td>
+        <td>${typeBadge}</td>
+        <td>${permsDisplay}</td>
+        <td><strong style="color: #FFF;">${r.user_count || 0}</strong></td>
+        <td>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openRoleModal('${r.id}')">Editar</button>
+            ${canDelete ? `
+              <button class="btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="deleteRole('${r.id}', '${r.name}')">Eliminar</button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function openRoleModal(roleIdToEdit = null) {
+  const token = getAuthToken();
+  if (!cachedPermissions || cachedPermissions.length === 0) {
+    try {
+      const pRes = await fetch('/api/permissions', { headers: { 'Authorization': `Bearer ${token}` } });
+      const pData = await pRes.json();
+      if (pData.permissions) cachedPermissions = pData.permissions;
+    } catch (e) {}
+  }
+
+  let role = null;
+  if (roleIdToEdit) {
+    role = cachedRoles.find(r => String(r.id) === String(roleIdToEdit));
+  }
+
+  document.getElementById('roleId').value = role ? role.id : '';
+  document.getElementById('roleModalTitle').innerText = role ? `Editar Rol: ${role.name}` : 'Crear Rol Personalizado';
+  document.getElementById('roleNameInput').value = role ? role.name : '';
+  document.getElementById('roleSlugInput').value = role ? role.slug : '';
+  document.getElementById('roleSlugInput').disabled = !!(role && role.is_system);
+  document.getElementById('roleDescriptionInput').value = role ? (role.description || '') : '';
+
+  const activePerms = role && Array.isArray(role.permissions) ? role.permissions : [];
+  const isSuperadminRole = role && role.slug === 'superadmin';
+
+  // Renderizar checkboxes agrupados por módulo
+  const container = document.getElementById('rolePermissionsContainer');
+  if (container) {
+    const grouped = {};
+    cachedPermissions.forEach(p => {
+      // Ignorar comodín global en la lista de checkboxes
+      if (p.key === '*') return;
+      const mod = p.module_code || p.module || (p.key.includes(':') ? p.key.split(':')[0] : 'general');
+      if (!grouped[mod]) grouped[mod] = [];
+      grouped[mod].push(p);
+    });
+
+    let html = '';
+    for (const mod in grouped) {
+      html += `
+        <div style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; margin-bottom: 4px;">
+          <div style="font-size: 12px; font-weight: 800; color: var(--emerald); text-transform: uppercase; margin-bottom: 6px;">
+            Módulo: ${mod}
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 8px;">
+      `;
+      grouped[mod].forEach(perm => {
+        const isChecked = isSuperadminRole || activePerms.includes(perm.key) || activePerms.includes('*') || activePerms.includes(`${mod}:*`);
+        const actionLabel = perm.action || (perm.key.includes(':') ? perm.key.split(':')[2] : (perm.category || 'op'));
+        const titleLabel = perm.name || perm.description || perm.key;
+        const descLabel = perm.description ? `<span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">${perm.description}</span>` : '';
+        html += `
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; cursor: pointer; color: var(--text-main); background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+            <input type="checkbox" name="role_perm" value="${perm.key}" ${isChecked ? 'checked' : ''} ${isSuperadminRole ? 'disabled' : ''} style="margin-top: 3px;">
+            <div>
+              <span style="font-weight: 700; color: #FFF;">${titleLabel}</span>
+              <code style="font-family: monospace; font-size: 11px; color: var(--amber); margin-left: 4px;">(${perm.key})</code>
+              ${descLabel}
+            </div>
+          </label>
+        `;
+      });
+      html += `</div></div>`;
+    }
+    container.innerHTML = html;
+  }
+
+  document.getElementById('roleModal').classList.remove('hidden');
+}
+
+function closeRoleModal() {
+  const modal = document.getElementById('roleModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function selectAllRolePermissions(selectAll) {
+  const checkboxes = document.querySelectorAll('#rolePermissionsContainer input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    if (!cb.disabled) cb.checked = !!selectAll;
+  });
+}
+
+async function saveRoleSubmit(e) {
+  e.preventDefault();
+  const id = document.getElementById('roleId').value;
+  const name = document.getElementById('roleNameInput').value.trim();
+  const slug = document.getElementById('roleSlugInput').value.trim();
+  const description = document.getElementById('roleDescriptionInput').value.trim();
+
+  if (!name) {
+    await showCustomAlert('Campo Requerido', 'El nombre del rol es obligatorio.');
+    return;
+  }
+
+  const selectedPermissions = [];
+  document.querySelectorAll('#rolePermissionsContainer input[name="role_perm"]:checked').forEach(cb => {
+    selectedPermissions.push(cb.value);
+  });
+
+  const token = getAuthToken();
+  const method = id ? 'PUT' : 'POST';
+  const url = id ? `/api/roles/${id}` : '/api/roles';
+  const payload = { name, slug, description, permissions: selectedPermissions };
+
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      closeRoleModal();
+      await showCustomAlert('Rol Guardado', `El rol '${name}' fue guardado correctamente con ${selectedPermissions.length} permisos.`);
+      await fetchRolesManagementData();
+      cachedRoles = [];
+      updateRoleSelectOptions();
+    } else {
+      await showCustomAlert('Error al Guardar', data.error || 'No se pudo guardar el rol.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', 'Error de conexión con el servidor al guardar rol.');
+  }
+}
+
+async function deleteRole(id, name) {
+  const confirmed = await showCustomConfirm(
+    'Confirmar Eliminación',
+    `¿Estás seguro de eliminar el rol '${name}'? Los usuarios asignados a este rol perderán sus permisos específicos.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const token = getAuthToken();
+    const res = await fetch(`/api/roles/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      await showCustomAlert('Rol Eliminado', `El rol '${name}' fue eliminado correctamente.`);
+      await fetchRolesManagementData();
+      cachedRoles = [];
+      updateRoleSelectOptions();
+    } else {
+      await showCustomAlert('Error al Eliminar', data.error || 'No se pudo eliminar el rol.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', 'Error de conexión con el servidor al eliminar rol.');
   }
 }
 

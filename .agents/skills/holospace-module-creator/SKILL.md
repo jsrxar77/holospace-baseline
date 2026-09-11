@@ -87,11 +87,25 @@ CREATE POLICY rls_<tabla_modulo>_tenant_isolation ON <tabla_modulo>
   );
 ```
 
-### Paso 5: Sincronizacion Mandatoria de Documentacion en `/docs`
+### Paso 5: Definir y Registrar Permisos Granulares RBAC
+1. **Registrar permisos en la tabla `permissions`**:
+   Insertar los permisos granulares en formato `<modulo>:<recurso>:<accion>`:
+   ```sql
+   INSERT INTO permissions (key, module, resource, action, description) VALUES
+     ('<modulo>:<recurso>:read', '<modulo>', '<recurso>', 'read', 'Lectura de <recurso>'),
+     ('<modulo>:<recurso>:write', '<modulo>', '<recurso>', 'write', 'Escritura y mutación de <recurso>')
+   ON CONFLICT (key) DO NOTHING;
+   ```
+2. **Asignar permisos a roles de sistema por defecto en `role_permissions`**:
+   Vincular al rol `admin` o al rol `operator` si corresponde operativamente.
+3. **Proteger endpoints en `routes/`**:
+   Validar permisos con `hasPermission(req.user, '<modulo>:<recurso>:<accion>')`. Si no lo posee, emitir el error canónico 403 `INSUFFICIENT_PERMISSIONS`.
+
+### Paso 6: Sincronizacion Mandatoria de Documentacion en `/docs`
 Actualizar obligatoriamente los 6 archivos canonicos:
 1. `docs/MODULES.md`: Especificar el modulo, clave, endpoints y proposito.
 2. `docs/FEATURES.md`: Anadir a la matriz RBAC de roles y al catalogo de planes.
-3. `docs/ARCHITECTURE.md`: Registrar nuevas tablas y politicas RLS.
+3. `docs/ARCHITECTURE.md`: Registrar nuevas tablas, politicas RLS y permisos del modulo.
 4. `docs/README.md` (y raiz `README.md`): Agregar URL de acceso, rol permitido y credenciales de prueba.
 5. `docs/CONTENT.md`: Naming oficial y textos de interfaz.
 6. `docs/ROADMAP.md`: Marcar hito de creacion y estado de entrega.

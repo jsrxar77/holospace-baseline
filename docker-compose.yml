@@ -22,6 +22,8 @@ services:
       - ./lib:/app/lib
       - ./modules:/app/modules
       - ./package.json:/app/package.json
+      - ./tests:/app/tests
+      - ./bin:/app/bin
     ports:
       - "3001:3001"
     depends_on:

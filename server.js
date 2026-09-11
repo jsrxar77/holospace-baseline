@@ -10,6 +10,17 @@ const { query, getOne, execute, transaction, DEFAULT_TENANT_ID } = require('./li
 const { hashPassword, verifyPassword, signJwt, verifyJwt, resolveTenantContext } = require('./lib/auth');
 const { checkTenantModuleAccess, getTenantEntitlements, setTenantModuleState, getTenantSubscriptionAndUsage, requireModule } = require('./lib/entitlement');
 const { PLANS, registerNewTenant, createCheckoutSession, handlePaymentWebhook } = require('./lib/billing');
+const {
+  hasPermission,
+  formatPermissionError,
+  sendPermissionError,
+  getUserPermissions,
+  getAllPermissions,
+  getRolesForTenant,
+  createCustomRole,
+  updateCustomRole,
+  deleteCustomRole
+} = require('./lib/rbac');
 
 function getPrimaryLocalIp(req) {
   if (process.env.HOST_IP) return process.env.HOST_IP;
@@ -500,7 +511,7 @@ const server = http.createServer(async (req, res) => {
     if (emailToFind) {
       try {
         const dbUser = await getOne(
-          'SELECT email as id, email, password_hash as password, name, role, is_active as active, tenant_id, theme_preference FROM users WHERE LOWER(email) = ? AND is_active = true',
+          'SELECT email as id, email, password_hash as password, name, role, role_id, is_active as active, tenant_id, theme_preference FROM users WHERE LOWER(email) = ? AND is_active = true',
           [emailToFind.toLowerCase()],
           { isSuperAdmin: true }
         );
@@ -508,6 +519,10 @@ const server = http.createServer(async (req, res) => {
           currentUser = { ...(currentUser || {}), ...dbUser };
         }
       } catch (e) { }
+    }
+
+    if (currentUser) {
+      currentUser.permissions = await getUserPermissions(currentUser);
     }
 
     const tenantContext = await resolveTenantContext(req, currentUser);
@@ -712,11 +727,10 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 4. AUDITORÍA DE PLATAFORMA (SUPERADMIN ONLY)
+      // 4. AUDITORÍA DE PLATAFORMA (SUPERADMIN / AUDITOR)
       if (req.url === '/api/platform-audit' && req.method === 'GET') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede acceder a la auditoría de plataforma.' }));
+        if (!hasPermission(currentUser?.permissions, 'core:audit:read')) {
+          sendPermissionError(res, 'core:audit:read');
           return;
         }
         const logs = await query('SELECT id, created_at as timestamp, user_email as "userEmail", action, details FROM platform_audit_logs ORDER BY created_at DESC LIMIT 100', [], { isSuperAdmin: true });
@@ -755,9 +769,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url === '/api/plans' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede crear o modificar planes.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:quotas:manage')) {
+          sendPermissionError(res, 'tenant:quotas:manage');
           return;
         }
         const { code, name, description, maxUsers = 5, maxOrdersMonthly = 500, includedModules = ['core'] } = data || {};
@@ -776,11 +789,10 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      // 6. SAAS: GESTIÓN DE TENANTS (SUPERADMIN ONLY)
+      // 6. SAAS: GESTIÓN DE TENANTS
       if (req.url === '/api/tenants' && req.method === 'GET') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede listar organizaciones.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:tenants:read')) {
+          sendPermissionError(res, 'tenant:tenants:read');
           return;
         }
         const tenants = await query(`
@@ -804,9 +816,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url === '/api/tenants' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede crear organizaciones.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:tenants:manage')) {
+          sendPermissionError(res, 'tenant:tenants:manage');
           return;
         }
         const { name, slug, planCode = 'starter', maxUsers, maxOrdersMonthly, adminName, adminEmail, adminPassword } = data || {};
@@ -859,9 +870,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url === '/api/tenants/users' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede crear usuarios en tenants.' }));
+        if (!hasPermission(currentUser?.permissions, 'core:users:manage')) {
+          sendPermissionError(res, 'core:users:manage');
           return;
         }
         const { tenantId: targetTenantId, username, email, name, password, role = 'OPERATOR' } = data || {};
@@ -898,9 +908,8 @@ const server = http.createServer(async (req, res) => {
 
       // 6.2 EDICIÓN INTEGRAL DE ORGANIZACIÓN (SUPERADMIN ONLY)
       if (req.url === '/api/tenants' && req.method === 'PUT') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede editar organizaciones.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:tenants:manage')) {
+          sendPermissionError(res, 'tenant:tenants:manage');
           return;
         }
 
@@ -990,9 +999,8 @@ const server = http.createServer(async (req, res) => {
 
       // 6.1 SUSPENSIÓN LÓGICA DE ORGANIZACIÓN (TENANT)
       if (req.url === '/api/tenants/status' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede modificar el estado de organizaciones.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:tenants:manage')) {
+          sendPermissionError(res, 'tenant:tenants:manage');
           return;
         }
         const { tenantId: targetTenantId, status } = data || {};
@@ -1039,9 +1047,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url === '/api/tenants/modules' && req.method === 'POST') {
-        if (!currentUser || currentUser.role !== 'SUPERADMIN') {
-          res.writeHead(403, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'Solo el Super Administrador puede licenciar módulos.' }));
+        if (!hasPermission(currentUser?.permissions, 'tenant:modules:manage')) {
+          sendPermissionError(res, 'tenant:modules:manage');
           return;
         }
         const { tenantId: targetTenantId, moduleCode, isEnabled } = data || {};
@@ -1107,7 +1114,7 @@ const server = http.createServer(async (req, res) => {
         const normalizedEmail = (email || '').toLowerCase().trim();
 
         const user = await getOne(
-          'SELECT email as id, email, username, password_hash as password, name, role, is_active as active, tenant_id FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
+          'SELECT email as id, email, username, password_hash as password, name, role, role_id, is_active as active, tenant_id FROM users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
           [normalizedEmail, normalizedEmail],
           { isSuperAdmin: true }
         );
@@ -1135,6 +1142,7 @@ const server = http.createServer(async (req, res) => {
         };
 
         const entitlements = await getTenantEntitlements(userTenantId);
+        const userPermissions = await getUserPermissions(user);
 
         const jwtPayload = {
           sub: user.email,
@@ -1142,13 +1150,15 @@ const server = http.createServer(async (req, res) => {
           username: user.username || user.email.split('@')[0],
           name: user.name,
           role: user.role,
+          roleId: user.role_id,
           tenantId: tenant.id,
           tenantSlug: tenant.slug,
-          entitlements
+          entitlements,
+          permissions: userPermissions
         };
         const token = signJwt(jwtPayload, 86400 * 7);
 
-        console.log(`[AUTH] Login JWT exitoso: ${user.username || user.email} (${user.role}) [Tenant: ${tenant.slug}]`);
+        console.log(`[AUTH] Login JWT exitoso: ${user.username || user.email} (${user.role}) [Tenant: ${tenant.slug}] [Permisos: ${userPermissions.length}]`);
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
           success: true,
@@ -1159,9 +1169,11 @@ const server = http.createServer(async (req, res) => {
             username: user.username || user.email.split('@')[0],
             name: user.name,
             role: user.role,
+            roleId: user.role_id,
             tenantId: tenant.id,
             tenantSlug: tenant.slug,
-            tenantName: tenant.name
+            tenantName: tenant.name,
+            permissions: userPermissions
           },
           tenant,
           entitlements
@@ -1169,37 +1181,126 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 8.1 RBAC: CATÁLOGO DE PERMISOS GRANULARES
+      if (req.url === '/api/permissions' && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'core:roles:read')) {
+          sendPermissionError(res, 'core:roles:read');
+          return;
+        }
+        const permissions = await getAllPermissions();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, permissions }));
+        return;
+      }
+
+      // 8.2 RBAC: GESTIÓN DE ROLES (LISTAR, CREAR, EDITAR, ELIMINAR)
+      if ((req.url === '/api/roles' || req.url.startsWith('/api/roles?')) && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'core:roles:read')) {
+          sendPermissionError(res, 'core:roles:read');
+          return;
+        }
+        const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+        const roles = await getRolesForTenant(tenantId, isSuperAdmin);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, roles }));
+        return;
+      }
+
+      if (req.url === '/api/roles' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'core:roles:manage')) {
+          sendPermissionError(res, 'core:roles:manage');
+          return;
+        }
+        try {
+          const role = await createCustomRole(tenantId, data || {});
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, role }));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+        return;
+      }
+
+      if (req.url.startsWith('/api/roles/') && req.method === 'PUT') {
+        if (!hasPermission(currentUser?.permissions, 'core:roles:manage')) {
+          sendPermissionError(res, 'core:roles:manage');
+          return;
+        }
+        const roleId = req.url.split('/')[3].split('?')[0];
+        try {
+          const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+          const result = await updateCustomRole(roleId, tenantId, data || {}, isSuperAdmin);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+        return;
+      }
+
+      if (req.url.startsWith('/api/roles/') && req.method === 'DELETE') {
+        if (!hasPermission(currentUser?.permissions, 'core:roles:manage')) {
+          sendPermissionError(res, 'core:roles:manage');
+          return;
+        }
+        const roleId = req.url.split('/')[3].split('?')[0];
+        try {
+          const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+          const result = await deleteCustomRole(roleId, tenantId, isSuperAdmin);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+        return;
+      }
+
       // 9. GESTIÓN DE USUARIOS
       if (req.url.startsWith('/api/users')) {
         if (req.method === 'GET') {
+          if (!hasPermission(currentUser?.permissions, 'core:users:read')) {
+            sendPermissionError(res, 'core:users:read');
+            return;
+          }
           const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
           const filterTenantId = urlObj.searchParams.get('tenantId') || (currentUser && currentUser.role !== 'SUPERADMIN' ? tenantId : null);
           const filterRole = urlObj.searchParams.get('role');
 
           let userList;
           if (filterTenantId) {
-            let sql = 'SELECT id, username, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ?';
+            let sql = `
+              SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id
+              FROM users u
+              LEFT JOIN roles r ON u.role_id = r.id
+              WHERE u.tenant_id = ?
+            `;
             const params = [filterTenantId];
             if (filterRole) {
-              sql += ' AND role = ?';
+              sql += ' AND u.role = ?';
               params.push(filterRole.toUpperCase());
             }
-            sql += ' ORDER BY name';
+            sql += ' ORDER BY u.name';
             userList = await query(sql, params, { tenantId: filterTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' });
           } else if (currentUser && currentUser.role === 'SUPERADMIN') {
             userList = await query(`
-              SELECT u.id, u.username, u.email, u.name, u.role, u.is_active as active, u.tenant_id,
+              SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id,
                      t.name as tenant_name, t.slug as tenant_slug
               FROM users u
+              LEFT JOIN roles r ON u.role_id = r.id
               LEFT JOIN tenants t ON u.tenant_id = t.id
               ORDER BY t.slug, u.name
             `, [], { isSuperAdmin: true });
           } else {
-            userList = await query(
-              'SELECT id, username, email, name, role, is_active as active, tenant_id FROM users WHERE tenant_id = ? ORDER BY name',
-              [tenantId],
-              { tenantId }
-            );
+            userList = await query(`
+              SELECT u.id, u.username, u.email, u.name, u.role, u.role_id, r.name as role_name, u.is_active as active, u.tenant_id
+              FROM users u
+              LEFT JOIN roles r ON u.role_id = r.id
+              WHERE u.tenant_id = ?
+              ORDER BY u.name
+            `, [tenantId], { tenantId });
           }
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify(userList));
@@ -1207,7 +1308,11 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'POST') {
-          const { tenantId: reqTenantId, username, email, password, name, role } = data || {};
+          if (!hasPermission(currentUser?.permissions, 'core:users:manage')) {
+            sendPermissionError(res, 'core:users:manage');
+            return;
+          }
+          const { tenantId: reqTenantId, username, email, password, name, role, roleId } = data || {};
           if (!username || !email || !password || !name) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Nick (Username), nombre, email y contraseña son obligatorios.' }));
@@ -1215,11 +1320,21 @@ const server = http.createServer(async (req, res) => {
           }
           const cleanUsername = username.toLowerCase().trim();
           const cleanEmail = email.toLowerCase().trim();
-          const targetRole = role || 'OPERATOR';
           const targetTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : tenantId;
           const userId = crypto.randomUUID();
 
-          // Validar username único dentro del tenant
+          let targetRoleId = roleId || null;
+          let targetRole = (role || 'OPERATOR').toUpperCase();
+
+          if (targetRoleId) {
+            const rRow = await getOne('SELECT id, code FROM roles WHERE id = ?', [targetRoleId], { isSuperAdmin: true });
+            if (rRow) targetRole = rRow.code.toUpperCase();
+          } else {
+            const rRow = await getOne('SELECT id FROM roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [targetRole.toLowerCase(), targetTenantId], { isSuperAdmin: true });
+            if (rRow) targetRoleId = rRow.id;
+          }
+
+          // Validar username o email único dentro del tenant
           const existing = await getOne(
             'SELECT id FROM users WHERE tenant_id = ? AND (LOWER(username) = ? OR LOWER(email) = ?)',
             [targetTenantId, cleanUsername, cleanEmail],
@@ -1232,8 +1347,8 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'INSERT INTO users (id, tenant_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, true)',
-            [userId, targetTenantId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
+            'INSERT INTO users (id, tenant_id, role_id, username, email, password_hash, name, role, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)',
+            [userId, targetTenantId, targetRoleId, cleanUsername, cleanEmail, hashPassword(password), name, targetRole],
             { tenantId: targetTenantId, isSuperAdmin: currentUser && currentUser.role === 'SUPERADMIN' }
           );
 
@@ -1243,7 +1358,11 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'PUT') {
-          const { id, tenantId: reqTenantId, username, email, name, password, role, active } = data || {};
+          if (!hasPermission(currentUser?.permissions, 'core:users:manage')) {
+            sendPermissionError(res, 'core:users:manage');
+            return;
+          }
+          const { id, tenantId: reqTenantId, username, email, name, password, role, roleId, active } = data || {};
           if (!id && !email && !username) {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'Se requiere ID, username o email de usuario.' }));
@@ -1263,12 +1382,25 @@ const server = http.createServer(async (req, res) => {
             return;
           }
 
+          const updatedTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : targetUser.tenant_id;
+          let updatedRoleId = targetUser.role_id;
+          let updatedRole = role !== undefined ? role : targetUser.role;
+
+          if (roleId) {
+            const rRow = await getOne('SELECT id, code FROM roles WHERE id = ?', [roleId], { isSuperAdmin: true });
+            if (rRow) {
+              updatedRoleId = rRow.id;
+              updatedRole = rRow.code.toUpperCase();
+            }
+          } else if (role !== undefined) {
+            const rRow = await getOne('SELECT id FROM roles WHERE LOWER(code) = ? AND (tenant_id IS NULL OR tenant_id = ?)', [role.toLowerCase(), updatedTenantId], { isSuperAdmin: true });
+            if (rRow) updatedRoleId = rRow.id;
+          }
+
           const updatedUsername = username !== undefined ? username.toLowerCase().trim() : (targetUser.username || targetUser.email.split('@')[0]);
           const updatedName = name !== undefined ? name : targetUser.name;
           const updatedEmail = email !== undefined ? email.toLowerCase().trim() : targetUser.email;
-          const updatedRole = role !== undefined ? role : targetUser.role;
           const updatedActive = active !== undefined ? Boolean(active) : targetUser.is_active;
-          const updatedTenantId = (currentUser && currentUser.role === 'SUPERADMIN' && reqTenantId) ? reqTenantId : targetUser.tenant_id;
 
           let updatedHash = targetUser.password_hash;
           if (password && password.trim() && password !== '••••••••') {
@@ -1276,8 +1408,8 @@ const server = http.createServer(async (req, res) => {
           }
 
           await execute(
-            'UPDATE users SET tenant_id = ?, username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-            [updatedTenantId, updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
+            'UPDATE users SET tenant_id = ?, role_id = ?, username = ?, name = ?, email = ?, role = ?, is_active = ?, password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+            [updatedTenantId, updatedRoleId, updatedUsername, updatedName, updatedEmail, updatedRole, updatedActive, updatedHash, targetUser.id],
             { isSuperAdmin: true }
           );
 
@@ -1289,6 +1421,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10. KANBAN BOARD & PEDIDOS (SCANBAN)
       if ((req.url.startsWith('/api/scanban/orders') || req.url.startsWith('/api/scanban/kanban')) && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'kanban:orders:read');
+          return;
+        }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const search = (urlParams.get('q') || urlParams.get('search') || '').toLowerCase().trim();
         const statusFilter = (urlParams.get('status') || 'ALL').toUpperCase();
@@ -1363,6 +1499,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.1 VALIDAR COMPROBANTE (BACKLOG -> READY)
       if (req.url === '/api/scanban/mark-ready' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:assign')) {
+          sendPermissionError(res, 'kanban:orders:assign');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
@@ -1384,6 +1524,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.2 DEVOLVER A BACKLOG
       if (req.url === '/api/scanban/mark-backlog' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:assign')) {
+          sendPermissionError(res, 'kanban:orders:assign');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data;
         const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
@@ -1405,6 +1549,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.3 ASIGNAR OPERARIO
       if (req.url === '/api/scanban/assign-order' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:assign')) {
+          sendPermissionError(res, 'kanban:orders:assign');
+          return;
+        }
         const { orderId, orderNumber, operatorEmail, userEmail } = data;
         const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
         const targetOperator = (operatorEmail || '').trim().toLowerCase();
@@ -1427,6 +1575,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.3.1 REASIGNAR Y LIBERAR A LISTO (DOING -> READY)
       if (req.url === '/api/scanban/release-order-admin' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:assign')) {
+          sendPermissionError(res, 'kanban:orders:assign');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data;
         const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
@@ -1448,6 +1600,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.3.2 ELIMINAR PEDIDO DE BACKLOG
       if (req.url === '/api/scanban/delete-order' && (req.method === 'POST' || req.method === 'DELETE')) {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:assign')) {
+          sendPermissionError(res, 'kanban:orders:assign');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data || {};
         const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
 
@@ -1465,6 +1621,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.4 SUBIDA DE PDF CON PARSER REAL
       if (req.url === '/api/scanban/upload-pdf' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:ingest')) {
+          sendPermissionError(res, 'kanban:orders:ingest');
+          return;
+        }
         const { fileName, pdfBase64, userEmail } = data;
         if (!fileName || !pdfBase64) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -1541,6 +1701,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.5 APP MÓVIL: PEDIDOS DISPONIBLES & DETALLE
       if (req.url === '/api/scanban/available-orders' && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned') && !hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const readyOrders = await query(
           "SELECT id, uuid, order_number as \"orderNumber\", client_name as \"clientName\", total_items_required as \"totalItems\" FROM orders WHERE status = 'READY' AND tenant_id = ?",
           [tenantId],
@@ -1553,6 +1717,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.5.1 APP MÓVIL: PEDIDOS EN PROCESO (DOING) ASIGNADOS AL OPERARIO
       if (req.url.startsWith('/api/scanban/my-doing-orders') && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned') && !hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
@@ -1575,6 +1743,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.5.1.B APP MÓVIL: PEDIDO ACTIVO EN FOCO DE ESCANEO
       if (req.url.startsWith('/api/scanban/active-order') && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned') && !hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
         const requestedId = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
@@ -1616,6 +1788,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.5.2 APP MÓVIL: LIBERAR PEDIDO A READY (desde operario móvil)
       if (req.url === '/api/scanban/release-order' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned') && !hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data || {};
         const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
@@ -1640,6 +1816,10 @@ const server = http.createServer(async (req, res) => {
       }
 
       if (req.url.startsWith('/api/scanban/order-detail') && req.method === 'GET') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned') && !hasPermission(currentUser?.permissions, 'kanban:orders:read')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
         const identifier = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
         const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
@@ -1659,6 +1839,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.5.3 APP MÓVIL: ACTUALIZAR AVANCE DE ESCANEO EN TIEMPO REAL
       if (req.url === '/api/scanban/update-scan-progress' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:items:scan')) {
+          sendPermissionError(res, 'scanner:items:scan');
+          return;
+        }
         const { orderId, orderNumber, items, totalItemsScanned, userEmail } = data || {};
         const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
@@ -1704,6 +1888,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.6 TOMAR Y ESCANEAR PEDIDO
       if (req.url === '/api/scanban/claim-order' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'scanner:orders:view_assigned')) {
+          sendPermissionError(res, 'scanner:orders:view_assigned');
+          return;
+        }
         const { orderId, orderNumber, userEmail } = data;
         const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 
@@ -1730,6 +1918,10 @@ const server = http.createServer(async (req, res) => {
 
       // 10.7 COMPLETAR Y DESPACHAR PEDIDO
       if (req.url === '/api/scanban/complete-order' && req.method === 'POST') {
+        if (!hasPermission(currentUser?.permissions, 'kanban:orders:dispatch')) {
+          sendPermissionError(res, 'kanban:orders:dispatch');
+          return;
+        }
         const { orderId, orderNumber, userEmail, watermarkText } = data;
         const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
 

@@ -97,8 +97,23 @@ Toda la documentación del sistema reside **única y obligatoriamente** en los s
    - El tema visual se administra 100% a través del Core (`/api/theme`).
    - Todos los módulos Web y Móviles consumen los tokens de tema provistos por el Core.
 
-5. **Roles y Seguridad (RBAC):**
-   - Respetar la jerarquía de roles en endpoints: `SUPERADMIN` (gestión total de plataforma/módulos), `ADMIN` (gestión de módulo), `OPERATOR` (operativo móvil/escáner).
+5. **Roles Dinámicos y Seguridad Granular (RBAC):**
+   - Queda terminantemente prohibido hardcodear comprobaciones de strings de roles estáticos (`role === 'ADMIN'`) para autorizaciones operativas.
+   - Toda autorización debe validarse a través del sistema RBAC granular (`lib/rbac.js`) verificando permisos específicos en formato `modulo:recurso:accion` (ej. `kanban:orders:read`, `4see:pricing:write`, `core:roles:manage`).
+   - Los roles son dinámicos en base de datos (`roles`, `role_permissions`, `permissions`). Cada organización (tenant) puede crear y gestionar roles personalizados con granularidad total.
+   - El rol `SUPERADMIN` conserva acceso total (`*`) a nivel plataforma.
+   - Ante cualquier denegación de permisos, todo endpoint DEBE responder un HTTP 403 estructurado con el contrato canónico:
+     ```json
+     {
+       "error": "Acceso denegado: Permisos insuficientes",
+       "code": "INSUFFICIENT_PERMISSIONS",
+       "required_permission": "<modulo:recurso:accion>",
+       "module": "<modulo>",
+       "message": "Se requiere el permiso '<modulo:recurso:accion>' para realizar esta acción.",
+       "timestamp": "..."
+     }
+     ```
+   - El frontend debe capturar centralizadamente este error y desplegar el modal de advertencia de seguridad con el chip del permiso faltante (`showPermissionDeniedModal`).
 
 ---
 

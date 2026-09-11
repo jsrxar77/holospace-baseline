@@ -969,6 +969,7 @@
       <!-- 2. MÓDULO CORE (SUPERADMIN) -->
       <button class="nav-tab" id="tabPlatform" onclick="switchTab('platform')" style="display:none;">Plataforma</button>
       <button class="nav-tab" id="tabUsers" onclick="switchTab('users')" style="display:none;">Usuarios Core</button>
+      <button class="nav-tab" id="tabRoles" onclick="switchTab('roles')" style="display:none;">Roles y Permisos</button>
       
       <!-- 3. MÓDULO SCANBAN BOARD (ADMIN & OPERATOR) -->
       <button class="nav-tab" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">ScanBan Board</button>
@@ -997,6 +998,7 @@
         <button class="mobile-nav-tab" id="mobTabTenants" onclick="switchTabMobile('tenants')" style="display:none;">Tenants</button>
         <button class="mobile-nav-tab" id="mobTabPlatform" onclick="switchTabMobile('platform')" style="display:none;">Plataforma</button>
         <button class="mobile-nav-tab" id="mobTabUsers" onclick="switchTabMobile('users')" style="display:none;">Usuarios Core</button>
+        <button class="mobile-nav-tab" id="mobTabRoles" onclick="switchTabMobile('roles')" style="display:none;">Roles y Permisos</button>
         <button class="mobile-nav-tab" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">ScanBan Board</button>
         <button class="mobile-nav-tab" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
         <button class="mobile-nav-tab" id="mobTabScanFlow" onclick="switchTabMobile('scanflow')" style="display:none;">ScanFlow</button>
@@ -1122,6 +1124,32 @@
           </tr>
         </thead>
         <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 2.1 ROLES & PERMISSIONS MANAGEMENT VIEW -->
+    <div id="viewRoles" class="view-panel hidden">
+      <div class="actions-bar">
+        <div>
+          <h2 style="font-size: 24px; font-weight: 900;">Roles y Permisos Granulares (RBAC)</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Administra los roles del sistema y define roles personalizados para tu organización</p>
+        </div>
+        <button class="btn-primary" onclick="openRoleModal()">+ Crear Nuevo Rol</button>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nombre del Rol</th>
+            <th>Slug</th>
+            <th>Descripción</th>
+            <th>Tipo</th>
+            <th>Permisos Granulares</th>
+            <th>Usuarios</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="rolesTableBody"></tbody>
       </table>
     </div>
 
@@ -1430,6 +1458,71 @@
       </div>
 
       <div id="invoiceModalBody"></div>
+    </div>
+  </div>
+
+  <!-- MODAL ALTA / EDICIÓN DE ROLES PERSONALIZADOS -->
+  <div id="roleModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 id="roleModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Crear Rol Personalizado</h3>
+        <button type="button" class="btn-secondary" style="padding: 4px 10px;" onclick="closeRoleModal()">✕</button>
+      </div>
+      <form id="roleForm" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px;" onsubmit="saveRoleSubmit(event)">
+        <input type="hidden" id="roleId">
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Nombre del Rol <span style="color: var(--red);">*</span></label>
+          <input type="text" id="roleNameInput" class="input-field" placeholder="ej: Auditor Comercial" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Slug (Identificador único)</label>
+          <input type="text" id="roleSlugInput" class="input-field" placeholder="ej: commercial_auditor">
+        </div>
+        <div>
+          <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Descripción</label>
+          <input type="text" id="roleDescriptionInput" class="input-field" placeholder="ej: Acceso de lectura y auditoría a catálogo y márgenes">
+        </div>
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-size: 13px; color: var(--text-muted); font-weight: 700;">Permisos Asignados al Rol <span style="color: var(--red);">*</span></label>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="selectAllRolePermissions(true)">Todos</button>
+              <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="selectAllRolePermissions(false)">Ninguno</button>
+            </div>
+          </div>
+          <div id="rolePermissionsContainer" style="display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; max-height: 280px; overflow-y: auto;">
+            <!-- Rellenado dinámicamente con checkboxes agrupados por módulo -->
+          </div>
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" class="btn-secondary" onclick="closeRoleModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btnSaveRole">Guardar Rol</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL ERROR CENTRALIZADO 403 PERMISO DENEGADO -->
+  <div id="permissionDeniedModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px; text-align: center; border: 1px solid rgba(255, 82, 82, 0.4); box-shadow: 0 8px 32px rgba(255, 82, 82, 0.2);">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 82, 82, 0.15); border: 1px solid var(--red); color: var(--red); font-size: 24px; font-weight: 900; margin-bottom: 16px;">
+        !
+      </div>
+      <h3 style="font-size: 22px; font-weight: 900; color: #FFF; margin-bottom: 8px;">Acceso Restringido (403)</h3>
+      <p id="deniedMessageText" style="color: var(--text-muted); font-size: 14px; line-height: 20px; margin-bottom: 16px;">
+        No dispones de los permisos necesarios para realizar esta acción.
+      </p>
+      <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Módulo:</span>
+          <span id="deniedModuleChip" class="badge-role" style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--cobalt); color: var(--cobalt); font-size: 11px;">CORE</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Permiso Requerido:</span>
+          <code id="deniedPermissionChip" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--amber); background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">core:roles:manage</code>
+        </div>
+      </div>
+      <button class="btn-primary" style="width: 100%;" onclick="closePermissionDeniedModal()">Entendido</button>
     </div>
   </div>
 

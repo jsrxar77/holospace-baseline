@@ -19,7 +19,7 @@ modules/
 
 ### Módulo 1: Core (`modules/core/`)
 - **Clave:** `core` | **Categoría:** `system` | **Estado:** Siempre activo (Obligatorio).
-- Provee autenticación JWT, perfil de usuario, motor de temas, navegación SPA y auditoría.
+- Provee autenticación JWT, perfil de usuario, administración dinámica de roles y catálogo de permisos granulares (`/api/roles`, `/api/permissions`), motor de temas, navegación SPA y auditoría.
 
 ### Módulo 2: Tenant (`modules/tenant/`)
 - **Clave:** `tenant` | **Categoría:** `admin` | **Acceso:** Exclusivo `SUPERADMIN`.

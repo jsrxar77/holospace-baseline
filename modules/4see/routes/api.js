@@ -3,6 +3,7 @@ const { query, execute, getOne } = require('../../../lib/db');
 const { extractProductData } = require('../lib/extractor');
 const { calculateMarginMetrics } = require('../lib/margins');
 const { checkTenantModuleAccess } = require('../../../lib/entitlement');
+const { hasPermission, sendPermissionError } = require('../../../lib/rbac');
 
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*
@@ -27,6 +28,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
   // 1. MONITOR DE COMPETIDORES
   if (pathPart === '/api/4see/monitors' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
     const monitors = await query(
       isSuperAdmin 
         ? 'SELECT * FROM fourseee_competitor_monitors ORDER BY created_at DESC'
@@ -40,6 +45,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart === '/api/4see/monitors' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
     const { productName, competitorUrl, competitorName, myPrice } = data || {};
     if (!productName || !competitorUrl) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -74,6 +83,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart.startsWith('/api/4see/monitors/') && pathPart.endsWith('/check') && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
     const monitorId = pathPart.replace('/api/4see/monitors/', '').replace('/check', '');
     const monitor = await getOne(
       'SELECT * FROM fourseee_competitor_monitors WHERE id = ?',
@@ -102,6 +115,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart.startsWith('/api/4see/monitors/') && req.method === 'DELETE') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
     const monitorId = pathPart.replace('/api/4see/monitors/', '');
     await execute('DELETE FROM fourseee_competitor_monitors WHERE id = ? AND tenant_id = ?', [monitorId, tenantId], { tenantId });
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -111,6 +128,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
   // 2. AUDITORÍA DE CATÁLOGO & DIFF VIEW
   if (pathPart === '/api/4see/catalog' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
     const items = await query(
       isSuperAdmin
         ? 'SELECT * FROM fourseee_catalog_items ORDER BY updated_at DESC'
@@ -124,6 +145,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart === '/api/4see/catalog/audit' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
     const { sku, title, gtin, brand, category } = data || {};
     if (!sku || !title) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -172,6 +197,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart.startsWith('/api/4see/catalog/') && pathPart.endsWith('/approve') && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
     const itemId = pathPart.replace('/api/4see/catalog/', '').replace('/approve', '');
     const item = await getOne('SELECT * FROM fourseee_catalog_items WHERE id = ? AND tenant_id = ?', [itemId, tenantId], { tenantId });
     if (!item) {
@@ -195,6 +224,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
   // 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES
   if (pathPart === '/api/4see/margins' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
     const rules = await query(
       isSuperAdmin
         ? 'SELECT * FROM fourseee_margin_rules ORDER BY created_at DESC'
@@ -208,6 +241,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
   }
 
   if (pathPart === '/api/4see/margins' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:margins:manage')) {
+      sendPermissionError(res, '4see:margins:manage');
+      return true;
+    }
     const { productSku, productName, costPrice, sellingPrice, minMarginPct, platformFeePct, taxPct, shippingCost } = data || {};
     if (!productSku || costPrice === undefined || sellingPrice === undefined) {
       res.writeHead(400, { 'Content-Type': 'application/json' });

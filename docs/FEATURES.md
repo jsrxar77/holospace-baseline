@@ -4,39 +4,39 @@
 
 ---
 
-## 1. Matriz de Control de Acceso y Segregación de Roles (RBAC)
+## 1. Matriz de Control de Acceso y Permisos Granulares (RBAC)
 
-HoloSpace implementa el principio de **Mínimo Privilegio (PoLP)** y **Segregación Estricta de Funciones (SoD)**:
+HoloSpace implementa un modelo de roles dinámicos con granularidad a nivel de acción (`modulo:recurso:accion`):
 
-| Módulo / Capacidad | SUPERADMIN (HoloSpace Global) | ADMIN (Cliente: Drink Lovers, Poke) | OPERATOR (Operario Depósito) |
-| :--- | :---: | :---: | :---: |
-| **MÓDULO TENANT (Gobierno SaaS)** | | | |
-| ├── Directorio de Organizaciones | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| ├── Alta, Edición y Suspensión | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| └── Toggle Dinámico de Licencias | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| **MÓDULO CORE (Plataforma Base)** | | | |
-| ├── Catálogo de Planes y Cuotas | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| ├── Auditoría Global de Sistema | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| └── ABM Global de Usuarios | ✅ **Acceso Total** | ❌ **Bloqueado (403)** | ❌ **Bloqueado (403)** |
-| **MÓDULO KANBAN (Logística)** | | | |
-| ├── Tablero Kanban 4 Columnas | ❌ **Bloqueado (Separación)** | ✅ **Acceso Total** | ✅ **Solo Lectura / Mover** |
-| ├── Ingesta & Parseo de PDF | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
-| ├── Asignación de Operarios | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
-| └── Explorador de Pedidos | ❌ **Bloqueado** | ✅ **Acceso Total** | ✅ **Solo pedidos asignados** |
-| **MÓDULO SCANNER (Móvil)** | | | |
-| ├── Escaneo EAN-13 con Cámara | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| ├── Guía de Producto Asistido & Retículo Láser | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| ├── Diagnóstico Comparativo Esperado vs Leído | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| ├── Pausa y Reintento Interactivo ante Discrepancia | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| ├── Selección Enfocada de Ítems en Resumen | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| └── Sincronización Offline SQLite | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
-| **MÓDULO 4SEE (Inteligencia E-Commerce)** | | | |
-| ├── Monitor de Precios y Stock Competencia | ❌ **Bloqueado** | ✅ **Acceso Total** | ✅ **Lectura** |
-| ├── Auditoría de Catálogo y Diff View | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
-| └── Guardián de Márgenes y Repricing | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
-| **SISTEMA DE DISEÑO / TEMAS** | | | |
-| ├── Selección de Tema Personal | ✅ (Scope: User) | ✅ (Scope: User) | ✅ (Scope: User) |
-| └── Definición de Tema Base Tenant | ✅ (HoloSpace Global) | ✅ (Su Organización) | ❌ **Bloqueado** |
+### 1.1 Catálogo Canónico de Permisos Granulares
+
+| Módulo | Clave de Permiso | Acción | Descripción | Rol Sistema Predeterminado |
+| :--- | :--- | :--- | :--- | :--- |
+| **Platform** | `platform:*` | all | Acceso irrestricto de SuperAdmin | superadmin |
+| **Core** | `core:users:read` | read | Ver usuarios de la organización | superadmin, admin |
+| **Core** | `core:users:manage` | manage | Crear, editar y desactivar usuarios | superadmin, admin |
+| **Core** | `core:roles:read` | read | Ver roles del sistema y personalizados | superadmin, admin |
+| **Core** | `core:roles:manage` | manage | Crear, editar y eliminar roles personalizados | superadmin, admin |
+| **Core** | `core:modules:read` | read | Ver módulos instalados y estado | superadmin, admin |
+| **Core** | `core:audit:read` | read | Ver registros de auditoría de plataforma | superadmin |
+| **Tenant** | `tenant:tenants:read` | read | Ver directorio de organizaciones SaaS | superadmin |
+| **Tenant** | `tenant:tenants:manage` | manage | Crear, editar y suspender tenants | superadmin |
+| **Tenant** | `tenant:modules:manage` | manage | Licenciar o deslicenciar módulos para un tenant | superadmin |
+| **Tenant** | `tenant:quotas:manage` | manage | Ajustar cuotas de usuarios y pedidos | superadmin |
+| **Kanban** | `kanban:orders:read` | read | Ver pedidos en tablero y explorador | admin, operator |
+| **Kanban** | `kanban:orders:ingest` | ingest | Ingesta y parseo automático de PDF | admin |
+| **Kanban** | `kanban:orders:assign` | assign | Asignar y reasignar operarios a pedidos | admin |
+| **Kanban** | `kanban:orders:dispatch` | dispatch | Mover estados y despachar pedidos | admin, operator |
+| **Scanner** | `scanner:orders:view_assigned` | read | Ver pedidos asignados para escaneo | admin, operator |
+| **Scanner** | `scanner:items:scan` | scan | Escanear códigos de barra EAN-13 | admin, operator |
+| **Scanner** | `scanner:orders:complete` | complete | Completar y cerrar despacho en depósito | admin, operator |
+| **4see** | `4see:catalog:read` | read | Ver monitor de precios y catálogo | admin, operator |
+| **4see** | `4see:catalog:audit` | audit | Auditar catálogo y ver diffs de competidores | admin |
+| **4see** | `4see:pricing:write` | write | Actualizar precios y reglas de catálogo | admin |
+| **4see** | `4see:margins:manage` | manage | Crear y modificar reglas de margen de ganancia | admin |
+
+### 1.2 Roles Personalizados (Custom Roles)
+Cada organización puede crear roles personalizados a través del módulo Core (`/core`) asignando selectivamente cualquier subconjunto de permisos. Los usuarios asignados a un rol personalizado heredan exactamente las capacidades concedidas, siendo denegadas las restantes con HTTP 403 `INSUFFICIENT_PERMISSIONS`.
 
 ## 2. Catálogo Oficial de Planes SaaS y Facturación B2B (lib/billing.js)
 
