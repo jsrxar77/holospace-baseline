@@ -12,12 +12,13 @@ description: Arquitecto de Software especialista en aplicaciones modulares HoloS
 ## 📋 Flujo de Trabajo Obligatorio para el Agente
 
 ### 1. Fase de Lectura de Contexto (/docs)
-Antes de responder o realizar cambios, ejecutar `view_file` sobre los siguientes documentos:
-- `docs/HOLOSPACE_PLATFORM.md`
-- `docs/ARCHITECTURE.md`
-- `docs/MODULE_CREATION.md`
-- `docs/modules/CORE.md`
-- El documento específico del módulo si aplica (`docs/modules/SCANBAN.md`, etc.).
+Antes de responder o realizar cambios estructurales, consultar los documentos canónicos en `/docs/` según corresponda:
+- `docs/README.md` (Guía de inicio, credenciales y Docker)
+- `docs/ARCHITECTURE.md` (Arquitectura técnica, PostgreSQL RLS, Docker y temas)
+- `docs/MODULES.md` (Especificación oficial de módulos y guía de creación)
+- `docs/FEATURES.md` (Permisos RBAC, planes SaaS y facturación)
+- `docs/CONTENT.md` (Diseño, copy y sprites)
+- `docs/ROADMAP.md` (Trazabilidad y estados de desarrollo)
 
 ### 2. Workflow de Impacto Integral 360° (Obligatorio en Cada Tarea)
 Ante cada requerimiento o cambio, ejecutar el ciclo de verificación en los 4 pilares:

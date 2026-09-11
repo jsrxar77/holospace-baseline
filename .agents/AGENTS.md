@@ -138,3 +138,24 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
    - `cyberpunk_glassmorphism` (Cyberpunk Glass)
 3. **Consumo Universal vía API `/api/theme`:** Todos los componentes Web y pantallas de React Native deben consumir los tokens dinámicos entregados por el endpoint central `/api/theme`, respetando colores, radios de borde, tipografías y sombras del tema activo.
 4. **Aislamiento de Fondos Dinámicos:** Los fondos animados con estrellas y asteroides son exclusivos del **Landing** y del **Login**. Las vistas autenticadas (`Tenant`, `Core`, `Kanban`, `Scanner`) deben permanecer con fondos sólidos estáticos.
+
+---
+
+## 🛠️ Catálogo Oficial de Skills en `.agents/skills/`
+
+Todo agente que opere en este repositorio cuenta con los siguientes skills especializados dentro de `.agents/skills/`:
+
+1. **`holospace-architect`**: Diseño arquitectónico, orquestación del impacto 360° y validación del cumplimiento estricto de `/docs`.
+2. **`holospace-module-creator`**: Workflow estandarizado para la creación, registro, licenciamiento y documentación de nuevos módulos desacoplados.
+3. **`holospace-multi-tenant-security`**: Procedimientos de auditoría de aislamiento multi-tenant, Row-Level Security (RLS) en PostgreSQL 16 y manejo de accesos 403.
+4. **`holospace-theme-system`**: Integración universal con el motor de temas HW-DS (`/api/theme`) y consumo de tokens CSS sin duplicación de estilos.
+5. **`holospace-testing-verification`**: Batería de pruebas automatizadas en `bin/` y verificación de regresiones dentro de Docker.
+6. **`holospace-docker-deploy`**: Procedimientos de inicio, logs y diferenciación entre hot-reload y rebuild de servicios Docker.
+
+---
+
+## 🔌 Integración MCP (Model Context Protocol) en `.agents/mcp_config.json`
+
+Para inspecciones directas y seguras de base de datos sin alterar esquemas manualmente, el entorno cuenta con el servidor MCP de PostgreSQL conectado al puerto expuesto `5434`:
+* Servidor: `@modelcontextprotocol/server-postgres`
+* Base de datos: `postgresql://holospace_admin:BrunaSeRelambe22!@localhost:5434/holospace_db`
