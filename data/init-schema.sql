@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS tenant_modules (
 
 CREATE INDEX IF NOT EXISTS idx_tenant_modules_lookup ON tenant_modules(tenant_id, module_code);
 
+-- Asegurar actualización de restricción en tenant_modules si la tabla ya existía
+ALTER TABLE tenant_modules DROP CONSTRAINT IF EXISTS tenant_modules_module_code_check;
+ALTER TABLE tenant_modules ADD CONSTRAINT tenant_modules_module_code_check 
+  CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics', '4see'));
+
 -- Catálogo Oficial de Módulos de la Plataforma
 CREATE TABLE IF NOT EXISTS modules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

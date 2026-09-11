@@ -2501,10 +2501,6 @@ function openEditTenantModal(tenantId) {
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
   const themeSelect = document.getElementById('editTenantThemeSelect');
 
-  const modBoard = document.getElementById('editTenantModBoard');
-  const modScanner = document.getElementById('editTenantModScanner');
-  const modFlow = document.getElementById('editTenantModFlow');
-
   if (title) title.innerText = `Editar: ${tenant.name}`;
   if (idInput) idInput.value = tenant.id;
   if (nameInput) nameInput.value = tenant.name || '';
