@@ -52,6 +52,23 @@ Cada organización puede crear roles adicionales a medida a través del módulo 
 
 ## 2. Catálogo Oficial de Planes SaaS y Facturación B2B (lib/billing.js)
 
+La plataforma ofrece una estructura comercial de doble entrada: planes verticales especializados por producto (**Kanban** y **4see**) con cuotas desglosadas por rol, coexistiendo con los planes bundles consolidados para organizaciones globales.
+
+### 2.1 Línea Vertical Logística: Planes Módulo Kanban (con Scanner EAN-13)
+| Plan | Código | Módulos | Cuota Admins | Cuota Operarios | Usuarios Totales | Pedidos / Mes | Precio Mensual |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **Kanban Simple** | `kanban_simple` | `core`, `kanban`, `scanner` | 1 Admin | 3 Operarios | 4 usuarios | 500 pedidos | $39 USD |
+| **Kanban Business** | `kanban_business` | `core`, `kanban`, `scanner` | 3 Admins | 15 Operarios | 18 usuarios | 3.000 pedidos | $119 USD |
+| **Kanban Enterprise** | `kanban_enterprise` | `core`, `kanban`, `scanner` | Ilimitado | Ilimitado | Ilimitado | Ilimitado | $299 USD |
+
+### 2.2 Línea Vertical E-Commerce: Planes Módulo 4see (Inteligencia & Repricing)
+| Plan | Código | Módulos | Cuota Admins | Cuota Analistas | Usuarios Totales | SKUs / Monitores | Precio Mensual |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
+| **4see Simple** | `fourseee_simple` | `core`, `4see` | 1 Admin | 2 Analistas | 3 usuarios | 50 productos | $49 USD |
+| **4see Business** | `fourseee_business` | `core`, `4see` | 2 Admins | 8 Analistas | 10 usuarios | 500 productos | $149 USD |
+| **4see Enterprise** | `fourseee_enterprise` | `core`, `4see` | Ilimitado | Ilimitado | Ilimitado | Ilimitado | $349 USD |
+
+### 2.3 Planes Bundles Consolidados Multi-Módulo (Catálogo General)
 ```javascript
 const PLANS = {
   starter: {
@@ -61,6 +78,7 @@ const PLANS = {
     maxUsers: 5,
     maxOrdersMonthly: 500,
     includedModules: ['core', 'kanban', 'scanner'],
+    roleQuotas: { max_admins: 1, max_operators: 4, max_analysts: 0 },
     description: 'Ideal para depósitos pequeños o pilotos operativos.'
   },
   pro: {
@@ -70,6 +88,7 @@ const PLANS = {
     maxUsers: 15,
     maxOrdersMonthly: 3000,
     includedModules: ['core', 'kanban', 'scanner', '4see'],
+    roleQuotas: { max_admins: 3, max_operators: 12, max_analysts: 5 },
     description: 'Para centros de distribución y empresas medianas con inteligencia e-commerce.'
   },
   enterprise: {
@@ -79,6 +98,7 @@ const PLANS = {
     maxUsers: 999,
     maxOrdersMonthly: 999999,
     includedModules: ['core', 'tenant', 'kanban', 'scanner', '4see'],
+    roleQuotas: { max_admins: 999, max_operators: 999, max_analysts: 999 },
     description: 'Capacidad ilimitada, soporte prioritario y todos los módulos desbloqueados.'
   }
 };

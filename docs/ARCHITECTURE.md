@@ -324,3 +324,56 @@ Para garantizar que los textos nunca se corten ni se compriman antiestéticament
 2. **Borrado Lógico Idempotente:** Toda baja o cambio de disponibilidad se efectúa mediante mutación de estado lógico (`active: false` o `status: 'suspended'`), preservando la integridad referencial en PostgreSQL 16.
 3. **Captura Centralizada de Errores RBAC:** Si un usuario sin permisos suficientes intenta mutar una entidad, el cliente captura el código `INSUFFICIENT_PERMISSIONS` (HTTP 403) y presenta el modal de denegación sin bloquear la interfaz.
 
+---
+
+## 11. Arquitectura de Autenticación Federada OAuth2 / OpenID Connect y Cuotas Granulares
+
+Para brindar una experiencia de acceso World-Class orientada a empresas B2B, la plataforma incorpora una capa modular de federación de identidad desacoplada, preservando el motor centralizado de autorización RBAC y Row-Level Security (RLS).
+
+### 11.1 Principios de Identidad Federada Desacoplada
+1. **Desacople entre Autenticación y Autorización:** Los proveedores OAuth2 (Google Workspace, Microsoft Entra ID / Azure AD, GitHub) se encargan única y exclusivamente de autenticar y validar la identidad del usuario (`sub`, `email`, `name`, `picture`). La autorización, pertenencia a organizaciones (`tenant_id`), roles (`core_roles`) y permisos granulares siguen bajo el gobierno exclusivo de PostgreSQL 16 y los tokens JWT firmados de HoloSpace.
+2. **Arquitectura Multi-Proveedor Universal (`lib/oauth.js`):** El backend expone rutas dinámicas parametrizadas por proveedor:
+   - `GET /api/auth/:provider`: Redirección hacia el concentrador de consentimiento con parámetros de seguridad (`client_id`, `redirect_uri`, `scope: 'openid email profile'`, `state` criptográfico anti-CSRF).
+   - `GET /api/auth/:provider/callback`: Recepción del código de autorización, canje por tokens, validación de firma criptográfica OpenID Connect y resolución atómica del usuario.
+
+### 11.2 Modelo de Datos Relacional para Federación y Cuotas por Rol
+```sql
+-- Extensión de la tabla core_users para soporte multi-proveedor
+ALTER TABLE core_users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(32) NOT NULL DEFAULT 'local';
+ALTER TABLE core_users ADD COLUMN IF NOT EXISTS auth_provider_id VARCHAR(255);
+ALTER TABLE core_users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
+-- Índice para búsquedas federadas eficientes
+CREATE INDEX IF NOT EXISTS idx_core_users_auth_provider ON core_users(auth_provider, auth_provider_id);
+
+-- Extensión de tenant_plans para soporte de cuotas granulares por rol
+ALTER TABLE tenant_plans ADD COLUMN IF NOT EXISTS role_quotas JSONB NOT NULL DEFAULT '{}'::jsonb;
+```
+
+### 11.3 Flujo Híbrido de Onboarding con Google OAuth2
+1. **Usuario Existente con Organización:** Al autenticarse exitosamente mediante Google, el sistema localiza su cuenta por `email` o `auth_provider_id`. Si pertenece a un Tenant activo, emite de inmediato el JWT con sus permisos granulares RBAC y lo redirige a su módulo autorizado (`/kanban`, `/4see` o `/core`).
+2. **Usuario Nuevo sin Organización (Self-Service Onboarding):** Si el email verificado por Google no existe en la plataforma, el sistema extrae su nombre y avatar oficial, desplegando el selector interactivo de **Línea de Producto** (Kanban o 4see) y **Nivel de Plan** (Simple, Business, Enterprise). Al confirmar el nombre de su empresa:
+   - Se crea el nuevo `tenant_tenants` con su propio UUID.
+   - Se crea el usuario en `core_users` vinculándolo a Google (`auth_provider = 'google'`) con rol inicial de Administrador (`kanban_admin` o `4see_admin`).
+   - Se genera la suscripción inicial en `tenant_subscriptions` asignando las cuotas de roles correspondientes.
+   - Se habilitan los módulos contratados en `tenant_modules`.
+   - Se emite el token JWT y se redirige al dashboard del módulo sin requerir ingreso manual de contraseñas.
+
+### 11.4 Validación Estricta de Cuotas de Roles en Backend
+En cada operación de alta o cambio de rol de usuario (`POST /api/users` o `PUT /api/users/:id`), el backend ejecuta la validación contra las cuotas configuradas en `tenant_plans.role_quotas`:
+- Si se asigna un rol administrativo (`kanban_admin`, `core_admin`, `4see_admin`, `tenant_admin`), el sistema verifica:
+  $$\text{Admins Activos} < \text{role\_quotas.max\_admins}$$
+- Si se asigna un rol operativo (`kanban_operator`, `scanner_operator`, `4see_user`), el sistema verifica:
+  $$\text{Operarios Activos} < \text{role\_quotas.max\_operators}$$
+- Ante cualquier exceso, el endpoint responde HTTP 422 / 403 con contrato estructurado:
+  ```json
+  {
+    "error": "Límite de cuota excedido",
+    "code": "ROLE_QUOTA_EXCEEDED",
+    "role": "kanban_admin",
+    "limit": 3,
+    "current": 3,
+    "message": "Su plan actual solo permite hasta 3 administradores. Actualice su suscripción para habilitar más cupos."
+  }
+  ```
+

@@ -20,11 +20,11 @@ modules/
 ### Módulo 1: Core (`modules/core/`)
 - **Clave:** `core` | **Categoría:** `system` | **Estado:** Siempre activo (Obligatorio).
 - **Roles Canónicos:** `core_admin` (Gobierno de usuarios y roles) y `superadmin`.
-- Provee autenticación JWT, perfil de usuario, administración dinámica de roles y catálogo de permisos granulares (`/api/roles`, `/api/permissions`), motor de temas, navegación SPA y auditoría.
+- Provee autenticación JWT nativa y federada (Google Workspace OAuth2 / OpenID Connect), perfil de usuario, administración dinámica de roles y catálogo de permisos granulares (`/api/roles`, `/api/permissions`), motor de temas HW-DS, navegación SPA, control de cuotas por rol y auditoría.
 
 ### Módulo 2: Tenant (`modules/tenant/`)
 - **Clave:** `tenant` | **Categoría:** `admin` | **Acceso:** `superadmin` y `tenant_admin`.
-- Directorio de Organizaciones, gestión de planes, asignación de cuotas y licenciamiento en vivo.
+- Directorio de Organizaciones, gestión de planes verticales por producto (**Kanban** y **4see**) y bundles generales, asignación de cuotas granulares por rol (`role_quotas`), auto-onboarding B2B y licenciamiento en vivo.
 
 ### Módulo 3: Kanban (`modules/kanban/`)
 - **Clave:** `kanban` | **Categoría:** `operational` | **Acceso:** `kanban_admin` y `kanban_operator` (Tenant con módulo contratado).

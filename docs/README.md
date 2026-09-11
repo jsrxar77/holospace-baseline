@@ -202,39 +202,47 @@ holospace-baseline/
 │   ├── init-schema.sql             ← DDL PostgreSQL 16 con políticas RLS
 │   ├── schema-sqlite.sql           ← DDL SQLite Multi-Tenant
 │   └── holospace.db                 ← Base de datos SQLite local
-├── docs/                           ← Especificaciones arquitectónicas vivas
-│   ├── ARCHITECTURE.md             ← Estructura técnica y capas
-│   ├── DOCKER_AND_INFRASTRUCTURE.md ← Guía completa de Docker y Nginx
-│   ├── MULTITENANT_SAAS_ARCHITECTURE.md ← Arquitectura Multi-Tenant y RLS
-│   ├── SECURITY_AUTH_AND_BACKUP_STRATEGY.md ← Seguridad, JWT y Backups
-│   └── SUBSCRIPTION_AND_MODULE_ENTITLEMENT.md ← Licenciamiento y Planes
+├── docs/                           ← Los Únicos 6 Documentos Canónicos del Sistema
+│   ├── README.md                   ← Guía de inicio rápido, cuentas y comandos Docker
+│   ├── ARCHITECTURE.md             ← Arquitectura desacoplada, PostgreSQL 16 RLS y OAuth2
+│   ├── MODULES.md                  ← Especificación de los módulos oficiales y creación
+│   ├── FEATURES.md                 ← Matriz de permisos RBAC, catálogo de planes y cuotas
+│   ├── CONTENT.md                  ← Estrategia de contenidos, sprites pixel art y copy
+│   └── ROADMAP.md                  ← Trazabilidad de hitos y fases planificadas
 ├── lib/                            ← Capas y motores desacoplados
 │   ├── auth.js                     ← Hashing scrypt, firma JWT y RBAC
 │   ├── billing.js                  ← Planes comerciales, checkout y webhooks
-│   ├── db.js                       ← Capa dual Postgres RLS / SQLite
+│   ├── db.js                       ← Capa Postgres RLS exclusiva
+│   ├── oauth.js                    ← Capa modular de federación OAuth2 / OpenID Connect
+│   ├── rbac.js                     ← Motor dinámico de permisos granulares
 │   └── entitlement.js              ← Feature flags, módulos y cuotas
 ├── modules/                        ← Módulos de aplicación
-│   ├── core/                       ← Módulo Core (Web y Temas)
-│   ├── scanban/                    ← Módulo ScanBan (Tablero Web + Scanner Móvil)
-│   └── stockflow/                  ← Módulo StockFlow (Plantilla)
+│   ├── core/                       ← Módulo Core (Usuarios, Roles, Temas y Auditoría)
+│   ├── tenant/                     ← Módulo Tenant (Directorio de Organizaciones)
+│   ├── kanban/                     ← Módulo Kanban (Tablero logístico y explorador)
+│   ├── scanner/                    ← Módulo Scanner (Picking móvil Expo / Web)
+│   └── 4see/                       ← Módulo 4see (Inteligencia E-Commerce & Repricing)
 ├── nginx/                          ← Configuración de proxy reverso
 │   └── default.conf                ← Configuración Nginx para SaaS
 ├── public/                         ← Portal web y recursos estáticos
-├── roadmap/                        ← Roadmap maestro del SaaS
-│   └── SAAS_MULTITENANT_ROADMAP.md ← Registro de fases y tareas completadas
 ├── server.js                       ← Servidor HTTP principal y dispatch de APIs
 ├── Dockerfile                      ← Dockerfile multi-stage de producción
 ├── docker-compose.yml              ← Orquestador Docker Compose para producción
-└── README.md                       ← Esta documentación
+└── README.md                       ← Documentación oficial
 ```
 
 ---
 
-## 📚 Documentación Técnica Detallada
+## Variables de Entorno del Sistema (.env)
 
-* [Arquitectura SaaS Multi-Tenant & RLS](./docs/MULTITENANT_SAAS_ARCHITECTURE.md)
-* [Licenciamiento Modular y Planes](./docs/SUBSCRIPTION_AND_MODULE_ENTITLEMENT.md)
-* [Seguridad, JWT y Estrategia de Backups](./docs/SECURITY_AUTH_AND_BACKUP_STRATEGY.md)
+| Variable | Descripción | Valor por Defecto / Ejemplo |
+| :--- | :--- | :--- |
+| `PORT` | Puerto HTTP del servidor Express | `3001` |
+| `DATABASE_URL` | String de conexión a PostgreSQL 16 RLS | `postgresql://holospace_admin:****@postgres:5432/holospace_saas` |
+| `JWT_SECRET` | Clave secreta para firma criptográfica de tokens | `clave_secreta_jwt_produccion_2026` |
+| `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 / Workspace | Configurable en Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Secreto de cliente Google OAuth2 | Configurable en Google Cloud Console |
+| `GOOGLE_CALLBACK_URL` | URL de redirección del callback OAuth2 | `https://holospace.com.ar/api/auth/google/callback` |
 * [Infraestructura Docker y Nginx](./docs/DOCKER_AND_INFRASTRUCTURE.md)
 * [Design System y Motor de Temas](./modules/core/theme/DESIGN_SYSTEM.md)
 * [Roadmap de Transformación SaaS](./roadmap/SAAS_MULTITENANT_ROADMAP.md)

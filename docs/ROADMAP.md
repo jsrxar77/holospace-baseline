@@ -109,6 +109,12 @@
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 11:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 12:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 13:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 12: Autenticación World-Class con Google OAuth2, Onboarding Híbrido y Cuotas Granulares por Rol:**
+  - Integración de capa modular de identidad federada (`lib/oauth.js`) con Google Workspace (OpenID Connect).
+  - Flujo híbrido de registro y login: auto-provisión de Tenant y Administrador al iniciar sesión con Google por primera vez.
+  - Catálogo de planes verticales independientes por producto (**Kanban** Simple/Business/Enterprise y **4see** Simple/Business/Enterprise) coexistiendo con bundles generales.
+  - Gobernanza de cuotas granulares por rol (`role_quotas` en `tenant_plans`) con validación y error canónico en `POST /api/users`.
+  - Suite de pruebas automatizadas (`tests/test-oauth-and-role-quotas.js`) incorporada en `tests/run-all-tests.js`.
+- [ ] **FASE 13:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 14:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 15:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
