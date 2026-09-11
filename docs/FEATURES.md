@@ -30,6 +30,10 @@ HoloSpace implementa el principio de **Mínimo Privilegio (PoLP)** y **Segregaci
 | ├── Pausa y Reintento Interactivo ante Discrepancia | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | ├── Selección Enfocada de Ítems en Resumen | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
 | └── Sincronización Offline SQLite | ❌ **Bloqueado** | ✅ **Acceso** | ✅ **Uso Principal** |
+| **MÓDULO 4SEE (Inteligencia E-Commerce)** | | | |
+| ├── Monitor de Precios y Stock Competencia | ❌ **Bloqueado** | ✅ **Acceso Total** | ✅ **Lectura** |
+| ├── Auditoría de Catálogo y Diff View | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
+| └── Guardián de Márgenes y Repricing | ❌ **Bloqueado** | ✅ **Acceso Total** | ❌ **Bloqueado** |
 | **SISTEMA DE DISEÑO / TEMAS** | | | |
 | ├── Selección de Tema Personal | ✅ (Scope: User) | ✅ (Scope: User) | ✅ (Scope: User) |
 | └── Definición de Tema Base Tenant | ✅ (HoloSpace Global) | ✅ (Su Organización) | ❌ **Bloqueado** |
@@ -53,8 +57,8 @@ const PLANS = {
     priceUsd: 149,
     maxUsers: 15,
     maxOrdersMonthly: 3000,
-    includedModules: ['core', 'kanban', 'scanner'],
-    description: 'Para centros de distribución y empresas de logística medianas.'
+    includedModules: ['core', 'kanban', 'scanner', '4see'],
+    description: 'Para centros de distribución y empresas medianas con inteligencia e-commerce.'
   },
   enterprise: {
     code: 'enterprise',
@@ -62,8 +66,8 @@ const PLANS = {
     priceUsd: 499,
     maxUsers: 999,
     maxOrdersMonthly: 999999,
-    includedModules: ['core', 'tenant', 'kanban', 'scanner'],
-    description: 'Capacidad ilimitada, soporte prioritario y acceso total al módulo Tenant.'
+    includedModules: ['core', 'tenant', 'kanban', 'scanner', '4see'],
+    description: 'Capacidad ilimitada, soporte prioritario y todos los módulos desbloqueados.'
   }
 };
 ```

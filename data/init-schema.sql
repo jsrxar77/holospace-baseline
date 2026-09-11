@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON tenant_subscriptions(tena
 CREATE TABLE IF NOT EXISTS tenant_modules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  module_code VARCHAR(64) NOT NULL CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics')),
+  module_code VARCHAR(64) NOT NULL CHECK (module_code IN ('landing', 'tenant', 'tenants', 'core', 'kanban', 'scanner', 'scanban-board', 'scanban-scanner', 'scanflow', 'scanban', 'stockflow', 'analytics', '4see')),
   is_enabled BOOLEAN NOT NULL DEFAULT true,
   quota_limit INT DEFAULT NULL,
   quota_used INT NOT NULL DEFAULT 0,
@@ -201,6 +201,65 @@ CREATE TABLE IF NOT EXISTS app_settings (
 
 CREATE INDEX IF NOT EXISTS idx_settings_tenant_key ON app_settings(tenant_id, key);
 
+-- Tabla de Monitores de Competidores (Módulo 4see)
+CREATE TABLE IF NOT EXISTS fourseee_competitor_monitors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  product_name VARCHAR(255) NOT NULL,
+  competitor_url TEXT NOT NULL,
+  competitor_name VARCHAR(128) NOT NULL DEFAULT 'Competidor',
+  my_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  competitor_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  competitor_stock VARCHAR(32) NOT NULL DEFAULT 'IN_STOCK',
+  extraction_method VARCHAR(64) DEFAULT 'STRUCTURED_DATA',
+  last_checked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_tenant ON fourseee_competitor_monitors(tenant_id);
+
+-- Tabla de Auditoría de Catálogo / Feeds (Módulo 4see)
+CREATE TABLE IF NOT EXISTS fourseee_catalog_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  sku VARCHAR(128) NOT NULL,
+  original_title TEXT NOT NULL,
+  current_title TEXT NOT NULL,
+  gtin VARCHAR(64),
+  brand VARCHAR(128),
+  category VARCHAR(128),
+  status VARCHAR(32) NOT NULL DEFAULT 'NEEDS_REVIEW',
+  diagnostics JSONB DEFAULT '[]'::jsonb,
+  suggested_title TEXT,
+  is_approved BOOLEAN NOT NULL DEFAULT false,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_catalog_tenant ON fourseee_catalog_items(tenant_id);
+
+-- Tabla de Reglas de Margen y Repricing (Módulo 4see)
+CREATE TABLE IF NOT EXISTS fourseee_margin_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  product_sku VARCHAR(128) NOT NULL,
+  product_name VARCHAR(255) NOT NULL,
+  cost_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  selling_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  min_margin_pct NUMERIC(5, 2) NOT NULL DEFAULT 20.0,
+  platform_fee_pct NUMERIC(5, 2) NOT NULL DEFAULT 13.0,
+  tax_pct NUMERIC(5, 2) NOT NULL DEFAULT 21.0,
+  shipping_cost NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  net_profit NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  real_margin_pct NUMERIC(5, 2) NOT NULL DEFAULT 0,
+  is_red_zone BOOLEAN NOT NULL DEFAULT false,
+  suggested_repricing_price NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_margins_tenant ON fourseee_margin_rules(tenant_id);
+
 -- ============================================================================
 -- 4. POLÍTICAS DE ROW-LEVEL SECURITY (RLS) - AISLAMIENTO CRIPTOGRÁFICO
 -- ============================================================================
@@ -213,6 +272,46 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE platform_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
+
+-- Políticas RLS para módulo 4see
+DROP POLICY IF EXISTS rls_fourseee_monitors_tenant_isolation ON fourseee_competitor_monitors;
+CREATE POLICY rls_fourseee_monitors_tenant_isolation ON fourseee_competitor_monitors
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_catalog_tenant_isolation ON fourseee_catalog_items;
+CREATE POLICY rls_fourseee_catalog_tenant_isolation ON fourseee_catalog_items
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules;
+CREATE POLICY rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
 
 -- 1. Política RLS para users
 DROP POLICY IF EXISTS rls_users_tenant_isolation ON users;
@@ -325,7 +424,8 @@ VALUES
   ('tenant', 'Tenant', 'Panel exclusivo SUPERADMIN para administración de organizaciones, cuotas y licencias.', 'admin', true, 'system'),
   ('core', 'Core', 'Plataforma base: autenticación centralizada, motor de temas y auditoría.', 'system', true, 'system'),
   ('kanban', 'Kanban', 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador de pedidos.', 'operational', true, 'system'),
-  ('scanner', 'Scanner', 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13 y validación de depósito.', 'operational', true, 'system')
+  ('scanner', 'Scanner', 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13 y validación de depósito.', 'operational', true, 'system'),
+  ('4see', '4see', 'Torre de control de e-commerce: monitoreo de competencia, auditoría de catálogo y protección de rentabilidad.', 'operational', true, 'system')
 ON CONFLICT (key) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -336,8 +436,8 @@ ON CONFLICT (key) DO UPDATE SET
 INSERT INTO plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active)
 VALUES
   ('starter', 'Plan Starter Inicial', 'Plan esencial para pequeños depósitos y operaciones ágiles.', 5, 500, '["core", "kanban", "scanner"]'::jsonb, true),
-  ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner"]'::jsonb, true),
-  ('enterprise', 'Plan Enterprise Ilimitado', 'Acceso total a todas las herramientas y módulos de la plataforma.', 999, 999999, '["core", "tenant", "kanban", "scanner"]'::jsonb, true)
+  ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner", "4see"]'::jsonb, true),
+  ('enterprise', 'Plan Enterprise Ilimitado', 'Acceso total a todas las herramientas y módulos de la plataforma.', 999, 999999, '["core", "tenant", "kanban", "scanner", "4see"]'::jsonb, true)
 ON CONFLICT (code) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -383,7 +483,8 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440000', 'scanner', true),
   ('550e8400-e29b-41d4-a716-446655440000', 'scanban-board', true),
   ('550e8400-e29b-41d4-a716-446655440000', 'scanban-scanner', true),
-  ('550e8400-e29b-41d4-a716-446655440000', 'scanban', true)
+  ('550e8400-e29b-41d4-a716-446655440000', 'scanban', true),
+  ('550e8400-e29b-41d4-a716-446655440000', '4see', true)
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
 INSERT INTO app_settings (tenant_id, key, value)
@@ -414,7 +515,8 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'scanner', true),
   ('550e8400-e29b-41d4-a716-446655440001', 'scanban-board', true),
   ('550e8400-e29b-41d4-a716-446655440001', 'scanban-scanner', true),
-  ('550e8400-e29b-41d4-a716-446655440001', 'scanban', true)
+  ('550e8400-e29b-41d4-a716-446655440001', 'scanban', true),
+  ('550e8400-e29b-41d4-a716-446655440001', '4see', true)
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
 INSERT INTO app_settings (tenant_id, key, value)

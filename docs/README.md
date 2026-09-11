@@ -14,6 +14,7 @@ HoloSpace es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de 
 | **Core** | `http://localhost:3001/core` | `SUPERADMIN` | Mandatorio (`core`) | Plataforma base: autenticación centralizada, control de usuarios/roles, motor de temas y auditoría. |
 | **Kanban** | `http://localhost:3001/kanban` | `ADMIN` / `OPERATOR` | Plan Starter/Pro/Enterprise (`kanban`) | Tablero Kanban interactivo 4 columnas, ingesta/parseo automático de remitos PDF y explorador de pedidos. |
 | **Scanner** | `http://localhost:8081/scanner` (App Expo) | `OPERATOR` / `ADMIN` | Plan Starter/Pro/Enterprise (`scanner`) | App móvil/web de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
+| **4see** | `http://localhost:3001/4see` | `ADMIN` / `OPERATOR` | Plan Pro/Enterprise (`4see`) | Inteligencia comercial e-commerce: vigilancia de precios de competidores, auditoría de catálogo y protección de margen neto. |
 
 ---
 

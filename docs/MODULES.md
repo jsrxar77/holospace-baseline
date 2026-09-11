@@ -1,17 +1,18 @@
 # Especificación Canónica de Módulos y Guía de Creación — HoloSpace Baseline
 
-> Documento maestro que detalla la arquitectura de los 4 módulos oficiales de HoloSpace Baseline (`core`, `tenant`, `kanban`, `scanner`), el motor de licenciamiento modular y la guía oficial para desarrolladores sobre cómo crear nuevos módulos.
+> Documento maestro que detalla la arquitectura de los 5 módulos oficiales de HoloSpace Baseline (`core`, `tenant`, `kanban`, `scanner`, `4see`), el motor de licenciamiento modular y la guía oficial para desarrolladores sobre cómo crear nuevos módulos.
 
 ---
 
-## 1. Los 4 Módulos Oficiales de la Plataforma
+## 1. Los 5 Módulos Oficiales de la Plataforma
 
 ```text
 modules/
 ├── core/                   ← Plataforma Base, Auth JWT, Motor de Temas y RLS
 ├── tenant/                 ← Gobierno SaaS (SuperAdmin), Planes y Organizaciones
 ├── kanban/                 ← Tablero Kanban Web y Procesador de PDF
-└── scanner/                ← App Móvil Expo / React Native y Lector EAN-13
+├── scanner/                ← App Móvil Expo / React Native y Lector EAN-13
+└── 4see/                   ← Inteligencia E-Commerce: Monitor, Catálogo Diff & Márgenes
 ```
 
 ---
@@ -35,6 +36,15 @@ modules/
 - Interfaz de escaneo asistido con tarjeta superior de producto pendiente, retículo con línea central láser y panel comparativo de código esperado vs. escaneado para control de calidad y captura de pantalla.
 - Flujo interactivo dual: salida automática inmediata ante lectura exitosa (zero-clicks) y retención con pausa de cámara, visualización de discrepancia EAN, botón de reintento y salida manual ante errores.
 - Selección enfocada de ítems: permite al operario tocar un ítem puntual del resumen para escanearlo específicamente o usar el botón general para escaneo secuencial.
+
+### Módulo 5: 4see (`modules/4see/`)
+- **Clave:** `4see` | **Categoría:** `operational` | **Acceso:** `ADMIN` y `OPERATOR` (Planes Pro y Enterprise).
+- **Propósito:** Torre de control unificada para e-commerce: vigilancia de competencia, auditoría de catálogo y protección de rentabilidad.
+- **Sub-herramientas integradas:**
+  - **4see Monitor:** Rastreo automático de URLs de competidores, variaciones de precio y quiebres de stock mediante motor en cascada de 3 capas (Capa 1: JSON-LD y OpenGraph; Capa 2: Heurística DOM; Capa 3: API Mercado Libre directa).
+  - **4see Catalog:** Auditoría de catálogo multicanal (detección de ausencias de GTIN/EAN o marca), optimización de títulos comerciales y visualización de dos columnas *Diff View* con aprobación granular.
+  - **4see Margins:** Guardián de rentabilidad neta en economías con alta inflación o comisiones (cálculo de costos de reposición, comisiones de pasarela, impuestos IVA/IIBB y fletes), alerta temprana de Zona Roja y repricing táctico (+8%) ante quiebre de competidores.
+- **Rutas API:** `/api/4see/monitors`, `/api/4see/catalog`, `/api/4see/margins`. Protected by `requireModule('4see')`.
 
 ---
 

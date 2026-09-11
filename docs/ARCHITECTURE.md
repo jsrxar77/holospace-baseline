@@ -105,6 +105,10 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY rls_tenant_isolation ON orders
   FOR ALL
@@ -116,6 +120,8 @@ CREATE POLICY rls_tenant_isolation ON orders
     current_setting('app.is_superadmin', true) = 'true' 
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
+
+-- Políticas RLS idénticas aplicadas sobre fourseee_competitor_monitors, fourseee_catalog_items y fourseee_margin_rules.
 ```
 
 ---

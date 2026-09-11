@@ -339,23 +339,26 @@ function applyRoleVisibility() {
   const modTenant = document.getElementById('modTenant') || document.getElementById('modTenants');
   const modCore = document.getElementById('modCore');
   const modKanban = document.getElementById('modKanban') || document.getElementById('modScanBan');
+  const mod4see = document.getElementById('mod4see');
     
   const mobModTenant = document.getElementById('mobModTenant') || document.getElementById('mobModTenants');
   const mobModCore = document.getElementById('mobModCore');
   const mobModKanban = document.getElementById('mobModKanban') || document.getElementById('mobModScanBan');
+  const mobMod4see = document.getElementById('mobMod4see');
   
   if (isSuperAdmin) {
     // SUPERADMIN: Access strictly to HoloSpace Tenant & Core Platform
     if (modTenant) modTenant.style.display = 'inline-flex';
     if (modCore) modCore.style.display = 'inline-flex';
     if (modKanban) modKanban.style.display = 'none';
+    if (mod4see) mod4see.style.display = 'inline-flex';
     
     if (themeContainer) themeContainer.style.display = 'flex';
 
     if (mobModTenant) mobModTenant.style.display = 'block';
     if (mobModCore) mobModCore.style.display = 'block';
     if (mobModKanban) mobModKanban.style.display = 'none';
-    
+    if (mobMod4see) mobMod4see.style.display = 'block';
 
     const displaySuperUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'superadmin');
     if (userBadge) {
@@ -387,21 +390,24 @@ function applyRoleVisibility() {
     const path = window.location.pathname.toLowerCase();
     if (path.includes('core')) {
       switchModule('core');
+    } else if (path.includes('4see')) {
+      switchModule('4see');
     } else {
       switchModule('tenant');
     }
   } else {
-    // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, QR Connection)
+    // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, 4see, QR Connection)
     if (modTenant) modTenant.style.display = 'none';
     if (modCore) modCore.style.display = 'none';
     if (modKanban) modKanban.style.display = 'inline-flex';
+    if (mod4see) mod4see.style.display = 'inline-flex';
     
     if (themeContainer) themeContainer.style.display = 'none';
 
     if (mobModTenant) mobModTenant.style.display = 'none';
     if (mobModCore) mobModCore.style.display = 'none';
     if (mobModKanban) mobModKanban.style.display = 'block';
-    
+    if (mobMod4see) mobMod4see.style.display = 'block';
 
     const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'KANBAN';
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
@@ -439,6 +445,8 @@ function applyRoleVisibility() {
     } else if (path.includes('core')) {
       showForbiddenView('core');
       if (window.history && window.history.replaceState) window.history.replaceState({ module: 'core' }, '', '/core');
+    } else if (path.includes('4see')) {
+      switchModule('4see');
     } else if (path.includes('orders')) {
       switchModule('kanban');
       switchTab('orders');
@@ -526,7 +534,7 @@ function switchModule(moduleName, updateUrl = true) {
   if (forbidView) forbidView.classList.add('hidden');
 
   // 2. Ocultar todas las features (Tabs)
-  document.querySelectorAll('.feature-tenant, .feature-tenants, .feature-core, .feature-kanban, .feature-scanban, .feature-scanner').forEach(el => {
+  document.querySelectorAll('.feature-tenant, .feature-tenants, .feature-core, .feature-kanban, .feature-scanban, .feature-scanner, .feature-4see').forEach(el => {
     el.style.display = 'none';
   });
 
@@ -535,8 +543,8 @@ function switchModule(moduleName, updateUrl = true) {
   document.querySelectorAll('.mobile-nav-tab.feature-' + normMod + ', .mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
 
   // 4. Marcar módulo activo con mapeo exacto de IDs
-  const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner' };
-  const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner' };
+  const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner', '4see': 'mod4see' };
+  const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner', '4see': 'mobMod4see' };
 
   document.querySelectorAll('.module-tab').forEach(el => el.classList.remove('active'));
   const dMod = document.getElementById(desktopModMap[normMod]);
@@ -561,6 +569,8 @@ function switchModule(moduleName, updateUrl = true) {
     switchTab('kanban');
   } else if (normMod === 'scanner') {
     switchTab('scanner');
+  } else if (normMod === '4see') {
+    switchTab('4see-monitors');
   }
 }
 
@@ -596,15 +606,29 @@ function switchTabMobile(tabName) {
 // NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
   // Limpiar clase activa de todos los feature tabs
-  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanner',
-   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeCatalog', 'tab4seeMargins',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
 
   // Activar tab seleccionado
-  const tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
-  const mobTabId = 'mobTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+  let tabId = '';
+  let mobTabId = '';
+  if (tabName === '4see-monitors') {
+    tabId = 'tab4seeMonitors';
+    mobTabId = 'mobTab4seeMonitors';
+  } else if (tabName === '4see-catalog') {
+    tabId = 'tab4seeCatalog';
+    mobTabId = 'mobTab4seeCatalog';
+  } else if (tabName === '4see-margins') {
+    tabId = 'tab4seeMargins';
+    mobTabId = 'mobTab4seeMargins';
+  } else {
+    tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+    mobTabId = 'mobTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
+  }
+
   const el = document.getElementById(tabId);
   const mobEl = document.getElementById(mobTabId);
   if (el) el.classList.add('active');
@@ -616,10 +640,11 @@ function switchTab(tabName) {
   if (tabName === 'platform' || tabName === 'users') parentModule = 'core';
   if (tabName === 'kanban' || tabName === 'orders') parentModule = 'kanban';
   if (tabName === 'scanner') parentModule = 'scanner';
+  if (tabName.startsWith('4see')) parentModule = '4see';
   
   if (parentModule) {
-    const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner' };
-    const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner' };
+    const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner', '4see': 'mod4see' };
+    const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner', '4see': 'mobMod4see' };
 
     document.querySelectorAll('.module-tab').forEach(m => m.classList.remove('active'));
     const dMod = document.getElementById(desktopModMap[parentModule]);
@@ -634,7 +659,7 @@ function switchTab(tabName) {
     kanbanAutoRefreshInterval = null;
   }
 
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -647,6 +672,18 @@ function switchTab(tabName) {
     const view = document.getElementById('viewTenants');
     if (view) view.classList.remove('hidden');
     loadTenantsManagementData();
+  } else if (tabName === '4see-monitors') {
+    const view = document.getElementById('view4seeMonitors');
+    if (view) view.classList.remove('hidden');
+    load4seeMonitors();
+  } else if (tabName === '4see-catalog') {
+    const view = document.getElementById('view4seeCatalog');
+    if (view) view.classList.remove('hidden');
+    load4seeCatalog();
+  } else if (tabName === '4see-margins') {
+    const view = document.getElementById('view4seeMargins');
+    if (view) view.classList.remove('hidden');
+    load4seeMargins();
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
@@ -2480,8 +2517,13 @@ function openEditTenantModal(tenantId) {
   const modules = tenant.modules || [];
   const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
 
+  const modBoard = document.getElementById('editTenantModBoard');
+  const modScanner = document.getElementById('editTenantModScanner');
+  const mod4see = document.getElementById('editTenantMod4see');
+
   if (modBoard) modBoard.checked = hasModule('kanban');
   if (modScanner) modScanner.checked = hasModule('scanner');
+  if (mod4see) mod4see.checked = hasModule('4see');
 
   if (modal) modal.classList.remove('hidden');
 }
@@ -2493,20 +2535,22 @@ function closeEditTenantModal() {
 
 function handleEditTenantPlanChange(newPlan) {
   const defaultQuotas = {
-    starter: { users: 5, orders: 500, board: true, scanner: false },
-    pro: { users: 20, orders: 2500, board: true, scanner: true },
-    enterprise: { users: 100, orders: 10000, board: true, scanner: true }
-  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false };
+    starter: { users: 5, orders: 500, board: true, scanner: false, foursee: false },
+    pro: { users: 20, orders: 2500, board: true, scanner: true, foursee: true },
+    enterprise: { users: 100, orders: 10000, board: true, scanner: true, foursee: true }
+  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false, foursee: false };
 
   const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
   const modBoard = document.getElementById('editTenantModBoard');
   const modScanner = document.getElementById('editTenantModScanner');
+  const mod4see = document.getElementById('editTenantMod4see');
 
   if (maxUsersInput) maxUsersInput.value = defaultQuotas.users;
   if (maxOrdersInput) maxOrdersInput.value = defaultQuotas.orders;
   if (modBoard) modBoard.checked = defaultQuotas.board;
   if (modScanner) modScanner.checked = defaultQuotas.scanner;
+  if (mod4see) mod4see.checked = defaultQuotas.foursee;
 }
 
 async function saveEditTenantSubmit(e) {
@@ -2519,14 +2563,16 @@ async function saveEditTenantSubmit(e) {
   const maxOrdersMonthly = parseInt(document.getElementById('editTenantMaxOrdersInput').value, 10);
   const activeTheme = document.getElementById('editTenantThemeSelect').value;
 
-  const isBoardChecked = document.getElementById('editTenantModBoard').checked;
-  const isScannerChecked = document.getElementById('editTenantModScanner').checked;
+  const isBoardChecked = document.getElementById('editTenantModBoard') ? document.getElementById('editTenantModBoard').checked : false;
+  const isScannerChecked = document.getElementById('editTenantModScanner') ? document.getElementById('editTenantModScanner').checked : false;
+  const is4seeChecked = document.getElementById('editTenantMod4see') ? document.getElementById('editTenantMod4see').checked : false;
 
   const modules = {
     'kanban': isBoardChecked,
     'scanban-board': isBoardChecked,
     'scanner': isScannerChecked,
-    'scanban-scanner': isScannerChecked
+    'scanban-scanner': isScannerChecked,
+    '4see': is4seeChecked
   };
 
   try {
@@ -2559,3 +2605,437 @@ async function saveEditTenantSubmit(e) {
     await showCustomAlert('Error', `Error de red: ${err.message}`);
   }
 }
+
+// ============================================================================
+// FUNCIONALIDADES DEL MÓDULO 4SEE (MONITOR, CATALOG, MARGINS)
+// ============================================================================
+
+// 1. MONITOR DE COMPETENCIA
+async function load4seeMonitors() {
+  const container = document.getElementById('monitorsTableContainer');
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando monitores de competencia...</div>';
+
+  try {
+    const res = await fetch('/api/4see/monitors', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.monitors || data.monitors.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay URLs de competidores monitoreadas</div>
+          <div style="font-size: 13px; margin-top: 6px;">Agrega la primera URL de la competencia para rastrear precios y stock automáticamente.</div>
+          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMonitorModal()">+ Agregar URL Competidora</button>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <th style="padding: 12px 14px;">Producto</th>
+              <th style="padding: 12px 14px;">Competidor / Tienda</th>
+              <th style="padding: 12px 14px;">Mi Precio</th>
+              <th style="padding: 12px 14px;">Precio Rival</th>
+              <th style="padding: 12px 14px;">Estado Stock</th>
+              <th style="padding: 12px 14px;">Última Revisión</th>
+              <th style="padding: 12px 14px; text-align: right;">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    data.monitors.forEach(m => {
+      const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
+      const stockBadge = isOutOfStock
+        ? '<span style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">QUIEBRE (SIN STOCK)</span>'
+        : '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">EN STOCK</span>';
+
+      const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
+      const diffLabel = priceDiff > 0 
+        ? `<span style="color: var(--red); font-size: 11px;">(+$${priceDiff.toLocaleString('es-AR')})</span>`
+        : (priceDiff < 0 ? `<span style="color: var(--emerald); font-size: 11px;">(-$${Math.abs(priceDiff).toLocaleString('es-AR')})</span>` : '');
+
+      html += `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+          <td style="padding: 14px; font-weight: 700; color: #FFF;">${m.product_name}</td>
+          <td style="padding: 14px;">
+            <a href="${m.competitor_url}" target="_blank" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
+              ${m.competitor_name || 'Ver Tienda'} ↗
+            </a>
+          </td>
+          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
+          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">
+            $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
+          </td>
+          <td style="padding: 14px;">${stockBadge}</td>
+          <td style="padding: 14px; color: var(--text-muted); font-size: 12px;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
+          <td style="padding: 14px; text-align: right;">
+            <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="recheckMonitor('${m.id}')">Re-verificar</button>
+            <button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando monitores: ${err.message}</div>`;
+  }
+}
+
+function openCreateMonitorModal() {
+  const modal = document.getElementById('createMonitorModal');
+  if (modal) {
+    document.getElementById('createMonitorForm').reset();
+    document.getElementById('createMonitorError').style.display = 'none';
+    modal.classList.remove('hidden');
+  }
+}
+
+function closeCreateMonitorModal() {
+  const modal = document.getElementById('createMonitorModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateMonitorSubmit(e) {
+  e.preventDefault();
+  const productName = document.getElementById('monProductName').value.trim();
+  const competitorUrl = document.getElementById('monCompetitorUrl').value.trim();
+  const competitorName = document.getElementById('monCompetitorName').value.trim();
+  const myPrice = document.getElementById('monMyPrice').value;
+  const errorDiv = document.getElementById('createMonitorError');
+
+  try {
+    const res = await fetch('/api/4see/monitors', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ productName, competitorUrl, competitorName, myPrice })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeCreateMonitorModal();
+      load4seeMonitors();
+    } else {
+      errorDiv.innerText = data.error || 'Error al guardar monitor';
+      errorDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errorDiv.innerText = `Error de red: ${err.message}`;
+    errorDiv.style.display = 'block';
+  }
+}
+
+async function recheckMonitor(id) {
+  try {
+    const res = await fetch(`/api/4see/monitors/${id}/check`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      load4seeMonitors();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo re-verificar.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error: ${err.message}`);
+  }
+}
+
+async function deleteMonitor(id) {
+  const confirmDelete = await showCustomConfirm('Eliminar Monitor', '¿Deseas dejar de monitorear esta URL?');
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(`/api/4see/monitors/${id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      load4seeMonitors();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo eliminar.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error: ${err.message}`);
+  }
+}
+
+// 2. AUDITORÍA DE CATÁLOGO & DIFF VIEW
+async function load4seeCatalog() {
+  const container = document.getElementById('catalogDiffContainer');
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando catálogo auditado...</div>';
+
+  try {
+    const res = await fetch('/api/4see/catalog', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.items || data.items.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay productos auditados en el catálogo</div>
+          <div style="font-size: 13px; margin-top: 6px;">Audita un producto para detectar ausencias de GTIN/EAN y optimizar títulos por IA.</div>
+          <button class="btn-primary" style="margin-top: 16px;" onclick="openAuditItemModal()">+ Auditar Producto</button>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+    `;
+
+    data.items.forEach(item => {
+      const diagnostics = typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []);
+      const diagBadges = diagnostics.map(d => {
+        const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+        const color = d.severity === 'HIGH' ? 'var(--red)' : '#EAB308';
+        return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
+      }).join('');
+
+      html += `
+        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku}</span>
+              ${item.brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${item.brand}</strong></span>` : ''}
+              ${item.gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN: <strong>${item.gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN</span>'}
+            </div>
+            <div>
+              ${item.is_approved 
+                ? '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800;">OPTIMIZADO Y APROBADO</span>' 
+                : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${item.id}')">Aprobar Sugerencia</button>`
+              }
+            </div>
+          </div>
+
+          ${diagBadges ? `<div style="margin-bottom: 12px;">${diagBadges}</div>` : ''}
+
+          <!-- Vista Diff de Dos Columnas -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
+            <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Original</div>
+              <div style="font-size: 13px; color: #FFF; font-weight: 600;">${item.original_title}</div>
+            </div>
+            <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
+              <div style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Optimizado (Diff)</div>
+              <div style="font-size: 13px; color: #FFF; font-weight: 600;">${item.suggested_title}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando catálogo: ${err.message}</div>`;
+  }
+}
+
+function openAuditItemModal() {
+  const modal = document.getElementById('auditItemModal');
+  if (modal) {
+    document.getElementById('auditItemForm').reset();
+    modal.classList.remove('hidden');
+  }
+}
+
+function closeAuditItemModal() {
+  const modal = document.getElementById('auditItemModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleAuditItemSubmit(e) {
+  e.preventDefault();
+  const sku = document.getElementById('catSku').value.trim();
+  const title = document.getElementById('catTitle').value.trim();
+  const gtin = document.getElementById('catGtin').value.trim();
+  const brand = document.getElementById('catBrand').value.trim();
+
+  try {
+    const res = await fetch('/api/4see/catalog/audit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ sku, title, gtin, brand })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAuditItemModal();
+      load4seeCatalog();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo auditar.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+
+async function approveCatalogOptimization(id) {
+  try {
+    const res = await fetch(`/api/4see/catalog/${id}/approve`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      load4seeCatalog();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo aprobar.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+
+// 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES
+async function load4seeMargins() {
+  const container = document.getElementById('marginsTableContainer');
+  if (!container) return;
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando reglas de rentabilidad...</div>';
+
+  try {
+    const res = await fetch('/api/4see/margins', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (!data.success || !data.rules || data.rules.length === 0) {
+      container.innerHTML = `
+        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay reglas de margen configuradas</div>
+          <div style="font-size: 13px; margin-top: 6px;">Fija tus costos, comisiones e impuestos para proteger el margen neto frente a ventas a pérdida.</div>
+          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMarginModal()">+ Nueva Regla de Margen</button>
+        </div>
+      `;
+      return;
+    }
+
+    let html = `
+      <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+              <th style="padding: 12px 14px;">SKU / Producto</th>
+              <th style="padding: 12px 14px;">Costo Reposición</th>
+              <th style="padding: 12px 14px;">Precio Venta</th>
+              <th style="padding: 12px 14px;">Ganancia Neta</th>
+              <th style="padding: 12px 14px;">Margen Real</th>
+              <th style="padding: 12px 14px;">Alerta Rentabilidad</th>
+              <th style="padding: 12px 14px;">Repricing Oportunidad</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    data.rules.forEach(r => {
+      const isRed = Boolean(r.is_red_zone);
+      const alertBadge = isRed
+        ? '<span style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">ZONA ROJA (&lt;' + r.min_margin_pct + '%)</span>'
+        : '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">SALUDABLE</span>';
+
+      html += `
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+          <td style="padding: 14px;">
+            <div style="font-weight: 700; color: #FFF;">${r.product_name || r.product_sku}</div>
+            <div style="font-family: monospace; font-size: 11px; color: var(--text-muted);">${r.product_sku}</div>
+          </td>
+          <td style="padding: 14px; font-family: monospace; color: #FFF;">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
+          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
+          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
+            $${parseFloat(r.net_profit).toLocaleString('es-AR')}
+          </td>
+          <td style="padding: 14px; font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : '#FFF'};">
+            ${r.real_margin_pct}%
+          </td>
+          <td style="padding: 14px;">${alertBadge}</td>
+          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: var(--cobalt);">
+            $${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `
+          </tbody>
+        </table>
+      </div>
+    `;
+    container.innerHTML = html;
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando reglas de margen: ${err.message}</div>`;
+  }
+}
+
+function openCreateMarginModal() {
+  const modal = document.getElementById('createMarginModal');
+  if (modal) {
+    document.getElementById('createMarginForm').reset();
+    modal.classList.remove('hidden');
+  }
+}
+
+function closeCreateMarginModal() {
+  const modal = document.getElementById('createMarginModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function handleCreateMarginSubmit(e) {
+  e.preventDefault();
+  const productSku = document.getElementById('marSku').value.trim();
+  const productName = document.getElementById('marProductName').value.trim();
+  const costPrice = document.getElementById('marCostPrice').value;
+  const sellingPrice = document.getElementById('marSellingPrice').value;
+  const minMarginPct = document.getElementById('marMinMargin').value;
+  const platformFeePct = document.getElementById('marFeePct').value;
+  const taxPct = document.getElementById('marTaxPct').value;
+  const shippingCost = document.getElementById('marShipping').value;
+
+  try {
+    const res = await fetch('/api/4see/margins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({
+        productSku,
+        productName,
+        costPrice,
+        sellingPrice,
+        minMarginPct,
+        platformFeePct,
+        taxPct,
+        shippingCost
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeCreateMarginModal();
+      load4seeMargins();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo guardar la regla de margen.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+

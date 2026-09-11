@@ -1077,7 +1077,7 @@
       <button class="nav-tab module-tab" id="modTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
       <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;">Core</button>
       <button class="nav-tab module-tab" id="modKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-      
+      <button class="nav-tab module-tab" id="mod4see" onclick="switchModule('4see')" style="display:none;">4see</button>
     </nav>
 
     <!-- Línea 3: Features del Módulo Activo -->
@@ -1092,6 +1092,11 @@
       <!-- Features Kanban -->
       <button class="nav-tab feature-tab feature-kanban" id="tabKanban" onclick="switchTab('kanban')" style="display:none;">Tablero Kanban</button>
       <button class="nav-tab feature-tab feature-kanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Explorador de Pedidos</button>
+
+      <!-- Features 4see -->
+      <button class="nav-tab feature-tab feature-4see" id="tab4seeMonitors" onclick="switchTab('4see-monitors')" style="display:none;">Monitor de Precios</button>
+      <button class="nav-tab feature-tab feature-4see" id="tab4seeCatalog" onclick="switchTab('4see-catalog')" style="display:none;">Auditor de Catálogo (Diff View)</button>
+      <button class="nav-tab feature-tab feature-4see" id="tab4seeMargins" onclick="switchTab('4see-margins')" style="display:none;">Guardián de Márgenes</button>
     </nav>
   </header>
 
@@ -1114,7 +1119,7 @@
         <button class="mobile-nav-tab module-tab" id="mobModTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
         <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;">Core</button>
         <button class="mobile-nav-tab module-tab" id="mobModKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-        
+        <button class="mobile-nav-tab module-tab" id="mobMod4see" onclick="switchModule('4see')" style="display:none;">4see</button>
       </nav>
       <nav class="mobile-drawer-nav" id="mobileNavFeatures" style="margin-top: 16px;">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Funcionalidades</div>
@@ -1125,6 +1130,10 @@
         
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Tablero Kanban</button>
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Explorador de Pedidos</button>
+
+        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeMonitors" onclick="switchTabMobile('4see-monitors')" style="display:none;">Monitor de Precios</button>
+        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeCatalog" onclick="switchTabMobile('4see-catalog')" style="display:none;">Auditor de Catálogo</button>
+        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeMargins" onclick="switchTabMobile('4see-margins')" style="display:none;">Guardián de Márgenes</button>
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
@@ -1392,6 +1401,64 @@
       </div>
     </div>
 
+    <!-- 7. VISTAS DEL MÓDULO 4SEE (MONITOR, CATALOG & MARGINS) -->
+    <!-- 7.1 Monitor de Competidores -->
+    <div id="view4seeMonitors" class="view-panel hidden">
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Monitor — Vigilancia de Competencia</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Rastreo automático de precios y quiebres de stock en competidores (Extracción en Cascada y Mercado Libre).</p>
+          </div>
+          <button class="btn-primary" onclick="openCreateMonitorModal()">+ Agregar URL Competidora</button>
+        </div>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px;">
+        <div id="monitorsTableContainer">
+          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando monitores de competencia...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7.2 Auditoría de Catálogo y Diff View -->
+    <div id="view4seeCatalog" class="view-panel hidden">
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Catalog — Auditoría y Diff View</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Diagnóstico de atributos faltantes (GTIN/EAN, marca) y optimización de títulos orientada a conversión.</p>
+          </div>
+          <button class="btn-primary" onclick="openAuditItemModal()">+ Auditar Producto</button>
+        </div>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px;">
+        <div id="catalogDiffContainer">
+          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando catálogo auditado...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7.3 Guardián de Márgenes y Repricing -->
+    <div id="view4seeMargins" class="view-panel hidden">
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+          <div>
+            <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Margins — Guardián de Rentabilidad</h2>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Protección del margen neto frente a comisiones, impuestos (IVA/IIBB) y alertas de Zona Roja.</p>
+          </div>
+          <button class="btn-primary" onclick="openCreateMarginModal()">+ Nueva Regla de Margen</button>
+        </div>
+      </div>
+
+      <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 24px;">
+        <div id="marginsTableContainer">
+          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando reglas de rentabilidad...</div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
@@ -1642,6 +1709,10 @@
               <span>Scanner (App Móvil EAN-13)</span>
               <input type="checkbox" id="editTenantModScanner">
             </label>
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+              <span>4see (Inteligencia E-Commerce)</span>
+              <input type="checkbox" id="editTenantMod4see">
+            </label>
           </div>
         </div>
 
@@ -1649,6 +1720,121 @@
           <button type="button" class="btn-secondary" onclick="closeEditTenantModal()">Cancelar</button>
           <button type="submit" class="btn-primary">✓ Guardar Cambios</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODALES DEL MÓDULO 4SEE -->
+  <!-- Modal Nuevo Monitor -->
+  <div id="createMonitorModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Agregar URL Competidora</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMonitorModal()">✕</button>
+      </div>
+      <form id="createMonitorForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMonitorSubmit(event)">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Producto de Referencia <span style="color: var(--red);">*</span></label>
+          <input type="text" id="monProductName" class="input-field" placeholder="Ej: Ginebra London Dry 750ml" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">URL del Competidor <span style="color: var(--red);">*</span></label>
+          <input type="url" id="monCompetitorUrl" class="input-field" placeholder="https://articulo.mercadolibre.com.ar/MLA-..." required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre Tienda</label>
+            <input type="text" id="monCompetitorName" class="input-field" placeholder="Ej: Tienda Rival">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Mi Precio de Venta ($)</label>
+            <input type="number" step="0.01" id="monMyPrice" class="input-field" placeholder="18500">
+          </div>
+        </div>
+        <div id="createMonitorError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar y Rastrear</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Auditar Ítem Catálogo -->
+  <div id="auditItemModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Auditar Producto en Catálogo</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAuditItemModal()">✕</button>
+      </div>
+      <form id="auditItemForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleAuditItemSubmit(event)">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">SKU <span style="color: var(--red);">*</span></label>
+          <input type="text" id="catSku" class="input-field" placeholder="Ej: DRK-GIN-750" required>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Título Original <span style="color: var(--red);">*</span></label>
+          <input type="text" id="catTitle" class="input-field" placeholder="Ej: Ginebra clásica" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Código GTIN / EAN-13</label>
+            <input type="text" id="catGtin" class="input-field" placeholder="7791234567890">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Marca</label>
+            <input type="text" id="catBrand" class="input-field" placeholder="Ej: Tanqueray">
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Ejecutar Auditoría Técnica</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Nueva Regla de Margen -->
+  <div id="createMarginModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Configurar Regla de Rentabilidad</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMarginModal()">✕</button>
+      </div>
+      <form id="createMarginForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMarginSubmit(event)">
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">SKU <span style="color: var(--red);">*</span></label>
+            <input type="text" id="marSku" class="input-field" placeholder="DRK-01" required>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del Producto</label>
+            <input type="text" id="marProductName" class="input-field" placeholder="Vodka Premium 700ml">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Costo Reposición ($) <span style="color: var(--red);">*</span></label>
+            <input type="number" step="0.01" id="marCostPrice" class="input-field" placeholder="8000" required>
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Precio Venta ($) <span style="color: var(--red);">*</span></label>
+            <input type="number" step="0.01" id="marSellingPrice" class="input-field" placeholder="15000" required>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Margen Mín %</label>
+            <input type="number" step="0.1" id="marMinMargin" class="input-field" value="20">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Comisión %</label>
+            <input type="number" step="0.1" id="marFeePct" class="input-field" value="13">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Impuestos %</label>
+            <input type="number" step="0.1" id="marTaxPct" class="input-field" value="21">
+          </div>
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Costo Envío / Logística ($)</label>
+          <input type="number" step="0.01" id="marShipping" class="input-field" value="0">
+        </div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Calcular y Guardar Regla</button>
       </form>
     </div>
   </div>
