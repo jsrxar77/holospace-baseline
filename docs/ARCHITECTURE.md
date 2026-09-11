@@ -293,3 +293,34 @@ Cuando cualquier usuario intenta ejecutar una acción sin contar con el permiso 
 
 ### 9.3 Interceptor Centralizado y Modal UI/UX
 En el frontend (`public/app.js`), el cliente intercepta respuestas 403 con `code === 'INSUFFICIENT_PERMISSIONS'`, renderizando el modal de advertencia (`permissionDeniedModal`) con el chip destacado del permiso faltante y el módulo afectado sin interrumpir la sesión del usuario.
+
+---
+
+## 10. Estándar Canónico de UI/UX y Patrón ABM/CRUD Unificado (HoloSpace Standard CRUD Template)
+
+Toda pantalla de Altas, Bajas y Modificaciones (CRUD/ABM) en la plataforma HoloSpace Baseline debe apegarse estrictamente a la plantilla canónica sintetizada a partir de `Core / Usuarios`, asegurando consistencia visual, búsqueda reactiva universal y eliminación de texto truncado.
+
+### 10.1 Principios Visuales y de Interacción
+1. **Jerarquía Visual Sobria:** La cabecera del panel (`.actions-bar`) se compone de un título descriptivo (`<h2>`, 24px/900), un subtítulo explicativo (`var(--text-muted)`) y una barra de herramientas (`.actions-controls`) que agrupa el buscador reactivo (`.input-search`) y el botón de acción primaria (`.btn-primary`, fondo esmeralda con texto en alto contraste).
+2. **Cero Emojis:** Queda prohibido el uso de emojis en títulos, botones, estados o tablas. Toda señalización se construye mediante tipografía sobria (Outfit, JetBrains Mono) y tokens CSS (`var(--emerald)`, `var(--card-bg)`, `var(--text-main)`).
+3. **Puntos Indicadores de Estado:** La columna de estado implementa indicadores con punto sólido en lugar de chips pesados: `● Activo` en `var(--emerald)` o `○ Desactivado` / `○ Suspendido` en `var(--red)`.
+
+### 10.2 Política Estricta Anti-Truncado de Textos
+Para garantizar que los textos nunca se corten ni se compriman antiestéticamente en resoluciones intermedias:
+1. **Contenedor Responsivo Obligatorio (`.table-responsive-container`):** Toda tabla tabular debe residir dentro de un contenedor con scroll horizontal (`overflow-x: auto`), radio de curvatura y borde acorde al tema activo (`public/css/holospace-theme.css`).
+2. **Preservación de Texto en Celdas (`.data-table td`):**
+   - Se aplica `white-space: normal`, `overflow-wrap: anywhere` y `word-break: break-word` para nombres largos, descripciones, correos y URLs, garantizando que el texto fluya sin truncamiento ni desbordes.
+3. **Elementos Atómicos Protegidos (`white-space: nowrap`):**
+   - Se reserva `nowrap` exclusivamente para elementos que jamás deben romperse en múltiples líneas: badges de rol (`.badge-role`), etiquetas de organización (`.badge-tenant`), indicadores de estado (`.status-indicator`) y grupos de botones de acción (`.data-table-actions`).
+4. **Reserva Tipográfica por Columna:** Cada encabezado (`<th>`) define un ancho mínimo (`min-width`) adaptado a su naturaleza de dato (ej: 140px para slugs, 200px para nombres, 160px para acciones).
+
+### 10.3 Motor de Búsqueda Reactiva en Tiempo Real
+1. **Filtrado en Cliente (In-Memory Filtering):** Al recibir los datos de la API, el controlador los almacena en una variable en memoria (`cached[Entidad]List`).
+2. **Respuesta Instantánea (`oninput`):** El campo `.input-search` ejecuta la función `filter[Entidad]Table(query)` que evalúa coincidencias insensibles a mayúsculas/minúsculas en múltiples columnas (identificador, nombre, correo, categoría, estado).
+3. **Empty State Homogéneo:** Si la búsqueda no produce resultados, la tabla renderiza una fila descriptiva con mensaje sobrio: *"No se encontraron registros que coincidan con la búsqueda."*
+
+### 10.4 Ciclo de Vida de Controladores y Modales Homogéneos
+1. **Modales de Modo Dual (Crear / Editar):** Se reutiliza un único modal por entidad (`open[Entidad]Modal(id = null)`), adaptando el título y los campos mutables según el contexto.
+2. **Borrado Lógico Idempotente:** Toda baja o cambio de disponibilidad se efectúa mediante mutación de estado lógico (`active: false` o `status: 'suspended'`), preservando la integridad referencial en PostgreSQL 16.
+3. **Captura Centralizada de Errores RBAC:** Si un usuario sin permisos suficientes intenta mutar una entidad, el cliente captura el código `INSUFFICIENT_PERMISSIONS` (HTTP 403) y presenta el modal de denegación sin bloquear la interfaz.
+

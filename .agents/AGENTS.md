@@ -168,6 +168,15 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
 
 ---
 
+## Regla de Oro Obligatoria: Estandarización Universal de Vistas ABM/CRUD (Skill holospace-crud-template)
+
+1. **Alineación Obligatoria con el Template Canónico:** Toda vista de Altas, Bajas y Modificaciones (CRUD/ABM) en cualquier módulo existente o futuro debe implementarse siguiendo de forma estricta la skill `holospace-crud-template` (.agents/skills/holospace-crud-template/SKILL.md).
+2. **Búsqueda Reactiva Multicolumna Mandatoria:** Todo listado tabular ABM debe incorporar en su barra de herramientas (`.actions-bar`) un campo de búsqueda en vivo (`.input-search`) que filtre en memoria sin recarga de página.
+3. **Erradicación Absoluta de Textos Cortados:** Es mandatorio envolver las tablas en `.table-responsive-container` y configurar celdas con `white-space: normal` y `overflow-wrap: anywhere`, limitando `white-space: nowrap` solo a badges, estado (`● Activo`) y botones de acción.
+4. **Prohibido el Borrado Físico Destructivo:** Toda baja debe implementarse mediante borrado lógico / toggle de estado (`active: false`).
+
+---
+
 ## 🛠️ Catálogo Oficial de Skills en `.agents/skills/`
 
 Todo agente que opere en este repositorio cuenta con los siguientes skills especializados dentro de `.agents/skills/`:
@@ -178,6 +187,7 @@ Todo agente que opere en este repositorio cuenta con los siguientes skills espec
 4. **`holospace-theme-system`**: Integración universal con el motor de temas HW-DS (`/api/theme`) y consumo de tokens CSS sin duplicación de estilos.
 5. **`holospace-testing-verification`**: Batería de pruebas automatizadas en `bin/` y verificación de regresiones dentro de Docker.
 6. **`holospace-docker-deploy`**: Procedimientos de inicio, logs y diferenciación entre hot-reload y rebuild de servicios Docker.
+7. **`holospace-crud-template`**: Workflow y plantilla canónica para construir y refactorizar vistas ABM/CRUD con búsqueda reactiva, anti-truncado de textos y modales homogéneos.
 
 ---
 

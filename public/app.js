@@ -1510,55 +1510,84 @@ async function fetchUsers() {
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
     currentFetchedUsers = usersList;
-    const tbody = document.getElementById('usersTableBody');
-    const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
-
-    tbody.innerHTML = usersList.map((u, idx) => {
-      const isTargetSuperAdmin = u.role === 'SUPERADMIN';
-      const canEdit = isSuperAdmin || !isTargetSuperAdmin;
-      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
-      const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
-
-      return `
-        <tr>
-          <td><strong style="color: var(--emerald); font-family: monospace;">@${displayNick}</strong></td>
-          <td><strong>${u.name}</strong></td>
-          <td>${u.email}</td>
-          <td>
-            <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
-              ${orgName}
-            </span>
-          </td>
-          <td>
-            <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : (u.is_custom_role ? 'background:rgba(0,230,118,0.15); color:var(--emerald); border-color:var(--emerald);' : '')}">
-              ${u.role_name || u.role}
-            </span>
-          </td>
-          <td>
-            <span style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
-              ${u.active !== false ? '● Activo' : '○ Desactivado'}
-            </span>
-          </td>
-          <td>
-            ${canEdit ? `
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserByIndex(${idx})">Editar</button>
-                <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
-                  ${u.active !== false ? 'Desactivar' : 'Activar'}
-                </button>
-              </div>
-            ` : `
-              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
-                Protegido (SuperAdmin)
-              </span>
-            `}
-          </td>
-        </tr>
-      `;
-    }).join('');
+    renderUsersTable(currentFetchedUsers);
   } catch (e) {
     console.error('Error al cargar usuarios:', e);
   }
+}
+
+function filterUsersTable(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderUsersTable(currentFetchedUsers);
+    return;
+  }
+  const filtered = currentFetchedUsers.filter(u => {
+    const nick = (u.username || (u.email ? u.email.split('@')[0] : '')).toLowerCase();
+    const name = (u.name || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const org = (u.tenant_name || u.tenantSlug || '').toLowerCase();
+    const role = (u.role_name || u.role || '').toLowerCase();
+    const status = u.active !== false ? 'activo' : 'desactivado inactivo';
+    return nick.includes(q) || name.includes(q) || email.includes(q) || org.includes(q) || role.includes(q) || status.includes(q);
+  });
+  renderUsersTable(filtered);
+}
+
+function renderUsersTable(usersList = []) {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+
+  if (usersList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron usuarios que coincidan con la búsqueda.</td></tr>`;
+    return;
+  }
+
+  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+
+  tbody.innerHTML = usersList.map((u, idx) => {
+    const isTargetSuperAdmin = u.role === 'SUPERADMIN';
+    const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+    const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
+    const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
+
+    return `
+      <tr>
+        <td><strong style="color: var(--emerald); font-family: monospace;">@${displayNick}</strong></td>
+        <td><strong style="color: #FFF;">${u.name}</strong></td>
+        <td style="font-family: monospace; font-size: 13px;">${u.email}</td>
+        <td>
+          <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
+            ${orgName}
+          </span>
+        </td>
+        <td>
+          <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : (u.is_custom_role ? 'background:rgba(0,230,118,0.15); color:var(--emerald); border-color:var(--emerald);' : '')}">
+            ${u.role_name || u.role}
+          </span>
+        </td>
+        <td style="text-align: center;">
+          <span class="status-indicator" style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
+            ${u.active !== false ? '● Activo' : '○ Desactivado'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          ${canEdit ? `
+            <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
+              <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
+              <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
+                ${u.active !== false ? 'Desactivar' : 'Activar'}
+              </button>
+            </div>
+          ` : `
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
+              Protegido (SuperAdmin)
+            </span>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId = null) {
@@ -1856,12 +1885,28 @@ async function fetchRolesManagementData() {
   }
 }
 
+function filterRolesTable(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderRolesTable(cachedRoles);
+    return;
+  }
+  const filtered = cachedRoles.filter(r => {
+    const name = (r.name || '').toLowerCase();
+    const slug = (r.slug || '').toLowerCase();
+    const desc = (r.description || '').toLowerCase();
+    const perms = Array.isArray(r.permissions) ? r.permissions.join(' ').toLowerCase() : '';
+    return name.includes(q) || slug.includes(q) || desc.includes(q) || perms.includes(q);
+  });
+  renderRolesTable(filtered);
+}
+
 function renderRolesTable(roles = []) {
   const tbody = document.getElementById('rolesTableBody');
   if (!tbody) return;
 
   if (roles.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No se encontraron roles configurados.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron roles que coincidan con la búsqueda.</td></tr>`;
     return;
   }
 
@@ -1889,14 +1934,14 @@ function renderRolesTable(roles = []) {
 
     return `
       <tr>
-        <td><strong>${r.name}</strong></td>
-        <td><code style="font-family: monospace; color: var(--text-muted);">${r.slug}</code></td>
-        <td style="color: var(--text-muted); font-size: 13px; max-width: 240px;">${r.description || '-'}</td>
+        <td><strong style="color: #FFF;">${r.name}</strong></td>
+        <td><code style="font-family: monospace; color: var(--text-muted);">@${r.slug}</code></td>
+        <td style="color: var(--text-muted); font-size: 13px;">${r.description || '-'}</td>
         <td>${typeBadge}</td>
         <td>${permsDisplay}</td>
-        <td><strong style="color: #FFF;">${r.user_count || 0}</strong></td>
-        <td>
-          <div style="display: flex; gap: 8px;">
+        <td style="text-align: center;"><strong style="color: #FFF;">${r.user_count || 0}</strong></td>
+        <td style="text-align: right;">
+          <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
             <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openRoleModal('${r.id}')">Editar</button>
             ${canDelete ? `
               <button class="btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="deleteRole('${r.id}', '${r.name}')">Eliminar</button>
@@ -2703,10 +2748,106 @@ async function loadTenantsManagementData() {
       `;
     }).join('');
 
+    renderTenantsTable(cachedTenantsList);
+
   } catch (err) {
-    container.innerHTML = `<div style="color:var(--red); padding:20px;">Error conectando con la API de Tenants: ${err.message}</div>`;
+    const tableBody = document.getElementById('tenantsTableBody');
+    if (tableBody) {
+      tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--red); padding:20px; text-align:center;">Error conectando con la API de Tenants: ${err.message}</td></tr>`;
+    }
+    if (container) {
+      container.innerHTML = `<div style="color:var(--red); padding:20px;">Error conectando con la API de Tenants: ${err.message}</div>`;
+    }
   }
 }
+
+function filterTenantsTable(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderTenantsTable(cachedTenantsList);
+    return;
+  }
+  const filtered = cachedTenantsList.filter(t => {
+    const name = (t.name || '').toLowerCase();
+    const slug = (t.slug || '').toLowerCase();
+    const plan = (t.plan_code || '').toLowerCase();
+    const status = t.status === 'suspended' ? 'suspendido' : 'activo';
+    const modules = (t.modules || []).map(m => m.module_code).join(' ').toLowerCase();
+    return name.includes(q) || slug.includes(q) || plan.includes(q) || status.includes(q) || modules.includes(q);
+  });
+  renderTenantsTable(filtered);
+}
+
+function renderTenantsTable(tenantsList = []) {
+  const tbody = document.getElementById('tenantsTableBody');
+  if (!tbody) return;
+
+  if (tenantsList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron organizaciones que coincidan con la búsqueda.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = tenantsList.map(t => {
+    const isPlatform = t.slug === 'holospace';
+    const isSuspended = t.status === 'suspended';
+    const planCode = t.plan_code || 'starter';
+    const planBadgeColors = {
+      starter: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', border: '#3B82F6' },
+      pro: { bg: 'rgba(0, 230, 118, 0.15)', color: 'var(--emerald)', border: 'var(--emerald)' },
+      enterprise: { bg: 'rgba(167, 139, 250, 0.15)', color: '#A78BFA', border: '#A78BFA' }
+    }[planCode] || { bg: 'rgba(255,255,255,0.1)', color: '#FFF', border: '#888' };
+
+    const modules = t.modules || [];
+    const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
+
+    const moduleChips = ['core', 'tenant', 'kanban', 'scanner', '4see'].map(mCode => {
+      const active = (mCode === 'core' || (mCode === 'tenant' && isPlatform)) ? true : hasModule(mCode);
+      return `<span style="font-size: 10px; font-family: monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'rgba(255,255,255,0.04)'}; background: ${active ? 'rgba(255,255,255,0.06)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
+    }).join(' ');
+
+    const users = t.users || [];
+
+    return `
+      <tr style="opacity: ${isSuspended ? '0.75' : '1'};">
+        <td><strong style="color: var(--emerald); font-family: monospace;">@${t.slug}</strong></td>
+        <td>
+          <div style="font-weight: 800; color: #FFF;">${t.name}</div>
+          ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}
+        </td>
+        <td>
+          <span class="badge-role" style="background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border-color: ${planBadgeColors.border};">
+            ${planCode.toUpperCase()}
+          </span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+            ${moduleChips}
+          </div>
+        </td>
+        <td style="text-align: center;">
+          <strong style="color: #FFF;">${users.length}</strong>
+          <span style="color: var(--text-muted); font-size: 11px;"> / ${t.max_users || '—'}</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="status-indicator" style="color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; font-weight: 800;">
+            ${isSuspended ? '○ Suspendido' : '● Activo'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="openEditTenantModal('${t.id}')">Editar</button>
+            ${!isPlatform ? `
+              <button class="${isSuspended ? 'btn-primary' : 'btn-danger'}" style="padding: 5px 10px; font-size: 11px;" onclick="toggleTenantStatus('${t.id}', '${t.name}', '${t.status || 'active'}')">
+                ${isSuspended ? 'Reactivar' : 'Suspender'}
+              </button>
+            ` : ''}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
 
 async function toggleTenantStatus(tenantId, tenantName, currentStatus) {
   const isCurrentlySuspended = currentStatus === 'suspended';
@@ -2943,6 +3084,8 @@ async function saveEditTenantSubmit(e) {
 // ============================================================================
 
 // 1. MONITOR DE COMPETENCIA
+let cached4seeMonitors = [];
+
 async function load4seeMonitors() {
   const container = document.getElementById('monitorsTableContainer');
   if (!container) return;
@@ -2954,6 +3097,7 @@ async function load4seeMonitors() {
     });
     const data = await res.json();
     if (!data.success || !data.monitors || data.monitors.length === 0) {
+      cached4seeMonitors = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
           <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay URLs de competidores monitoreadas</div>
@@ -2964,65 +3108,104 @@ async function load4seeMonitors() {
       return;
     }
 
-    let html = `
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
-              <th style="padding: 12px 14px;">Producto</th>
-              <th style="padding: 12px 14px;">Competidor / Tienda</th>
-              <th style="padding: 12px 14px;">Mi Precio</th>
-              <th style="padding: 12px 14px;">Precio Rival</th>
-              <th style="padding: 12px 14px;">Estado Stock</th>
-              <th style="padding: 12px 14px;">Última Revisión</th>
-              <th style="padding: 12px 14px; text-align: right;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    data.monitors.forEach(m => {
-      const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
-      const stockBadge = isOutOfStock
-        ? '<span style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">QUIEBRE (SIN STOCK)</span>'
-        : '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">EN STOCK</span>';
-
-      const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
-      const diffLabel = priceDiff > 0 
-        ? `<span style="color: var(--red); font-size: 11px;">(+$${priceDiff.toLocaleString('es-AR')})</span>`
-        : (priceDiff < 0 ? `<span style="color: var(--emerald); font-size: 11px;">(-$${Math.abs(priceDiff).toLocaleString('es-AR')})</span>` : '');
-
-      html += `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-          <td style="padding: 14px; font-weight: 700; color: #FFF;">${m.product_name}</td>
-          <td style="padding: 14px;">
-            <a href="${m.competitor_url}" target="_blank" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
-              ${m.competitor_name || 'Ver Tienda'} ↗
-            </a>
-          </td>
-          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
-          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">
-            $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
-          </td>
-          <td style="padding: 14px;">${stockBadge}</td>
-          <td style="padding: 14px; color: var(--text-muted); font-size: 12px;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
-          <td style="padding: 14px; text-align: right;">
-            <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="recheckMonitor('${m.id}')">Re-verificar</button>
-            <button class="btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Eliminar</button>
-          </td>
-        </tr>
-      `;
-    });
-
-    html += `
-          </tbody>
-        </table>
-      </div>
-    `;
-    container.innerHTML = html;
+    cached4seeMonitors = data.monitors;
+    render4seeMonitorsTable(cached4seeMonitors);
   } catch (err) {
     container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando monitores: ${err.message}</div>`;
   }
+}
+
+function filter4seeMonitors(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    render4seeMonitorsTable(cached4seeMonitors);
+    return;
+  }
+  const filtered = cached4seeMonitors.filter(m => {
+    const prod = (m.product_name || '').toLowerCase();
+    const comp = (m.competitor_name || '').toLowerCase();
+    const url = (m.competitor_url || '').toLowerCase();
+    const stock = (m.competitor_stock || '').toLowerCase();
+    return prod.includes(q) || comp.includes(q) || url.includes(q) || stock.includes(q);
+  });
+  render4seeMonitorsTable(filtered);
+}
+
+function render4seeMonitorsTable(monitors = []) {
+  const container = document.getElementById('monitorsTableContainer');
+  if (!container) return;
+
+  if (monitors.length === 0) {
+    container.innerHTML = `
+      <table class="data-table">
+        <tbody>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              No se encontraron monitores que coincidan con la búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    return;
+  }
+
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="min-width: 180px;">Producto</th>
+          <th style="min-width: 160px;">Competidor / Tienda</th>
+          <th style="min-width: 110px;">Mi Precio</th>
+          <th style="min-width: 120px;">Precio Rival</th>
+          <th style="min-width: 130px;">Estado Stock</th>
+          <th style="min-width: 120px;">Última Revisión</th>
+          <th style="min-width: 160px; text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  monitors.forEach(m => {
+    const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
+    const stockBadge = isOutOfStock
+      ? '<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">○ QUIEBRE (SIN STOCK)</span>'
+      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● EN STOCK</span>';
+
+    const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
+    const diffLabel = priceDiff > 0 
+      ? `<span style="color: var(--red); font-size: 11px;">(+$${priceDiff.toLocaleString('es-AR')})</span>`
+      : (priceDiff < 0 ? `<span style="color: var(--emerald); font-size: 11px;">(-$${Math.abs(priceDiff).toLocaleString('es-AR')})</span>` : '');
+
+    html += `
+      <tr>
+        <td><strong style="color: #FFF;">${m.product_name}</strong></td>
+        <td>
+          <a href="${m.competitor_url}" target="_blank" rel="noopener noreferrer" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
+            ${m.competitor_name || 'Ver Tienda'} ↗
+          </a>
+        </td>
+        <td style="font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; font-weight: 800; color: #FFF;">
+          $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
+        </td>
+        <td>${stockBadge}</td>
+        <td style="color: var(--text-muted); font-size: 12px; font-family: monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
+        <td style="text-align: right;">
+          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="recheckMonitor('${m.id}')">Re-verificar</button>
+            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Eliminar</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
 }
 
 function openCreateMonitorModal() {
@@ -3108,6 +3291,8 @@ async function deleteMonitor(id) {
 }
 
 // 2. AUDITORÍA DE CATÁLOGO & DIFF VIEW
+let cached4seeCatalog = [];
+
 async function load4seeCatalog() {
   const container = document.getElementById('catalogDiffContainer');
   if (!container) return;
@@ -3119,6 +3304,7 @@ async function load4seeCatalog() {
     });
     const data = await res.json();
     if (!data.success || !data.items || data.items.length === 0) {
+      cached4seeCatalog = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
           <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay productos auditados en el catálogo</div>
@@ -3129,56 +3315,88 @@ async function load4seeCatalog() {
       return;
     }
 
-    let html = `
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-    `;
-
-    data.items.forEach(item => {
-      const diagnostics = typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []);
-      const diagBadges = diagnostics.map(d => {
-        const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
-        const color = d.severity === 'HIGH' ? 'var(--red)' : '#EAB308';
-        return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
-      }).join('');
-
-      html += `
-        <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku}</span>
-              ${item.brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${item.brand}</strong></span>` : ''}
-              ${item.gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN: <strong>${item.gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN</span>'}
-            </div>
-            <div>
-              ${item.is_approved 
-                ? '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800;">OPTIMIZADO Y APROBADO</span>' 
-                : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${item.id}')">Aprobar Sugerencia</button>`
-              }
-            </div>
-          </div>
-
-          ${diagBadges ? `<div style="margin-bottom: 12px;">${diagBadges}</div>` : ''}
-
-          <!-- Vista Diff de Dos Columnas -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 10px;">
-            <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
-              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Original</div>
-              <div style="font-size: 13px; color: #FFF; font-weight: 600;">${item.original_title}</div>
-            </div>
-            <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
-              <div style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Optimizado (Diff)</div>
-              <div style="font-size: 13px; color: #FFF; font-weight: 600;">${item.suggested_title}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    });
-
-    html += `</div>`;
-    container.innerHTML = html;
+    cached4seeCatalog = data.items;
+    render4seeCatalog(cached4seeCatalog);
   } catch (err) {
     container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando catálogo: ${err.message}</div>`;
   }
+}
+
+function filter4seeCatalog(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    render4seeCatalog(cached4seeCatalog);
+    return;
+  }
+  const filtered = cached4seeCatalog.filter(item => {
+    const orig = (item.original_title || '').toLowerCase();
+    const sugg = (item.suggested_title || '').toLowerCase();
+    const sku = (item.sku || '').toLowerCase();
+    const brand = (item.brand || '').toLowerCase();
+    const gtin = (item.gtin || '').toLowerCase();
+    return orig.includes(q) || sugg.includes(q) || sku.includes(q) || brand.includes(q) || gtin.includes(q);
+  });
+  render4seeCatalog(filtered);
+}
+
+function render4seeCatalog(items = []) {
+  const container = document.getElementById('catalogDiffContainer');
+  if (!container) return;
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 36px 20px; color: var(--text-muted);">
+        No se encontraron productos auditados que coincidan con la búsqueda.
+      </div>
+    `;
+    return;
+  }
+
+  let html = `<div style="display: flex; flex-direction: column; gap: 16px; padding: 12px 0;">`;
+
+  items.forEach(item => {
+    const diagnostics = typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []);
+    const diagBadges = diagnostics.map(d => {
+      const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+      const color = d.severity === 'HIGH' ? 'var(--red)' : '#EAB308';
+      return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
+    }).join('');
+
+    html += `
+      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku}</span>
+            ${item.brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${item.brand}</strong></span>` : ''}
+            ${item.gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN: <strong>${item.gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN</span>'}
+          </div>
+          <div>
+            ${item.is_approved 
+              ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● OPTIMIZADO Y APROBADO</span>' 
+              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${item.id}')">Aprobar Sugerencia</button>`
+            }
+          </div>
+        </div>
+
+        ${diagBadges ? `<div style="margin-bottom: 12px;">${diagBadges}</div>` : ''}
+
+        <!-- Vista Diff de Dos Columnas -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
+          <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Original</div>
+            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${item.original_title}</div>
+          </div>
+          <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
+            <div style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Optimizado (Diff)</div>
+            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${item.suggested_title}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 function openAuditItemModal() {
@@ -3198,27 +3416,32 @@ async function handleAuditItemSubmit(e) {
   e.preventDefault();
   const sku = document.getElementById('catSku').value.trim();
   const title = document.getElementById('catTitle').value.trim();
-  const gtin = document.getElementById('catGtin').value.trim();
   const brand = document.getElementById('catBrand').value.trim();
+  const gtin = document.getElementById('catGtin').value.trim();
+  const btn = e.target.querySelector('button[type="submit"]');
+
+  if (btn) btn.innerText = 'Analizando con IA...';
 
   try {
-    const res = await fetch('/api/4see/catalog/audit', {
+    const res = await fetch('/api/4see/catalog', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getAuthToken()}`
       },
-      body: JSON.stringify({ sku, title, gtin, brand })
+      body: JSON.stringify({ sku, title, brand, gtin })
     });
     const data = await res.json();
     if (data.success) {
       closeAuditItemModal();
       load4seeCatalog();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo auditar.');
+      await showCustomAlert('Error', data.error || 'Error al auditar producto');
     }
   } catch (err) {
     await showCustomAlert('Error', `Error de red: ${err.message}`);
+  } finally {
+    if (btn) btn.innerText = 'Auditar Producto';
   }
 }
 
@@ -3230,16 +3453,19 @@ async function approveCatalogOptimization(id) {
     });
     const data = await res.json();
     if (data.success) {
+      await showCustomAlert('Optimización Aprobada', 'El título sugerido ha sido aplicado con éxito.');
       load4seeCatalog();
     } else {
       await showCustomAlert('Error', data.error || 'No se pudo aprobar.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Error: ${err.message}`);
   }
 }
 
 // 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES
+let cached4seeMargins = [];
+
 async function load4seeMargins() {
   const container = document.getElementById('marginsTableContainer');
   if (!container) return;
@@ -3251,6 +3477,7 @@ async function load4seeMargins() {
     });
     const data = await res.json();
     if (!data.success || !data.rules || data.rules.length === 0) {
+      cached4seeMargins = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
           <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay reglas de margen configuradas</div>
@@ -3261,61 +3488,98 @@ async function load4seeMargins() {
       return;
     }
 
-    let html = `
-      <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
-          <thead>
-            <tr style="border-bottom: 1px solid var(--card-border); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
-              <th style="padding: 12px 14px;">SKU / Producto</th>
-              <th style="padding: 12px 14px;">Costo Reposición</th>
-              <th style="padding: 12px 14px;">Precio Venta</th>
-              <th style="padding: 12px 14px;">Ganancia Neta</th>
-              <th style="padding: 12px 14px;">Margen Real</th>
-              <th style="padding: 12px 14px;">Alerta Rentabilidad</th>
-              <th style="padding: 12px 14px;">Repricing Oportunidad</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    data.rules.forEach(r => {
-      const isRed = Boolean(r.is_red_zone);
-      const alertBadge = isRed
-        ? '<span style="background: rgba(239, 68, 68, 0.15); color: var(--red); border: 1px solid var(--red); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">ZONA ROJA (&lt;' + r.min_margin_pct + '%)</span>'
-        : '<span style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald); padding: 4px 8px; border-radius: 6px; font-weight: 800; font-size: 11px;">SALUDABLE</span>';
-
-      html += `
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.04);">
-          <td style="padding: 14px;">
-            <div style="font-weight: 700; color: #FFF;">${r.product_name || r.product_sku}</div>
-            <div style="font-family: monospace; font-size: 11px; color: var(--text-muted);">${r.product_sku}</div>
-          </td>
-          <td style="padding: 14px; font-family: monospace; color: #FFF;">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
-          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
-          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
-            $${parseFloat(r.net_profit).toLocaleString('es-AR')}
-          </td>
-          <td style="padding: 14px; font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : '#FFF'};">
-            ${r.real_margin_pct}%
-          </td>
-          <td style="padding: 14px;">${alertBadge}</td>
-          <td style="padding: 14px; font-family: monospace; font-weight: 800; color: var(--cobalt);">
-            $${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)
-          </td>
-        </tr>
-      `;
-    });
-
-    html += `
-          </tbody>
-        </table>
-      </div>
-    `;
-    container.innerHTML = html;
+    cached4seeMargins = data.rules;
+    render4seeMarginsTable(cached4seeMargins);
   } catch (err) {
     container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando reglas de margen: ${err.message}</div>`;
   }
 }
+
+function filter4seeMargins(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    render4seeMarginsTable(cached4seeMargins);
+    return;
+  }
+  const filtered = cached4seeMargins.filter(r => {
+    const name = (r.product_name || '').toLowerCase();
+    const sku = (r.product_sku || '').toLowerCase();
+    const zone = r.is_red_zone ? 'zona roja' : 'saludable';
+    return name.includes(q) || sku.includes(q) || zone.includes(q);
+  });
+  render4seeMarginsTable(filtered);
+}
+
+function render4seeMarginsTable(rules = []) {
+  const container = document.getElementById('marginsTableContainer');
+  if (!container) return;
+
+  if (rules.length === 0) {
+    container.innerHTML = `
+      <table class="data-table">
+        <tbody>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              No se encontraron reglas de margen que coincidan con la búsqueda.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    return;
+  }
+
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="min-width: 180px;">SKU / Producto</th>
+          <th style="min-width: 120px;">Costo Reposición</th>
+          <th style="min-width: 120px;">Precio Venta</th>
+          <th style="min-width: 120px;">Ganancia Neta</th>
+          <th style="min-width: 110px;">Margen Real</th>
+          <th style="min-width: 140px;">Alerta Rentabilidad</th>
+          <th style="min-width: 160px; text-align: right;">Repricing Oportunidad</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  rules.forEach(r => {
+    const isRed = Boolean(r.is_red_zone);
+    const alertBadge = isRed
+      ? '<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">○ ZONA ROJA (&lt;' + r.min_margin_pct + '%)</span>'
+      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● SALUDABLE</span>';
+
+    html += `
+      <tr>
+        <td>
+          <div style="font-weight: 800; color: #FFF;">${r.product_name || r.product_sku}</div>
+          <div style="font-family: monospace; font-size: 11px; color: var(--emerald);">SKU: ${r.product_sku}</div>
+        </td>
+        <td style="font-family: monospace; color: #FFF;">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
+          $${parseFloat(r.net_profit).toLocaleString('es-AR')}
+        </td>
+        <td style="font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : '#FFF'};">
+          ${r.real_margin_pct}%
+        </td>
+        <td>${alertBadge}</td>
+        <td style="font-family: monospace; font-weight: 800; color: var(--cobalt); text-align: right;">
+          $${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
 
 function openCreateMarginModal() {
   const modal = document.getElementById('createMarginModal');

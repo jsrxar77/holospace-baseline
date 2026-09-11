@@ -69,6 +69,7 @@ if (req.url.startsWith('/api/kanban/')) {
 3. Definir rutas con prefijo `/api/<key>/`.
 4. Vincular al catálogo de planes en `lib/billing.js` y `data/init-schema.sql`.
 5. Nombrar las tablas con el prefijo oficial del módulo (ej: `<modulo>_<tabla>`) y configurar políticas RLS.
+6. Toda interfaz web de administración o gestión de datos (ABM/CRUD) debe implementar estrictamente el Estándar Canónico ABM (ver `docs/ARCHITECTURE.md` Sección 10 y skill `.agents/skills/holospace-crud-template/SKILL.md`), incluyendo barra de búsqueda reactiva en tiempo real y envoltura en `.table-responsive-container` con protección tipográfica anti-truncado.
 
 ---
 

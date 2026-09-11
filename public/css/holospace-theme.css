@@ -159,6 +159,7 @@ body.theme-omarchy_tiling .invoice-card,
 body.theme-omarchy_tiling .user-group,
 body.theme-omarchy_tiling .modal-content,
 body.theme-omarchy_tiling .data-table,
+body.theme-omarchy_tiling .table-responsive-container,
 body.theme-omarchy_tiling section,
 body.theme-omarchy_tiling article {
   background: #181825 !important;
@@ -360,6 +361,7 @@ body.theme-soft_minimal_pastel .invoice-card,
 body.theme-soft_minimal_pastel .user-group,
 body.theme-soft_minimal_pastel .modal-content,
 body.theme-soft_minimal_pastel .data-table,
+body.theme-soft_minimal_pastel .table-responsive-container,
 body.theme-soft_minimal_pastel section,
 body.theme-soft_minimal_pastel article {
   border-radius: 12px !important;
@@ -546,6 +548,7 @@ body.theme-dark_glassmorphism .invoice-card,
 body.theme-dark_glassmorphism .user-group,
 body.theme-dark_glassmorphism .modal-content,
 body.theme-dark_glassmorphism .data-table,
+body.theme-dark_glassmorphism .table-responsive-container,
 body.theme-dark_glassmorphism section,
 body.theme-dark_glassmorphism article {
   background: rgba(18, 24, 38, 0.45) !important;
@@ -751,6 +754,7 @@ body.theme-cyberpunk_glassmorphism .invoice-card,
 body.theme-cyberpunk_glassmorphism .user-group,
 body.theme-cyberpunk_glassmorphism .modal-content,
 body.theme-cyberpunk_glassmorphism .data-table,
+body.theme-cyberpunk_glassmorphism .table-responsive-container,
 body.theme-cyberpunk_glassmorphism section,
 body.theme-cyberpunk_glassmorphism article {
   background: rgba(22, 18, 42, 0.45) !important;
@@ -916,6 +920,7 @@ body.theme-omarchy_aetheria .invoice-card,
 body.theme-omarchy_aetheria .user-group,
 body.theme-omarchy_aetheria .modal-content,
 body.theme-omarchy_aetheria .data-table,
+body.theme-omarchy_aetheria .table-responsive-container,
 body.theme-omarchy_aetheria section,
 body.theme-omarchy_aetheria article {
   background: #170F2E !important;

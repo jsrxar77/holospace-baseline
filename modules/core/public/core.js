@@ -1185,54 +1185,83 @@ async function fetchUsers() {
     const data = await res.json();
     const usersList = Array.isArray(data) ? data : (data.users || []);
     currentFetchedUsers = usersList;
-    const tbody = document.getElementById('usersTableBody');
-    const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
-
-    tbody.innerHTML = usersList.map(u => {
-      const isTargetSuperAdmin = u.role === 'SUPERADMIN';
-      const canEdit = isSuperAdmin || !isTargetSuperAdmin;
-      const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
-
-      return `
-        <tr>
-          <td><strong>${u.name}</strong></td>
-          <td>${u.email}</td>
-          <td>
-            <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
-              ${orgName}
-            </span>
-          </td>
-          <td>
-            <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
-              ${u.role}
-            </span>
-          </td>
-          <td style="font-family: monospace;">${u.operatorId || '-'}</td>
-          <td>
-            <span style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
-              ${u.active !== false ? '● Activo' : '○ Desactivado'}
-            </span>
-          </td>
-          <td>
-            ${canEdit ? `
-              <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
-                <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
-                  ${u.active !== false ? 'Desactivar' : 'Activar'}
-                </button>
-              </div>
-            ` : `
-              <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
-                🔒 Protegido (SuperAdmin)
-              </span>
-            `}
-          </td>
-        </tr>
-      `;
-    }).join('');
+    renderUsersTable(currentFetchedUsers);
   } catch (e) {
     console.error('Error al cargar usuarios:', e);
   }
+}
+
+function filterUsersTable(query = '') {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    renderUsersTable(currentFetchedUsers);
+    return;
+  }
+  const filtered = currentFetchedUsers.filter(u => {
+    const name = (u.name || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const org = (u.tenant_name || u.tenantSlug || '').toLowerCase();
+    const role = (u.role || '').toLowerCase();
+    const opId = (u.operatorId || '').toLowerCase();
+    const status = u.active !== false ? 'activo' : 'desactivado inactivo';
+    return name.includes(q) || email.includes(q) || org.includes(q) || role.includes(q) || opId.includes(q) || status.includes(q);
+  });
+  renderUsersTable(filtered);
+}
+
+function renderUsersTable(usersList = []) {
+  const tbody = document.getElementById('usersTableBody');
+  if (!tbody) return;
+
+  if (usersList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron usuarios que coincidan con la búsqueda.</td></tr>`;
+    return;
+  }
+
+  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+
+  tbody.innerHTML = usersList.map(u => {
+    const isTargetSuperAdmin = u.role === 'SUPERADMIN';
+    const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+    const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
+
+    return `
+      <tr>
+        <td><strong style="color: #FFF;">${u.name}</strong></td>
+        <td style="font-family: monospace; font-size: 13px;">${u.email}</td>
+        <td>
+          <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
+            ${orgName}
+          </span>
+        </td>
+        <td>
+          <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : ''}">
+            ${u.role}
+          </span>
+        </td>
+        <td style="font-family: monospace;">${u.operatorId || '-'}</td>
+        <td style="text-align: center;">
+          <span class="status-indicator" style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
+            ${u.active !== false ? '● Activo' : '○ Desactivado'}
+          </span>
+        </td>
+        <td style="text-align: right;">
+          ${canEdit ? `
+            <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
+              <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
+              <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
+                ${u.active !== false ? 'Desactivar' : 'Activar'}
+              </button>
+            </div>
+          ` : `
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
+              Protegido (SuperAdmin)
+            </span>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
 }
 
 async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId = null) {

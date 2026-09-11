@@ -94,6 +94,17 @@
 - [x] **10.12** Refactorización de nombres de tablas de PostgreSQL con prefijos modulares desacoplados (`core_*`, `kanban_*`, `tenant_*`, `fourseee_*`) y eliminación de vistas legadas (fase Alpha nativa).
 - [x] **10.13** Suite integral de pruebas automatizadas con cobertura total de todos los módulos (`kanban`, `scanner`, `core`, `tenant`, `4see`), con creación de `tests/test-kanban-module.js`, `tests/test-scanner-module.js` y el orquestador unificado `tests/run-all-tests.js` (11 suites, 100% PASS).
 
+### FASE 11: Estandarización de Plantilla Canónica ABM/CRUD y Búsqueda Reactiva Universal
+- [x] **11.1** Creación de la Skill Canónica `.agents/skills/holospace-crud-template/SKILL.md` y registro obligatorio en `.agents/AGENTS.md`.
+- [x] **11.2** Definición de clases maestras (`.table-responsive-container`, `.input-search`, `.search-box-wrapper`, `.actions-controls`) en `public/index.html` y los 5 temas de `public/css/holospace-theme.css`.
+- [x] **11.3** Implementación de búsqueda reactiva multi-columna en memoria (`filterUsersTable`) y reglas anti-truncado en Módulo Core (`Usuarios`).
+- [x] **11.4** Implementación de búsqueda reactiva (`filterRolesTable`) y eliminación de corte de textos en Módulo Core (`Roles y Permisos`).
+- [x] **11.5** Transformación del Directorio de Organizaciones en Módulo Tenant (`/tenant`) a la Tabla Canónica con buscador en vivo (`filterTenantsTable`), preservando KPIs superiores.
+- [x] **11.6** Refactorización y estandarización a la plantilla canónica con búsqueda en vivo en las tres vistas del Módulo 4see (`Monitores`, `Catálogo Diff` y `Márgenes`).
+- [x] **11.7** Blindaje de anchos y clases de tabla en Módulo Kanban (`Explorador de Pedidos`).
+- [x] **11.8** Documentación canónica en `docs/ARCHITECTURE.md` (Sección 10) y `docs/MODULES.md` (Sección 3).
+- [x] **11.9** Verificación y paso exitoso de las 11 suites de pruebas automatizadas en Docker (`tests/run-all-tests.js`).
+
 ---
 
 ## 3. Próximas Fases Planificadas
