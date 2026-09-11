@@ -536,30 +536,3 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'OPERATOR'),
   ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
-
--- Datos Semilla Módulo 4see: Reglas de Margen y Repricing Táctico
-INSERT INTO fourseee_margin_rules 
-  (id, tenant_id, product_sku, product_name, cost_price, selling_price, min_margin_pct, platform_fee_pct, tax_pct, shipping_cost, net_profit, real_margin_pct, is_red_zone, suggested_repricing_price)
-VALUES
-  ('d1000000-0000-0000-0000-000000000001', '550e8400-e29b-41d4-a716-446655440000', 'BEB-MAL-01', 'Vino Malbec Reserva 750ml', 4800.00, 8500.00, 20.00, 13.00, 21.00, 0.00, 810.00, 9.53, true, 9180.00),
-  ('d1000000-0000-0000-0000-000000000002', '550e8400-e29b-41d4-a716-446655440000', 'BEB-GIN-02', 'Gin Premium Artesanal 700ml', 6000.00, 14200.00, 20.00, 13.00, 21.00, 0.00, 3372.00, 23.75, false, 15336.00),
-  ('d1000000-0000-0000-0000-000000000003', '550e8400-e29b-41d4-a716-446655440001', 'POK-SAL-01', 'Poke Bowl Salmón Clásico', 4200.00, 9500.00, 25.00, 13.00, 21.00, 0.00, 2070.00, 21.79, true, 10260.00)
-ON CONFLICT DO NOTHING;
-
--- Datos Semilla Módulo 4see: Monitores de Competidores
-INSERT INTO fourseee_competitor_monitors 
-  (id, tenant_id, product_name, competitor_url, competitor_name, my_price, competitor_price, competitor_stock, extraction_method)
-VALUES
-  ('d2000000-0000-0000-0000-000000000001', '550e8400-e29b-41d4-a716-446655440000', 'Vino Malbec Reserva 750ml', 'https://articulo.mercadolibre.com.ar/MLA-987654321-malbec-reserva', 'Distribuidora Cuyo', 8500.00, 7900.00, 'IN_STOCK', 'NATIVE_API'),
-  ('d2000000-0000-0000-0000-000000000002', '550e8400-e29b-41d4-a716-446655440000', 'Gin Premium Artesanal 700ml', 'https://tienda.licores.com.ar/productos/gin-artesanal', 'Tienda Oficial Licores', 14200.00, 15500.00, 'IN_STOCK', 'JSON_LD'),
-  ('d2000000-0000-0000-0000-000000000003', '550e8400-e29b-41d4-a716-446655440001', 'Poke Bowl Salmón Clásico', 'https://articulo.mercadolibre.com.ar/MLA-887766554-poke-salmon', 'Poke Rival Express', 9500.00, 8900.00, 'IN_STOCK', 'NATIVE_API')
-ON CONFLICT DO NOTHING;
-
--- Datos Semilla Módulo 4see: Auditoría de Catálogo y Diff View
-INSERT INTO fourseee_catalog_items 
-  (id, tenant_id, sku, original_title, current_title, gtin, brand, category, status, diagnostics, suggested_title, is_approved)
-VALUES
-  ('d3000000-0000-0000-0000-000000000001', '550e8400-e29b-41d4-a716-446655440000', 'BEB-MAL-01', 'Vino Malbec 750', 'Vino Malbec Reserva 750ml', '7791234567890', 'Bodega Cuyo', 'Vinos', 'NEEDS_REVIEW', '[{"code":"SHORT_TITLE","severity":"LOW","message":"Título breve para intención comercial"}]'::jsonb, 'BODEGA CUYO Vino Malbec Reserva 750ml [Envío Inmediato]', false),
-  ('d3000000-0000-0000-0000-000000000002', '550e8400-e29b-41d4-a716-446655440000', 'BEB-GIN-02', 'Gin Artesanal', 'Gin Premium Artesanal 700ml', '7799876543210', 'Destilería Patagónica', 'Destilados', 'OPTIMIZED', '[]'::jsonb, 'DESTILERÍA PATAGÓNICA Gin Premium Artesanal 700ml [Stock Oficial]', true),
-  ('d3000000-0000-0000-0000-000000000003', '550e8400-e29b-41d4-a716-446655440001', 'POK-SAL-01', 'Poke Salmon', 'Poke Bowl Salmón Clásico', '7795554443332', 'Poke House', 'Comidas', 'NEEDS_REVIEW', '[{"code":"MISSING_BRAND","severity":"MEDIUM","message":"Falta especificar origen de ingredientes"}]'::jsonb, 'POKE HOUSE Poke Bowl Salmón Clásico Fresco [Envío Express]', false)
-ON CONFLICT DO NOTHING;
