@@ -1,8 +1,8 @@
 const crypto = require('crypto');
-const { query, execute, getOne } = require('../../lib/db');
+const { query, execute, getOne } = require('../../../lib/db');
 const { extractProductData } = require('../lib/extractor');
 const { calculateMarginMetrics } = require('../lib/margins');
-const { checkTenantModuleAccess } = require('../../lib/entitlement');
+const { checkTenantModuleAccess } = require('../../../lib/entitlement');
 
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*

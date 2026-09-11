@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
-const { query, execute, getOne } = require('../../lib/db');
+const { query, execute, getOne } = require('../../../lib/db');
 const { extractProductData } = require('../lib/extractor');
 const { calculateMarginMetrics } = require('../lib/margins');
 
