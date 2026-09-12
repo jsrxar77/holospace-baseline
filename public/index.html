@@ -1707,6 +1707,23 @@
       </h2>
       <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Iniciar Sesión</p>
       
+      <!-- BOTÓN FEDERADO GOOGLE OAUTH2 -->
+      <a href="/api/auth/google" class="btn-google-oauth" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; background: #ffffff; color: #1f1f1f; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid #dadce0; margin-top: 14px; transition: background 0.2s, box-shadow 0.2s;">
+        <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Continuar con Google
+      </a>
+
+      <div style="display: flex; align-items: center; text-align: center; margin: 16px 0 6px 0; color: var(--text-muted); font-size: 11px;">
+        <span style="flex: 1; border-bottom: 1px solid var(--card-border);"></span>
+        <span style="padding: 0 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">o con credenciales locales</span>
+        <span style="flex: 1; border-bottom: 1px solid var(--card-border);"></span>
+      </div>
+      
       <form id="loginForm" style="display: flex; flex-direction: column; gap: 16px; margin-top: 10px;">
         <div>
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Email de Usuario</label>
@@ -1724,6 +1741,96 @@
         <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
           <a href="/" style="font-size: 12px; color: var(--text-muted); text-decoration: none; font-family: monospace; transition: color 0.2s;" onmouseover="this.style.color='var(--emerald)'" onmouseout="this.style.color='var(--text-muted)'">Volver a Inicio →</a>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL DE ONBOARDING FEDERADO (GOOGLE OAUTH2 / SELECCIÓN DE PLAN) -->
+  <div id="onboardingPlanModal" class="modal-overlay hidden" style="z-index: 99999;">
+    <div class="modal-content" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--text-main);">Bienvenido a HoloSpace</h3>
+        <button type="button" onclick="closeOnboardingPlanModal()" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+      </div>
+
+      <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
+        Tu cuenta de Google ha sido verificada. Para completar el alta, ingresa los datos de tu organización y selecciona el plan vertical correspondiente a tu operación.
+      </p>
+
+      <!-- Perfil Verificado de Google -->
+      <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
+        <img id="obAvatarImg" src="" alt="Avatar" style="width: 38px; height: 38px; border-radius: 50%; display: none; object-fit: cover;">
+        <div id="obAvatarPlaceholder" style="width: 38px; height: 38px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-main);">G</div>
+        <div style="overflow: hidden;">
+          <div id="obProfileName" style="font-weight: 700; font-size: 14px; color: var(--text-main);">Usuario Google</div>
+          <div id="obProfileEmail" style="font-size: 12px; color: var(--text-muted);">email@gmail.com</div>
+        </div>
+      </div>
+
+      <form id="onboardingPlanForm" style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre de la Empresa</label>
+            <input type="text" id="obCompanyName" class="input-field" placeholder="Ej: Distribuidora Central" required oninput="handleOnboardingCompanyNameChange(this.value)">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Identificador URL (Slug)</label>
+            <input type="text" id="obCompanySlug" class="input-field" placeholder="distribuidora-central" required pattern="[a-z0-9_-]+">
+          </div>
+        </div>
+
+        <!-- Selector Vertical de Producto -->
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">Seleccione el Producto Principal</label>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button type="button" id="tabProductKanban" class="btn-secondary" style="flex: 1; padding: 8px 12px; font-weight: 700;" onclick="switchOnboardingProduct('kanban')">Logística (Kanban + Scanner)</button>
+            <button type="button" id="tabProduct4see" class="btn-secondary" style="flex: 1; padding: 8px 12px; font-weight: 700;" onclick="switchOnboardingProduct('4see')">E-Commerce (4see Intelligence)</button>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Planes para Kanban -->
+        <div id="plansGridKanban" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="plan-card-option" data-plan="kanban_simple" onclick="selectOnboardingPlan('kanban_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Simple</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$39 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">1 Admin, 3 Operarios. Hasta 500 pedidos/mes.</div>
+          </div>
+          <div class="plan-card-option selected" data-plan="kanban_business" onclick="selectOnboardingPlan('kanban_business')" style="border: 2px solid var(--emerald); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.04);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Business</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$119 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">3 Admins, 15 Operarios. Hasta 3.000 pedidos/mes.</div>
+          </div>
+          <div class="plan-card-option" data-plan="kanban_enterprise" onclick="selectOnboardingPlan('kanban_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Enterprise</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$299 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Admins y Operarios ilimitados. Redes logísticas.</div>
+          </div>
+        </div>
+
+        <!-- Tarjetas de Planes para 4see -->
+        <div id="plansGrid4see" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <div class="plan-card-option" data-plan="fourseee_simple" onclick="selectOnboardingPlan('fourseee_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Simple</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$49 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">1 Admin, 2 Analistas. Vigilancia de catálogo y precios.</div>
+          </div>
+          <div class="plan-card-option" data-plan="fourseee_business" onclick="selectOnboardingPlan('fourseee_business')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Business</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$149 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">2 Admins, 8 Analistas. Repricing dinámico y márgenes.</div>
+          </div>
+          <div class="plan-card-option" data-plan="fourseee_enterprise" onclick="selectOnboardingPlan('fourseee_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Enterprise</div>
+            <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$349 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
+            <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Capacidad total multi-cuenta para grandes marcas.</div>
+          </div>
+        </div>
+
+        <input type="hidden" id="obSelectedPlanCode" value="kanban_business">
+
+        <div id="onboardingError" style="color: var(--red); font-size: 13px; display: none; text-align: center;"></div>
+
+        <button type="submit" id="obSubmitBtn" class="btn-primary" style="margin-top: 8px; padding: 12px;">Activar Organización y Entrar</button>
       </form>
     </div>
   </div>

@@ -240,6 +240,22 @@ body {
   box-shadow: var(--pixel-shadow);
 }
 
+.btn-pixel-google {
+  background: #ffffff !important;
+  color: #1f1f1f !important;
+  border-color: #dadce0 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.btn-pixel-google:hover {
+  background: #f1f3f4 !important;
+  box-shadow: var(--pixel-shadow);
+}
+
 /* HERO SECTION */
 .hero-section {
   padding: 80px 0 60px;

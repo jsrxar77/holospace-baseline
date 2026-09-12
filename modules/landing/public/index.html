@@ -115,9 +115,18 @@
     
 
 
-    <div style="display: flex; gap: 10px; align-items: center;">
-      <a href="/login" class="btn-pixel btn-pixel-secondary" style="padding: 6px 12px; font-size: 12px;">Ingresar</a>
-      <a href="#modulos" class="btn-pixel btn-pixel-primary" style="padding: 6px 12px; font-size: 12px;">Explorar</a>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <a href="/api/auth/google" class="btn-pixel btn-pixel-google" style="padding: 6px 12px; font-size: 11px;">
+        <svg width="14" height="14" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+          <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Google
+      </a>
+      <a href="/login" class="btn-pixel btn-pixel-secondary" style="padding: 6px 12px; font-size: 11px;">Ingresar</a>
+      <a href="#planes" class="btn-pixel btn-pixel-primary" style="padding: 6px 12px; font-size: 11px;">Planes</a>
     </div>
   </header>
 
@@ -130,11 +139,20 @@
         Digitaliza la preparación de pedidos, elimina errores de despacho con escaneo móvil EAN-13 y administra múltiples empresas con aislamiento criptográfico de datos.
       </p>
 
-      <div class="hero-ctas">
-        <a href="#modulos" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 12px; padding: 14px 28px;">
-          Explorar Modulos
+      <div class="hero-ctas" style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;">
+        <a href="/api/auth/google" class="btn-pixel btn-pixel-google pixel-font" style="font-size: 12px; padding: 14px 24px;">
+          <svg width="16" height="16" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z" fill="#34A853"/>
+            <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.166 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Comenzar con Google
         </a>
-        <a href="/login" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 12px; padding: 14px 28px;">
+        <a href="#planes" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 12px; padding: 14px 24px;">
+          Ver Planes y Precios
+        </a>
+        <a href="/login" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 12px; padding: 14px 24px;">
           Ver Demo en Vivo
         </a>
       </div>
@@ -268,6 +286,138 @@
       </div>
     </section>
 
+    <!-- SECCIÓN: PLANES COMERCIALES POR PRODUCTO VERTICAL -->
+    <section id="planes" class="pricing-section" style="margin-top: 80px; padding: 40px 0;">
+      <h2 class="section-title pixel-font" style="text-align: center;">Planes y Precios por Solución</h2>
+      <p class="section-subtitle" style="text-align: center; max-width: 680px; margin: 0 auto 32px;">
+        Capacidad operativa adaptada a tu escala con gobernanza estricta de cuotas por rol y aislamiento multi-tenant.
+      </p>
+
+      <!-- Selector Vertical de Solución -->
+      <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 36px;">
+        <button id="btnLandingTabKanban" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 11px; padding: 10px 20px;" onclick="switchLandingPlanProduct('kanban')">
+          Logística (Kanban + Scanner)
+        </button>
+        <button id="btnLandingTab4see" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 11px; padding: 10px 20px;" onclick="switchLandingPlanProduct('4see')">
+          E-Commerce (4see Intelligence)
+        </button>
+      </div>
+
+      <!-- Cuadrícula de Planes: Línea Logística (Kanban) -->
+      <div id="landingGridKanban" class="pricing-grid">
+        <!-- Tarjeta Kanban Simple -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font" style="color: var(--accent-emerald);">LINEA LOGISTICA</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">Kanban Simple</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Para depósitos individuales o pequeñas operaciones ágiles.</p>
+          <div class="plan-price">$39 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>1 Usuario Administrador</li>
+            <li>Hasta 3 Operarios de depósito</li>
+            <li>500 pedidos procesados / mes</li>
+            <li>Tablero Kanban 4 columnas</li>
+            <li>Escáner móvil PWA EAN-13</li>
+          </ul>
+          <a href="/api/auth/google?plan=kanban_simple" class="btn-pixel btn-pixel-google pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center;">
+            Comenzar con Google
+          </a>
+        </div>
+
+        <!-- Tarjeta Kanban Business (Destacado) -->
+        <div class="pricing-card featured">
+          <div class="plan-badge pixel-font" style="color: var(--accent-emerald); font-weight: 800;">RECOMENDADO</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">Kanban Business</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Para centros de distribución con múltiples supervisores y operarios.</p>
+          <div class="plan-price">$119 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>3 Usuarios Administradores</li>
+            <li>Hasta 15 Operarios de depósito</li>
+            <li>3.000 pedidos procesados / mes</li>
+            <li>Ingesta y parseo automático de PDF</li>
+            <li>Auditoría completa de trazabilidad</li>
+          </ul>
+          <a href="/api/auth/google?plan=kanban_business" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center;">
+            Comenzar con Google
+          </a>
+        </div>
+
+        <!-- Tarjeta Kanban Enterprise -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font" style="color: var(--accent-emerald);">CORPORATIVO</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">Kanban Enterprise</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Capacidad masiva ilimitada para grandes redes logísticas y 3PL.</p>
+          <div class="plan-price">$299 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>Administradores ilimitados</li>
+            <li>Operarios ilimitados</li>
+            <li>Pedidos y despachos ilimitados</li>
+            <li>Soporte técnico prioritario 24/7</li>
+            <li>Aislamiento RLS multi-sucursal</li>
+          </ul>
+          <a href="/api/auth/google?plan=kanban_enterprise" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center;">
+            Contactar Ventas
+          </a>
+        </div>
+      </div>
+
+      <!-- Cuadrícula de Planes: Línea E-Commerce (4see) -->
+      <div id="landingGrid4see" class="pricing-grid" style="display: none;">
+        <!-- Tarjeta 4see Simple -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font" style="color: var(--accent-mauve);">LINEA E-COMMERCE</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">4see Simple</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Vigilancia de precios y márgenes para vendedores individuales.</p>
+          <div class="plan-price">$49 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>1 Usuario Administrador</li>
+            <li>2 Analistas de catálogo</li>
+            <li>Monitoreo de publicaciones MELI</li>
+            <li>Detección de Zona Roja de márgenes</li>
+            <li>Sugerencias de repricing táctico</li>
+          </ul>
+          <a href="/api/auth/google?plan=fourseee_simple" class="btn-pixel btn-pixel-google pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center;">
+            Comenzar con Google
+          </a>
+        </div>
+
+        <!-- Tarjeta 4see Business (Destacado) -->
+        <div class="pricing-card featured" style="border-color: var(--accent-mauve);">
+          <div class="plan-badge pixel-font" style="color: var(--accent-mauve); font-weight: 800;">RECOMENDADO</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">4see Business</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Inteligencia de catálogo y repricing para tiendas en expansión.</p>
+          <div class="plan-price">$149 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>2 Usuarios Administradores</li>
+            <li>8 Analistas de catálogo</li>
+            <li>Monitoreo continuo multi-competidor</li>
+            <li>Alertas de discrepancias visuales</li>
+            <li>Cálculo de comisiones y rentabilidad neta</li>
+          </ul>
+          <a href="/api/auth/google?plan=fourseee_business" class="btn-pixel btn-pixel-primary pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center; background: var(--accent-mauve); border-color: var(--accent-mauve); color: #181926;">
+            Comenzar con Google
+          </a>
+        </div>
+
+        <!-- Tarjeta 4see Enterprise -->
+        <div class="pricing-card">
+          <div class="plan-badge pixel-font" style="color: var(--accent-mauve);">CORPORATIVO</div>
+          <h3 style="font-size: 20px; font-weight: 800; margin: 6px 0;">4see Enterprise</h3>
+          <p style="font-size: 12px; color: var(--text-muted); min-height: 36px;">Monitoreo multi-cuenta corporativo ilimitado para grandes marcas.</p>
+          <div class="plan-price">$349 <span>/ mes</span></div>
+          <ul class="plan-features">
+            <li>Administradores ilimitados</li>
+            <li>Analistas ilimitados</li>
+            <li>Multi-cuenta Mercado Libre y Tienda Nube</li>
+            <li>SLA de actualización de precios en tiempo real</li>
+            <li>Exportación contable e integraciones ERP</li>
+          </ul>
+          <a href="/api/auth/google?plan=fourseee_enterprise" class="btn-pixel btn-pixel-secondary pixel-font" style="font-size: 11px; padding: 12px; text-align: center; justify-content: center;">
+            Contactar Ventas
+          </a>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- FOOTER RETRO EN 3 LÍNEAS PIXELADAS -->
@@ -328,6 +478,29 @@
       document.documentElement.setAttribute('data-palette', paletteName);
       document.querySelectorAll('.palette-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
+    }
+
+    function switchLandingPlanProduct(prod) {
+      const btnKanban = document.getElementById('btnLandingTabKanban');
+      const btn4see = document.getElementById('btnLandingTab4see');
+      const gridKanban = document.getElementById('landingGridKanban');
+      const grid4see = document.getElementById('landingGrid4see');
+
+      if (prod === '4see') {
+        btnKanban.classList.remove('btn-pixel-primary');
+        btnKanban.classList.add('btn-pixel-secondary');
+        btn4see.classList.remove('btn-pixel-secondary');
+        btn4see.classList.add('btn-pixel-primary');
+        gridKanban.style.display = 'none';
+        grid4see.style.display = 'grid';
+      } else {
+        btn4see.classList.remove('btn-pixel-primary');
+        btn4see.classList.add('btn-pixel-secondary');
+        btnKanban.classList.remove('btn-pixel-secondary');
+        btnKanban.classList.add('btn-pixel-primary');
+        grid4see.style.display = 'none';
+        gridKanban.style.display = 'grid';
+      }
     }
   </script>
 

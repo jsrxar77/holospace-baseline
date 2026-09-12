@@ -249,6 +249,114 @@ async function loadAppConfig() {
   } catch (e) { }
 }
 
+let currentOnboardingProfile = null;
+
+function openOnboardingPlanModal(profile) {
+  currentOnboardingProfile = profile;
+  const modal = document.getElementById('onboardingPlanModal');
+  if (!modal) return;
+
+  const loginModal = document.getElementById('loginModal');
+  if (loginModal) {
+    loginModal.classList.add('hidden');
+    loginModal.style.display = 'none';
+  }
+
+  const emailEl = document.getElementById('obProfileEmail');
+  const nameEl = document.getElementById('obProfileName');
+  if (emailEl) emailEl.innerText = profile.email || '';
+  if (nameEl) nameEl.innerText = profile.name || (profile.email ? profile.email.split('@')[0] : '');
+
+  const imgEl = document.getElementById('obAvatarImg');
+  const placeholderEl = document.getElementById('obAvatarPlaceholder');
+  if (imgEl && placeholderEl) {
+    if (profile.picture) {
+      imgEl.src = profile.picture;
+      imgEl.style.display = 'block';
+      placeholderEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      placeholderEl.style.display = 'flex';
+      placeholderEl.innerText = (profile.name || profile.email || 'G')[0].toUpperCase();
+    }
+  }
+
+  if (profile.plan && profile.plan.startsWith('fourseee_')) {
+    switchOnboardingProduct('4see');
+    selectOnboardingPlan(profile.plan);
+  } else {
+    switchOnboardingProduct('kanban');
+    selectOnboardingPlan(profile.plan || 'kanban_business');
+  }
+
+  modal.classList.remove('hidden');
+  modal.style.display = 'flex';
+}
+
+function closeOnboardingPlanModal() {
+  const modal = document.getElementById('onboardingPlanModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+
+function handleOnboardingCompanyNameChange(val) {
+  const slugInput = document.getElementById('obCompanySlug');
+  if (slugInput) {
+    slugInput.value = val.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  }
+}
+
+function switchOnboardingProduct(prod) {
+  const tabKanban = document.getElementById('tabProductKanban');
+  const tab4see = document.getElementById('tabProduct4see');
+  const gridKanban = document.getElementById('plansGridKanban');
+  const grid4see = document.getElementById('plansGrid4see');
+
+  if (prod === '4see') {
+    if (tabKanban) {
+      tabKanban.classList.remove('btn-primary');
+      tabKanban.classList.add('btn-secondary');
+    }
+    if (tab4see) {
+      tab4see.classList.remove('btn-secondary');
+      tab4see.classList.add('btn-primary');
+    }
+    if (gridKanban) gridKanban.style.display = 'none';
+    if (grid4see) grid4see.style.display = 'grid';
+    selectOnboardingPlan('fourseee_business');
+  } else {
+    if (tab4see) {
+      tab4see.classList.remove('btn-primary');
+      tab4see.classList.add('btn-secondary');
+    }
+    if (tabKanban) {
+      tabKanban.classList.remove('btn-secondary');
+      tabKanban.classList.add('btn-primary');
+    }
+    if (grid4see) grid4see.style.display = 'none';
+    if (gridKanban) gridKanban.style.display = 'grid';
+    selectOnboardingPlan('kanban_business');
+  }
+}
+
+function selectOnboardingPlan(planCode) {
+  const inputEl = document.getElementById('obSelectedPlanCode');
+  if (inputEl) inputEl.value = planCode;
+  document.querySelectorAll('.plan-card-option').forEach(card => {
+    if (card.getAttribute('data-plan') === planCode) {
+      card.style.borderColor = 'var(--emerald)';
+      card.style.background = 'rgba(255,255,255,0.06)';
+      card.classList.add('selected');
+    } else {
+      card.style.borderColor = 'var(--card-border)';
+      card.style.background = 'rgba(255,255,255,0.02)';
+      card.classList.remove('selected');
+    }
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.add('state-logged-out');
   loadActiveTheme();
@@ -265,6 +373,97 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.history && window.history.replaceState) {
       window.history.replaceState(null, '', '/login');
     }
+  }
+
+  // Procesamiento de autenticación exitosa con Google OAuth2
+  const oauthToken = urlParams.get('token');
+  const oauthUserRaw = urlParams.get('user');
+  if (oauthToken) {
+    try {
+      const parsedUser = oauthUserRaw ? JSON.parse(decodeURIComponent(oauthUserRaw)) : null;
+      const parsedTenant = parsedUser?.tenantSlug ? { id: parsedUser.tenantId, slug: parsedUser.tenantSlug, name: parsedUser.tenantSlug } : null;
+      setAuthSession(oauthToken, parsedUser, parsedTenant);
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    } catch (e) {
+      console.error('[AUTH] Error al procesar sesión OAuth:', e);
+    }
+  }
+
+  // Manejo de onboarding federado (nuevo usuario Google)
+  if (urlParams.get('onboarding') === 'google') {
+    const obEmail = urlParams.get('email') || '';
+    const obName = urlParams.get('name') || '';
+    const obSub = urlParams.get('sub') || '';
+    const obPicture = urlParams.get('picture') || '';
+    const obPlan = urlParams.get('plan') || 'kanban_business';
+    
+    setTimeout(() => {
+      openOnboardingPlanModal({ email: obEmail, name: obName, sub: obSub, picture: obPicture, plan: obPlan });
+    }, 150);
+  }
+
+  const authError = urlParams.get('auth_error');
+  if (authError) {
+    const loginError = document.getElementById('loginError');
+    if (loginError) {
+      loginError.innerText = decodeURIComponent(authError);
+      loginError.style.display = 'block';
+    }
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }
+
+  // Listener para el formulario de Onboarding
+  const obForm = document.getElementById('onboardingPlanForm');
+  if (obForm) {
+    obForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const companyName = document.getElementById('obCompanyName').value;
+      const slug = document.getElementById('obCompanySlug').value;
+      const planCode = document.getElementById('obSelectedPlanCode').value;
+      const errorDiv = document.getElementById('onboardingError');
+      const submitBtn = document.getElementById('obSubmitBtn');
+
+      if (!currentOnboardingProfile) {
+        errorDiv.innerText = 'Error: no se encontraron datos de la cuenta de Google.';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creando Organización...';
+      errorDiv.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/oauth-onboarding', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            profile: currentOnboardingProfile,
+            companyName,
+            slug,
+            planCode
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Error al completar el alta de la organización.');
+        }
+
+        setAuthSession(data.token, data.user, data.tenant);
+        closeOnboardingPlanModal();
+        window.location.href = '/';
+      } catch (err) {
+        errorDiv.innerText = err.message;
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Activar Organización y Entrar';
+      }
+    });
   }
 
   const token = getAuthToken();
@@ -2469,11 +2668,12 @@ function renderModulesGrid(modules) {
   }
 
   const moduleUrlMap = {
-    'landing': { path: '/landing', label: 'holospace.com.ar/landing', icon: '🌐' },
-    'tenant': { path: '/tenant', label: 'holospace.com.ar/tenant', icon: '🏢' },
-    'core': { path: '/core', label: 'holospace.com.ar/core', icon: '⚙️' },
-    'kanban': { path: '/kanban', label: 'holospace.com.ar/kanban', icon: '📊' },
-    'scanner': { path: '/scanner', label: 'm.holospace.com.ar', icon: '📱' }
+    'landing': { path: '/landing', label: 'holospace.com.ar/landing', tag: 'WEB' },
+    'tenant': { path: '/tenant', label: 'holospace.com.ar/tenant', tag: 'ADMIN' },
+    'core': { path: '/core', label: 'holospace.com.ar/core', tag: 'CORE' },
+    'kanban': { path: '/kanban', label: 'holospace.com.ar/kanban', tag: 'LOGISTICA' },
+    'scanner': { path: '/scanner', label: 'm.holospace.com.ar', tag: 'MOVIL' },
+    '4see': { path: '/4see', label: 'holospace.com.ar/4see', tag: 'ECOMMERCE' }
   };
 
   grid.innerHTML = modules.map(mod => {
@@ -2483,14 +2683,14 @@ function renderModulesGrid(modules) {
     const activatedAt = rawDate ? new Date(rawDate).toLocaleString('es-AR') : '—';
     const statusColor = isActive ? 'var(--emerald)' : 'var(--text-muted)';
     const activatedBy = mod.activated_by || mod.activatedBy || '—';
-    const urlInfo = moduleUrlMap[mod.key] || { path: '/' + mod.key, label: 'holospace.com.ar/' + mod.key, icon: '📦' };
+    const urlInfo = moduleUrlMap[mod.key] || { path: '/' + mod.key, label: 'holospace.com.ar/' + mod.key, tag: 'MODULO' };
 
     return `
       <div class="module-card ${isActive ? 'active-module' : 'inactive-module'}" id="moduleCard-${mod.key}">
         <div class="module-info">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <div class="module-name" style="display:flex; align-items:center; gap:6px;">
-              <span>${urlInfo.icon}</span>
+              <span class="badge" style="font-size:10px; font-family:monospace; padding:2px 6px;">[${urlInfo.tag}]</span>
               <span>${mod.name}</span>
             </div>
             <span style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px;
@@ -2500,9 +2700,9 @@ function renderModulesGrid(modules) {
             </span>
             <a href="${urlInfo.path}" target="${mod.key === 'scanner' || mod.key === 'landing' ? '_blank' : '_self'}" 
                style="display:inline-flex; align-items:center; gap:4px; font-family:monospace; font-size:11px; font-weight:700; color:var(--cobalt); text-decoration:none; background:rgba(138,173,244,0.12); padding:3px 8px; border-radius:4px; border:1px solid rgba(138,173,244,0.25);">
-               🔗 ${urlInfo.label}
+               ${urlInfo.label}
             </a>
-            ${isCore ? '<span style="font-size:11px; color:#F59E0B; font-weight:800;">⚡ CORE</span>' : ''}
+            ${isCore ? '<span style="font-size:11px; color:#F59E0B; font-weight:800;">[CORE PLATAFORMA]</span>' : ''}
           </div>
           <div class="module-desc">${mod.description || '—'}</div>
           <div class="module-meta">

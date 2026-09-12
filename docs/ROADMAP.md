@@ -105,16 +105,21 @@
 - [x] **11.8** Documentación canónica en `docs/ARCHITECTURE.md` (Sección 10) y `docs/MODULES.md` (Sección 3).
 - [x] **11.9** Verificación y paso exitoso de las 11 suites de pruebas automatizadas en Docker (`tests/run-all-tests.js`).
 
+### FASE 12: Autenticación World-Class con Google OAuth2, Onboarding Híbrido y Cuotas Granulares por Rol
+- [x] **12.1** Capa modular de federación de identidades en `lib/oauth.js` (Google OAuth2 / OpenID Connect con soporte mock y producción).
+- [x] **12.2** Migración de esquema en PostgreSQL 16: columnas `auth_provider`, `auth_provider_id`, `avatar_url`, `password_hash` nullable e índice `idx_core_users_auth_provider`.
+- [x] **12.3** Catálogo de planes verticales en `tenant_plans` y `lib/billing.js`: líneas Kanban (Simple/Business/Enterprise) y 4see (Simple/Business/Enterprise) con columna `role_quotas JSONB` y FK en `tenant_subscriptions`.
+- [x] **12.4** Rutas backend en `server.js` (`GET /api/auth/google`, `GET/POST /api/auth/google/callback`, `POST /api/auth/oauth-onboarding`).
+- [x] **12.5** Validación estricta de cuotas por rol (`role_quotas`) en `POST /api/users` con error estructurado `ROLE_QUOTA_EXCEEDED` y permisos asignados en `lib/rbac.js`.
+- [x] **12.6** Botón World-Class "Continuar con Google" en `#loginModal` y modal reactivo `#onboardingPlanModal` en `public/index.html` y `public/app.js`.
+- [x] **12.7** Vitrina comercial y CTAs de Google en Landing Page (`modules/landing/public/index.html` y `landing.css`) con conmutador de soluciones.
+- [x] **12.8** Suite automatizada `tests/test-oauth-and-role-quotas.js` registrada en `tests/run-all-tests.js` (12 suites ejecutadas, 100% PASS, 0 fallos).
+- [x] **12.9** Documentación canónica actualizada en los 6 archivos canónicos de `/docs`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 12: Autenticación World-Class con Google OAuth2, Onboarding Híbrido y Cuotas Granulares por Rol:**
-  - Integración de capa modular de identidad federada (`lib/oauth.js`) con Google Workspace (OpenID Connect).
-  - Flujo híbrido de registro y login: auto-provisión de Tenant y Administrador al iniciar sesión con Google por primera vez.
-  - Catálogo de planes verticales independientes por producto (**Kanban** Simple/Business/Enterprise y **4see** Simple/Business/Enterprise) coexistiendo con bundles generales.
-  - Gobernanza de cuotas granulares por rol (`role_quotas` en `tenant_plans`) con validación y error canónico en `POST /api/users`.
-  - Suite de pruebas automatizadas (`tests/test-oauth-and-role-quotas.js`) incorporada en `tests/run-all-tests.js`.
 - [ ] **FASE 13:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
 - [ ] **FASE 14:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
 - [ ] **FASE 15:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.

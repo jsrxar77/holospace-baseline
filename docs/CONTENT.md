@@ -59,22 +59,45 @@ graph TD
 
 ---
 
-## 3. Catálogo Oficial de Planes Comerciales (Referencia Interna de Facturación B2B)
+## 3. Catálogo Oficial de Planes Comerciales por Solución Vertical
 
-> Nota de Despliegue: La sección visual de precios fue retirada temporalmente de la Landing Page pública para priorizar la exploración interactiva de los 5 módulos funcionales. El catálogo y cuotas se mantienen activos a nivel backend y módulo Tenant.
+> La Landing Page presenta una vitrina con selector de solución interactivo que permite contratar la suite Logística (Kanban + Scanner) o la suite E-Commerce (4see Intelligence), o contratar bundles corporativos.
 
-| Característica | Plan STARTER | Plan PRO (Recomendado) | Plan ENTERPRISE |
+### Línea Logística (Kanban + Scanner)
+
+| Característica | Kanban Simple | Kanban Business (Recomendado) | Kanban Enterprise |
 | :--- | :---: | :---: | :---: |
-| **Precio Mensual (ARS)** | **$ 65.000 ARS / mes** | **$ 195.000 ARS / mes** | **$ 590.000 ARS / mes** |
-| **Usuarios Activos** | Hasta **5 usuarios** | Hasta **15 usuarios** | **999+ (Ilimitados)** |
-| **Volumen de Pedidos** | Hasta **500 órdenes / mes** | Hasta **3.000 órdenes / mes** | **999.999 órdenes / mes** |
+| **Precio Mensual (USD)** | **$ 39 USD / mes** | **$ 119 USD / mes** | **$ 299 USD / mes** |
+| **Usuarios Administradores** | Hasta **1 Admin** | Hasta **3 Admins** | **Ilimitados** |
+| **Operarios de Depósito** | Hasta **3 Operarios** | Hasta **15 Operarios** | **Ilimitados** |
+| **Volumen de Pedidos** | Hasta **500 órdenes / mes** | Hasta **3.000 órdenes / mes** | **Ilimitados** |
 | **Módulo Core & Auth** | Incluido | Incluido | Incluido |
 | **Tablero Kanban Logístico** | Incluido | Incluido | Incluido |
 | **Escáner Móvil EAN-13** | Incluido | Incluido | Incluido |
-| **Módulo 4see Intelligence** | No incluido | Incluido | Incluido |
-| **Panel Gobierno Tenant** | No disponible | No disponible | **Exclusivo SuperAdmin** |
-| **Motor de Temas UI** | Omarchy Tiling | 5 Temas Completos | Personalización Total |
-| **Soporte Técnico** | Email estándar | Prioritario | Dedicado 24/7 + SLA |
+| **Ingesta de Facturas PDF** | Básico | Automático con parser | Automático en lote |
+| **Soporte Técnico** | Estándar | Prioritario | Dedicado 24/7 + SLA |
+
+### Línea E-Commerce (4see Intelligence)
+
+| Característica | 4see Simple | 4see Business (Recomendado) | 4see Enterprise |
+| :--- | :---: | :---: | :---: |
+| **Precio Mensual (USD)** | **$ 49 USD / mes** | **$ 149 USD / mes** | **$ 349 USD / mes** |
+| **Usuarios Administradores** | Hasta **1 Admin** | Hasta **2 Admins** | **Ilimitados** |
+| **Analistas de Catálogo** | Hasta **2 Analistas** | Hasta **8 Analistas** | **Ilimitados** |
+| **Monitoreo de Publicaciones** | Sí | Multi-competidor continuo | Corporativo ilimitado |
+| **Diff View & Aprobación 1-Clic** | Incluido | Incluido | Incluido |
+| **Sugerencias de Repricing (+8%)**| Incluido | Incluido | Incluido |
+| **Integraciones ERP y Multi-Cuenta**| No disponible | 2 Cuentas Mercado Libre | Multi-cuenta + API |
+
+### Bundles Generales Multi-Módulo (Referencia)
+
+| Característica | Plan STARTER | Plan PRO (Recomendado) | Plan ENTERPRISE |
+| :--- | :---: | :---: | :---: |
+| **Precio Mensual (ARS / USD)** | **$ 65.000 ARS / mes** | **$ 195.000 ARS / mes** | **$ 590.000 ARS / mes** |
+| **Usuarios Activos** | Hasta **5 usuarios** | Hasta **15 usuarios** | **999+ (Ilimitados)** |
+| **Cuotas por Rol** | 1 Admin, 4 Operarios | 3 Admins, 12 Operarios, 5 Analistas | Ilimitados |
+| **Volumen de Pedidos** | Hasta **500 órdenes / mes** | Hasta **3.000 órdenes / mes** | **999.999 órdenes / mes** |
+| **Módulos Incluidos** | Core, Kanban, Scanner | Core, Kanban, Scanner, 4see | Todos los módulos |
 
 ---
 

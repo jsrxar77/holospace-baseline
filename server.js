@@ -10,6 +10,7 @@ const { query, getOne, execute, transaction, DEFAULT_TENANT_ID } = require('./li
 const { hashPassword, verifyPassword, signJwt, verifyJwt, resolveTenantContext } = require('./lib/auth');
 const { checkTenantModuleAccess, getTenantEntitlements, setTenantModuleState, getTenantSubscriptionAndUsage, requireModule } = require('./lib/entitlement');
 const { PLANS, registerNewTenant, createCheckoutSession, handlePaymentWebhook } = require('./lib/billing');
+const { getAuthorizationUrl, exchangeCodeForUser, resolveOAuthUser, completeOAuthOnboarding } = require('./lib/oauth');
 const {
   hasPermission,
   formatPermissionError,
@@ -1108,6 +1109,114 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 7.1 AUTENTICACIÓN FEDERADA OAUTH2 / OPENID CONNECT (GOOGLE)
+      if (req.url.startsWith('/api/auth/google') && !req.url.startsWith('/api/auth/google/callback')) {
+        const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        const proto = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'localhost:3001';
+        const redirectUri = `${proto}://${host}/api/auth/google/callback`;
+        const planParam = urlObj.searchParams.get('plan') || '';
+        
+        try {
+          // Si no hay credenciales reales de Google configuradas en el entorno local, simular flujo exitoso directamente
+          const hasRealGoogleKeys = process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_ID.startsWith('dummy_');
+          if (!hasRealGoogleKeys) {
+            const mockEmail = urlObj.searchParams.get('email') || 'jsrxar@gmail.com';
+            const mockCode = `mock_code_${mockEmail}`;
+            const state = Buffer.from(JSON.stringify({ plan: planParam, nonce: 'simulated_local' })).toString('base64url');
+            res.writeHead(302, { 'Location': `/api/auth/google/callback?code=${encodeURIComponent(mockCode)}&state=${encodeURIComponent(state)}` });
+            res.end();
+            return;
+          }
+
+          const authUrl = getAuthorizationUrl('google', redirectUri, { plan: planParam });
+          const isJsonExpected = req.headers.accept && req.headers.accept.includes('application/json');
+          if (isJsonExpected || req.method === 'POST') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, authUrl, redirectUri }));
+          } else {
+            res.writeHead(302, { 'Location': authUrl });
+            res.end();
+          }
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+        return;
+      }
+
+      if (req.url.startsWith('/api/auth/google/callback')) {
+        const urlObj = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+        const code = urlObj.searchParams.get('code') || (data && data.code);
+        const stateStr = urlObj.searchParams.get('state') || (data && data.state);
+        let stateObj = {};
+        try {
+          if (stateStr) stateObj = JSON.parse(Buffer.from(stateStr, 'base64url').toString('utf8'));
+        } catch (e) {}
+
+        const proto = req.headers['x-forwarded-proto'] || 'http';
+        const host = req.headers.host || 'localhost:3001';
+        const redirectUri = `${proto}://${host}/api/auth/google/callback`;
+
+        if (!code) {
+          const errMsg = urlObj.searchParams.get('error') || 'Código de autorización faltante.';
+          if (req.method === 'POST' || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: errMsg }));
+          } else {
+            res.writeHead(302, { 'Location': `/?auth_error=${encodeURIComponent(errMsg)}` });
+            res.end();
+          }
+          return;
+        }
+
+        try {
+          const profile = await exchangeCodeForUser('google', code, redirectUri);
+          const result = await resolveOAuthUser(profile);
+
+          if (req.method === 'POST' || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, ...result }));
+            return;
+          }
+
+          // Redirección browser
+          if (result.status === 'AUTHENTICATED') {
+            const redirectUrl = `/?token=${encodeURIComponent(result.token)}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
+            res.writeHead(302, { 'Location': redirectUrl });
+            res.end();
+          } else {
+            // NEEDS_ONBOARDING
+            const targetPlan = stateObj.plan || 'kanban_simple';
+            const redirectUrl = `/?onboarding=google&email=${encodeURIComponent(result.profile.email)}&name=${encodeURIComponent(result.profile.name || '')}&sub=${encodeURIComponent(result.profile.sub)}&picture=${encodeURIComponent(result.profile.picture || '')}&plan=${encodeURIComponent(targetPlan)}`;
+            res.writeHead(302, { 'Location': redirectUrl });
+            res.end();
+          }
+        } catch (err) {
+          console.error('[OAUTH ERROR]', err.message);
+          if (req.method === 'POST' || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          } else {
+            res.writeHead(302, { 'Location': `/?auth_error=${encodeURIComponent(err.message)}` });
+            res.end();
+          }
+        }
+        return;
+      }
+
+      if (req.url === '/api/auth/oauth-onboarding' && req.method === 'POST') {
+        try {
+          const result = await completeOAuthOnboarding(data || {});
+          res.writeHead(201, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(result));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+        return;
+      }
+
       // 8. AUTENTICACIÓN / LOGIN JWT MULTI-TENANT
       if ((req.url === '/api/login' || req.url === '/api/auth/login') && req.method === 'POST') {
         const { email, password } = data || {};
@@ -1344,6 +1453,84 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: 'El Nick (Username) o Email ya están en uso en esta organización.' }));
             return;
+          }
+
+          // Validar límites de usuarios y cuotas por rol del plan
+          const subRow = await getOne(
+            `SELECT s.plan_code, s.max_users, p.role_quotas
+             FROM tenant_subscriptions s
+             LEFT JOIN tenant_plans p ON s.plan_code = p.code
+             WHERE s.tenant_id = ? AND s.status = 'active'
+             ORDER BY s.created_at DESC LIMIT 1`,
+            [targetTenantId],
+            { isSuperAdmin: true }
+          );
+
+          if (subRow) {
+            const planMeta = (subRow && subRow.plan_code) ? (PLANS[subRow.plan_code] || {}) : {};
+            const roleQuotas = (subRow && subRow.role_quotas) ? subRow.role_quotas : (planMeta.roleQuotas || null);
+
+            // Validar límite total de usuarios
+            const maxUsers = subRow.max_users || planMeta.maxUsers || 9999;
+            const totalUsersRow = await getOne(
+              'SELECT COUNT(*) as count FROM core_users WHERE tenant_id = ? AND is_active = true',
+              [targetTenantId],
+              { isSuperAdmin: true }
+            );
+            const totalUsers = parseInt(totalUsersRow ? totalUsersRow.count : 0, 10);
+            if (totalUsers >= maxUsers) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                success: false,
+                code: 'USER_LIMIT_EXCEEDED',
+                error: `Límite total alcanzado: el plan actual permite hasta ${maxUsers} usuarios. Actualice su plan para continuar.`
+              }));
+              return;
+            }
+
+            // Validar cuotas específicas por rol
+            if (roleQuotas) {
+              let quotaKey = null;
+              let roleLabel = '';
+              const normalizedRole = targetRole.toUpperCase();
+
+              if (normalizedRole.includes('ADMIN') || normalizedRole === 'SUPERADMIN') {
+                quotaKey = 'max_admins';
+                roleLabel = 'Administrador';
+              } else if (normalizedRole.includes('OPERATOR')) {
+                quotaKey = 'max_operators';
+                roleLabel = 'Operador';
+              } else if (normalizedRole.includes('ANALYST')) {
+                quotaKey = 'max_analysts';
+                roleLabel = 'Analista';
+              }
+
+              if (quotaKey && typeof roleQuotas[quotaKey] === 'number') {
+                const limit = roleQuotas[quotaKey];
+                let countFilter = '';
+                if (quotaKey === 'max_admins') countFilter = "AND (role LIKE '%ADMIN%')";
+                if (quotaKey === 'max_operators') countFilter = "AND (role LIKE '%OPERATOR%')";
+                if (quotaKey === 'max_analysts') countFilter = "AND (role LIKE '%ANALYST%')";
+
+                const countRow = await getOne(
+                  `SELECT COUNT(*) as count FROM core_users WHERE tenant_id = ? AND is_active = true ${countFilter}`,
+                  [targetTenantId],
+                  { isSuperAdmin: true }
+                );
+                const currentCount = parseInt(countRow ? countRow.count : 0, 10);
+                if (currentCount >= limit) {
+                  res.writeHead(400, { 'Content-Type': 'application/json' });
+                  res.end(JSON.stringify({
+                    success: false,
+                    code: 'ROLE_QUOTA_EXCEEDED',
+                    error: `Límite de rol alcanzado: el plan actual permite un máximo de ${limit} usuario(s) con rol ${roleLabel}. Actualmente tiene ${currentCount}. Actualice su plan para añadir más.`,
+                    limit,
+                    current: currentCount
+                  }));
+                  return;
+                }
+              }
+            }
           }
 
           await execute(
@@ -1972,5 +2159,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 HoloSpace Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
+  console.log(`[SERVER] HoloSpace Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
 });

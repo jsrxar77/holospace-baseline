@@ -24,7 +24,8 @@ const SUITES = [
   { name: 'Tenant: Dynamic Module Toggle', file: 'tests/test-modules-toggle.js', module: 'TENANT' },
   { name: 'Kanban: Order Lifecycle & Logistics', file: 'tests/test-kanban-module.js', module: 'KANBAN' },
   { name: 'Scanner: Mobile EAN-13 Picking', file: 'tests/test-scanner-module.js', module: 'SCANNER' },
-  { name: '4see: Margin Calculations & Repricing', file: 'bin/test-4see.js', module: '4SEE' }
+  { name: '4see: Margin Calculations & Repricing', file: 'bin/test-4see.js', module: '4SEE' },
+  { name: 'Core/Tenant: Google OAuth2 & Role Quotas', file: 'tests/test-oauth-and-role-quotas.js', module: 'CORE' }
 ];
 
 function runScript(filePath) {

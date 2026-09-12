@@ -95,11 +95,27 @@ CREATE TABLE IF NOT EXISTS tenant_tenants (
 CREATE INDEX IF NOT EXISTS idx_tenant_tenants_slug ON tenant_tenants(slug);
 CREATE INDEX IF NOT EXISTS idx_tenant_tenants_status ON tenant_tenants(status);
 
+-- Catálogo Oficial de Planes SaaS
+CREATE TABLE IF NOT EXISTS tenant_plans (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code VARCHAR(64) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  max_users INT NOT NULL DEFAULT 5,
+  max_orders_monthly INT NOT NULL DEFAULT 500,
+  included_modules JSONB NOT NULL DEFAULT '["core"]'::jsonb,
+  role_quotas JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_tenant_plans_code ON tenant_plans(code);
+
 -- Tabla de Suscripciones & Planes por Tenant
 CREATE TABLE IF NOT EXISTS tenant_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-  plan_code VARCHAR(64) NOT NULL DEFAULT 'starter' CHECK (plan_code IN ('starter', 'pro', 'enterprise')),
+  plan_code VARCHAR(64) NOT NULL DEFAULT 'starter' REFERENCES tenant_plans(code) ON UPDATE CASCADE,
   status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'past_due', 'canceled', 'trialing')),
   max_users INT NOT NULL DEFAULT 5,
   max_orders_monthly INT NOT NULL DEFAULT 500,
@@ -141,21 +157,6 @@ CREATE TABLE IF NOT EXISTS tenant_modules_catalog (
 );
 
 CREATE INDEX IF NOT EXISTS idx_modules_catalog_key ON tenant_modules_catalog(key);
-
--- Catálogo Oficial de Planes SaaS
-CREATE TABLE IF NOT EXISTS tenant_plans (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  code VARCHAR(64) UNIQUE NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  max_users INT NOT NULL DEFAULT 5,
-  max_orders_monthly INT NOT NULL DEFAULT 500,
-  included_modules JSONB NOT NULL DEFAULT '["core"]'::jsonb,
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_tenant_plans_code ON tenant_plans(code);
 
 -- ============================================================================
 -- 3. MÓDULO CORE: ROLES, PERMISOS, USUARIOS Y AUDITORÍA
@@ -207,9 +208,12 @@ CREATE TABLE IF NOT EXISTS core_users (
   role_id UUID REFERENCES core_roles(id) ON DELETE SET NULL,
   username VARCHAR(64) NOT NULL,
   email VARCHAR(255) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL,
+  password_hash VARCHAR(255),
   name VARCHAR(255) NOT NULL,
   role VARCHAR(64) NOT NULL DEFAULT 'OPERATOR',
+  auth_provider VARCHAR(32) NOT NULL DEFAULT 'local',
+  auth_provider_id VARCHAR(255),
+  avatar_url TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
   theme_preference VARCHAR(64) DEFAULT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -220,6 +224,7 @@ CREATE TABLE IF NOT EXISTS core_users (
 
 CREATE INDEX IF NOT EXISTS idx_core_users_tenant_email ON core_users(tenant_id, email);
 CREATE INDEX IF NOT EXISTS idx_core_users_tenant_username ON core_users(tenant_id, username);
+CREATE INDEX IF NOT EXISTS idx_core_users_auth_provider ON core_users(auth_provider, auth_provider_id);
 CREATE INDEX IF NOT EXISTS idx_core_users_role ON core_users(role);
 CREATE INDEX IF NOT EXISTS idx_core_users_role_id ON core_users(role_id);
 
@@ -566,17 +571,24 @@ ON CONFLICT (key) DO UPDATE SET
   is_active = EXCLUDED.is_active;
 
 -- Catálogo de Planes Oficiales SaaS
-INSERT INTO tenant_plans (code, name, description, max_users, max_orders_monthly, included_modules, is_active)
+INSERT INTO tenant_plans (code, name, description, max_users, max_orders_monthly, included_modules, role_quotas, is_active)
 VALUES
-  ('starter', 'Plan Starter Inicial', 'Plan esencial para pequeños depósitos y operaciones ágiles.', 5, 500, '["core", "kanban", "scanner"]'::jsonb, true),
-  ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner", "4see"]'::jsonb, true),
-  ('enterprise', 'Plan Enterprise Ilimitado', 'Acceso total a todas las herramientas y módulos de la plataforma.', 999, 999999, '["core", "tenant", "kanban", "scanner", "4see"]'::jsonb, true)
+  ('starter', 'Plan Starter Inicial', 'Plan esencial para pequeños depósitos y operaciones ágiles.', 5, 500, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 1, "max_operators": 4, "max_analysts": 0}'::jsonb, true),
+  ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner", "4see"]'::jsonb, '{"max_admins": 3, "max_operators": 12, "max_analysts": 5}'::jsonb, true),
+  ('enterprise', 'Plan Enterprise Ilimitado', 'Acceso total a todas las herramientas y módulos de la plataforma.', 999, 999999, '["core", "tenant", "kanban", "scanner", "4see"]'::jsonb, '{"max_admins": 999, "max_operators": 999, "max_analysts": 999}'::jsonb, true),
+  ('kanban_simple', 'Plan Kanban Simple', 'Para depósitos individuales o pequeñas operaciones.', 4, 500, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 1, "max_operators": 3, "max_analysts": 0}'::jsonb, true),
+  ('kanban_business', 'Plan Kanban Business', 'Para centros de distribución con múltiples operarios y supervisores.', 18, 3000, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 3, "max_operators": 15, "max_analysts": 0}'::jsonb, true),
+  ('kanban_enterprise', 'Plan Kanban Enterprise', 'Capacidad masiva ilimitada para grandes redes logísticas.', 9999, 999999, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 9999, "max_operators": 9999, "max_analysts": 0}'::jsonb, true),
+  ('fourseee_simple', 'Plan 4see Simple', 'Vigilancia de precios y márgenes para vendedores individuales.', 3, 0, '["core", "4see"]'::jsonb, '{"max_admins": 1, "max_operators": 0, "max_analysts": 2}'::jsonb, true),
+  ('fourseee_business', 'Plan 4see Business', 'Inteligencia de catálogo y repricing para tiendas en expansión.', 10, 0, '["core", "4see"]'::jsonb, '{"max_admins": 2, "max_operators": 0, "max_analysts": 8}'::jsonb, true),
+  ('fourseee_enterprise', 'Plan 4see Enterprise', 'Monitoreo multi-cuenta corporativo ilimitado.', 9999, 0, '["core", "4see"]'::jsonb, '{"max_admins": 9999, "max_operators": 0, "max_analysts": 9999}'::jsonb, true)
 ON CONFLICT (code) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
   max_users = EXCLUDED.max_users,
   max_orders_monthly = EXCLUDED.max_orders_monthly,
   included_modules = EXCLUDED.included_modules,
+  role_quotas = EXCLUDED.role_quotas,
   is_active = EXCLUDED.is_active;
 
 -- Catálogo Universal de Permisos Granulares de la Plataforma
@@ -674,10 +686,16 @@ ON CONFLICT (role_id, permission_key) DO NOTHING;
 -- Permisos para Rol: KANBAN_ADMIN
 INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
+  ('c0000000-0000-0000-0000-000000000005', 'core:users:read'),
+  ('c0000000-0000-0000-0000-000000000005', 'core:users:manage'),
+  ('c0000000-0000-0000-0000-000000000005', 'core:audit:read'),
   ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:read'),
   ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:ingest'),
   ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:assign'),
-  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:dispatch')
+  ('c0000000-0000-0000-0000-000000000005', 'kanban:orders:dispatch'),
+  ('c0000000-0000-0000-0000-000000000005', 'scanner:orders:view_assigned'),
+  ('c0000000-0000-0000-0000-000000000005', 'scanner:items:scan'),
+  ('c0000000-0000-0000-0000-000000000005', 'scanner:items:verify')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: KANBAN_OPERATOR
@@ -690,6 +708,9 @@ ON CONFLICT (role_id, permission_key) DO NOTHING;
 -- Permisos para Rol: 4SEE_ADMIN
 INSERT INTO core_role_permissions (role_id, permission_key)
 VALUES
+  ('c0000000-0000-0000-0000-000000000007', 'core:users:read'),
+  ('c0000000-0000-0000-0000-000000000007', 'core:users:manage'),
+  ('c0000000-0000-0000-0000-000000000007', 'core:audit:read'),
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:read'),
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:audit'),
   ('c0000000-0000-0000-0000-000000000007', '4see:pricing:write'),
