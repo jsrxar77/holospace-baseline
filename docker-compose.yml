@@ -14,7 +14,10 @@ services:
       - DATABASE_URL=postgres://${POSTGRES_USER:-holospace_admin}:${POSTGRES_PASSWORD:-Secr3tP@ssword2026}@postgres:5432/${POSTGRES_DB:-holospace_saas}
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-holospace_super_secret_jwt_key_2026_x89f_aes}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     volumes:
+      - ./.env:/app/.env
       - ./data:/app/data
       - ./backups:/app/backups
       - ./public:/app/public
