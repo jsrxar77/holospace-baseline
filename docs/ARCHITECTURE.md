@@ -109,6 +109,7 @@ ALTER TABLE core_platform_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_connected_stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
@@ -122,15 +123,20 @@ CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- Políticas RLS idénticas aplicadas sobre fourseee_competitor_monitors, fourseee_catalog_items, fourseee_margin_rules, core_users, core_roles, core_audit_logs, core_app_settings y core_platform_audit_logs.
+-- Políticas RLS idénticas aplicadas sobre fourseee_connected_stores, fourseee_competitor_monitors, fourseee_catalog_items, fourseee_margin_rules, core_users, core_roles, core_audit_logs, core_app_settings y core_platform_audit_logs.
 ```
 
 ---
 
-## 5. Seguridad Criptográfica y Motor JWT (lib/auth.js)
+## 5. Seguridad Criptográfica, Motor JWT y Gestión Segura de Credenciales Multi-Tienda
 
 - **Hashing de Contraseñas:** Algoritmo `scrypt` (`N=16384, r=8, p=1`) con salt criptográfico de 16 bytes.
 - **JSON Web Tokens (JWT):** Firmados con HMAC-SHA256 con claims estructurados (`sub`, `tenantId`, `tenantSlug`, `role`, `entitlements`).
+- **Almacenamiento y Enmascaramiento de Credenciales Multi-Tienda (4see):**
+  - Las credenciales de conexión (`consumer_key`, `consumer_secret`, `access_token`) se almacenan aisladas por organización en la tabla `fourseee_connected_stores` protegida por PostgreSQL 16 RLS.
+  - Al listar tiendas (`GET /api/4see/stores`), todo secreto es sanitizado y enmascarado (`maskStoreCredentials`), impidiendo la filtración de claves al frontend.
+  - Las operaciones de auditoría (`POST /api/4see/store/audit-live`) y de write-back aceptan `store_id`, resolviendo las credenciales de forma segura dentro del backend sin transmitirlas por red.
+  - Las actualizaciones no destructivas conservan los secretos previos si el usuario deja los campos en blanco o envía la máscara `••••••••`.
 
 ---
 

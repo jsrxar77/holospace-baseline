@@ -124,10 +124,20 @@
 - [x] **13.5** Suite de pruebas automatizadas `tests/test-4see-ontology.js` incorporada al orquestador maestro `tests/run-all-tests.js` (13 suites, 100% PASS, 0 fallos).
 - [x] **13.6** Documentación canónica actualizada en `/docs/MODULES.md`, `/docs/ARCHITECTURE.md` y `/docs/ROADMAP.md`.
 
+### FASE 14: Gestión Multi-Tienda Persistente y Almacenamiento Seguro de Credenciales (Módulo 4see)
+- [x] **14.1** Esquema en PostgreSQL 16: tabla `fourseee_connected_stores` con índice y políticas RLS para aislamiento estricto multi-tenant (Zero Data Leakage).
+- [x] **14.2** Endpoints CRUD de tiendas conectadas (`GET /api/4see/stores`, `POST /api/4see/stores`, `DELETE /api/4see/stores/:id`).
+- [x] **14.3** Algoritmo de sanitización y enmascaramiento seguro de credenciales (`maskStoreCredentials`), evitando que secretos viajen al frontend.
+- [x] **14.4** Resolución segura de credenciales en el servidor mediante `store_id` en `POST /api/4see/store/audit-live` y `write-back`.
+- [x] **14.5** Selector reactivo de tiendas conectadas en la cabecera del catálogo (`#savedStoresSelect`) con escaneo rápido directo en 1 clic.
+- [x] **14.6** Modal de gestión multi-tienda (`#manageStoresModal`) con listado de tiendas activas, fecha de último escaneo, edición y desconexión lógica.
+- [x] **14.7** Suite de pruebas automatizadas `tests/test-4see-stores.js` registrada en `tests/run-all-tests.js` (14 suites ejecutadas, 100% PASS, 0 fallos).
+- [x] **14.8** Documentación canónica sincronizada en los 6 documentos canónicos de `/docs`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 14:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 15:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 16:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 15:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 16:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 17:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.

@@ -384,6 +384,22 @@ CREATE TABLE IF NOT EXISTS fourseee_margin_rules (
 
 CREATE INDEX IF NOT EXISTS idx_fourseee_margins_tenant ON fourseee_margin_rules(tenant_id);
 
+-- Tabla de Conexiones de Tiendas E-Commerce (Tiendanube, WooCommerce)
+CREATE TABLE IF NOT EXISTS fourseee_connected_stores (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  name VARCHAR(150) NOT NULL,
+  platform VARCHAR(50) NOT NULL,
+  store_url TEXT NOT NULL,
+  credentials JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  last_scanned_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_stores_tenant ON fourseee_connected_stores(tenant_id);
+
 -- ============================================================================
 -- 6. POLÍTICAS DE ROW-LEVEL SECURITY (RLS) - AISLAMIENTO MULTI-TENANT
 -- ============================================================================
@@ -398,6 +414,7 @@ ALTER TABLE core_platform_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_connected_stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
 -- Política RLS para core_roles
@@ -441,6 +458,18 @@ CREATE POLICY rls_fourseee_catalog_tenant_isolation ON fourseee_catalog_items
 
 DROP POLICY IF EXISTS rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules;
 CREATE POLICY rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_stores_tenant_isolation ON fourseee_connected_stores;
+CREATE POLICY rls_fourseee_stores_tenant_isolation ON fourseee_connected_stores
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true'

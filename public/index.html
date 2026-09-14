@@ -1580,7 +1580,7 @@
           <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Catalog — Auditoría Técnica y Diff View</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Diagnóstico de salud de tienda (GTIN/EAN, marcas, SEO) y optimización de títulos con write-back directo.</p>
         </div>
-        <div class="actions-controls" style="flex-wrap: wrap; gap: 10px;">
+        <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
           <div class="search-box-wrapper">
             <input 
               type="text" 
@@ -1590,8 +1590,13 @@
               oninput="filter4seeCatalog(this.value)"
             />
           </div>
-          <button class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="openConnectStoreModal()">⚡ Escanear Tienda en Vivo</button>
-          <button class="btn-secondary" onclick="openAuditItemModal()">+ Probar Ítem Individual</button>
+          <!-- Selector de Tiendas Guardadas (Multi-Store) -->
+          <select id="savedStoresSelect" class="input-field" style="max-width: 240px; font-size: 13px;" onchange="handleSelectSavedStore(this.value)">
+            <option value="">-- Conectar Nueva Tienda --</option>
+          </select>
+          <button id="btnQuickAuditStore" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="handleQuickScanSelectedStore()">⚡ Escanear Tienda en Vivo</button>
+          <button class="btn-secondary" style="font-size: 13px;" onclick="openManageStoresModal()">Tiendas Guardadas</button>
+          <button class="btn-secondary" style="font-size: 13px;" onclick="openAuditItemModal()">+ Probar Ítem</button>
         </div>
       </div>
 
@@ -2067,39 +2072,34 @@
     </div>
   </div>
 
-  <!-- Modal Escanear Tienda en Vivo (Tiendanube / WooCommerce) -->
+  <!-- Modal Conectar y Escanear Tienda (Multi-Store) -->
   <div id="connectStoreModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-content" style="max-width: 540px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Escanear Tienda en Vivo (On-the-Fly)</h3>
+        <h3 id="connectStoreModalTitle" style="font-size: 20px; font-weight: 900; color: #FFF;">Conectar Tienda E-Commerce</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeConnectStoreModal()">✕</button>
       </div>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
-        Auditoría técnica en memoria sin alterar tu base de datos local. Detecta problemas de GTIN, marcas y SEO al instante.
+        Conecta tu tienda para auditar catálogo on-the-fly, detectar faltantes de GTIN/EAN y aplicar optimizaciones.
       </p>
       <form id="connectStoreForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleConnectStoreSubmit(event)">
+        <input type="hidden" id="connStoreId" value="">
+        
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre de la Tienda / Conexión <span style="color: var(--red);">*</span></label>
+          <input type="text" id="connStoreName" class="input-field" placeholder="Ej: Poke Argentina, Tienda Principal..." required>
+        </div>
+
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Plataforma de E-Commerce <span style="color: var(--red);">*</span></label>
           <select id="connPlatform" class="input-field" onchange="togglePlatformFields(this.value)" required>
-            <option value="TIENDANUBE">Tiendanube / Nuvemshop (API v1)</option>
             <option value="WOOCOMMERCE">WooCommerce (REST API v3)</option>
+            <option value="TIENDANUBE">Tiendanube / Nuvemshop (API v1)</option>
           </select>
         </div>
 
-        <!-- Campos Tiendanube -->
-        <div id="fieldsTiendanube" style="display: flex; flex-direction: column; gap: 12px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ID de Tienda (User ID) <span style="color: var(--red);">*</span></label>
-            <input type="text" id="tnUserId" class="input-field" placeholder="Ej: 1234567">
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Access Token (Bearer) <span style="color: var(--red);">*</span></label>
-            <input type="password" id="tnAccessToken" class="input-field" placeholder="Token generado en Tiendanube">
-          </div>
-        </div>
-
         <!-- Campos WooCommerce -->
-        <div id="fieldsWooCommerce" style="display: none; flex-direction: column; gap: 12px;">
+        <div id="fieldsWooCommerce" style="display: flex; flex-direction: column; gap: 12px;">
           <div>
             <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">URL de la Tienda <span style="color: var(--red);">*</span></label>
             <input type="url" id="wcStoreUrl" class="input-field" placeholder="https://mitienda.com">
@@ -2116,11 +2116,54 @@
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+        <!-- Campos Tiendanube -->
+        <div id="fieldsTiendanube" style="display: none; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">ID de Tienda (User ID) <span style="color: var(--red);">*</span></label>
+            <input type="text" id="tnUserId" class="input-field" placeholder="Ej: 1234567">
+          </div>
+          <div>
+            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Access Token (Bearer) <span style="color: var(--red);">*</span></label>
+            <input type="password" id="tnAccessToken" class="input-field" placeholder="Token generado en Tiendanube">
+          </div>
+        </div>
+
+        <!-- Checkbox de Guardado Permanente de Tienda -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px;">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #FFF; cursor: pointer;">
+            <input type="checkbox" id="connSaveStore" checked style="accent-color: var(--emerald); width: 16px; height: 16px;">
+            <span>Guardar esta conexión de forma permanente para no volver a ingresar credenciales</span>
+          </label>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 10px;">
           <button type="button" class="btn-secondary" onclick="runDemoCatalogScan()">Cargar Muestra Demo</button>
-          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;">Iniciar Escaneo de Catálogo</button>
+          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;">Conectar y Escanear Ahora</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal Gestión de Tiendas Guardadas (Multi-Store) -->
+  <div id="manageStoresModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 680px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Tiendas Conectadas Guardadas</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeManageStoresModal()">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
+        Gestiona las conexiones activas de tu organización. Las credenciales se conservan seguras y encriptadas por tenant.
+      </p>
+
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 12px;">
+        <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="openConnectStoreModalForNew()">+ Conectar Otra Tienda</button>
+      </div>
+
+      <div class="table-responsive-container">
+        <div id="savedStoresListContainer">
+          <div style="color: var(--text-muted); font-size: 13px; text-align: center; padding: 20px 0;">Cargando tiendas conectadas...</div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2324,6 +2367,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=7.2"></script>
+  <script src="/app.js?v=7.3"></script>
 </body>
 </html>

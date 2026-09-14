@@ -161,11 +161,13 @@ docker compose exec app node tests/test-modules-toggle.js      # Tenant: Activac
 docker compose exec app node tests/test-kanban-module.js       # Kanban: Ciclo de vida y logística
 docker compose exec app node tests/test-scanner-module.js      # Scanner: Picking móvil y EAN-13
 docker compose exec app node bin/test-4see.js                 # 4see: Rentabilidad, extractor y repricing
+docker compose exec app node tests/test-4see-ontology.js       # 4see: Ontología universal y auditoría on-the-fly
+docker compose exec app node tests/test-4see-stores.js         # 4see: Gestión multi-tienda persistente y RLS
 ```
 
-O ejecutar toda la batería en un solo comando:
+O ejecutar el orquestador unificado de las 14 suites completas:
 ```bash
-node bin/verify-db-integrity.js && node bin/test-auth-jwt.js && node bin/test-entitlement.js && node bin/test-billing-onboarding.js
+docker compose exec app node tests/run-all-tests.js
 ```
 
 ---

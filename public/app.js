@@ -3499,6 +3499,8 @@ async function load4seeCatalog() {
   const container = document.getElementById('catalogDiffContainer');
   if (!container) return;
 
+  loadSavedStores();
+
   if (cached4seeCatalog.length > 0) {
     render4seeCatalog(cached4seeCatalog);
     return;
@@ -3660,12 +3662,156 @@ function render4seeCatalog(items = []) {
   container.innerHTML = html;
 }
 
-// Modal Conectar Tienda
+// ============================================================================
+// GESTIÓN MULTI-TIENDA PERSISTENTE (4SEE CONNECTED STORES)
+// ============================================================================
+let cachedSavedStores = [];
+let currentSelectedStoreId = null;
+
+async function loadSavedStores() {
+  const select = document.getElementById('savedStoresSelect');
+  if (!select) return;
+
+  try {
+    const res = await fetch('/api/4see/stores', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (data.success && Array.isArray(data.stores)) {
+      cachedSavedStores = data.stores;
+      
+      let optionsHtml = `<option value="">-- Seleccionar Tienda (${cachedSavedStores.length}) --</option>`;
+      cachedSavedStores.forEach(s => {
+        const isSelected = s.id === currentSelectedStoreId ? 'selected' : '';
+        optionsHtml += `<option value="${s.id}" ${isSelected}>${s.name} (${s.platform})</option>`;
+      });
+      optionsHtml += `<option value="__NEW__">+ Conectar Nueva Tienda...</option>`;
+      select.innerHTML = optionsHtml;
+
+      if (!currentSelectedStoreId && cachedSavedStores.length > 0) {
+        currentSelectedStoreId = cachedSavedStores[0].id;
+        select.value = currentSelectedStoreId;
+      }
+
+      updateQuickScanButtonText();
+    }
+  } catch (err) {
+    console.error('Error cargando tiendas conectadas:', err);
+  }
+}
+window.loadSavedStores = loadSavedStores;
+
+function updateQuickScanButtonText() {
+  const btn = document.getElementById('btnQuickAuditStore');
+  if (!btn) return;
+
+  if (currentSelectedStoreId) {
+    const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
+    if (store) {
+      btn.innerText = `⚡ Escanear ${store.name}`;
+      return;
+    }
+  }
+  btn.innerText = '⚡ Escanear Tienda en Vivo';
+}
+
+function handleSelectSavedStore(val) {
+  if (val === '__NEW__') {
+    openConnectStoreModalForNew();
+    const select = document.getElementById('savedStoresSelect');
+    if (select) select.value = currentSelectedStoreId || '';
+    return;
+  }
+  currentSelectedStoreId = val || null;
+  updateQuickScanButtonText();
+}
+window.handleSelectSavedStore = handleSelectSavedStore;
+
+async function handleQuickScanSelectedStore() {
+  if (!currentSelectedStoreId) {
+    openConnectStoreModalForNew();
+    return;
+  }
+
+  const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
+  const btn = document.getElementById('btnQuickAuditStore');
+  const originalText = btn ? btn.innerText : '⚡ Escanear Tienda en Vivo';
+  if (btn) {
+    btn.innerText = `Escaneando ${store ? store.name : 'tienda'}...`;
+    btn.disabled = true;
+  }
+
+  const container = document.getElementById('catalogDiffContainer');
+  if (container) {
+    container.innerHTML = `<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Conectando y auditando catálogo de ${store ? store.name : 'tienda'} on-the-fly...</div>`;
+  }
+
+  try {
+    const res = await fetch('/api/4see/store/audit-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ store_id: currentSelectedStoreId, options: { limit: 50 } })
+    });
+
+    const data = await res.json();
+    if (data.success && data.audit) {
+      cached4seeCatalog = data.audit.items || [];
+      lastAuditedPlatform = data.platform || (store ? store.platform : 'CUSTOM');
+      
+      const total = data.audit.total_audited || 0;
+      const opt = data.audit.optimized_count || 0;
+      const rev = data.audit.needs_review_count || 0;
+      const gtin = data.audit.critical_issues_count || 0;
+
+      updateCatalogKpis(total, opt, gtin, rev);
+      render4seeCatalog(cached4seeCatalog);
+      loadSavedStores(); // Actualizar fecha de último escaneo
+
+      const bulkBar = document.getElementById('catalogBulkBar');
+      if (bulkBar) bulkBar.style.display = 'flex';
+
+      await showCustomAlert('Escaneo Completado', `Se auditaron ${total} productos de ${data.store_name || (store ? store.name : 'la tienda')} exitosamente.`);
+    } else {
+      await showCustomAlert('Error en Escaneo', data.error || 'No se pudo conectar a la tienda seleccionada.');
+      if (container) container.innerHTML = `<div style="color: var(--red); font-size: 14px; text-align: center; padding: 20px 0;">Error: ${data.error || 'Fallo de conexión'}</div>`;
+    }
+  } catch (err) {
+    await showCustomAlert('Error de Red', err.message);
+  } finally {
+    if (btn) {
+      btn.innerText = originalText;
+      btn.disabled = false;
+    }
+  }
+}
+window.handleQuickScanSelectedStore = handleQuickScanSelectedStore;
+
+// Modal Conectar / Editar Tienda
 function openConnectStoreModal() {
   const modal = document.getElementById('connectStoreModal');
   if (modal) modal.classList.remove('hidden');
 }
 window.openConnectStoreModal = openConnectStoreModal;
+
+function openConnectStoreModalForNew() {
+  const form = document.getElementById('connectStoreForm');
+  if (form) form.reset();
+  const idField = document.getElementById('connStoreId');
+  if (idField) idField.value = '';
+  const title = document.getElementById('connectStoreModalTitle');
+  if (title) title.innerText = 'Conectar Nueva Tienda E-Commerce';
+  const btn = document.getElementById('btnRunStoreScan');
+  if (btn) btn.innerText = 'Conectar y Escanear Ahora';
+  const saveCheck = document.getElementById('connSaveStore');
+  if (saveCheck) saveCheck.checked = true;
+
+  togglePlatformFields(document.getElementById('connPlatform').value);
+  openConnectStoreModal();
+}
+window.openConnectStoreModalForNew = openConnectStoreModalForNew;
 
 function closeConnectStoreModal() {
   const modal = document.getElementById('connectStoreModal');
@@ -3685,24 +3831,183 @@ function togglePlatformFields(platform) {
   }
 }
 window.togglePlatformFields = togglePlatformFields;
-window.handleConnectStoreSubmit = handleConnectStoreSubmit;
-window.runDemoCatalogScan = runDemoCatalogScan;
+
+// Modal Gestionar Tiendas Guardadas
+function openManageStoresModal() {
+  renderManageStoresList();
+  const modal = document.getElementById('manageStoresModal');
+  if (modal) modal.classList.remove('hidden');
+}
+window.openManageStoresModal = openManageStoresModal;
+
+function closeManageStoresModal() {
+  const modal = document.getElementById('manageStoresModal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeManageStoresModal = closeManageStoresModal;
+
+function renderManageStoresList() {
+  const container = document.getElementById('savedStoresListContainer');
+  if (!container) return;
+
+  if (cachedSavedStores.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 30px 20px; color: var(--text-muted);">
+        No tienes tiendas conectadas guardadas actualmente.
+        <div style="margin-top: 12px;">
+          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="closeManageStoresModal(); openConnectStoreModalForNew();">+ Conectar Primera Tienda</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  let html = `
+    <table class="data-table" style="width: 100%; font-size: 13px;">
+      <thead>
+        <tr>
+          <th>Nombre / URL</th>
+          <th>Plataforma</th>
+          <th>Último Escaneo</th>
+          <th style="text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  cachedSavedStores.forEach(s => {
+    const lastScan = s.last_scanned_at ? new Date(s.last_scanned_at).toLocaleString() : '<span style="color: var(--text-muted);">Sin escaneo</span>';
+    const isSelected = s.id === currentSelectedStoreId;
+
+    html += `
+      <tr style="${isSelected ? 'background: rgba(0, 230, 118, 0.05);' : ''}">
+        <td>
+          <div style="font-weight: 800; color: #FFF; display: flex; align-items: center; gap: 8px;">
+            ${s.name}
+            ${isSelected ? '<span style="font-size: 10px; color: var(--emerald); background: rgba(0,230,118,0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${s.store_url || 'N/A'}</div>
+        </td>
+        <td>
+          <span style="font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
+        </td>
+        <td style="font-size: 12px; color: var(--text-main);">${lastScan}</td>
+        <td style="text-align: right; white-space: nowrap;">
+          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">⚡ Escanear</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="editStoreConnection('${s.id}')">Editar</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: rgba(239,68,68,0.4);" onclick="disconnectStore('${s.id}')">✕</button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `</tbody></table>`;
+  container.innerHTML = html;
+}
+
+function editStoreConnection(storeId) {
+  const store = cachedSavedStores.find(s => s.id === storeId);
+  if (!store) return;
+
+  closeManageStoresModal();
+
+  const idField = document.getElementById('connStoreId');
+  if (idField) idField.value = store.id;
+
+  const nameField = document.getElementById('connStoreName');
+  if (nameField) nameField.value = store.name;
+
+  const platformField = document.getElementById('connPlatform');
+  if (platformField) {
+    platformField.value = store.platform;
+    togglePlatformFields(store.platform);
+  }
+
+  const urlField = document.getElementById('wcStoreUrl');
+  if (urlField) urlField.value = store.store_url || '';
+
+  const keyField = document.getElementById('wcConsumerKey');
+  if (keyField) keyField.value = store.credentials?.consumer_key || store.credentials?.consumerKey || '';
+
+  const secField = document.getElementById('wcConsumerSecret');
+  if (secField) {
+    secField.value = '';
+    secField.placeholder = '•••••••• (Dejar en blanco para mantener)';
+  }
+
+  const tnUser = document.getElementById('tnUserId');
+  if (tnUser) tnUser.value = store.credentials?.user_id || store.credentials?.userId || '';
+
+  const tnTok = document.getElementById('tnAccessToken');
+  if (tnTok) {
+    tnTok.value = '';
+    tnTok.placeholder = '•••••••• (Dejar en blanco para mantener)';
+  }
+
+  const title = document.getElementById('connectStoreModalTitle');
+  if (title) title.innerText = `Editar Tienda: ${store.name}`;
+
+  const btn = document.getElementById('btnRunStoreScan');
+  if (btn) btn.innerText = 'Guardar Cambios y Escanear';
+
+  openConnectStoreModal();
+}
+window.editStoreConnection = editStoreConnection;
+
+async function disconnectStore(storeId) {
+  const store = cachedSavedStores.find(s => s.id === storeId);
+  const storeName = store ? store.name : 'esta tienda';
+
+  const confirmed = await showCustomConfirm(
+    'Desconectar Tienda',
+    `¿Estás seguro de que deseas desconectar "${storeName}"? Sus credenciales guardadas se eliminarán del acceso activo.`
+  );
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(`/api/4see/stores/${storeId}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (currentSelectedStoreId === storeId) {
+        currentSelectedStoreId = null;
+      }
+      await loadSavedStores();
+      renderManageStoresList();
+      await showCustomAlert('Tienda Desconectada', `"${storeName}" fue desconectada correctamente.`);
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo desconectar la tienda.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error de Red', err.message);
+  }
+}
+window.disconnectStore = disconnectStore;
 
 async function handleConnectStoreSubmit(e) {
   e.preventDefault();
+  const storeId = document.getElementById('connStoreId').value.trim();
+  const storeName = document.getElementById('connStoreName').value.trim();
   const platform = document.getElementById('connPlatform').value;
+  const saveStore = document.getElementById('connSaveStore') ? document.getElementById('connSaveStore').checked : true;
   const btn = document.getElementById('btnRunStoreScan');
 
   let credentials = {};
+  let storeUrl = '';
+
   if (platform === 'TIENDANUBE') {
     credentials.userId = document.getElementById('tnUserId').value.trim();
     credentials.accessToken = document.getElementById('tnAccessToken').value.trim();
-    if (!credentials.userId || !credentials.accessToken) {
-      await showCustomAlert('Datos Incompletos', 'Ingresa el User ID y el Access Token de Tiendanube.');
+    storeUrl = `https://tiendanube.com/store/${credentials.userId}`;
+    if (!credentials.userId) {
+      await showCustomAlert('Datos Incompletos', 'Ingresa el User ID de Tiendanube.');
       return;
     }
   } else {
-    credentials.storeUrl = document.getElementById('wcStoreUrl').value.trim();
+    storeUrl = document.getElementById('wcStoreUrl').value.trim();
+    credentials.storeUrl = storeUrl;
     credentials.consumerKey = document.getElementById('wcConsumerKey').value.trim();
     credentials.consumerSecret = document.getElementById('wcConsumerSecret').value.trim();
     if (!credentials.storeUrl) {
@@ -3711,42 +4016,80 @@ async function handleConnectStoreSubmit(e) {
     }
   }
 
-  if (btn) btn.innerText = 'Escaneando catálogo...';
+  if (btn) btn.innerText = 'Guardando y escaneando...';
 
   try {
-    const res = await fetch('/api/4see/store/audit-live', {
+    let activeStoreId = storeId || null;
+
+    // Si está marcado guardar o ya tiene ID, persistir en /api/4see/stores
+    if (saveStore || activeStoreId) {
+      const storePayload = {
+        id: activeStoreId || undefined,
+        name: storeName || storeUrl,
+        platform,
+        store_url: storeUrl,
+        credentials
+      };
+      const resStore = await fetch('/api/4see/stores', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getAuthToken()}`
+        },
+        body: JSON.stringify(storePayload)
+      });
+      const dataStore = await resStore.json();
+      if (dataStore.success && dataStore.store) {
+        activeStoreId = dataStore.store.id;
+        currentSelectedStoreId = activeStoreId;
+      }
+    }
+
+    // Ejecutar auditoría on-the-fly
+    const auditBody = activeStoreId 
+      ? { store_id: activeStoreId, options: { limit: 50 } }
+      : { platform, credentials, options: { limit: 50 } };
+
+    const resAudit = await fetch('/api/4see/store/audit-live', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getAuthToken()}`
       },
-      body: JSON.stringify({ platform, credentials, options: { limit: 50 } })
+      body: JSON.stringify(auditBody)
     });
 
-    const data = await res.json();
-    if (data.success && data.audit) {
+    const dataAudit = await resAudit.json();
+    if (dataAudit.success && dataAudit.audit) {
       closeConnectStoreModal();
       lastAuditedPlatform = platform;
       lastAuditedCredentials = credentials;
-      cached4seeCatalog = data.audit.items || [];
+      cached4seeCatalog = dataAudit.audit.items || [];
       
-      const total = data.audit.total_audited || 0;
-      const opt = data.audit.optimized_count || 0;
-      const rev = data.audit.needs_review_count || 0;
-      const gtin = data.audit.critical_issues_count || 0;
+      const total = dataAudit.audit.total_audited || 0;
+      const opt = dataAudit.audit.optimized_count || 0;
+      const rev = dataAudit.audit.needs_review_count || 0;
+      const gtin = dataAudit.audit.critical_issues_count || 0;
 
       updateCatalogKpis(total, opt, gtin, rev);
       render4seeCatalog(cached4seeCatalog);
-      await showCustomAlert('Escaneo Completado', `Se auditaron ${total} productos de ${platform} en memoria exitosamente.`);
+      await loadSavedStores();
+
+      const bulkBar = document.getElementById('catalogBulkBar');
+      if (bulkBar) bulkBar.style.display = 'flex';
+
+      await showCustomAlert('Conexión y Escaneo Exitoso', `La tienda "${storeName || storeUrl}" fue guardada y se auditaron ${total} productos.`);
     } else {
-      await showCustomAlert('Error en Escaneo', data.error || 'No se pudo conectar a la tienda.');
+      await showCustomAlert('Error en Escaneo', dataAudit.error || 'No se pudo auditar la tienda.');
     }
   } catch (err) {
     await showCustomAlert('Error de Red', err.message);
   } finally {
-    if (btn) btn.innerText = 'Iniciar Escaneo de Catálogo';
+    if (btn) btn.innerText = 'Conectar y Escanear Ahora';
   }
 }
+window.handleConnectStoreSubmit = handleConnectStoreSubmit;
+window.runDemoCatalogScan = runDemoCatalogScan;
 
 // Cargar muestra de catálogo Demo on-the-fly para visualización inmediata
 async function runDemoCatalogScan() {

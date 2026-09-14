@@ -9,10 +9,54 @@ const { auditListing, auditCatalogBatch } = require('../lib/rules_engine');
 const { TiendanubeConnector } = require('../lib/connectors/tiendanube');
 const { WooCommerceConnector } = require('../lib/connectors/woocommerce');
 
+let isStoreTableReady = false;
+async function ensureConnectedStoresTable() {
+  if (isStoreTableReady) return;
+  try {
+    await execute(`
+      CREATE TABLE IF NOT EXISTS fourseee_connected_stores (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+        name VARCHAR(150) NOT NULL,
+        platform VARCHAR(50) NOT NULL,
+        store_url TEXT NOT NULL,
+        credentials JSONB NOT NULL DEFAULT '{}'::jsonb,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        last_scanned_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_fourseee_stores_tenant ON fourseee_connected_stores(tenant_id);
+      ALTER TABLE fourseee_connected_stores ENABLE ROW LEVEL SECURITY;
+    `, []);
+    isStoreTableReady = true;
+  } catch (err) {
+    isStoreTableReady = true;
+  }
+}
+
+function maskCredentialValue(str) {
+  if (!str || typeof str !== 'string') return '';
+  if (str.length <= 8) return '••••••••';
+  return str.slice(0, 4) + '••••' + str.slice(-4);
+}
+
+function maskStoreCredentials(creds = {}) {
+  const masked = { ...creds };
+  if (masked.consumer_secret) masked.consumer_secret = maskCredentialValue(masked.consumer_secret);
+  if (masked.consumerSecret) masked.consumerSecret = maskCredentialValue(masked.consumerSecret);
+  if (masked.access_token) masked.access_token = maskCredentialValue(masked.access_token);
+  if (masked.accessToken) masked.accessToken = maskCredentialValue(masked.accessToken);
+  if (masked.consumer_key) masked.consumer_key = maskCredentialValue(masked.consumer_key);
+  if (masked.consumerKey) masked.consumerKey = maskCredentialValue(masked.consumerKey);
+  return masked;
+}
+
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*
  */
 async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdmin }) {
+  await ensureConnectedStoresTable();
   const url = req.url;
   const pathPart = url.split('?')[0];
 
@@ -226,6 +270,142 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
+  // 2.0 TIENDAS CONECTADAS PERSISTENTES (MULTI-STORE MANAGEMENT)
+  if (pathPart === '/api/4see/stores' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+
+    const stores = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_connected_stores WHERE is_active = true ORDER BY created_at DESC'
+        : 'SELECT * FROM fourseee_connected_stores WHERE tenant_id = ? AND is_active = true ORDER BY created_at DESC',
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+
+    const safeStores = stores.map(st => {
+      const creds = typeof st.credentials === 'string' ? JSON.parse(st.credentials) : (st.credentials || {});
+      return {
+        id: st.id,
+        tenant_id: st.tenant_id,
+        name: st.name,
+        platform: st.platform,
+        store_url: st.store_url,
+        is_active: st.is_active,
+        last_scanned_at: st.last_scanned_at,
+        created_at: st.created_at,
+        updated_at: st.updated_at,
+        credentials: maskStoreCredentials(creds)
+      };
+    });
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, stores: safeStores }));
+    return true;
+  }
+
+  if (pathPart === '/api/4see/stores' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write') && !hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
+
+    const { id: storeId, name, platform, store_url, credentials = {}, is_active = true } = data || {};
+    if (!name || !platform || !store_url) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Nombre, plataforma y URL de la tienda son obligatorios.' }));
+      return true;
+    }
+
+    const cleanPlatform = String(platform).toUpperCase().trim();
+    const cleanName = String(name).trim();
+    const cleanUrl = String(store_url).trim();
+
+    if (storeId) {
+      const existing = await getOne(
+        'SELECT * FROM fourseee_connected_stores WHERE id = ?',
+        [storeId],
+        { tenantId, isSuperAdmin }
+      );
+      if (!existing) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Tienda conectada no encontrada.' }));
+        return true;
+      }
+
+      const prevCreds = typeof existing.credentials === 'string' ? JSON.parse(existing.credentials) : (existing.credentials || {});
+      const mergedCreds = { ...prevCreds };
+      for (const [k, v] of Object.entries(credentials)) {
+        if (v && typeof v === 'string' && !v.includes('••••')) {
+          mergedCreds[k] = v.trim();
+        }
+      }
+
+      await execute(
+        `UPDATE fourseee_connected_stores
+         SET name = ?, platform = ?, store_url = ?, credentials = ?::jsonb, is_active = ?, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND tenant_id = ?`,
+        [cleanName, cleanPlatform, cleanUrl, JSON.stringify(mergedCreds), is_active, storeId, existing.tenant_id],
+        { tenantId }
+      );
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        store: {
+          id: storeId,
+          name: cleanName,
+          platform: cleanPlatform,
+          store_url: cleanUrl,
+          credentials: maskStoreCredentials(mergedCreds)
+        }
+      }));
+      return true;
+    } else {
+      const newId = crypto.randomUUID();
+      await execute(
+        `INSERT INTO fourseee_connected_stores
+         (id, tenant_id, name, platform, store_url, credentials, is_active, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?::jsonb, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [newId, tenantId, cleanName, cleanPlatform, cleanUrl, JSON.stringify(credentials)],
+        { tenantId }
+      );
+
+      res.writeHead(201, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        store: {
+          id: newId,
+          name: cleanName,
+          platform: cleanPlatform,
+          store_url: cleanUrl,
+          credentials: maskStoreCredentials(credentials)
+        }
+      }));
+      return true;
+    }
+  }
+
+  if (pathPart.startsWith('/api/4see/stores/') && req.method === 'DELETE') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write') && !hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
+
+    const storeId = pathPart.replace('/api/4see/stores/', '').trim();
+    await execute(
+      'UPDATE fourseee_connected_stores SET is_active = false, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+      [storeId, tenantId],
+      { tenantId }
+    );
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, message: 'Tienda desconectada exitosamente.' }));
+    return true;
+  }
+
   // 2.1 AUDITORÍA ON-THE-FLY & CONECTORES MULTITIENDA (CERO PERSISTENCIA)
   if (pathPart === '/api/4see/store/audit-live' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
@@ -233,7 +413,45 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
-    const { platform, credentials = {}, options = {} } = data || {};
+    const { store_id, platform: reqPlatform, credentials: reqCredentials = {}, options = {}, save_store, store_name } = data || {};
+    let platform = reqPlatform;
+    let credentials = reqCredentials;
+    let activeStore = null;
+
+    if (store_id) {
+      activeStore = await getOne(
+        'SELECT * FROM fourseee_connected_stores WHERE id = ? AND is_active = true',
+        [store_id],
+        { tenantId, isSuperAdmin }
+      );
+      if (!activeStore) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Tienda conectada no encontrada o inactiva.' }));
+        return true;
+      }
+      platform = activeStore.platform.toUpperCase();
+      const storedCreds = typeof activeStore.credentials === 'string' ? JSON.parse(activeStore.credentials) : (activeStore.credentials || {});
+      credentials = { ...storedCreds };
+      if (activeStore.store_url && !credentials.storeUrl && !credentials.store_url) {
+        credentials.storeUrl = activeStore.store_url;
+      }
+    } else if (save_store && (reqCredentials.consumerSecret || reqCredentials.consumer_secret || reqCredentials.accessToken || reqCredentials.access_token)) {
+      try {
+        const newId = crypto.randomUUID();
+        const sUrl = credentials.storeUrl || credentials.store_url || '';
+        const sName = (store_name || sUrl || 'Tienda Conectada').replace(/^https?:\/\//, '').replace(/\/$/, '');
+        await execute(
+          `INSERT INTO fourseee_connected_stores (id, tenant_id, name, platform, store_url, credentials, is_active)
+           VALUES (?, ?, ?, ?, ?, ?::jsonb, true)`,
+          [newId, tenantId, sName, String(platform).toUpperCase(), sUrl, JSON.stringify(credentials)],
+          { tenantId }
+        );
+        activeStore = { id: newId, name: sName, platform: String(platform).toUpperCase(), store_url: sUrl };
+      } catch (saveErr) {
+        console.warn('[4SEE] No se pudo persistir la conexion de la tienda:', saveErr.message);
+      }
+    }
+
     let listings = [];
 
     try {
@@ -270,6 +488,11 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
         return true;
       }
 
+      // Actualizar marca temporal de escaneo si la tienda está persistida
+      if (activeStore && activeStore.id) {
+        await execute('UPDATE fourseee_connected_stores SET last_scanned_at = CURRENT_TIMESTAMP WHERE id = ?', [activeStore.id], { tenantId });
+      }
+
       // Ejecutar motor de reglas OQL en caliente sobre los listings
       const auditReport = auditCatalogBatch(listings);
 
@@ -277,6 +500,8 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       res.end(JSON.stringify({
         success: true,
         platform: platform || 'CUSTOM',
+        store_id: activeStore ? activeStore.id : null,
+        store_name: activeStore ? activeStore.name : null,
         audit: auditReport
       }));
       return true;
@@ -297,7 +522,29 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
-    const { platform, credentials = {}, productId, updates = {} } = data || {};
+    const { store_id, platform: reqPlatform, credentials: reqCredentials = {}, productId, updates = {} } = data || {};
+    let platform = reqPlatform;
+    let credentials = reqCredentials;
+
+    if (store_id) {
+      const store = await getOne(
+        'SELECT * FROM fourseee_connected_stores WHERE id = ? AND is_active = true',
+        [store_id],
+        { tenantId, isSuperAdmin }
+      );
+      if (!store) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Tienda conectada no encontrada para write-back.' }));
+        return true;
+      }
+      platform = store.platform.toUpperCase();
+      const storedCreds = typeof store.credentials === 'string' ? JSON.parse(store.credentials) : (store.credentials || {});
+      credentials = { ...storedCreds };
+      if (store.store_url && !credentials.storeUrl && !credentials.store_url) {
+        credentials.storeUrl = store.store_url;
+      }
+    }
+
     if (!platform || !productId || Object.keys(updates).length === 0) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Parámetros insuficientes para write-back.' }));

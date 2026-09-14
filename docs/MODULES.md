@@ -43,9 +43,9 @@ modules/
 - **Propósito:** Torre de control unificada para e-commerce: vigilancia de competencia, auditoría de catálogo y protección de rentabilidad.
 - **Sub-herramientas integradas:**
   - **4see Monitor:** Rastreo automático de URLs de competidores, variaciones de precio y quiebres de stock mediante motor en cascada de 3 capas (Capa 1: JSON-LD y OpenGraph; Capa 2: Heurística DOM; Capa 3: API Mercado Libre directa).
-  - **4see Catalog:** Auditoría de catálogo multicanal (detección de ausencias de GTIN/EAN o marca), optimización de títulos comerciales y visualización de dos columnas *Diff View* con aprobación granular. Incorpora capa ontológica universal en memoria (`StoreListing`), conectores desacoplados para Tiendanube (API v1) y WooCommerce (REST API v3), motor de reglas OQL sin persistencia forzada ("on the fly") y capacidad de write-back selectivo hacia las tiendas.
+  - **4see Catalog:** Auditoría de catálogo multicanal (detección de ausencias de GTIN/EAN o marca), optimización de títulos comerciales y visualización de dos columnas *Diff View* con aprobación granular. Incorpora capa ontológica universal en memoria (`StoreListing`), conectores desacoplados para Tiendanube (API v1) y WooCommerce (REST API v3), motor de reglas OQL sin persistencia forzada ("on the fly"), capacidad de write-back selectivo hacia las tiendas y gestión multi-tienda persistente (`fourseee_connected_stores`) con almacenamiento seguro y encriptado por tenant para evitar reingreso de credenciales.
   - **4see Margins:** Guardián de rentabilidad neta en economías con alta inflación o comisiones (cálculo de costos de reposición, comisiones de pasarela, impuestos IVA/IIBB y fletes), alerta temprana de Zona Roja y repricing táctico (+8%) ante quiebre de competidores.
-- **Rutas API:** `/api/4see/monitors`, `/api/4see/catalog`, `/api/4see/store/audit-live`, `/api/4see/store/write-back`, `/api/4see/margins`. Protected by `requireModule('4see')`.
+- **Rutas API:** `/api/4see/monitors`, `/api/4see/catalog`, `/api/4see/stores`, `/api/4see/store/audit-live`, `/api/4see/store/write-back`, `/api/4see/margins`. Protected by `requireModule('4see')`.
 
 ---
 
@@ -80,4 +80,4 @@ if (req.url.startsWith('/api/kanban/')) {
 | **Tenant** | `tenant_tenants`, `tenant_subscriptions`, `tenant_modules`, `tenant_modules_catalog`, `tenant_plans` | Gobierno SaaS, facturación, planes y cuotas |
 | **Core** | `core_users`, `core_roles`, `core_permissions`, `core_role_permissions`, `core_audit_logs`, `core_platform_audit_logs`, `core_app_settings` | Identidad, autenticación, RBAC dinámico y configuración |
 | **Kanban & Scanner** | `kanban_orders`, `kanban_order_items` | Pedidos, comprobantes, trazabilidad y picking de depósito |
-| **4see** | `fourseee_competitor_monitors`, `fourseee_catalog_items`, `fourseee_margin_rules` | Monitores de competidores, auditoría de catálogo y rentabilidad neta |
+| **4see** | `fourseee_competitor_monitors`, `fourseee_catalog_items`, `fourseee_margin_rules`, `fourseee_connected_stores` | Monitores de competidores, auditoría de catálogo, conexiones multi-tienda y rentabilidad neta |
