@@ -43,9 +43,9 @@ modules/
 - **Propósito:** Torre de control unificada para e-commerce: vigilancia de competencia, auditoría de catálogo y protección de rentabilidad.
 - **Sub-herramientas integradas:**
   - **4see Monitor:** Rastreo automático de URLs de competidores, variaciones de precio y quiebres de stock mediante motor en cascada de 3 capas (Capa 1: JSON-LD y OpenGraph; Capa 2: Heurística DOM; Capa 3: API Mercado Libre directa).
-  - **4see Catalog:** Auditoría de catálogo multicanal (detección de ausencias de GTIN/EAN o marca), optimización de títulos comerciales y visualización de dos columnas *Diff View* con aprobación granular.
+  - **4see Catalog:** Auditoría de catálogo multicanal (detección de ausencias de GTIN/EAN o marca), optimización de títulos comerciales y visualización de dos columnas *Diff View* con aprobación granular. Incorpora capa ontológica universal en memoria (`StoreListing`), conectores desacoplados para Tiendanube (API v1) y WooCommerce (REST API v3), motor de reglas OQL sin persistencia forzada ("on the fly") y capacidad de write-back selectivo hacia las tiendas.
   - **4see Margins:** Guardián de rentabilidad neta en economías con alta inflación o comisiones (cálculo de costos de reposición, comisiones de pasarela, impuestos IVA/IIBB y fletes), alerta temprana de Zona Roja y repricing táctico (+8%) ante quiebre de competidores.
-- **Rutas API:** `/api/4see/monitors`, `/api/4see/catalog`, `/api/4see/margins`. Protected by `requireModule('4see')`.
+- **Rutas API:** `/api/4see/monitors`, `/api/4see/catalog`, `/api/4see/store/audit-live`, `/api/4see/store/write-back`, `/api/4see/margins`. Protected by `requireModule('4see')`.
 
 ---
 

@@ -116,10 +116,18 @@
 - [x] **12.8** Suite automatizada `tests/test-oauth-and-role-quotas.js` registrada en `tests/run-all-tests.js` (12 suites ejecutadas, 100% PASS, 0 fallos).
 - [x] **12.9** Documentación canónica actualizada en los 6 archivos canónicos de `/docs`.
 
+### FASE 13: Capa Ontológica E-Commerce On-The-Fly y Conectores Multitienda (Módulo 4see)
+- [x] **13.1** Modelo ontológico universal en memoria (`modules/4see/lib/ontology.js`) con normalización de esquemas dispares (`StoreListing`, `StoreTaxonomy`, depuración HTML y strings multilingües).
+- [x] **13.2** Motor de reglas determinístico OQL (`modules/4see/lib/rules_engine.js`) para evaluación instantánea de GTIN/EAN, marca, longitud de títulos y SEO sin modelos LLM.
+- [x] **13.3** Conectores oficiales desacoplados: Tiendanube API v1 (`tiendanube.js`) y WooCommerce REST API v3 (`woocommerce.js`) con soporte de extracción SEO (Yoast/RankMath).
+- [x] **13.4** Endpoints API REST on-the-fly (`POST /api/4see/store/audit-live` y `POST /api/4see/store/write-back`) con cero persistencia obligatoria de catálogo.
+- [x] **13.5** Suite de pruebas automatizadas `tests/test-4see-ontology.js` incorporada al orquestador maestro `tests/run-all-tests.js` (13 suites, 100% PASS, 0 fallos).
+- [x] **13.6** Documentación canónica actualizada en `/docs/MODULES.md`, `/docs/ARCHITECTURE.md` y `/docs/ROADMAP.md`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 13:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 14:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 15:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 14:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 15:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 16:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.

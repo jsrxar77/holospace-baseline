@@ -3620,7 +3620,7 @@ async function handleAuditItemSubmit(e) {
   const gtin = document.getElementById('catGtin').value.trim();
   const btn = e.target.querySelector('button[type="submit"]');
 
-  if (btn) btn.innerText = 'Analizando con IA...';
+  if (btn) btn.innerText = 'Ejecutando auditoría técnica...';
 
   try {
     const res = await fetch('/api/4see/catalog', {

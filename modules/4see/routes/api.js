@@ -4,6 +4,10 @@ const { extractProductData } = require('../lib/extractor');
 const { calculateMarginMetrics } = require('../lib/margins');
 const { checkTenantModuleAccess } = require('../../../lib/entitlement');
 const { hasPermission, sendPermissionError } = require('../../../lib/rbac');
+const { createStoreListing } = require('../lib/ontology');
+const { auditListing, auditCatalogBatch } = require('../lib/rules_engine');
+const { TiendanubeConnector } = require('../lib/connectors/tiendanube');
+const { WooCommerceConnector } = require('../lib/connectors/woocommerce');
 
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*
@@ -144,7 +148,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
-  if (pathPart === '/api/4see/catalog/audit' && req.method === 'POST') {
+  if ((pathPart === '/api/4see/catalog' || pathPart === '/api/4see/catalog/audit') && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
       sendPermissionError(res, '4see:catalog:audit');
       return true;
@@ -220,6 +224,114 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, approvedTitle: item.suggested_title }));
     return true;
+  }
+
+  // 2.1 AUDITORÍA ON-THE-FLY & CONECTORES MULTITIENDA (CERO PERSISTENCIA)
+  if (pathPart === '/api/4see/store/audit-live' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
+
+    const { platform, credentials = {}, options = {} } = data || {};
+    let listings = [];
+
+    try {
+      if (platform === 'TIENDANUBE') {
+        const connector = new TiendanubeConnector({
+          accessToken: credentials.accessToken || credentials.access_token,
+          userId: credentials.userId || credentials.user_id
+        });
+        listings = await connector.fetchProducts({
+          page: options.page || 1,
+          limit: options.limit || 50,
+          query: options.query || ''
+        });
+      } else if (platform === 'WOOCOMMERCE') {
+        const connector = new WooCommerceConnector({
+          storeUrl: credentials.storeUrl || credentials.store_url,
+          consumerKey: credentials.consumerKey || credentials.consumer_key,
+          consumerSecret: credentials.consumerSecret || credentials.consumer_secret
+        });
+        listings = await connector.fetchProducts({
+          page: options.page || 1,
+          limit: options.limit || 50,
+          search: options.query || ''
+        });
+      } else if (Array.isArray(data?.raw_items)) {
+        // Soporte para procesamiento on-the-fly desde payload crudo arbitrario (ej. CSV/JSON import)
+        listings = data.raw_items.map(item => createStoreListing(item));
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Plataforma no soportada o datos incompletos. Soportadas: TIENDANUBE, WOOCOMMERCE o raw_items.'
+        }));
+        return true;
+      }
+
+      // Ejecutar motor de reglas OQL en caliente sobre los listings
+      const auditReport = auditCatalogBatch(listings);
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: true,
+        platform: platform || 'CUSTOM',
+        audit: auditReport
+      }));
+      return true;
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({
+        success: false,
+        error: `Error en auditoría on-the-fly: ${err.message}`
+      }));
+      return true;
+    }
+  }
+
+  // 2.2 WRITE-BACK SELECTIVO HACIA LA TIENDA CONECTADA
+  if (pathPart === '/api/4see/store/write-back' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:audit')) {
+      sendPermissionError(res, '4see:catalog:audit');
+      return true;
+    }
+
+    const { platform, credentials = {}, productId, updates = {} } = data || {};
+    if (!platform || !productId || Object.keys(updates).length === 0) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Parámetros insuficientes para write-back.' }));
+      return true;
+    }
+
+    try {
+      if (platform === 'TIENDANUBE') {
+        const connector = new TiendanubeConnector({
+          accessToken: credentials.accessToken || credentials.access_token,
+          userId: credentials.userId || credentials.user_id
+        });
+        await connector.updateProduct(productId, updates);
+      } else if (platform === 'WOOCOMMERCE') {
+        const connector = new WooCommerceConnector({
+          storeUrl: credentials.storeUrl || credentials.store_url,
+          consumerKey: credentials.consumerKey || credentials.consumer_key,
+          consumerSecret: credentials.consumerSecret || credentials.consumer_secret
+        });
+        await connector.updateProduct(productId, updates);
+      } else {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: `Plataforma ${platform} no soporta write-back.` }));
+        return true;
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: `Producto ${productId} actualizado en ${platform}.` }));
+      return true;
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: `Error en write-back: ${err.message}` }));
+      return true;
+    }
   }
 
   // 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES

@@ -245,6 +245,12 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
 * Fondo Dinámico Espacial (Estrellas a 60s, grilla y asteroides): Confinado exclusivamente a Landing Page (/landing) y Pantalla de Login (/login).
 * Módulos Internos Autenticados (/tenant, /core, /kanban, /scanner): Fondo estático sólido limpio sin animaciones para garantizar máximo rendimiento, legibilidad y ahorro de batería.
 
+### 7.5 Capa Ontológica E-Commerce On-The-Fly y Conectores Multitienda (Módulo 4see)
+* **Contrato Ontológico Universal (`StoreListing`):** Normaliza esquemas dispares de plataformas externas (Tiendanube, WooCommerce, Shopify) en un objeto estándar en memoria `{ external_id, title, sku, barcode_gtin, brand, unit_price, stock, categories, seo_title, seo_description }`.
+* **Cero Persistencia Obligatoria:** Los catálogos externos se consultan y auditan en caliente ("on the fly") vía API sin poblar tablas locales en PostgreSQL 16.
+* **Motor de Reglas OQL Determinístico (`rules_engine.js`):** Validador matemático de expresiones (regex de EAN-13, longitud de títulos, marca y completitud SEO) sin dependencia de modelos de inteligencia artificial en fase inicial.
+* **Write-back Selectivo:** Permite enviar mutaciones puntuales aprobadas directamente a la tienda del cliente vía `PUT /products/{id}`.
+
 ---
 
 ## 8. Protocolo de Sincronización y Consistencia de Pedidos (ScanBan Web <-> Scanner Mobile)
