@@ -2198,6 +2198,65 @@
     </div>
   </div>
 
+  <!-- Modal Editar y Cargar Atributos de Producto (Multi-Attribute Editor) -->
+  <div id="editProductAttributesModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 580px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div>
+          <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Editar y Cargar Atributos</h3>
+          <div id="editAttrSubtitle" style="font-size: 12px; color: var(--emerald); font-family: monospace; margin-top: 2px;">SKU: N/A</div>
+        </div>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditProductModal()">✕</button>
+      </div>
+
+      <form id="editProductAttributesForm" style="display: flex; flex-direction: column; gap: 16px;" onsubmit="handleSaveProductAttributes(event)">
+        <input type="hidden" id="editAttrItemId" value="">
+
+        <!-- Bloque Título -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+          <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Título del Producto</label>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Original en Tienda: <span id="editAttrOriginalTitle" style="color: #FFF; font-weight: 600;">-</span></div>
+          <div id="editAttrTitleSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;" id="editAttrSuggestedTitleText">-</div>
+            <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('title')">Usar Sugerencia</button>
+          </div>
+          <input type="text" id="editAttrTitleInput" class="input-field" style="width: 100%; font-size: 13px; font-weight: 600;" required>
+        </div>
+
+        <!-- Bloque Marca -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Marca del Producto</label>
+            <span id="editAttrCurrentBrandBadge" style="font-size: 11px; color: var(--text-muted);">Sin marca</span>
+          </div>
+          <div id="editAttrBrandSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">Sugerencia detectada: <strong id="editAttrSuggestedBrandText">-</strong></div>
+            <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('brand')">Usar Sugerencia</button>
+          </div>
+          <input type="text" id="editAttrBrandInput" class="input-field" style="width: 100%; font-size: 13px;" placeholder="Ingresa la marca del fabricante...">
+        </div>
+
+        <!-- Bloque Código GTIN / EAN -->
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+            <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Código de Barras GTIN / EAN-13</label>
+            <span id="editAttrGtinStatusBadge" style="font-size: 11px; font-weight: 800;">-</span>
+          </div>
+          <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+            <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">EAN interno generado (GS1): <strong id="editAttrSuggestedGtinText" style="font-family: monospace;">-</strong></div>
+            <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('gtin')">Usar Sugerencia</button>
+          </div>
+          <input type="text" id="editAttrGtinInput" class="input-field" style="width: 100%; font-size: 13px; font-family: monospace;" placeholder="8 a 14 dígitos numéricos (ej: 7791234567890)...">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
+          <button type="button" class="btn-secondary" onclick="closeEditProductModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;">Guardar y Re-auditar Producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal Nueva Regla de Margen -->
   <div id="createMarginModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
@@ -2367,6 +2426,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=7.3"></script>
+  <script src="/app.js?v=7.4"></script>
 </body>
 </html>

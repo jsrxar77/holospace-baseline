@@ -3606,19 +3606,28 @@ function render4seeCatalog(items = []) {
     const itemId = item.id || item.external_id || auditInfo.listing_id;
     const platform = item.platform || 'LOCAL';
     const brand = item.brand || '';
+    const suggestedBrand = auditInfo.suggested_brand || item.suggested_brand || '';
     const gtin = item.barcode_gtin || item.gtin || '';
+    const suggestedGtin = auditInfo.suggested_gtin || item.suggested_gtin || '';
     const isMissingGtin = !gtin || !/^[0-9]{8,14}$/.test(String(gtin).trim());
+    const isMissingBrand = !brand;
 
     html += `
       <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+        <!-- Cabecera de la Tarjeta -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <span style="font-family: monospace; font-size: 11px; font-weight: 800; color: #FFF; background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
             <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
-            ${brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${brand}</strong></span>` : '<span style="font-size: 12px; color: #EAB308; font-weight: 700;">Sin Marca</span>'}
-            ${gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN/EAN: <strong>${gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN/EAN</span>'}
+            ${brand 
+              ? `<span style="font-size: 12px; color: var(--text-main); background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">Marca: <strong>${brand}</strong></span>` 
+              : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Falta Marca</span>`}
+            ${!isMissingGtin 
+              ? `<span style="font-size: 12px; color: var(--text-main); font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
+              : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Falta EAN</span>`}
           </div>
-          <div>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button class="btn-secondary" style="padding: 5px 12px; font-size: 11px;" onclick="openEditProductModal('${itemId}')">✏️ Editar Atributos</button>
             ${isApproved 
               ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px; background: rgba(0,230,118,0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--emerald);">● APROBADO (MOCK)</span>' 
               : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar y Aplicar (Mock)</button>`
@@ -3628,25 +3637,43 @@ function render4seeCatalog(items = []) {
 
         ${diagBadges ? `<div style="margin-bottom: 12px;">${diagBadges}</div>` : ''}
 
-        <!-- Asignación rápida de GTIN/EAN si falta -->
-        ${isMissingGtin && !isApproved ? `
-          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: rgba(239, 68, 68, 0.06); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px;">
-            <span style="font-size: 12px; color: var(--red); font-weight: 700;">Asignar Código EAN:</span>
-            <input type="text" id="gtin_input_${itemId}" class="input-field" placeholder="Ej: 7791234567890" style="padding: 4px 8px; font-size: 12px; max-width: 180px; font-family: monospace;">
-            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="updateItemGtin('${itemId}', document.getElementById('gtin_input_${itemId}').value)">Asignar</button>
+        <!-- Asistente Rápido de Atributos Faltantes (Marca y EAN) -->
+        ${(isMissingBrand || isMissingGtin) && !isApproved ? `
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; background: rgba(255,255,255,0.02); border: 1px dashed var(--card-border); border-radius: 10px; padding: 10px 14px;">
+            ${isMissingBrand ? `
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; color: #EAB308;">Cargar Marca:</span>
+                <input type="text" id="inline_brand_${itemId}" class="input-field" placeholder="Escribe la marca..." style="padding: 3px 8px; font-size: 12px; max-width: 160px;" value="">
+                <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="updateItemBrand('${itemId}', document.getElementById('inline_brand_${itemId}').value)">Asignar</button>
+                ${suggestedBrand ? `
+                  <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; color: var(--emerald); border-color: rgba(0,230,118,0.4);" onclick="updateItemBrand('${itemId}', '${suggestedBrand.replace(/'/g, "\\'")}')">Sugerida: "${suggestedBrand}"</button>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            ${isMissingGtin ? `
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span style="font-size: 11px; font-weight: 800; color: var(--red);">Cargar EAN:</span>
+                <input type="text" id="inline_gtin_${itemId}" class="input-field" placeholder="8-14 dígitos..." style="padding: 3px 8px; font-size: 12px; max-width: 160px; font-family: monospace;" value="">
+                <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="updateItemGtin('${itemId}', document.getElementById('inline_gtin_${itemId}').value)">Asignar</button>
+                ${suggestedGtin ? `
+                  <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; color: var(--emerald); border-color: rgba(0,230,118,0.4);" onclick="updateItemGtin('${itemId}', '${suggestedGtin}')">Generar EAN interno: ${suggestedGtin}</button>
+                ` : ''}
+              </div>
+            ` : ''}
           </div>
         ` : ''}
 
-        <!-- Vista Diff de Dos Columnas con Edición en Vivo -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
+        <!-- Vista Diff de Título con Edición en Vivo -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 6px;">
           <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
             <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Actual en Tienda</div>
             <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
           </div>
           <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título Optimizado (Editable)</span>
-              <span style="font-size: 10px; color: var(--text-muted);">Puedes editarlo antes de aprobar</span>
+              <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título Optimizado (Editable Libre)</span>
+              <span style="font-size: 10px; color: var(--text-muted);">Puedes modificarlo antes de aprobar</span>
             </div>
             ${isApproved 
               ? `<div style="font-size: 13px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>`
@@ -4220,14 +4247,90 @@ async function handleAuditItemSubmit(e) {
   }
 }
 
+function reAuditItemInMemory(item) {
+  if (!item) return;
+  const diagnostics = [];
+  const gtin = String(item.barcode_gtin || item.gtin || '').trim();
+  const brand = String(item.brand || '').trim();
+  const title = String(item.suggested_title || item.original_title || item.title || '').trim();
+
+  // 1. GTIN
+  if (!/^[0-9]{8,14}$/.test(gtin)) {
+    diagnostics.push({
+      code: 'MISSING_GTIN',
+      severity: 'HIGH',
+      field: 'barcode_gtin',
+      message: 'Falta código GTIN / EAN-13 válido (8-14 dígitos). Riesgo de rechazo en Google Shopping.'
+    });
+  }
+
+  // 2. Marca
+  if (!brand) {
+    diagnostics.push({
+      code: 'MISSING_BRAND',
+      severity: 'MEDIUM',
+      field: 'brand',
+      message: 'Falta especificar la marca del producto para indexación y filtros.'
+    });
+  }
+
+  // 3. Título
+  if (title.length < 20) {
+    diagnostics.push({
+      code: 'SHORT_TITLE',
+      severity: 'LOW',
+      field: 'title',
+      message: 'Título demasiado breve (< 20 caracteres) para intención de búsqueda.'
+    });
+  }
+
+  if (!item.audit) item.audit = {};
+  item.audit.diagnostics = diagnostics;
+  item.audit.has_critical_issues = diagnostics.some(d => d.severity === 'HIGH');
+  item.audit.status = diagnostics.length === 0 ? 'OPTIMIZED' : 'NEEDS_REVIEW';
+
+  // Recalcular KPIs globales
+  const total = cached4seeCatalog.length;
+  const opt = cached4seeCatalog.filter(i => i.is_approved || (i.audit && i.audit.status === 'OPTIMIZED')).length;
+  const rev = Math.max(0, total - opt);
+  const missingGtin = cached4seeCatalog.filter(i => {
+    const g = String(i.barcode_gtin || i.gtin || '').trim();
+    return !/^[0-9]{8,14}$/.test(g);
+  }).length;
+
+  updateCatalogKpis(total, opt, missingGtin, rev);
+  render4seeCatalog(cached4seeCatalog);
+}
+
 function updateItemSuggestedTitle(id, newTitle) {
   const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
   if (item) {
-    if (item.audit) item.audit.suggested_title = newTitle.trim();
-    item.suggested_title = newTitle.trim();
+    const clean = newTitle.trim();
+    if (item.audit) item.audit.suggested_title = clean;
+    item.suggested_title = clean;
+    reAuditItemInMemory(item);
   }
 }
 window.updateItemSuggestedTitle = updateItemSuggestedTitle;
+
+function updateItemBrand(id, newBrand) {
+  const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+  if (item) {
+    const clean = newBrand.trim();
+    item.brand = clean;
+    if (item.audit) item.audit.current_brand = clean;
+    
+    // Si el título no tenía la marca o fue generado automáticamente, sugerir incorporarla
+    if (clean && item.suggested_title && !item.suggested_title.toUpperCase().includes(clean.toUpperCase())) {
+      item.suggested_title = `${clean.toUpperCase()} ${item.suggested_title}`;
+      if (item.audit) item.audit.suggested_title = item.suggested_title;
+    }
+
+    reAuditItemInMemory(item);
+    showCustomAlert('Marca Actualizada', `Marca "${clean}" asignada al producto ${item.sku || id}.`);
+  }
+}
+window.updateItemBrand = updateItemBrand;
 
 function updateItemGtin(id, newGtin) {
   const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
@@ -4235,18 +4338,130 @@ function updateItemGtin(id, newGtin) {
     const clean = newGtin.trim();
     item.barcode_gtin = clean;
     item.gtin = clean;
-    // Re-evaluar diagnósticos de GTIN en memoria
-    if (item.audit && Array.isArray(item.audit.diagnostics)) {
-      if (/^[0-9]{8,14}$/.test(clean)) {
-        item.audit.diagnostics = item.audit.diagnostics.filter(d => d.code !== 'MISSING_GTIN');
-        item.audit.has_critical_issues = item.audit.diagnostics.some(d => d.severity === 'HIGH');
-      }
-    }
-    render4seeCatalog(cached4seeCatalog);
-    showCustomAlert('GTIN / EAN Actualizado', `Código ${clean} asignado al producto ${item.sku || id} en el reporte.`);
+    if (item.audit) item.audit.current_gtin = clean;
+    reAuditItemInMemory(item);
+    showCustomAlert('GTIN / EAN Actualizado', `Código ${clean} asignado al producto ${item.sku || id}.`);
   }
 }
 window.updateItemGtin = updateItemGtin;
+
+// Modal Completo de Edición y Carga de Atributos
+let currentEditingProductItem = null;
+
+function openEditProductModal(itemId) {
+  const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === itemId);
+  if (!item) return;
+
+  currentEditingProductItem = item;
+  const auditInfo = item.audit || {};
+
+  document.getElementById('editAttrItemId').value = itemId;
+  document.getElementById('editAttrSubtitle').innerText = `SKU: ${item.sku || 'N/A'} | Plataforma: ${item.platform || 'LOCAL'}`;
+
+  // Título
+  const origTitle = item.original_title || item.title || '';
+  const suggTitle = auditInfo.suggested_title || item.suggested_title || origTitle;
+  document.getElementById('editAttrOriginalTitle').innerText = origTitle || 'Sin título';
+  document.getElementById('editAttrTitleInput').value = item.suggested_title || suggTitle;
+
+  const titleSugBox = document.getElementById('editAttrTitleSuggestionBox');
+  const titleSugTxt = document.getElementById('editAttrSuggestedTitleText');
+  if (suggTitle && suggTitle !== origTitle) {
+    titleSugTxt.innerText = suggTitle;
+    titleSugBox.style.display = 'flex';
+  } else {
+    titleSugBox.style.display = 'none';
+  }
+
+  // Marca
+  const curBrand = item.brand || '';
+  const suggBrand = auditInfo.suggested_brand || item.suggested_brand || '';
+  document.getElementById('editAttrCurrentBrandBadge').innerText = curBrand ? `Actual: ${curBrand}` : 'Sin marca asignada';
+  document.getElementById('editAttrBrandInput').value = curBrand || suggBrand;
+
+  const brandSugBox = document.getElementById('editAttrBrandSuggestionBox');
+  const brandSugTxt = document.getElementById('editAttrSuggestedBrandText');
+  if (suggBrand && suggBrand !== curBrand) {
+    brandSugTxt.innerText = suggBrand;
+    brandSugBox.style.display = 'flex';
+  } else {
+    brandSugBox.style.display = 'none';
+  }
+
+  // GTIN / EAN
+  const curGtin = item.barcode_gtin || item.gtin || '';
+  const suggGtin = auditInfo.suggested_gtin || item.suggested_gtin || '';
+  const gtinBadge = document.getElementById('editAttrGtinStatusBadge');
+  if (/^[0-9]{8,14}$/.test(curGtin)) {
+    gtinBadge.innerText = '● Código Válido';
+    gtinBadge.style.color = 'var(--emerald)';
+  } else {
+    gtinBadge.innerText = '● Sin código / Inválido';
+    gtinBadge.style.color = 'var(--red)';
+  }
+  document.getElementById('editAttrGtinInput').value = curGtin || suggGtin;
+
+  const gtinSugBox = document.getElementById('editAttrGtinSuggestionBox');
+  const gtinSugTxt = document.getElementById('editAttrSuggestedGtinText');
+  if (suggGtin && suggGtin !== curGtin) {
+    gtinSugTxt.innerText = suggGtin;
+    gtinSugBox.style.display = 'flex';
+  } else {
+    gtinSugBox.style.display = 'none';
+  }
+
+  const modal = document.getElementById('editProductAttributesModal');
+  if (modal) modal.classList.remove('hidden');
+}
+window.openEditProductModal = openEditProductModal;
+
+function closeEditProductModal() {
+  const modal = document.getElementById('editProductAttributesModal');
+  if (modal) modal.classList.add('hidden');
+  currentEditingProductItem = null;
+}
+window.closeEditProductModal = closeEditProductModal;
+
+function applyFieldSuggestion(field) {
+  if (!currentEditingProductItem) return;
+  const auditInfo = currentEditingProductItem.audit || {};
+
+  if (field === 'title') {
+    const suggTitle = auditInfo.suggested_title || currentEditingProductItem.suggested_title || '';
+    if (suggTitle) document.getElementById('editAttrTitleInput').value = suggTitle;
+  } else if (field === 'brand') {
+    const suggBrand = auditInfo.suggested_brand || currentEditingProductItem.suggested_brand || '';
+    if (suggBrand) document.getElementById('editAttrBrandInput').value = suggBrand;
+  } else if (field === 'gtin') {
+    const suggGtin = auditInfo.suggested_gtin || currentEditingProductItem.suggested_gtin || '';
+    if (suggGtin) document.getElementById('editAttrGtinInput').value = suggGtin;
+  }
+}
+window.applyFieldSuggestion = applyFieldSuggestion;
+
+function handleSaveProductAttributes(e) {
+  e.preventDefault();
+  if (!currentEditingProductItem) return;
+
+  const newTitle = document.getElementById('editAttrTitleInput').value.trim();
+  const newBrand = document.getElementById('editAttrBrandInput').value.trim();
+  const newGtin = document.getElementById('editAttrGtinInput').value.trim();
+
+  currentEditingProductItem.suggested_title = newTitle;
+  if (currentEditingProductItem.audit) currentEditingProductItem.audit.suggested_title = newTitle;
+
+  currentEditingProductItem.brand = newBrand;
+  if (currentEditingProductItem.audit) currentEditingProductItem.audit.current_brand = newBrand;
+
+  currentEditingProductItem.barcode_gtin = newGtin;
+  currentEditingProductItem.gtin = newGtin;
+  if (currentEditingProductItem.audit) currentEditingProductItem.audit.current_gtin = newGtin;
+
+  reAuditItemInMemory(currentEditingProductItem);
+  closeEditProductModal();
+  showCustomAlert('Atributos Guardados', `El producto ${currentEditingProductItem.sku || ''} fue actualizado y re-auditado en tiempo real.`);
+}
+window.handleSaveProductAttributes = handleSaveProductAttributes;
 
 // Aprobación en Modo Mock Seguro (Sin mutaciones en la tienda real)
 async function approveCatalogOptimization(id) {

@@ -62,6 +62,62 @@ function isCommerciallyActive(listing) {
 }
 
 /**
+ * Genera un código de barras EAN-13 estándar de uso interno con checksum GS1 (Prefijo 200).
+ */
+function generateSuggestedEan(seed = '') {
+  let hash = 0;
+  const str = String(seed || Date.now());
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const rawNum = '200' + String(Math.abs(hash)).padStart(9, '0').slice(0, 9);
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    const digit = parseInt(rawNum[i], 10);
+    sum += (i % 2 === 0) ? digit : digit * 3;
+  }
+  const checkDigit = (10 - (sum % 10)) % 10;
+  return rawNum + checkDigit;
+}
+
+/**
+ * Infiere la posible marca a partir de las primeras palabras del título
+ */
+function inferBrandFromTitle(title = '') {
+  if (!title) return '';
+  const clean = title.trim();
+  const stopWords = ['de', 'del', 'la', 'el', 'los', 'las', 'pack', 'set', 'combo', 'caja', 'promo', 'remera', 'pantalon', 'vino', 'cerveza', 'whisky', 'gin', 'ginebra'];
+  const words = clean.split(/\s+/);
+  if (words.length === 0) return '';
+  
+  const firstWord = words[0];
+  if (stopWords.includes(firstWord.toLowerCase()) && words.length > 1) {
+    const secondWord = words[1];
+    if (!stopWords.includes(secondWord.toLowerCase())) {
+      return secondWord.charAt(0).toUpperCase() + secondWord.slice(1);
+    }
+  } else if (!stopWords.includes(firstWord.toLowerCase())) {
+    return firstWord.charAt(0).toUpperCase() + firstWord.slice(1);
+  }
+  return '';
+}
+
+/**
+ * Genera un título comercial enriquecido sin duplicar la marca
+ */
+function buildSuggestedTitle(title, brand) {
+  const cleanTitle = title ? title.trim() : 'Producto';
+  if (!brand) {
+    return `${cleanTitle} [Stock Oficial - Envio Inmediato]`;
+  }
+  const brandUpper = brand.toUpperCase().trim();
+  const regex = new RegExp(`^${brand}\\s*`, 'i');
+  const titleWithoutBrand = cleanTitle.replace(regex, '').trim();
+  return `${brandUpper} ${titleWithoutBrand} [Stock Oficial]`;
+}
+
+/**
  * Ejecuta la batería de auditoría técnica sobre un StoreListing canónico.
  * Genera diagnósticos con severidad y título sugerido determinístico.
  */
@@ -123,10 +179,10 @@ function auditListing(listing) {
     });
   }
 
-  // Generación determinística de título sugerido
-  const brandPrefix = brand ? `${brand.toUpperCase()} ` : '';
-  const cleanTitleCore = title ? title.trim() : 'Producto';
-  const suggestedTitle = `${brandPrefix}${cleanTitleCore} [Envio Inmediato - Stock Oficial]`;
+  // Generación determinística de atributos sugeridos
+  const inferredBrand = brand || inferBrandFromTitle(title);
+  const suggestedTitle = buildSuggestedTitle(title, inferredBrand || brand);
+  const suggestedGtin = !gtin ? generateSuggestedEan(listing.sku || listing.external_id || title) : gtin;
 
   const status = diagnostics.length === 0 ? 'OPTIMIZED' : 'NEEDS_REVIEW';
 
@@ -136,6 +192,10 @@ function auditListing(listing) {
     platform: listing.platform,
     original_title: title,
     suggested_title: suggestedTitle,
+    current_brand: brand,
+    suggested_brand: inferredBrand,
+    current_gtin: gtin,
+    suggested_gtin: suggestedGtin,
     status,
     diagnostics,
     has_critical_issues: diagnostics.some(d => d.severity === 'HIGH'),
@@ -178,5 +238,8 @@ module.exports = {
   evaluateQuery,
   isCommerciallyActive,
   auditListing,
-  auditCatalogBatch
+  auditCatalogBatch,
+  inferBrandFromTitle,
+  generateSuggestedEan,
+  buildSuggestedTitle
 };

@@ -5,7 +5,7 @@
  */
 
 const { createStoreListing, PlatformEnum, AvailabilityStatusEnum } = require('../modules/4see/lib/ontology');
-const { OQL_OPERATORS, auditListing, auditCatalogBatch, isCommerciallyActive } = require('../modules/4see/lib/rules_engine');
+const { OQL_OPERATORS, auditListing, auditCatalogBatch, isCommerciallyActive, inferBrandFromTitle, generateSuggestedEan } = require('../modules/4see/lib/rules_engine');
 const { TiendanubeConnector } = require('../modules/4see/lib/connectors/tiendanube');
 const { WooCommerceConnector } = require('../modules/4see/lib/connectors/woocommerce');
 
@@ -123,6 +123,37 @@ async function runTests() {
   assert(isCommerciallyActive(zeroPrice) === false, 'Producto con precio cero no es comercialmente activo');
   assert(isCommerciallyActive(outOfStock) === false, 'Producto agotado no es comercialmente activo');
   assert(isCommerciallyActive(tnListing) === true, 'Producto en stock con precio es activo');
+
+  // 7. Asistente Interactivo de Atributos & Control Total del Usuario
+  console.log('\n--- 7. Asistente Interactivo de Atributos & Inferencia ---');
+  const inferred = inferBrandFromTitle('London Spirit Ginebra Botánica 750ml');
+  assert(inferred === 'London', 'Infiere correctamente la marca a partir del título');
+
+  const generatedEan = generateSuggestedEan('SKU-TEST-99');
+  assert(generatedEan.length === 13, 'EAN interno generado tiene longitud exacta de 13 dígitos');
+  assert(generatedEan.startsWith('200'), 'EAN interno utiliza prefijo reservado GS1 200');
+  assert(/^[0-9]{13}$/.test(generatedEan), 'EAN interno cumple formato numérico estricto');
+
+  // Simular edición y carga de atributos por parte del usuario sobre el producto defectuoso
+  const correctedProduct = createStoreListing({
+    externalId: defectiveProduct.external_id,
+    sku: defectiveProduct.sku,
+    title: 'Vino Malbec Roble 750ml Cosecha Especial', // Título largo cargado por usuario
+    brand: 'Trapiche', // Marca cargada manualmente por el usuario
+    gtin: generatedEan, // GTIN asignado por el usuario
+    seoTitle: 'Vino Malbec Roble 750ml Cosecha Especial',
+    seoDescription: 'Vino Malbec Roble de cosecha especial en botella de 750ml.',
+    price: 1500,
+    stock: 5
+  });
+
+  const auditCorrected = auditListing(correctedProduct);
+  assert(auditCorrected.status === 'OPTIMIZED', 'Producto corregido por el usuario pasa a estado OPTIMIZED');
+  assert(auditCorrected.has_critical_issues === false, 'Desaparecen los problemas críticos de GTIN');
+  const correctedCodes = auditCorrected.diagnostics.map(d => d.code);
+  assert(!correctedCodes.includes('MISSING_GTIN'), 'Diagnóstico ya NO incluye MISSING_GTIN');
+  assert(!correctedCodes.includes('MISSING_BRAND'), 'Diagnóstico ya NO incluye MISSING_BRAND');
+  assert(!correctedCodes.includes('SHORT_TITLE'), 'Diagnóstico ya NO incluye SHORT_TITLE');
 
   console.log('======================================================================');
   console.log(`RESULTADOS: ${passed} PASARON | ${failed} FALLARON`);

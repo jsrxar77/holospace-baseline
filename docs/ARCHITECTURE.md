@@ -255,6 +255,7 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
 * **Contrato Ontológico Universal (`StoreListing`):** Normaliza esquemas dispares de plataformas externas (Tiendanube, WooCommerce, Shopify) en un objeto estándar en memoria `{ external_id, title, sku, barcode_gtin, brand, unit_price, stock, categories, seo_title, seo_description }`.
 * **Cero Persistencia Obligatoria:** Los catálogos externos se consultan y auditan en caliente ("on the fly") vía API sin poblar tablas locales en PostgreSQL 16.
 * **Motor de Reglas OQL Determinístico (`rules_engine.js`):** Validador matemático de expresiones (regex de EAN-13, longitud de títulos, marca y completitud SEO) sin dependencia de modelos de inteligencia artificial en fase inicial.
+* **Asistente Interactivo de Atributos & Inferencia On-The-Fly:** Inferencia heurística de marca a partir del título (`inferBrandFromTitle`), generación de códigos EAN-13 internos estándar GS1 prefijo 200 con checksum módulo 10 (`generateSuggestedEan`) y control total del usuario para editar libremente o aplicar sugerencias con re-auditoría reactiva en memoria.
 * **Write-back Selectivo:** Permite enviar mutaciones puntuales aprobadas directamente a la tienda del cliente vía `PUT /products/{id}`.
 
 ---

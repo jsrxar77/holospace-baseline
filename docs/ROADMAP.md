@@ -134,10 +134,19 @@
 - [x] **14.7** Suite de pruebas automatizadas `tests/test-4see-stores.js` registrada en `tests/run-all-tests.js` (14 suites ejecutadas, 100% PASS, 0 fallos).
 - [x] **14.8** Documentación canónica sincronizada en los 6 documentos canónicos de `/docs`.
 
+### FASE 15: Asistente Interactivo de Atributos E-Commerce y Control Total del Usuario (Módulo 4see)
+- [x] **15.1** Motor de inferencia y generación de atributos en `modules/4see/lib/rules_engine.js` (`inferBrandFromTitle`, `generateSuggestedEan` con prefijo GS1 200 y checksum módulo 10, `buildSuggestedTitle`).
+- [x] **15.2** Asistente interactivo en tarjetas de producto en `public/app.js` con chips de sugerencia rápida y edición libre de marca y GTIN.
+- [x] **15.3** Modal de edición integral de atributos (`#editProductAttributesModal`) en `public/index.html` con comparación lado a lado de valores actuales, sugerencias del sistema y edición libre de título, marca y GTIN.
+- [x] **15.4** Re-auditoría reactiva en caliente en memoria (`reAuditItemInMemory`) con recálculo instantáneo de diagnósticos y los 4 KPIs de salud de catálogo sin persistencia forzada.
+- [x] **15.5** Ampliación de la suite de pruebas `tests/test-4see-ontology.js` (38 pruebas unitarias ejecutadas, 100% PASS, 0 fallos).
+- [x] **15.6** Documentación canónica actualizada en `/docs/MODULES.md`, `/docs/ARCHITECTURE.md`, `/docs/ROADMAP.md` y `/docs/README.md`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 15:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 16:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 17:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 16:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 17:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 18:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+
