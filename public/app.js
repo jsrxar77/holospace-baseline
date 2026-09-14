@@ -3492,10 +3492,18 @@ async function deleteMonitor(id) {
 
 // 2. AUDITORÍA DE CATÁLOGO & DIFF VIEW
 let cached4seeCatalog = [];
+let lastAuditedPlatform = null;
+let lastAuditedCredentials = null;
 
 async function load4seeCatalog() {
   const container = document.getElementById('catalogDiffContainer');
   if (!container) return;
+
+  if (cached4seeCatalog.length > 0) {
+    render4seeCatalog(cached4seeCatalog);
+    return;
+  }
+
   container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando catálogo auditado...</div>';
 
   try {
@@ -3505,11 +3513,19 @@ async function load4seeCatalog() {
     const data = await res.json();
     if (!data.success || !data.items || data.items.length === 0) {
       cached4seeCatalog = [];
+      const kpis = document.getElementById('catalogHealthKpis');
+      if (kpis) kpis.style.display = 'none';
+
       container.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay productos auditados en el catálogo</div>
-          <div style="font-size: 13px; margin-top: 6px;">Audita un producto para detectar ausencias de GTIN/EAN y optimizar títulos por IA.</div>
-          <button class="btn-primary" style="margin-top: 16px;" onclick="openAuditItemModal()">+ Auditar Producto</button>
+        <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
+          <div style="font-size: 16px; font-weight: 800; color: #FFF;">Diagnóstico de Salud de Catálogo (On-the-Fly)</div>
+          <div style="font-size: 13px; margin-top: 8px; max-width: 540px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+            Conecta tu tienda de Tiendanube o WooCommerce para escanear en caliente productos sin código de barras GTIN/EAN, marcas faltantes y optimizar títulos para Google Shopping y buscadores.
+          </div>
+          <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
+            <button class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="openConnectStoreModal()">⚡ Conectar y Escanear Tienda</button>
+            <button class="btn-secondary" onclick="runDemoCatalogScan()">Cargar Muestra Demo</button>
+          </div>
         </div>
       `;
       return;
@@ -3529,14 +3545,30 @@ function filter4seeCatalog(query = '') {
     return;
   }
   const filtered = cached4seeCatalog.filter(item => {
-    const orig = (item.original_title || '').toLowerCase();
-    const sugg = (item.suggested_title || '').toLowerCase();
+    const orig = (item.original_title || item.title || '').toLowerCase();
+    const sugg = (item.suggested_title || (item.audit && item.audit.suggested_title) || '').toLowerCase();
     const sku = (item.sku || '').toLowerCase();
     const brand = (item.brand || '').toLowerCase();
-    const gtin = (item.gtin || '').toLowerCase();
+    const gtin = (item.gtin || item.barcode_gtin || '').toLowerCase();
     return orig.includes(q) || sugg.includes(q) || sku.includes(q) || brand.includes(q) || gtin.includes(q);
   });
   render4seeCatalog(filtered);
+}
+
+function updateCatalogKpis(total, optimized, missingGtin, needsReview) {
+  const kpisContainer = document.getElementById('catalogHealthKpis');
+  if (!kpisContainer) return;
+  kpisContainer.style.display = 'grid';
+
+  const elTotal = document.getElementById('kpiTotalAudited');
+  const elOpt = document.getElementById('kpiOptimized');
+  const elGtin = document.getElementById('kpiMissingGtin');
+  const elRev = document.getElementById('kpiNeedsReview');
+
+  if (elTotal) elTotal.innerText = total;
+  if (elOpt) elOpt.innerText = optimized;
+  if (elGtin) elGtin.innerText = missingGtin;
+  if (elRev) elRev.innerText = needsReview;
 }
 
 function render4seeCatalog(items = []) {
@@ -3555,25 +3587,38 @@ function render4seeCatalog(items = []) {
   let html = `<div style="display: flex; flex-direction: column; gap: 16px; padding: 12px 0;">`;
 
   items.forEach(item => {
-    const diagnostics = typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []);
+    const auditInfo = item.audit || {};
+    const diagnostics = Array.isArray(auditInfo.diagnostics) 
+      ? auditInfo.diagnostics 
+      : (typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []));
+
     const diagBadges = diagnostics.map(d => {
       const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
       const color = d.severity === 'HIGH' ? 'var(--red)' : '#EAB308';
       return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
     }).join('');
 
+    const originalTitle = item.original_title || item.title || 'Sin Título';
+    const suggestedTitle = auditInfo.suggested_title || item.suggested_title || originalTitle;
+    const isApproved = item.is_approved || auditInfo.status === 'OPTIMIZED';
+    const itemId = item.id || item.external_id || auditInfo.listing_id;
+    const platform = item.platform || 'LOCAL';
+    const brand = item.brand || '';
+    const gtin = item.barcode_gtin || item.gtin || '';
+
     html += `
       <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku}</span>
-            ${item.brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${item.brand}</strong></span>` : ''}
-            ${item.gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN: <strong>${item.gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN</span>'}
+          <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-family: monospace; font-size: 11px; font-weight: 800; color: #FFF; background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
+            <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
+            ${brand ? `<span style="font-size: 12px; color: var(--text-muted);">Marca: <strong>${brand}</strong></span>` : '<span style="font-size: 12px; color: #EAB308; font-weight: 700;">Sin Marca</span>'}
+            ${gtin ? `<span style="font-size: 12px; color: var(--text-muted);">GTIN/EAN: <strong>${gtin}</strong></span>` : '<span style="font-size: 12px; color: var(--red); font-weight: 700;">Sin GTIN/EAN</span>'}
           </div>
           <div>
-            ${item.is_approved 
+            ${isApproved 
               ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● OPTIMIZADO Y APROBADO</span>' 
-              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${item.id}')">Aprobar Sugerencia</button>`
+              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar y Aplicar</button>`
             }
           </div>
         </div>
@@ -3583,12 +3628,12 @@ function render4seeCatalog(items = []) {
         <!-- Vista Diff de Dos Columnas -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
           <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
-            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Original</div>
-            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${item.original_title}</div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Actual en Tienda</div>
+            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
           </div>
           <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
             <div style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Optimizado (Diff)</div>
-            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${item.suggested_title}</div>
+            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>
           </div>
         </div>
       </div>
@@ -3597,6 +3642,172 @@ function render4seeCatalog(items = []) {
 
   html += `</div>`;
   container.innerHTML = html;
+}
+
+// Modal Conectar Tienda
+function openConnectStoreModal() {
+  const modal = document.getElementById('connectStoreModal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeConnectStoreModal() {
+  const modal = document.getElementById('connectStoreModal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function togglePlatformFields(platform) {
+  const tnFields = document.getElementById('fieldsTiendanube');
+  const wcFields = document.getElementById('fieldsWooCommerce');
+  if (platform === 'TIENDANUBE') {
+    if (tnFields) tnFields.style.display = 'flex';
+    if (wcFields) wcFields.style.display = 'none';
+  } else {
+    if (tnFields) tnFields.style.display = 'none';
+    if (wcFields) wcFields.style.display = 'flex';
+  }
+}
+
+async function handleConnectStoreSubmit(e) {
+  e.preventDefault();
+  const platform = document.getElementById('connPlatform').value;
+  const btn = document.getElementById('btnRunStoreScan');
+
+  let credentials = {};
+  if (platform === 'TIENDANUBE') {
+    credentials.userId = document.getElementById('tnUserId').value.trim();
+    credentials.accessToken = document.getElementById('tnAccessToken').value.trim();
+    if (!credentials.userId || !credentials.accessToken) {
+      await showCustomAlert('Datos Incompletos', 'Ingresa el User ID y el Access Token de Tiendanube.');
+      return;
+    }
+  } else {
+    credentials.storeUrl = document.getElementById('wcStoreUrl').value.trim();
+    credentials.consumerKey = document.getElementById('wcConsumerKey').value.trim();
+    credentials.consumerSecret = document.getElementById('wcConsumerSecret').value.trim();
+    if (!credentials.storeUrl) {
+      await showCustomAlert('Datos Incompletos', 'Ingresa la URL de tu tienda WooCommerce.');
+      return;
+    }
+  }
+
+  if (btn) btn.innerText = 'Escaneando catálogo...';
+
+  try {
+    const res = await fetch('/api/4see/store/audit-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ platform, credentials, options: { limit: 50 } })
+    });
+
+    const data = await res.json();
+    if (data.success && data.audit) {
+      closeConnectStoreModal();
+      lastAuditedPlatform = platform;
+      lastAuditedCredentials = credentials;
+      cached4seeCatalog = data.audit.items || [];
+      
+      const total = data.audit.total_audited || 0;
+      const opt = data.audit.optimized_count || 0;
+      const rev = data.audit.needs_review_count || 0;
+      const gtin = data.audit.critical_issues_count || 0;
+
+      updateCatalogKpis(total, opt, gtin, rev);
+      render4seeCatalog(cached4seeCatalog);
+      await showCustomAlert('Escaneo Completado', `Se auditaron ${total} productos de ${platform} en memoria exitosamente.`);
+    } else {
+      await showCustomAlert('Error en Escaneo', data.error || 'No se pudo conectar a la tienda.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error de Red', err.message);
+  } finally {
+    if (btn) btn.innerText = 'Iniciar Escaneo de Catálogo';
+  }
+}
+
+// Cargar muestra de catálogo Demo on-the-fly para visualización inmediata
+async function runDemoCatalogScan() {
+  closeConnectStoreModal();
+  const container = document.getElementById('catalogDiffContainer');
+  if (container) container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Procesando catálogo demo en memoria...</div>';
+
+  const demoItems = [
+    {
+      id: 'demo-1',
+      platform: 'TIENDANUBE',
+      name: 'Ginebra clásica botánica',
+      brand: 'London Spirit',
+      price: 12500,
+      stock: 18,
+      sku: 'GIN-LON-01',
+      barcode: '7791234567890',
+      seo_title: 'Ginebra Botánica 750ml',
+      seo_description: 'Ginebra premium destilada artesanalmente.'
+    },
+    {
+      id: 'demo-2',
+      platform: 'TIENDANUBE',
+      name: 'Vino Tinto',
+      brand: '',
+      price: 8900,
+      stock: 5,
+      sku: 'VIN-MAL-02',
+      barcode: '',
+      seo_title: '',
+      seo_description: ''
+    },
+    {
+      id: 'demo-3',
+      platform: 'WOOCOMMERCE',
+      name: 'Whisky Escocés 12 Años Malta Pura',
+      brand: 'Highland Park',
+      price: 45000,
+      stock: 3,
+      sku: 'WKY-ESC-12',
+      barcode: '5010106113127',
+      seo_title: 'Whisky 12 Años',
+      seo_description: 'Whisky escocés añejado en roble.'
+    },
+    {
+      id: 'demo-4',
+      platform: 'WOOCOMMERCE',
+      name: 'Cerveza IPA',
+      brand: 'Patagonia Cervecería',
+      price: 2100,
+      stock: 40,
+      sku: 'CER-IPA-473',
+      barcode: '',
+      seo_title: '',
+      seo_description: ''
+    }
+  ];
+
+  try {
+    const res = await fetch('/api/4see/store/audit-live', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({ raw_items: demoItems })
+    });
+
+    const data = await res.json();
+    if (data.success && data.audit) {
+      cached4seeCatalog = data.audit.items || [];
+      const total = data.audit.total_audited || 0;
+      const opt = data.audit.optimized_count || 0;
+      const rev = data.audit.needs_review_count || 0;
+      const gtin = data.audit.critical_issues_count || 0;
+
+      updateCatalogKpis(total, opt, gtin, rev);
+      render4seeCatalog(cached4seeCatalog);
+    }
+  } catch (err) {
+    if (container) container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error: ${err.message}</div>`;
+  }
 }
 
 function openAuditItemModal() {
@@ -3641,11 +3852,43 @@ async function handleAuditItemSubmit(e) {
   } catch (err) {
     await showCustomAlert('Error', `Error de red: ${err.message}`);
   } finally {
-    if (btn) btn.innerText = 'Auditar Producto';
+    if (btn) btn.innerText = 'Ejecutar Auditoría Técnica';
   }
 }
 
 async function approveCatalogOptimization(id) {
+  // 1. Si tenemos una tienda conectada en caliente con credenciales, ofrecer write-back directo
+  if (lastAuditedPlatform && lastAuditedCredentials) {
+    const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+    if (item && item.audit && item.audit.suggested_title) {
+      try {
+        const res = await fetch('/api/4see/store/write-back', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${getAuthToken()}`
+          },
+          body: JSON.stringify({
+            platform: lastAuditedPlatform,
+            credentials: lastAuditedCredentials,
+            productId: id,
+            updates: { title: item.audit.suggested_title }
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          item.is_approved = true;
+          render4seeCatalog(cached4seeCatalog);
+          await showCustomAlert('Write-Back Exitoso', `El título optimizado ha sido enviado y actualizado en tu tienda ${lastAuditedPlatform}.`);
+          return;
+        }
+      } catch (err) {
+        console.warn('Fallo write-back, continuando con fallback local:', err);
+      }
+    }
+  }
+
+  // 2. Fallback local para ítems persistidos
   try {
     const res = await fetch(`/api/4see/catalog/${id}/approve`, {
       method: 'POST',
@@ -3656,7 +3899,15 @@ async function approveCatalogOptimization(id) {
       await showCustomAlert('Optimización Aprobada', 'El título sugerido ha sido aplicado con éxito.');
       load4seeCatalog();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo aprobar.');
+      // Si fue ítem de muestra o demo en memoria, marcarlo como aprobado visualmente
+      const found = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+      if (found) {
+        found.is_approved = true;
+        render4seeCatalog(cached4seeCatalog);
+        await showCustomAlert('Sugerencia Aprobada', 'El título ha sido optimizado en el reporte.');
+      } else {
+        await showCustomAlert('Error', data.error || 'No se pudo aprobar.');
+      }
     }
   } catch (err) {
     await showCustomAlert('Error', `Error: ${err.message}`);
