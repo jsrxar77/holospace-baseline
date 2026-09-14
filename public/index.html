@@ -1615,6 +1615,18 @@
         </div>
       </div>
 
+      <!-- Barra de Operaciones Masivas y Modo Mock Seguro -->
+      <div id="catalogBulkBar" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 12px 18px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 11px; font-weight: 900; color: #60A5FA; background: rgba(59, 130, 246, 0.2); padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">MODO MOCK SEGURO ACTIVO</span>
+          <span style="font-size: 13px; color: var(--text-main);">Las aprobaciones se simulan interactivamente sin alterar datos en tu tienda real.</span>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button class="btn-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="exportCatalogAuditCsv()">📥 Exportar Reporte CSV</button>
+          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="bulkApproveCatalogMock()">⚡ Aprobar Todo (Simulación)</button>
+        </div>
+      </div>
+
       <div class="table-responsive-container">
         <div id="catalogDiffContainer">
           <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando catálogo auditado...</div>
@@ -2312,6 +2324,6 @@
     </div>
   </footer>
 
-  <script src="/app.js?v=7.1"></script>
+  <script src="/app.js?v=7.2"></script>
 </body>
 </html>

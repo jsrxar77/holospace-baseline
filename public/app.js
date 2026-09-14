@@ -3605,6 +3605,7 @@ function render4seeCatalog(items = []) {
     const platform = item.platform || 'LOCAL';
     const brand = item.brand || '';
     const gtin = item.barcode_gtin || item.gtin || '';
+    const isMissingGtin = !gtin || !/^[0-9]{8,14}$/.test(String(gtin).trim());
 
     html += `
       <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
@@ -3617,23 +3618,38 @@ function render4seeCatalog(items = []) {
           </div>
           <div>
             ${isApproved 
-              ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● OPTIMIZADO Y APROBADO</span>' 
-              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar y Aplicar</button>`
+              ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px; background: rgba(0,230,118,0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--emerald);">● APROBADO (MOCK)</span>' 
+              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar y Aplicar (Mock)</button>`
             }
           </div>
         </div>
 
         ${diagBadges ? `<div style="margin-bottom: 12px;">${diagBadges}</div>` : ''}
 
-        <!-- Vista Diff de Dos Columnas -->
+        <!-- Asignación rápida de GTIN/EAN si falta -->
+        ${isMissingGtin && !isApproved ? `
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px; background: rgba(239, 68, 68, 0.06); border: 1px dashed rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 8px 12px;">
+            <span style="font-size: 12px; color: var(--red); font-weight: 700;">Asignar Código EAN:</span>
+            <input type="text" id="gtin_input_${itemId}" class="input-field" placeholder="Ej: 7791234567890" style="padding: 4px 8px; font-size: 12px; max-width: 180px; font-family: monospace;">
+            <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px;" onclick="updateItemGtin('${itemId}', document.getElementById('gtin_input_${itemId}').value)">Asignar</button>
+          </div>
+        ` : ''}
+
+        <!-- Vista Diff de Dos Columnas con Edición en Vivo -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 10px;">
           <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
             <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Actual en Tienda</div>
             <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
           </div>
           <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
-            <div style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Optimizado (Diff)</div>
-            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título Optimizado (Editable)</span>
+              <span style="font-size: 10px; color: var(--text-muted);">Puedes editarlo antes de aprobar</span>
+            </div>
+            ${isApproved 
+              ? `<div style="font-size: 13px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>`
+              : `<input type="text" class="input-field" style="width: 100%; font-size: 13px; font-weight: 600; color: #FFF; border-color: rgba(0, 230, 118, 0.4);" value="${suggestedTitle.replace(/"/g, '&quot;')}" onchange="updateItemSuggestedTitle('${itemId}', this.value)">`
+            }
           </div>
         </div>
       </div>
@@ -3861,63 +3877,128 @@ async function handleAuditItemSubmit(e) {
   }
 }
 
-async function approveCatalogOptimization(id) {
-  // 1. Si tenemos una tienda conectada en caliente con credenciales, ofrecer write-back directo
-  if (lastAuditedPlatform && lastAuditedCredentials) {
-    const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
-    if (item && item.audit && item.audit.suggested_title) {
-      try {
-        const res = await fetch('/api/4see/store/write-back', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getAuthToken()}`
-          },
-          body: JSON.stringify({
-            platform: lastAuditedPlatform,
-            credentials: lastAuditedCredentials,
-            productId: id,
-            updates: { title: item.audit.suggested_title }
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          item.is_approved = true;
-          render4seeCatalog(cached4seeCatalog);
-          await showCustomAlert('Write-Back Exitoso', `El título optimizado ha sido enviado y actualizado en tu tienda ${lastAuditedPlatform}.`);
-          return;
-        }
-      } catch (err) {
-        console.warn('Fallo write-back, continuando con fallback local:', err);
-      }
-    }
-  }
-
-  // 2. Fallback local para ítems persistidos
-  try {
-    const res = await fetch(`/api/4see/catalog/${id}/approve`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
-    const data = await res.json();
-    if (data.success) {
-      await showCustomAlert('Optimización Aprobada', 'El título sugerido ha sido aplicado con éxito.');
-      load4seeCatalog();
-    } else {
-      // Si fue ítem de muestra o demo en memoria, marcarlo como aprobado visualmente
-      const found = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
-      if (found) {
-        found.is_approved = true;
-        render4seeCatalog(cached4seeCatalog);
-        await showCustomAlert('Sugerencia Aprobada', 'El título ha sido optimizado en el reporte.');
-      } else {
-        await showCustomAlert('Error', data.error || 'No se pudo aprobar.');
-      }
-    }
-  } catch (err) {
-    await showCustomAlert('Error', `Error: ${err.message}`);
+function updateItemSuggestedTitle(id, newTitle) {
+  const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+  if (item) {
+    if (item.audit) item.audit.suggested_title = newTitle.trim();
+    item.suggested_title = newTitle.trim();
   }
 }
+window.updateItemSuggestedTitle = updateItemSuggestedTitle;
+
+function updateItemGtin(id, newGtin) {
+  const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+  if (item) {
+    const clean = newGtin.trim();
+    item.barcode_gtin = clean;
+    item.gtin = clean;
+    // Re-evaluar diagnósticos de GTIN en memoria
+    if (item.audit && Array.isArray(item.audit.diagnostics)) {
+      if (/^[0-9]{8,14}$/.test(clean)) {
+        item.audit.diagnostics = item.audit.diagnostics.filter(d => d.code !== 'MISSING_GTIN');
+        item.audit.has_critical_issues = item.audit.diagnostics.some(d => d.severity === 'HIGH');
+      }
+    }
+    render4seeCatalog(cached4seeCatalog);
+    showCustomAlert('GTIN / EAN Actualizado', `Código ${clean} asignado al producto ${item.sku || id} en el reporte.`);
+  }
+}
+window.updateItemGtin = updateItemGtin;
+
+// Aprobación en Modo Mock Seguro (Sin mutaciones en la tienda real)
+async function approveCatalogOptimization(id) {
+  const item = cached4seeCatalog.find(i => (i.id || i.external_id || (i.audit && i.audit.listing_id)) === id);
+  if (item) {
+    item.is_approved = true;
+    if (item.audit) item.audit.status = 'OPTIMIZED';
+
+    // Recalcular KPIs en caliente
+    const total = cached4seeCatalog.length;
+    const opt = cached4seeCatalog.filter(i => i.is_approved || (i.audit && i.audit.status === 'OPTIMIZED')).length;
+    const rev = Math.max(0, total - opt);
+    const gtin = cached4seeCatalog.filter(i => {
+      const g = i.barcode_gtin || i.gtin;
+      return !g || !/^[0-9]{8,14}$/.test(String(g).trim());
+    }).length;
+    updateCatalogKpis(total, opt, gtin, rev);
+
+    render4seeCatalog(cached4seeCatalog);
+    await showCustomAlert(
+      'Aprobado (Modo Simulación)',
+      `El título sugerido fue aprobado en memoria con éxito.\n\n🛡️ Modo Mock Seguro: No se realizaron cambios en tu tienda real (${item.platform || 'E-Commerce'}).`
+    );
+  }
+}
+window.approveCatalogOptimization = approveCatalogOptimization;
+
+// Aprobación Masiva en Modo Mock
+async function bulkApproveCatalogMock() {
+  if (cached4seeCatalog.length === 0) {
+    await showCustomAlert('Sin Catálogo', 'No hay productos auditados para aprobar.');
+    return;
+  }
+
+  let count = 0;
+  cached4seeCatalog.forEach(item => {
+    if (!item.is_approved) {
+      item.is_approved = true;
+      if (item.audit) item.audit.status = 'OPTIMIZED';
+      count++;
+    }
+  });
+
+  const total = cached4seeCatalog.length;
+  const gtin = cached4seeCatalog.filter(i => {
+    const g = i.barcode_gtin || i.gtin;
+    return !g || !/^[0-9]{8,14}$/.test(String(g).trim());
+  }).length;
+  updateCatalogKpis(total, total, gtin, 0);
+
+  render4seeCatalog(cached4seeCatalog);
+  await showCustomAlert(
+    'Aprobación Masiva Completada',
+    `Se aprobaron ${count} productos en simulación.\n\n🛡️ Modo Mock Seguro: Tu tienda conectada se mantiene intacta.`
+  );
+}
+window.bulkApproveCatalogMock = bulkApproveCatalogMock;
+
+// Exportar Reporte de Auditoría a CSV
+function exportCatalogAuditCsv() {
+  if (cached4seeCatalog.length === 0) {
+    showCustomAlert('Sin Datos', 'No hay catálogo auditado para exportar.');
+    return;
+  }
+
+  const headers = ['ID_Externo', 'Plataforma', 'SKU', 'Marca', 'GTIN_EAN', 'Titulo_Original', 'Titulo_Optimizado', 'Estado', 'Problemas_Detectados'];
+  const rows = cached4seeCatalog.map(item => {
+    const auditInfo = item.audit || {};
+    const diag = (auditInfo.diagnostics || []).map(d => d.code).join('; ');
+    const orig = (item.original_title || item.title || '').replace(/"/g, '""');
+    const sugg = (auditInfo.suggested_title || item.suggested_title || '').replace(/"/g, '""');
+    return [
+      `"${item.id || item.external_id || ''}"`,
+      `"${item.platform || 'CUSTOM'}"`,
+      `"${item.sku || ''}"`,
+      `"${item.brand || ''}"`,
+      `"${item.barcode_gtin || item.gtin || ''}"`,
+      `"${orig}"`,
+      `"${sugg}"`,
+      `"${item.is_approved ? 'OPTIMIZADO_APROBADO' : (auditInfo.status || 'NEEDS_REVIEW')}"`,
+      `"${diag}"`
+    ].join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `auditoria_catalogo_${new Date().toISOString().slice(0, 10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+window.exportCatalogAuditCsv = exportCatalogAuditCsv;
 
 // 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES
 let cached4seeMargins = [];
