@@ -3649,11 +3649,13 @@ function openConnectStoreModal() {
   const modal = document.getElementById('connectStoreModal');
   if (modal) modal.classList.remove('hidden');
 }
+window.openConnectStoreModal = openConnectStoreModal;
 
 function closeConnectStoreModal() {
   const modal = document.getElementById('connectStoreModal');
   if (modal) modal.classList.add('hidden');
 }
+window.closeConnectStoreModal = closeConnectStoreModal;
 
 function togglePlatformFields(platform) {
   const tnFields = document.getElementById('fieldsTiendanube');
@@ -3666,6 +3668,9 @@ function togglePlatformFields(platform) {
     if (wcFields) wcFields.style.display = 'flex';
   }
 }
+window.togglePlatformFields = togglePlatformFields;
+window.handleConnectStoreSubmit = handleConnectStoreSubmit;
+window.runDemoCatalogScan = runDemoCatalogScan;
 
 async function handleConnectStoreSubmit(e) {
   e.preventDefault();
