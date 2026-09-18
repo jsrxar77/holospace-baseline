@@ -95,7 +95,8 @@ body.theme-omarchy_tiling {
 }
 
 body {
-  background-color: #121317 !important;
+  background-color: var(--bg-main, var(--bg-dark, #121317)) !important;
+  color: var(--text-main, #FFFFFF);
   background-image: none !important;
   animation: none !important;
   min-height: 100vh !important;
@@ -301,6 +302,256 @@ body.theme-omarchy_tiling .btn-close-drawer:hover {
 }
 
 /* ============================================================ */
+/* 1.B OMARCHY TILING LIGHT (HYPRLAND PURE 4PX SQUARE TILING)   */
+/* ============================================================ */
+html.theme-omarchy_tiling_light,
+body.theme-omarchy_tiling_light {
+  font-family: 'JetBrains Mono', monospace !important;
+  background-color: #F6F8FA !important;
+  color: #1F2328 !important;
+  background-image: none !important;
+  animation: none !important;
+}
+
+body.theme-omarchy_tiling_light,
+body.theme-omarchy_tiling_light *,
+body.theme-omarchy_tiling_light *:before,
+body.theme-omarchy_tiling_light *:after {
+  font-family: 'JetBrains Mono', monospace !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling_light header,
+body.theme-omarchy_tiling_light .app-header-shell {
+  background: #FFFFFF !important;
+  border-bottom: 2px solid #D0D7DE !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-omarchy_tiling_light #brandLogoText,
+body.theme-omarchy_tiling_light #brandLogoText *,
+body.theme-omarchy_tiling_light .brand-title,
+body.theme-omarchy_tiling_light .brand-title * {
+  font-family: 'Press Start 2P', monospace !important;
+  font-size: 18px !important;
+  letter-spacing: 1px !important;
+  line-height: 1 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-omarchy_tiling_light .logo-holo {
+  color: #1F2328 !important;
+  text-shadow: 1px 1px 0px #D0D7DE !important;
+}
+
+body.theme-omarchy_tiling_light .logo-space {
+  color: #059669 !important;
+  text-shadow: 1px 1px 0px rgba(5, 150, 105, 0.3) !important;
+}
+
+body.theme-omarchy_tiling_light #activeContextBadge {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+  border: 1px solid #6366F1 !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: #6366F1 !important;
+}
+
+body.theme-omarchy_tiling_light .kanban-col,
+body.theme-omarchy_tiling_light .upload-dropzone,
+body.theme-omarchy_tiling_light .upload-zone,
+body.theme-omarchy_tiling_light .operator-group,
+body.theme-omarchy_tiling_light .kanban-card,
+body.theme-omarchy_tiling_light .module-card,
+body.theme-omarchy_tiling_light .invoice-card,
+body.theme-omarchy_tiling_light .user-group,
+body.theme-omarchy_tiling_light .modal-content,
+body.theme-omarchy_tiling_light .data-table,
+body.theme-omarchy_tiling_light .table-responsive-container,
+body.theme-omarchy_tiling_light section,
+body.theme-omarchy_tiling_light article,
+body.theme-omarchy_tiling_light [id^="view"] > div:first-child {
+  background: #FFFFFF !important;
+  border: 1px solid #D0D7DE !important;
+  border-radius: 4px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .data-table th {
+  background: #F6F8FA !important;
+  color: #656D76 !important;
+  border-bottom: 1px solid #D0D7DE !important;
+}
+
+body.theme-omarchy_tiling_light .data-table td {
+  border-bottom: 1px solid #E1E4E8 !important;
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .data-table tr:hover td {
+  background: #F6F8FA !important;
+}
+
+body.theme-omarchy_tiling_light .data-table td strong,
+body.theme-omarchy_tiling_light [id^="view"] h2,
+body.theme-omarchy_tiling_light [id^="view"] h3,
+body.theme-omarchy_tiling_light #kpiTenantsCount,
+body.theme-omarchy_tiling_light [id^="kpi"]:not(#kpiTenantsActive):not(#kpiTenantsUsers) {
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .actions-bar h2,
+body.theme-omarchy_tiling_light .actions-bar p {
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .kanban-card:hover,
+body.theme-omarchy_tiling_light .module-card:hover {
+  border-color: #6366F1 !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15) !important;
+}
+
+body.theme-omarchy_tiling_light .btn-primary,
+body.theme-omarchy_tiling_light .btn-action {
+  border: 1px solid #059669 !important;
+  background: #059669 !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling_light .header-nav-line {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #D0D7DE !important;
+}
+
+body.theme-omarchy_tiling_light .btn-secondary,
+body.theme-omarchy_tiling_light .btn-danger,
+body.theme-omarchy_tiling_light .btn-delete,
+body.theme-omarchy_tiling_light .nav-tab {
+  border: 1px solid #D0D7DE !important;
+  background: #FFFFFF !important;
+  color: #1F2328 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling_light .btn-secondary:hover,
+body.theme-omarchy_tiling_light .nav-tab:hover {
+  background: #F6F8FA !important;
+  color: #059669 !important;
+}
+
+body.theme-omarchy_tiling_light .theme-select,
+body.theme-omarchy_tiling_light .btn-header-ctrl,
+body.theme-omarchy_tiling_light .badge-header-ctrl {
+  height: 34px !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+  border: 1px solid #D0D7DE !important;
+  background: #FFFFFF !important;
+  color: #1F2328 !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.theme-omarchy_tiling_light .badge-header-ctrl {
+  border-color: #6366F1 !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: #6366F1 !important;
+}
+
+body.theme-omarchy_tiling_light .nav-tab.active {
+  background: #6366F1 !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling_light .badge-role,
+body.theme-omarchy_tiling_light .superadmin-badge,
+body.theme-omarchy_tiling_light .badge-admin,
+body.theme-omarchy_tiling_light .badge-operator,
+body.theme-omarchy_tiling_light .badge-superadmin {
+  border-radius: 4px !important;
+  border: 1px solid #6366F1 !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: #6366F1 !important;
+}
+
+body.theme-omarchy_tiling_light input,
+body.theme-omarchy_tiling_light select {
+  border-radius: 4px !important;
+  border: 1px solid #D0D7DE !important;
+  background: #FFFFFF !important;
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .btn-hamburger span {
+  background-color: #1F2328 !important;
+  border-radius: 1px !important;
+}
+
+body.theme-omarchy_tiling_light .btn-hamburger:hover span {
+  background-color: #059669 !important;
+}
+
+body.theme-omarchy_tiling_light .mobile-nav-drawer {
+  background: #FFFFFF !important;
+  border-right: 1px solid #D0D7DE !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  border-radius: 0px !important;
+}
+
+body.theme-omarchy_tiling_light .mobile-drawer-header,
+body.theme-omarchy_tiling_light .mobile-drawer-footer {
+  border-color: #D0D7DE !important;
+}
+
+body.theme-omarchy_tiling_light #mobileActiveContext {
+  font-family: 'JetBrains Mono', monospace !important;
+  color: #6366F1 !important;
+}
+
+body.theme-omarchy_tiling_light .mobile-nav-tab {
+  font-family: 'JetBrains Mono', monospace !important;
+  color: #1F2328 !important;
+  border-radius: 4px !important;
+  border: 1px solid transparent !important;
+}
+
+body.theme-omarchy_tiling_light .mobile-nav-tab:hover {
+  background: #F6F8FA !important;
+  color: #1F2328 !important;
+}
+
+body.theme-omarchy_tiling_light .mobile-nav-tab.active {
+  background: #6366F1 !important;
+  color: #FFFFFF !important;
+  border-color: #6366F1 !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+}
+
+body.theme-omarchy_tiling_light .btn-close-drawer {
+  color: #1F2328 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+body.theme-omarchy_tiling_light .btn-close-drawer:hover {
+  color: #059669 !important;
+}
+
+/* ============================================================ */
 /* 2. SOFT MINIMAL PASTEL THEME (EDITORIAL 12PX & 20PX PILLS)   */
 /* ============================================================ */
 html.theme-soft_minimal_pastel,
@@ -479,6 +730,214 @@ body.theme-soft_minimal_pastel .btn-close-drawer {
 
 body.theme-soft_minimal_pastel .btn-close-drawer:hover {
   color: #A6E3A1 !important;
+}
+
+/* ============================================================ */
+/* 2.B SOFT MINIMAL PASTEL LIGHT (CATPPUCCIN LATTE 16PX/20PX)  */
+/* ============================================================ */
+html.theme-soft_minimal_pastel_light,
+body.theme-soft_minimal_pastel_light {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  background-color: #EFF1F5 !important;
+  color: #4C4F69 !important;
+  background-image: none !important;
+  animation: none !important;
+}
+
+body.theme-soft_minimal_pastel_light * {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+body.theme-soft_minimal_pastel_light header,
+body.theme-soft_minimal_pastel_light .app-header-shell {
+  background: #FFFFFF !important;
+  border-bottom: 1px solid #CCD0DA !important;
+  border-radius: 0px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+body.theme-soft_minimal_pastel_light #brandLogoText,
+body.theme-soft_minimal_pastel_light #brandLogoText *,
+body.theme-soft_minimal_pastel_light .brand-title,
+body.theme-soft_minimal_pastel_light .brand-title * {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 22px !important;
+  letter-spacing: -0.5px !important;
+  font-weight: 800 !important;
+  border-radius: 0px !important;
+}
+
+body.theme-soft_minimal_pastel_light .logo-holo {
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .logo-space {
+  color: #40A02B !important;
+}
+
+body.theme-soft_minimal_pastel_light #activeContextBadge {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  border-radius: 20px !important;
+  border: 1px solid #1E66F5 !important;
+  background: rgba(30, 102, 245, 0.12) !important;
+  color: #1E66F5 !important;
+}
+
+body.theme-soft_minimal_pastel_light .kanban-col,
+body.theme-soft_minimal_pastel_light .upload-dropzone,
+body.theme-soft_minimal_pastel_light .upload-zone,
+body.theme-soft_minimal_pastel_light .operator-group,
+body.theme-soft_minimal_pastel_light .module-card,
+body.theme-soft_minimal_pastel_light .kanban-card,
+body.theme-soft_minimal_pastel_light .invoice-card,
+body.theme-soft_minimal_pastel_light .user-group,
+body.theme-soft_minimal_pastel_light .modal-content,
+body.theme-soft_minimal_pastel_light .data-table,
+body.theme-soft_minimal_pastel_light .table-responsive-container,
+body.theme-soft_minimal_pastel_light section,
+body.theme-soft_minimal_pastel_light article,
+body.theme-soft_minimal_pastel_light [id^="view"] > div:first-child {
+  border-radius: 16px !important;
+  border: 1px solid #CCD0DA !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 4px 16px rgba(140, 143, 161, 0.15) !important;
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .data-table th {
+  background: #EFF1F5 !important;
+  color: #8C8FA1 !important;
+  border-bottom: 1px solid #CCD0DA !important;
+}
+
+body.theme-soft_minimal_pastel_light .data-table td {
+  border-bottom: 1px solid #E6E9EF !important;
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .data-table tr:hover td {
+  background: #EFF1F5 !important;
+}
+
+body.theme-soft_minimal_pastel_light .data-table td strong,
+body.theme-soft_minimal_pastel_light [id^="view"] h2,
+body.theme-soft_minimal_pastel_light [id^="view"] h3,
+body.theme-soft_minimal_pastel_light #kpiTenantsCount,
+body.theme-soft_minimal_pastel_light [id^="kpi"]:not(#kpiTenantsActive):not(#kpiTenantsUsers) {
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .actions-bar h2,
+body.theme-soft_minimal_pastel_light .actions-bar p {
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .btn-primary,
+body.theme-soft_minimal_pastel_light .btn-action {
+  border: 1px solid #40A02B !important;
+  background: #40A02B !important;
+  color: #FFFFFF !important;
+  font-weight: 800 !important;
+  border-radius: 20px !important;
+}
+
+body.theme-soft_minimal_pastel_light .header-nav-line {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #CCD0DA !important;
+}
+
+body.theme-soft_minimal_pastel_light .btn-secondary,
+body.theme-soft_minimal_pastel_light .btn-danger,
+body.theme-soft_minimal_pastel_light .btn-delete,
+body.theme-soft_minimal_pastel_light .nav-tab {
+  border: 1px solid #CCD0DA !important;
+  background: #FFFFFF !important;
+  color: #4C4F69 !important;
+  border-radius: 20px !important;
+}
+
+body.theme-soft_minimal_pastel_light .btn-secondary:hover,
+body.theme-soft_minimal_pastel_light .nav-tab:hover {
+  background: #EFF1F5 !important;
+  color: #1E66F5 !important;
+}
+
+body.theme-soft_minimal_pastel_light .theme-select,
+body.theme-soft_minimal_pastel_light .btn-header-ctrl,
+body.theme-soft_minimal_pastel_light .badge-header-ctrl {
+  height: 34px !important;
+  font-size: 12px !important;
+  border-radius: 20px !important;
+  border: 1px solid #CCD0DA !important;
+  background: #FFFFFF !important;
+  color: #4C4F69 !important;
+  box-sizing: border-box !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+body.theme-soft_minimal_pastel_light .nav-tab.active {
+  background: #1E66F5 !important;
+  color: #FFFFFF !important;
+  border-color: #1E66F5 !important;
+  font-weight: 800 !important;
+  border-radius: 20px !important;
+}
+
+body.theme-soft_minimal_pastel_light .badge-role,
+body.theme-soft_minimal_pastel_light .superadmin-badge,
+body.theme-soft_minimal_pastel_light .badge-admin,
+body.theme-soft_minimal_pastel_light .badge-operator,
+body.theme-soft_minimal_pastel_light .badge-superadmin {
+  border-radius: 14px !important;
+  border: 1px solid #1E66F5 !important;
+  background: rgba(30, 102, 245, 0.12) !important;
+  color: #1E66F5 !important;
+}
+
+body.theme-soft_minimal_pastel_light input,
+body.theme-soft_minimal_pastel_light select {
+  border-radius: 12px !important;
+  border: 1px solid #CCD0DA !important;
+  background: #FFFFFF !important;
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .mobile-nav-drawer {
+  background: #FFFFFF !important;
+  border-right: 1px solid #CCD0DA !important;
+  border-radius: 0px !important;
+}
+
+body.theme-soft_minimal_pastel_light .mobile-drawer-header,
+body.theme-soft_minimal_pastel_light .mobile-drawer-footer {
+  border-color: #CCD0DA !important;
+}
+
+body.theme-soft_minimal_pastel_light #mobileActiveContext {
+  color: #1E66F5 !important;
+}
+
+body.theme-soft_minimal_pastel_light .mobile-nav-tab {
+  color: #4C4F69 !important;
+  border-radius: 16px !important;
+  border: 1px solid transparent !important;
+}
+
+body.theme-soft_minimal_pastel_light .mobile-nav-tab:hover {
+  background: #EFF1F5 !important;
+  color: #4C4F69 !important;
+}
+
+body.theme-soft_minimal_pastel_light .mobile-nav-tab.active {
+  background: #1E66F5 !important;
+  color: #FFFFFF !important;
+  border-color: #1E66F5 !important;
+  font-weight: 800 !important;
 }
 
 /* ============================================================ */
@@ -1062,14 +1521,50 @@ body.theme-omarchy_aetheria .btn-close-drawer:hover {
 }
 
 /* ============================================================ */
-/* CUSTOM OVERRIDES FOR FEATURES (AZUL)                         */
+/* DYNAMIC ACCENTS FOR TABS (DERIVADOS DEL MOTOR DE TEMAS)      */
 /* ============================================================ */
 body .nav-tab.feature-tab.active, 
 body .mobile-nav-tab.feature-tab.active {
-  color: #000 !important;
-  background-color: var(--accent, #00d4ff) !important;
-  border-color: var(--accent, #00d4ff) !important;
-  font-weight: 900 !important;
+  color: #FFFFFF !important;
+  background-color: var(--cobalt, var(--emerald, #6366F1)) !important;
+  border-color: var(--cobalt, var(--emerald, #6366F1)) !important;
+  font-weight: 800 !important;
+}
+
+body.theme-omarchy_tiling .nav-tab.feature-tab.active {
+  background-color: #BD93F9 !important;
+  border-color: #BD93F9 !important;
+  color: #121317 !important;
+}
+
+body.theme-omarchy_tiling_light .nav-tab.feature-tab.active {
+  background-color: #6366F1 !important;
+  border-color: #6366F1 !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-soft_minimal_pastel .nav-tab.feature-tab.active {
+  background-color: #89B4FA !important;
+  border-color: #89B4FA !important;
+  color: #1E1E2E !important;
+}
+
+body.theme-soft_minimal_pastel_light .nav-tab.feature-tab.active {
+  background-color: #1E66F5 !important;
+  border-color: #1E66F5 !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-dark_glassmorphism .nav-tab.feature-tab.active {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+body.theme-cyberpunk_glassmorphism .nav-tab.feature-tab.active {
+  background-color: #00FFCC !important;
+  border-color: #00FFCC !important;
+  color: #05050A !important;
 }
 
 body.theme-omarchy_tiling .nav-tab,

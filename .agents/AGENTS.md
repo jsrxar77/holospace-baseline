@@ -157,14 +157,20 @@ Para **CADA solicitud o cambio** solicitado por el usuario, el agente DEBE anali
 ## 🎨 Regla de Oro Obligatoria: Centralización Estricta del Sistema de Temas (Single Source of Truth)
 
 1. **Definición Única en `/modules/themes/`:** Queda terminantemente prohibido crear, hardcodear o duplicar definiciones de temas, tokens de color o archivos de estilo específicos dentro de las subcarpetas de módulos individuales (`modules/core`, `modules/kanban`, `modules/scanner`, etc.).
-2. **5 Temas Oficiales de Plataforma:** Toda la plataforma (`server.js`, Web App y Mobile Scanner) debe operar exclusivamente con los 5 temas oficiales definidos en `modules/themes/themes.json`:
+2. **7 Temas Oficiales de Plataforma (Dark y Light):** Toda la plataforma (`server.js`, Web App y Mobile Scanner) opera exclusivamente con los 7 temas oficiales definidos en `modules/themes/themes.json`:
    - `omarchy_tiling` (Omarchy Tiling - Predeterminado)
+   - `omarchy_tiling_light` (Omarchy Light)
    - `omarchy_aetheria` (Omarchy Aetherial)
    - `soft_minimal_pastel` (Soft Pastel)
+   - `soft_minimal_pastel_light` (Soft Pastel Light)
    - `dark_glassmorphism` (Dark Glass)
    - `cyberpunk_glassmorphism` (Cyberpunk Glass)
 3. **Consumo Universal vía API `/api/theme`:** Todos los componentes Web y pantallas de React Native deben consumir los tokens dinámicos entregados por el endpoint central `/api/theme`, respetando colores, radios de borde, tipografías y sombras del tema activo.
 4. **Aislamiento de Fondos Dinámicos:** Los fondos animados con estrellas y asteroides son exclusivos del **Landing** y del **Login**. Las vistas autenticadas (`Tenant`, `Core`, `Kanban`, `Scanner`) deben permanecer con fondos sólidos estáticos.
+5. **Prohibición Absoluta de Hardcoding de Colores y Fondos en UI (Cero Estilos Inline Fijos):**
+   - Queda terminantemente prohibido hardcodear colores fijos (hexadecimales, `rgba`, `linear-gradient`) mediante atributos `style="..."` inline o clases CSS rígidas en elementos estructurales: cabeceras (`header`), barras de navegación (`.header-nav-line`), menús de módulos, submenús de features, tarjetas, tablas o modales.
+   - Todo componente debe usar exclusivamente variables y tokens del sistema (`var(--bg-main)`, `var(--card-bg)`, `var(--card-border)`, `var(--text-main)`, `var(--text-muted)`, `var(--emerald)`, `var(--cobalt)`, etc.).
+6. **Estados Activos y Pestañas Dinámicas:** Los estados activos (`.active`) de menús, submenús y pestañas de navegación DEBEN respetar de forma estricta los tokens del tema en uso. Queda prohibido forzar colores fluorescentes o estáticos (como cyan `#00d4ff` o fondos `#0F131A`) con `!important` que rompan la armonía visual de los temas Light o Dark.
 
 ---
 

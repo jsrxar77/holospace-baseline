@@ -48,6 +48,26 @@ async function runTests() {
   assert(tenants.some(t => t.slug === 'poke'), 'Tenant `poke` presente.');
   assert(tenants.some(t => t.slug === 'holospace'), 'Tenant plataforma `holospace` presente.');
 
+  // 1.1 Verificación de Planes Verticales en Semillas Oficiales
+  console.log('\n--- 1.1 Verificación de Planes Verticales Semilla ---');
+  const pokeTenant = tenants.find(t => t.slug === 'poke');
+  const pokeSubs = await query('SELECT plan_code FROM tenant_subscriptions WHERE tenant_id = ? AND status = \'active\'', [pokeTenant.id], { isSuperAdmin: true });
+  assert(pokeSubs.length === 1 && pokeSubs[0].plan_code === 'kanban_simple', 'Poke posee exclusivamente el plan kanban_simple');
+
+  const pokeModules = await query('SELECT module_code, is_enabled FROM tenant_modules WHERE tenant_id = ?', [pokeTenant.id], { isSuperAdmin: true });
+  const poke4see = pokeModules.find(m => m.module_code === '4see');
+  assert(poke4see && poke4see.is_enabled === false, 'Poke NO tiene acceso a 4see (desactivado)');
+
+  const dlTenant = tenants.find(t => t.slug === 'drinklovers');
+  const dlSubs = await query('SELECT plan_code FROM tenant_subscriptions WHERE tenant_id = ? AND status = \'active\'', [dlTenant.id], { isSuperAdmin: true });
+  const dlPlanCodes = dlSubs.map(s => s.plan_code);
+  assert(dlPlanCodes.includes('kanban_enterprise'), 'DrinkLovers posee la vertical kanban_enterprise');
+  assert(dlPlanCodes.includes('fourseee_business'), 'DrinkLovers posee la vertical fourseee_business');
+
+  const dlModules = await query('SELECT module_code, is_enabled FROM tenant_modules WHERE tenant_id = ?', [dlTenant.id], { isSuperAdmin: true });
+  const dl4see = dlModules.find(m => m.module_code === '4see');
+  assert(dl4see && dl4see.is_enabled === true, 'DrinkLovers tiene 4see habilitado');
+
   // 2. Creación de un Nuevo Tenant por SuperAdmin
   console.log('\n--- 2. Aprovisionamiento Dinámico de Nuevo Tenant ---');
   const crypto = require('crypto');
@@ -62,7 +82,7 @@ async function runTests() {
 
   await execute(
     'INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly) VALUES (?, ?, ?, ?, ?, ?)',
-    [crypto.randomUUID(), testTenantId, 'pro', 'active', 15, 3000],
+    [crypto.randomUUID(), testTenantId, 'kanban_business', 'active', 18, 3000],
     { isSuperAdmin: true }
   );
 

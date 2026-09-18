@@ -70,9 +70,19 @@ BEGIN
     ALTER TABLE orders RENAME TO kanban_orders;
   END IF;
 
-  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'order_items') AND
-     NOT EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'kanban_order_items') THEN
-    ALTER TABLE order_items RENAME TO kanban_order_items;
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'kanban_order_items') THEN
+    -- Migración completada
+  END IF;
+
+  -- Migración de unicidad en tenant_subscriptions: permitir múltiples suscripciones por tenant (planes por vertical)
+  IF EXISTS (SELECT FROM pg_tables WHERE schemaname = 'public' AND tablename = 'tenant_subscriptions') THEN
+    ALTER TABLE tenant_subscriptions DROP CONSTRAINT IF EXISTS tenant_subscriptions_tenant_id_key;
+    IF NOT EXISTS (
+      SELECT 1 FROM pg_constraint 
+      WHERE conrelid = 'tenant_subscriptions'::regclass AND conname = 'tenant_subscriptions_tenant_plan_key'
+    ) THEN
+      ALTER TABLE tenant_subscriptions ADD CONSTRAINT tenant_subscriptions_tenant_plan_key UNIQUE (tenant_id, plan_code);
+    END IF;
   END IF;
 END $$;
 
@@ -115,15 +125,15 @@ CREATE INDEX IF NOT EXISTS idx_tenant_plans_code ON tenant_plans(code);
 CREATE TABLE IF NOT EXISTS tenant_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-  plan_code VARCHAR(64) NOT NULL DEFAULT 'starter' REFERENCES tenant_plans(code) ON UPDATE CASCADE,
+  plan_code VARCHAR(64) NOT NULL DEFAULT 'kanban_simple' REFERENCES tenant_plans(code) ON UPDATE CASCADE,
   status VARCHAR(32) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'past_due', 'canceled', 'trialing')),
-  max_users INT NOT NULL DEFAULT 5,
+  max_users INT NOT NULL DEFAULT 4,
   max_orders_monthly INT NOT NULL DEFAULT 500,
   current_period_start TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   current_period_end TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '30 days'),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(tenant_id)
+  UNIQUE(tenant_id, plan_code)
 );
 
 CREATE INDEX IF NOT EXISTS idx_subscriptions_tenant ON tenant_subscriptions(tenant_id);
@@ -400,6 +410,117 @@ CREATE TABLE IF NOT EXISTS fourseee_connected_stores (
 
 CREATE INDEX IF NOT EXISTS idx_fourseee_stores_tenant ON fourseee_connected_stores(tenant_id);
 
+-- Tabla de Productos Propios 1:N con Piso Inquebrantable
+CREATE TABLE IF NOT EXISTS fourseee_products (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL,
+  sku VARCHAR(100) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  cost_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+  operating_costs NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+  min_margin_percentage NUMERIC(5, 2) NOT NULL DEFAULT 0.00,
+  min_price_floor NUMERIC(14, 2) GENERATED ALWAYS AS (
+    ROUND(cost_price * (1.0 + (min_margin_percentage / 100.0)) + operating_costs, 2)
+  ) STORED,
+  max_price_ceiling NUMERIC(14, 2),
+  current_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+  stock_quantity INTEGER NOT NULL DEFAULT 0,
+  stock_status VARCHAR(20) NOT NULL DEFAULT 'IN_STOCK' CHECK (stock_status IN ('IN_STOCK', 'OUT_OF_STOCK', 'PAUSED')),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_fourseee_products_tenant_sku UNIQUE (tenant_id, sku)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_products_tenant ON fourseee_products(tenant_id);
+
+-- Directorio de Competidores
+CREATE TABLE IF NOT EXISTS fourseee_competitors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  name VARCHAR(150) NOT NULL,
+  domain_url VARCHAR(255) NOT NULL,
+  priority_weight INTEGER NOT NULL DEFAULT 1,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_fourseee_competitor_domain UNIQUE (tenant_id, domain_url)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_competitors_tenant ON fourseee_competitors(tenant_id);
+
+-- Mapeo 1:N Producto <-> URLs de Competidores
+CREATE TABLE IF NOT EXISTS fourseee_product_competitor_mappings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES fourseee_products(id) ON DELETE CASCADE,
+  competitor_id UUID NOT NULL REFERENCES fourseee_competitors(id) ON DELETE CASCADE,
+  competitor_url TEXT NOT NULL,
+  selector_config JSONB DEFAULT '{}'::jsonb,
+  last_scraped_price NUMERIC(14, 2),
+  last_scraped_stock VARCHAR(20) DEFAULT 'UNKNOWN',
+  last_scraped_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_fourseee_prod_comp_url UNIQUE (product_id, competitor_url)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_mappings_product ON fourseee_product_competitor_mappings(product_id);
+CREATE INDEX IF NOT EXISTS idx_fourseee_mappings_tenant ON fourseee_product_competitor_mappings(tenant_id);
+
+-- Historial Inmutable de Precios (PriceLog)
+CREATE TABLE IF NOT EXISTS fourseee_price_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  mapping_id UUID NOT NULL REFERENCES fourseee_product_competitor_mappings(id) ON DELETE CASCADE,
+  scraped_price NUMERIC(14, 2) NOT NULL,
+  scraped_currency VARCHAR(10) NOT NULL DEFAULT 'ARS',
+  scraped_stock_status VARCHAR(20) NOT NULL,
+  extraction_method VARCHAR(50) NOT NULL,
+  captured_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_logs_mapping_time ON fourseee_price_logs(mapping_id, captured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fourseee_logs_tenant ON fourseee_price_logs(tenant_id);
+
+-- Reglas de Dynamic Pricing (SmartPrice Rules)
+CREATE TABLE IF NOT EXISTS fourseee_pricing_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES fourseee_products(id) ON DELETE CASCADE,
+  name VARCHAR(150) NOT NULL,
+  trigger_condition VARCHAR(50) NOT NULL,
+  target_competitor_id UUID REFERENCES fourseee_competitors(id) ON DELETE SET NULL,
+  action_type VARCHAR(30) NOT NULL,
+  offset_value NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+  enforce_hard_floor BOOLEAN NOT NULL DEFAULT true,
+  auto_dispatch BOOLEAN NOT NULL DEFAULT false,
+  priority INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_rules_tenant ON fourseee_pricing_rules(tenant_id, is_active);
+
+-- Cola de Actualización y Despacho (PriceUpdateQueue)
+CREATE TABLE IF NOT EXISTS fourseee_price_update_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES fourseee_products(id) ON DELETE CASCADE,
+  rule_id UUID REFERENCES fourseee_pricing_rules(id) ON DELETE SET NULL,
+  previous_price NUMERIC(14, 2) NOT NULL,
+  calculated_price NUMERIC(14, 2) NOT NULL,
+  suggested_price NUMERIC(14, 2) NOT NULL,
+  floor_applied BOOLEAN NOT NULL DEFAULT false,
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'APPROVED', 'APPLIED', 'REJECTED', 'FAILED')),
+  error_message TEXT,
+  approved_by UUID REFERENCES core_users(id) ON DELETE SET NULL,
+  applied_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_queue_tenant_status ON fourseee_price_update_queue(tenant_id, status);
+
 -- ============================================================================
 -- 6. POLÍTICAS DE ROW-LEVEL SECURITY (RLS) - AISLAMIENTO MULTI-TENANT
 -- ============================================================================
@@ -415,6 +536,12 @@ ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_connected_stores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_competitors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_product_competitor_mappings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_price_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_pricing_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_price_update_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
 -- Política RLS para core_roles
@@ -470,6 +597,78 @@ CREATE POLICY rls_fourseee_margins_tenant_isolation ON fourseee_margin_rules
 
 DROP POLICY IF EXISTS rls_fourseee_stores_tenant_isolation ON fourseee_connected_stores;
 CREATE POLICY rls_fourseee_stores_tenant_isolation ON fourseee_connected_stores
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_products_tenant_isolation ON fourseee_products;
+CREATE POLICY rls_fourseee_products_tenant_isolation ON fourseee_products
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_competitors_tenant_isolation ON fourseee_competitors;
+CREATE POLICY rls_fourseee_competitors_tenant_isolation ON fourseee_competitors
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_mappings_tenant_isolation ON fourseee_product_competitor_mappings;
+CREATE POLICY rls_fourseee_mappings_tenant_isolation ON fourseee_product_competitor_mappings
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_logs_tenant_isolation ON fourseee_price_logs;
+CREATE POLICY rls_fourseee_logs_tenant_isolation ON fourseee_price_logs
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_rules_tenant_isolation ON fourseee_pricing_rules;
+CREATE POLICY rls_fourseee_rules_tenant_isolation ON fourseee_pricing_rules
+  FOR ALL
+  USING (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  )
+  WITH CHECK (
+    current_setting('app.is_superadmin', true) = 'true'
+    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+  );
+
+DROP POLICY IF EXISTS rls_fourseee_queue_tenant_isolation ON fourseee_price_update_queue;
+CREATE POLICY rls_fourseee_queue_tenant_isolation ON fourseee_price_update_queue
   FOR ALL
   USING (
     current_setting('app.is_superadmin', true) = 'true'
@@ -581,8 +780,10 @@ VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace', 'activ
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'enterprise', 'active', 999, 999999)
-ON CONFLICT (tenant_id) DO NOTHING;
+VALUES 
+  ('a0000000-0000-0000-0000-000000000001', 'kanban_enterprise', 'active', 9999, 999999),
+  ('a0000000-0000-0000-0000-000000000001', 'fourseee_enterprise', 'active', 9999, 0)
+ON CONFLICT (tenant_id, plan_code) DO NOTHING;
 
 -- Catálogo de Módulos Oficiales de la Plataforma HoloSpace
 INSERT INTO tenant_modules_catalog (key, name, description, category, is_active, activated_by)
@@ -599,12 +800,9 @@ ON CONFLICT (key) DO UPDATE SET
   category = EXCLUDED.category,
   is_active = EXCLUDED.is_active;
 
--- Catálogo de Planes Oficiales SaaS
+-- Catálogo de Planes Oficiales SaaS (Líneas Verticales Desacopladas)
 INSERT INTO tenant_plans (code, name, description, max_users, max_orders_monthly, included_modules, role_quotas, is_active)
 VALUES
-  ('starter', 'Plan Starter Inicial', 'Plan esencial para pequeños depósitos y operaciones ágiles.', 5, 500, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 1, "max_operators": 4, "max_analysts": 0}'::jsonb, true),
-  ('pro', 'Plan Pro Profesional', 'Plan integral para empresas medianas con gestión de tablero y escáner.', 15, 3000, '["core", "kanban", "scanner", "4see"]'::jsonb, '{"max_admins": 3, "max_operators": 12, "max_analysts": 5}'::jsonb, true),
-  ('enterprise', 'Plan Enterprise Ilimitado', 'Acceso total a todas las herramientas y módulos de la plataforma.', 999, 999999, '["core", "tenant", "kanban", "scanner", "4see"]'::jsonb, '{"max_admins": 999, "max_operators": 999, "max_analysts": 999}'::jsonb, true),
   ('kanban_simple', 'Plan Kanban Simple', 'Para depósitos individuales o pequeñas operaciones.', 4, 500, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 1, "max_operators": 3, "max_analysts": 0}'::jsonb, true),
   ('kanban_business', 'Plan Kanban Business', 'Para centros de distribución con múltiples operarios y supervisores.', 18, 3000, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 3, "max_operators": 15, "max_analysts": 0}'::jsonb, true),
   ('kanban_enterprise', 'Plan Kanban Enterprise', 'Capacidad masiva ilimitada para grandes redes logísticas.', 9999, 999999, '["core", "kanban", "scanner"]'::jsonb, '{"max_admins": 9999, "max_operators": 9999, "max_analysts": 0}'::jsonb, true),
@@ -619,6 +817,9 @@ ON CONFLICT (code) DO UPDATE SET
   included_modules = EXCLUDED.included_modules,
   role_quotas = EXCLUDED.role_quotas,
   is_active = EXCLUDED.is_active;
+
+-- Inactivar planes legados bundles
+UPDATE tenant_plans SET is_active = false WHERE code IN ('starter', 'pro', 'enterprise');
 
 -- Catálogo Universal de Permisos Granulares de la Plataforma
 INSERT INTO core_permissions (key, module_code, name, description, category)
@@ -655,7 +856,9 @@ VALUES
   ('4see:catalog:read', '4see', 'Consultar Catálogo y Monitores', 'Permite ver productos y competidores monitoreados.', 'read'),
   ('4see:catalog:audit', '4see', 'Auditoría de Catálogo', 'Permite analizar diferencias y cambios de atributos en productos.', 'read'),
   ('4see:pricing:write', '4see', 'Gestión de Precios y Repricing', 'Permite ajustar reglas de precios sugeridos y alertas.', 'write'),
-  ('4see:margins:manage', '4see', 'Gestión de Márgenes Mínimos', 'Permite configurar umbrales de rentabilidad y alertas de quiebre.', 'write')
+  ('4see:margins:manage', '4see', 'Gestión de Márgenes Mínimos', 'Permite configurar umbrales de rentabilidad y alertas de quiebre.', 'write'),
+  ('4see:rules:manage', '4see', 'Gestionar Reglas SmartPrice', 'Permite crear, ordenar y parametrizar reglas deterministas de Dynamic Pricing.', 'write'),
+  ('4see:queue:approve', '4see', 'Aprobar o Rechazar Precios en Cola', 'Permite aplicar o descartar sugerencias de precio hacia las tiendas.', 'write')
 ON CONFLICT (key) DO UPDATE SET
   name = EXCLUDED.name,
   description = EXCLUDED.description,
@@ -743,7 +946,9 @@ VALUES
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:read'),
   ('c0000000-0000-0000-0000-000000000007', '4see:catalog:audit'),
   ('c0000000-0000-0000-0000-000000000007', '4see:pricing:write'),
-  ('c0000000-0000-0000-0000-000000000007', '4see:margins:manage')
+  ('c0000000-0000-0000-0000-000000000007', '4see:margins:manage'),
+  ('c0000000-0000-0000-0000-000000000007', '4see:rules:manage'),
+  ('c0000000-0000-0000-0000-000000000007', '4see:queue:approve')
 ON CONFLICT (role_id, permission_key) DO NOTHING;
 
 -- Permisos para Rol: 4SEE_USER
@@ -781,8 +986,13 @@ VALUES ('550e8400-e29b-41d4-a716-446655440000', 'drinklovers', 'Drink Lovers', '
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', 'pro', 'active', 15, 3000)
-ON CONFLICT (tenant_id) DO NOTHING;
+VALUES 
+  ('550e8400-e29b-41d4-a716-446655440000', 'kanban_enterprise', 'active', 9999, 999999),
+  ('550e8400-e29b-41d4-a716-446655440000', 'fourseee_business', 'active', 10, 0)
+ON CONFLICT (tenant_id, plan_code) DO UPDATE SET
+  status = EXCLUDED.status,
+  max_users = EXCLUDED.max_users,
+  max_orders_monthly = EXCLUDED.max_orders_monthly;
 
 INSERT INTO tenant_modules (tenant_id, module_code, is_enabled)
 VALUES 
@@ -807,14 +1017,17 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440000', 'vanesa', 'vanesa@drinklovers.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria DrinkLovers)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
--- Tenant 2: Poke Argentina
+-- Tenant 2: Poke Argentina (Exclusivo Logística)
 INSERT INTO tenant_tenants (id, slug, name, status)
 VALUES ('550e8400-e29b-41d4-a716-446655440001', 'poke', 'Poke', 'active')
 ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
-VALUES ('550e8400-e29b-41d4-a716-446655440001', 'pro', 'active', 15, 3000)
-ON CONFLICT (tenant_id) DO NOTHING;
+VALUES ('550e8400-e29b-41d4-a716-446655440001', 'kanban_simple', 'active', 4, 500)
+ON CONFLICT (tenant_id, plan_code) DO UPDATE SET
+  status = EXCLUDED.status,
+  max_users = EXCLUDED.max_users,
+  max_orders_monthly = EXCLUDED.max_orders_monthly;
 
 INSERT INTO tenant_modules (tenant_id, module_code, is_enabled)
 VALUES 
@@ -824,8 +1037,8 @@ VALUES
   ('550e8400-e29b-41d4-a716-446655440001', 'scanban-board', true),
   ('550e8400-e29b-41d4-a716-446655440001', 'scanban-scanner', true),
   ('550e8400-e29b-41d4-a716-446655440001', 'scanban', true),
-  ('550e8400-e29b-41d4-a716-446655440001', '4see', true)
-ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
+  ('550e8400-e29b-41d4-a716-446655440001', '4see', false)
+ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = EXCLUDED.is_enabled;
 
 INSERT INTO core_app_settings (tenant_id, key, value)
 VALUES ('550e8400-e29b-41d4-a716-446655440001', 'active_theme', 'omarchy_tiling')

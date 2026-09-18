@@ -35,6 +35,8 @@ HoloSpace implementa un modelo de roles dinámicos con granularidad a nivel de a
 | **4see** | `4see:catalog:audit` | audit | Auditar catálogo y ver diffs de competidores | superadmin, 4see_admin, 4see_user |
 | **4see** | `4see:pricing:write` | write | Actualizar precios y reglas de catálogo | superadmin, 4see_admin |
 | **4see** | `4see:margins:manage` | manage | Crear y modificar reglas de margen de ganancia | superadmin, 4see_admin |
+| **4see** | `4see:rules:manage` | write | Gestionar y ordenar reglas deterministas de Dynamic Pricing | superadmin, 4see_admin |
+| **4see** | `4see:queue:approve` | write | Aprobar o rechazar sugerencias de repricing hacia tiendas | superadmin, 4see_admin |
 
 ### 1.2 Catálogo de los 8 Roles del Sistema Basados en Módulos
 
@@ -52,7 +54,7 @@ Cada organización puede crear roles adicionales a medida a través del módulo 
 
 ## 2. Catálogo Oficial de Planes SaaS y Facturación B2B (lib/billing.js)
 
-La plataforma ofrece una estructura comercial de doble entrada: planes verticales especializados por producto (**Kanban** y **4see**) con cuotas desglosadas por rol, coexistiendo con los planes bundles consolidados para organizaciones globales.
+La plataforma ofrece una estructura comercial 100% vertical y modular por producto (**Kanban** y **4see**) con cuotas desglosadas por rol y soporte nativo de multi-suscripción concurrente por organización.
 
 ### 2.1 Línea Vertical Logística: Planes Módulo Kanban (con Scanner EAN-13)
 | Plan | Código | Módulos | Cuota Admins | Cuota Operarios | Usuarios Totales | Pedidos / Mes | Precio Mensual |
@@ -62,47 +64,28 @@ La plataforma ofrece una estructura comercial de doble entrada: planes verticale
 | **Kanban Enterprise** | `kanban_enterprise` | `core`, `kanban`, `scanner` | Ilimitado | Ilimitado | Ilimitado | Ilimitado | $299 USD |
 
 ### 2.2 Línea Vertical E-Commerce: Planes Módulo 4see (Inteligencia & Repricing)
-| Plan | Código | Módulos | Cuota Admins | Cuota Analistas | Usuarios Totales | SKUs / Monitores | Precio Mensual |
-| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
-| **4see Simple** | `fourseee_simple` | `core`, `4see` | 1 Admin | 2 Analistas | 3 usuarios | 50 productos | $49 USD |
-| **4see Business** | `fourseee_business` | `core`, `4see` | 2 Admins | 8 Analistas | 10 usuarios | 500 productos | $149 USD |
-| **4see Enterprise** | `fourseee_enterprise` | `core`, `4see` | Ilimitado | Ilimitado | Ilimitado | Ilimitado | $349 USD |
+| Plan | Código | Módulos | Cuota Admins | Cuota Analistas | Usuarios Totales | SKUs Propios | URLs Rivales / SKU | Frecuencia Scraping | Modo Dispatch | Precio Mensual |
+| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **4see Simple** | `fourseee_simple` | `core`, `4see` | 1 Admin | 2 Analistas | 3 usuarios | 50 productos | 3 competidores | Cada 24 hs | Manual (1 clic) | $49 USD |
+| **4see Business** | `fourseee_business` | `core`, `4see` | 2 Admins | 8 Analistas | 10 usuarios | 500 productos | 10 competidores | Cada 6 hs | Manual o Automático | $149 USD |
+| **4see Enterprise** | `fourseee_enterprise` | `core`, `4see` | Ilimitado | Ilimitado | Ilimitado | Ilimitado | Ilimitado | Cada 1 hora / On-demand | Manual, Auto + Push | $349 USD |
 
-### 2.3 Planes Bundles Consolidados Multi-Módulo (Catálogo General)
-```javascript
-const PLANS = {
-  starter: {
-    code: 'starter',
-    name: 'Plan Starter Inicial',
-    priceUsd: 49,
-    maxUsers: 5,
-    maxOrdersMonthly: 500,
-    includedModules: ['core', 'kanban', 'scanner'],
-    roleQuotas: { max_admins: 1, max_operators: 4, max_analysts: 0 },
-    description: 'Ideal para depósitos pequeños o pilotos operativos.'
-  },
-  pro: {
-    code: 'pro',
-    name: 'Plan Pro Profesional',
-    priceUsd: 149,
-    maxUsers: 15,
-    maxOrdersMonthly: 3000,
-    includedModules: ['core', 'kanban', 'scanner', '4see'],
-    roleQuotas: { max_admins: 3, max_operators: 12, max_analysts: 5 },
-    description: 'Para centros de distribución y empresas medianas con inteligencia e-commerce.'
-  },
-  enterprise: {
-    code: 'enterprise',
-    name: 'Plan Enterprise Ilimitado',
-    priceUsd: 499,
-    maxUsers: 999,
-    maxOrdersMonthly: 999999,
-    includedModules: ['core', 'tenant', 'kanban', 'scanner', '4see'],
-    roleQuotas: { max_admins: 999, max_operators: 999, max_analysts: 999 },
-    description: 'Capacidad ilimitada, soporte prioritario y todos los módulos desbloqueados.'
-  }
-};
-```
+### 2.3 Multi-Suscripción Concurrente y Consolidación Acumulada de Cuotas
+
+La plataforma no utiliza paquetes o bundles cerrados; cada organización (tenant) contrata de manera independiente y concurrente los planes que requiere para su operación:
+- **Planes Logísticos (Módulo Kanban + Scanner):** `kanban_simple`, `kanban_business` o `kanban_enterprise`.
+- **Planes E-Commerce (Módulo 4see Intelligence):** `fourseee_simple`, `fourseee_business` o `fourseee_enterprise`.
+
+#### Reglas de Consolidación de Cuotas por Organización:
+1. **Multi-Suscripción en Base de Datos:** La tabla `tenant_subscriptions` cuenta con restricción relacional `UNIQUE(tenant_id, plan_code)` que permite múltiples suscripciones activas simultáneas por empresa.
+2. **Consolidación de Usuarios Totales:** Si un tenant posee suscripciones activas en ambas verticales (ej. `drinklovers`), la cuota global de usuarios (`max_users`) se calcula como la suma acumulada de las cuotas de cada suscripción activa.
+3. **Consolidación de Cuotas Granulares por Rol:** Las capacidades permitidas de administradores (`max_admins`), operarios (`max_operators`) y analistas (`max_analysts`) se agregan acumulativamente entre todos los planes contratados.
+4. **Activación Modular Dinámica:** La presencia de una suscripción activa habilita automáticamente los módulos correspondientes en `tenant_modules` (Kanban habilita `kanban` y `scanner`; 4see habilita `4see`).
+
+#### Asignación Canónica de Tenants Semilla:
+- **Organización `poke`:** Suscripción única a `kanban_simple` (4 usuarios, 500 pedidos/mes, módulos `core`, `kanban`, `scanner`; módulo `4see` inactivo).
+- **Organización `drinklovers`:** Multi-suscripción activa a `kanban_enterprise` (usuarios y pedidos ilimitados) y `fourseee_business` (10 usuarios, 500 SKUs, 10 competidores/SKU; módulos `core`, `kanban`, `scanner`, `4see` activos).
+- **Organización `holospace` (SuperAdmin):** Multi-suscripción activa a `kanban_enterprise` y `fourseee_enterprise` (acceso y cuotas ilimitadas en todos los módulos).
 
 ---
 

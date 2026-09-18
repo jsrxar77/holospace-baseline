@@ -110,6 +110,12 @@ ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_connected_stores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_competitors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_product_competitor_mappings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_price_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_pricing_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fourseee_price_update_queue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_roles ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
@@ -123,7 +129,7 @@ CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
     OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
   );
 
--- Políticas RLS idénticas aplicadas sobre fourseee_connected_stores, fourseee_competitor_monitors, fourseee_catalog_items, fourseee_margin_rules, core_users, core_roles, core_audit_logs, core_app_settings y core_platform_audit_logs.
+-- Políticas RLS idénticas aplicadas sobre fourseee_products, fourseee_competitors, fourseee_product_competitor_mappings, fourseee_price_logs, fourseee_pricing_rules, fourseee_price_update_queue, fourseee_connected_stores, fourseee_competitor_monitors, fourseee_catalog_items, fourseee_margin_rules, core_users, core_roles, core_audit_logs, core_app_settings y core_platform_audit_logs.
 ```
 
 ---
@@ -210,16 +216,19 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
      - **Preferencia de Usuario:** Guardada en la columna `users.theme_preference`.
      - **Preferencia de Tenant:** Guardada en la tabla `app_settings (active_theme)`.
      - **Fallback de Plataforma:** `omarchy_tiling`.
+5. **Cero Hardcodes de Color en UI (Regla de Oro):** Queda terminantemente prohibido incorporar estilos inline con colores fijos (`style="background-color: #..."`) o clases fijas saturadas en barras de navegación, menús de módulos, submenús de features o tarjetas. Todos los componentes deben consumir obligatoriamente los tokens dinámicos del sistema (`var(--bg-main)`, `var(--card-bg)`, `var(--card-border)`, `var(--cobalt)`, `var(--emerald)`).
 
-### 7.2 Catálogo Oficial de los 5 Temas de Plataforma
+### 7.2 Catálogo Oficial de los 7 Temas de Plataforma (Dark y Light)
 
-| Clave (`key`) | Nombre Oficial | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`omarchy_tiling`** | **Omarchy Tiling** *(Predeterminado)* | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#121317` | Verde Menta (`#A6DA95`) |
-| **`omarchy_aetheria`** | **Omarchy Aetherial** | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#0E091D` (OLED) | Teal (`#14B9B5`) / Violeta (`#7C3AED`) |
-| **`soft_minimal_pastel`** | **Soft Pastel** | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#1E1E2E` (Catppuccin) | Menta (`#A6E3A1`) / Lavanda (`#89B4FA`) |
-| **`dark_glassmorphism`** | **Dark Glass** | `Outfit` | `24px` (Glass) | `#0B0E14` (Cristal oscuro) | Esmeralda (`#00E676`) / Cobalto (`#3B82F6`) |
-| **`cyberpunk_glassmorphism`**| **Cyberpunk Glass** | `Press Start 2P` | `8px` (Synthwave) | `#05050A` (Neon) | Cian (`#00FFCC`) / Magenta (`#FF007F`) |
+| Clave (`key`) | Nombre Oficial | Modo | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
+| :--- | :--- | :---: | :--- | :--- | :--- | :--- |
+| **`omarchy_tiling`** | **Omarchy Tiling** *(Predeterminado)* | Dark | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#121317` | Verde Menta (`#A6DA95`) |
+| **`omarchy_tiling_light`** | **Omarchy Light** | Light | `JetBrains Mono` | `4px` (Tiling estricto) | `#F6F8FA` | Esmeralda (`#059669`) / Cobalto (`#6366F1`) |
+| **`omarchy_aetheria`** | **Omarchy Aetherial** | Dark | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#0E091D` (OLED) | Teal (`#14B9B5`) / Violeta (`#7C3AED`) |
+| **`soft_minimal_pastel`** | **Soft Pastel** | Dark | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#1E1E2E` (Catppuccin Mocha) | Menta (`#A6E3A1`) / Lavanda (`#89B4FA`) |
+| **`soft_minimal_pastel_light`** | **Soft Pastel Light** | Light | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#EFF1F5` (Catppuccin Latte) | Verde (`#40A02B`) / Azul (`#1E66F5`) |
+| **`dark_glassmorphism`** | **Dark Glass** | Dark | `Outfit` | `24px` (Glass) | `#0B0E14` (Cristal oscuro) | Esmeralda (`#00E676`) / Cobalto (`#3B82F6`) |
+| **`cyberpunk_glassmorphism`**| **Cyberpunk Glass** | Dark | `Press Start 2P` | `8px` (Synthwave) | `#05050A` (Neon) | Cian (`#00FFCC`) / Magenta (`#FF007F`) |
 
 ### 7.3 Mapa de Tokens Estándar por Tema (`modules/themes/themes.json`)
 ```json
@@ -389,4 +398,15 @@ En cada operación de alta o cambio de rol de usuario (`POST /api/users` o `PUT 
     "message": "Su plan actual solo permite hasta 3 administradores. Actualice su suscripción para habilitar más cupos."
   }
   ```
+
+### 11.5 Multi-Suscripción Concurrente y Consolidación Acumulada de Cuotas (Zero Bundles)
+Para permitir máxima flexibilidad comercial sin acoplar módulos innecesarios a los clientes, la plataforma erradica los paquetes genéricos (bundles) y adopta una arquitectura de líneas comerciales 100% verticales (`kanban_*` y `fourseee_*`):
+
+1. **Restricción Relacional Compuesta:** En la tabla `tenant_subscriptions`, la restricción única se define como `UNIQUE(tenant_id, plan_code)`, posibilitando que una misma organización posea simultáneamente contratos independientes para logística y para inteligencia comercial.
+2. **Consolidación en Capa de Entitlements (`lib/entitlement.js`):** La función `getTenantSubscriptionAndUsage(tenantId)` recupera todas las suscripciones activas del tenant y consolida acumulativamente sus límites:
+   - Capacidad total de usuarios: $\sum \text{plan.max\_users}$.
+   - Capacidad mensual de pedidos: $\sum \text{plan.max\_orders\_monthly}$.
+   - Cuotas desglosadas por rol: $\sum \text{role\_quotas.max\_admins}$, $\sum \text{role\_quotas.max\_operators}$, $\sum \text{role\_quotas.max\_analysts}$.
+3. **Gobierno en API (`server.js`):** Los endpoints `/api/tenants` exponen de manera estructurada los planes contratados por vertical (`kanban_plan` y `fourseee_plan`) junto con el desglose completo de suscripciones en `subscriptions`, permitiendo a los administradores activar, cambiar o cancelar suscripciones por vertical de forma desacoplada.
+
 

@@ -57,11 +57,12 @@ async function runTests() {
   const mlExtract = await extractProductData('https://articulo.mercadolibre.com.ar/MLA-12345678-test');
   assert(mlExtract && mlExtract.store !== undefined, 'Extractor reconoce URLs estructuradas');
 
-  // 3. Entitlements y Planes Comerciales en lib/billing.js
-  console.log('\n--- 3. Catalogo de Planes Comerciales (Billing) ---');
-  assert(PLANS.pro.includedModules.includes('4see'), 'Plan PRO incluye modulo 4see');
-  assert(PLANS.enterprise.includedModules.includes('4see'), 'Plan ENTERPRISE incluye modulo 4see');
-  assert(!PLANS.starter.includedModules.includes('4see'), 'Plan STARTER NO incluye modulo 4see (upsell)');
+  // 3. Entitlements y Planes Comerciales Verticales en lib/billing.js
+  console.log('\n--- 3. Catalogo de Planes Comerciales Verticales (Billing) ---');
+  assert(PLANS.fourseee_simple.includedModules.includes('4see'), 'Plan 4see Simple incluye modulo 4see');
+  assert(PLANS.fourseee_business.includedModules.includes('4see'), 'Plan 4see Business incluye modulo 4see');
+  assert(PLANS.fourseee_enterprise.includedModules.includes('4see'), 'Plan 4see Enterprise incluye modulo 4see');
+  assert(!PLANS.kanban_simple.includedModules.includes('4see'), 'Plan Kanban Simple NO incluye modulo 4see (aislamiento vertical)');
 
   // 4. Verificación de Base de Datos (si PostgreSQL esta activo)
   console.log('\n--- 4. Integridad en Base de Datos PostgreSQL 16 ---');

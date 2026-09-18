@@ -54,8 +54,8 @@ graph TD
 
 ### Módulo 5: 4SEE (Inteligencia E-Commerce & Repricing en Piloto Automático)
 - **Estética Sprite:** Radar orbital / Ojo cibernético retro (`#C6A0F6` / `#F5A97F`).
-- **Propósito:** Vigilancia automática de competidores, auditoría de catálogo y repricing táctico de márgenes.
-- **Capacidades:** Scraping continuo y monitorización de precios de competidores (Mercado Libre, Tienda Nube, Shopify), Diff View interactivo para auditar discrepancias de precio propio vs mercado con aprobación en 1 clic, motor de rentabilidad real con deducción de comisiones de canal, impuestos y flete, alertas visuales de zona roja y sugerencias de repricing táctico (+8%).
+- **Propósito:** Vigilancia automática de competidores, auditoría de catálogo y dynamic pricing con piso inquebrantable.
+- **Capacidades:** Mapeo 1 a N de productos propios contra múltiples competidores simultáneos, blindaje matemático de margen piso inquebrantable (`min_price_floor = costo * (1 + margen) + costos_op`), captura de sobremargen por quiebre de stock ajeno (*out-of-stock*), histórico inmutable de precios, motor SmartPrice determinista IF/THEN, worker asíncrono no bloqueante en background y cola de repricing con aprobación en 1 clic o push automático hacia Tiendanube y WooCommerce.
 
 ---
 
@@ -89,15 +89,13 @@ graph TD
 | **Sugerencias de Repricing (+8%)**| Incluido | Incluido | Incluido |
 | **Integraciones ERP y Multi-Cuenta**| No disponible | 2 Cuentas Mercado Libre | Multi-cuenta + API |
 
-### Bundles Generales Multi-Módulo (Referencia)
+### Combinación Modular Multi-Suscripción
 
-| Característica | Plan STARTER | Plan PRO (Recomendado) | Plan ENTERPRISE |
-| :--- | :---: | :---: | :---: |
-| **Precio Mensual (ARS / USD)** | **$ 65.000 ARS / mes** | **$ 195.000 ARS / mes** | **$ 590.000 ARS / mes** |
-| **Usuarios Activos** | Hasta **5 usuarios** | Hasta **15 usuarios** | **999+ (Ilimitados)** |
-| **Cuotas por Rol** | 1 Admin, 4 Operarios | 3 Admins, 12 Operarios, 5 Analistas | Ilimitados |
-| **Volumen de Pedidos** | Hasta **500 órdenes / mes** | Hasta **3.000 órdenes / mes** | **999.999 órdenes / mes** |
-| **Módulos Incluidos** | Core, Kanban, Scanner | Core, Kanban, Scanner, 4see | Todos los módulos |
+Para empresas con operaciones integrales (depósito físico y venta online), HoloSpace permite contratar de forma simultánea e independiente planes de ambas líneas verticales:
+- **Vertical Logística:** Kanban Simple ($39 USD), Kanban Business ($119 USD) o Kanban Enterprise ($299 USD).
+- **Vertical E-Commerce:** 4see Simple ($49 USD), 4see Business ($149 USD) o 4see Enterprise ($349 USD).
+
+Las cuotas de usuarios y límites mensuales se consolidan acumulativamente en la organización, manteniendo el aislamiento estricto de datos y el acceso modular por rol.
 
 ---
 

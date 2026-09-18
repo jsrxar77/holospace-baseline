@@ -8,6 +8,10 @@ const { createStoreListing } = require('../lib/ontology');
 const { auditListing, auditCatalogBatch } = require('../lib/rules_engine');
 const { TiendanubeConnector } = require('../lib/connectors/tiendanube');
 const { WooCommerceConnector } = require('../lib/connectors/woocommerce');
+const { ensureSmartPriceTables } = require('../lib/ensure_tables');
+const { evaluateSmartPrice, calculateHardFloor, clampPrice } = require('../lib/smartprice');
+const { runScraperWorkerCycle, dispatchPriceUpdate } = require('../workers/scraper_worker');
+const { checkTenantProductQuota } = require('../../../lib/billing');
 
 let isStoreTableReady = false;
 async function ensureConnectedStoresTable() {
@@ -57,6 +61,7 @@ function maskStoreCredentials(creds = {}) {
  */
 async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdmin }) {
   await ensureConnectedStoresTable();
+  await ensureSmartPriceTables();
   const url = req.url;
   const pathPart = url.split('?')[0];
 
@@ -646,6 +651,332 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, id, metrics }));
+    return true;
+  }
+
+  // 4. CATÁLOGO PROPIO 1:N & PISO INQUEBRANTABLE (fourseee_products)
+  if (pathPart === '/api/4see/products' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const products = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_products ORDER BY created_at DESC'
+        : 'SELECT * FROM fourseee_products WHERE tenant_id = ? ORDER BY created_at DESC',
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, products }));
+    return true;
+  }
+
+  if (pathPart === '/api/4see/products' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+
+    // Verificar cuota de productos del plan
+    if (!isSuperAdmin) {
+      const quota = await checkTenantProductQuota(tenantId);
+      if (!quota.allowed) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: false,
+          error: `Has alcanzado el límite de ${quota.limit} productos monitoreados de tu plan (${quota.planCode}).`,
+          code: 'PLAN_PRODUCT_QUOTA_EXCEEDED',
+          currentCount: quota.current,
+          limit: quota.limit
+        }));
+        return true;
+      }
+    }
+
+    const { sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, store_id } = data || {};
+    if (!sku || !title) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'SKU y Título son requeridos.' }));
+      return true;
+    }
+
+    const id = crypto.randomUUID();
+    const cPrice = parseFloat(cost_price) || 0;
+    const opCosts = parseFloat(operating_costs) || 0;
+    const marginPct = parseFloat(min_margin_percentage) || 0;
+    const ceiling = max_price_ceiling ? parseFloat(max_price_ceiling) : null;
+    const curPrice = parseFloat(current_price) || 0;
+    const qty = parseInt(stock_quantity, 10) || 0;
+    const stockStatus = qty > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK';
+
+    await execute(
+      `INSERT INTO fourseee_products
+       (id, tenant_id, store_id, sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, stock_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, tenantId, store_id || null, sku.trim(), title.trim(), cPrice, opCosts, marginPct, ceiling, curPrice, qty, stockStatus],
+      { tenantId }
+    );
+
+    const created = await getOne('SELECT * FROM fourseee_products WHERE id = ?', [id], { tenantId });
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, product: created }));
+    return true;
+  }
+
+  // 5. DIRECTORIO DE COMPETIDORES (fourseee_competitors)
+  if (pathPart === '/api/4see/competitors' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const competitors = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_competitors ORDER BY name ASC'
+        : 'SELECT * FROM fourseee_competitors WHERE tenant_id = ? ORDER BY name ASC',
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, competitors }));
+    return true;
+  }
+
+  if (pathPart === '/api/4see/competitors' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const { name, domain_url, priority_weight = 1 } = data || {};
+    if (!name || !domain_url) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Nombre y URL de dominio son requeridos.' }));
+      return true;
+    }
+
+    const id = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_competitors (id, tenant_id, name, domain_url, priority_weight)
+       VALUES (?, ?, ?, ?, ?)`,
+      [id, tenantId, name.trim(), domain_url.trim().toLowerCase(), parseInt(priority_weight, 10) || 1],
+      { tenantId }
+    );
+
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, id, name, domain_url }));
+    return true;
+  }
+
+  // 6. MAPEO 1:N PRODUCTO <-> URLs COMPETIDORES (fourseee_product_competitor_mappings)
+  if (pathPart === '/api/4see/mappings' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const mappings = await query(
+      isSuperAdmin
+        ? `SELECT m.*, p.title as product_title, p.sku, c.name as competitor_name, c.domain_url
+           FROM fourseee_product_competitor_mappings m
+           JOIN fourseee_products p ON m.product_id = p.id
+           JOIN fourseee_competitors c ON m.competitor_id = c.id
+           ORDER BY m.created_at DESC`
+        : `SELECT m.*, p.title as product_title, p.sku, c.name as competitor_name, c.domain_url
+           FROM fourseee_product_competitor_mappings m
+           JOIN fourseee_products p ON m.product_id = p.id
+           JOIN fourseee_competitors c ON m.competitor_id = c.id
+           WHERE m.tenant_id = ?
+           ORDER BY m.created_at DESC`,
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, mappings }));
+    return true;
+  }
+
+  if (pathPart === '/api/4see/mappings' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const { product_id, competitor_id, competitor_url, selector_config = {} } = data || {};
+    if (!product_id || !competitor_id || !competitor_url) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'product_id, competitor_id y competitor_url son obligatorios.' }));
+      return true;
+    }
+
+    const id = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_product_competitor_mappings
+       (id, tenant_id, product_id, competitor_id, competitor_url, selector_config)
+       VALUES (?, ?, ?, ?, ?, ?::jsonb)`,
+      [id, tenantId, product_id, competitor_id, competitor_url.trim(), JSON.stringify(selector_config)],
+      { tenantId }
+    );
+
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, id, product_id, competitor_id }));
+    return true;
+  }
+
+  // 7. REGLAS SMARTPRICE (fourseee_pricing_rules)
+  if (pathPart === '/api/4see/rules' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const rules = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_pricing_rules ORDER BY priority DESC, created_at DESC'
+        : 'SELECT * FROM fourseee_pricing_rules WHERE tenant_id = ? ORDER BY priority DESC, created_at DESC',
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, rules }));
+    return true;
+  }
+
+  if (pathPart === '/api/4see/rules' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:rules:manage')) {
+      sendPermissionError(res, '4see:rules:manage');
+      return true;
+    }
+
+    const { name, trigger_condition, target_competitor_id, action_type, offset_value, auto_dispatch, priority, product_id } = data || {};
+    if (!name || !trigger_condition || !action_type) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'name, trigger_condition y action_type son requeridos.' }));
+      return true;
+    }
+
+    const id = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_pricing_rules
+       (id, tenant_id, product_id, name, trigger_condition, target_competitor_id, action_type, offset_value, auto_dispatch, priority)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        tenantId,
+        product_id || null,
+        name.trim(),
+        trigger_condition,
+        target_competitor_id || null,
+        action_type,
+        parseFloat(offset_value) || 0,
+        Boolean(auto_dispatch),
+        parseInt(priority, 10) || 0
+      ],
+      { tenantId }
+    );
+
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, id, name }));
+    return true;
+  }
+
+  // 8. COLA DE SUGERENCIAS Y APROBACIÓN MANUAL / AUTO-DISPATCH (fourseee_price_update_queue)
+  if (pathPart === '/api/4see/queue' && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const queue = await query(
+      isSuperAdmin
+        ? `SELECT q.*, p.title as product_title, p.sku, p.min_price_floor, p.cost_price, r.name as rule_name
+           FROM fourseee_price_update_queue q
+           JOIN fourseee_products p ON q.product_id = p.id
+           LEFT JOIN fourseee_pricing_rules r ON q.rule_id = r.id
+           ORDER BY q.created_at DESC`
+        : `SELECT q.*, p.title as product_title, p.sku, p.min_price_floor, p.cost_price, r.name as rule_name
+           FROM fourseee_price_update_queue q
+           JOIN fourseee_products p ON q.product_id = p.id
+           LEFT JOIN fourseee_pricing_rules r ON q.rule_id = r.id
+           WHERE q.tenant_id = ?
+           ORDER BY q.created_at DESC`,
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, queue }));
+    return true;
+  }
+
+  if (pathPart.startsWith('/api/4see/queue/') && pathPart.endsWith('/approve') && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:queue:approve')) {
+      sendPermissionError(res, '4see:queue:approve');
+      return true;
+    }
+
+    const queueId = pathPart.replace('/api/4see/queue/', '').replace('/approve', '').trim();
+    const item = await getOne(
+      'SELECT q.*, p.store_id FROM fourseee_price_update_queue q JOIN fourseee_products p ON q.product_id = p.id WHERE q.id = ? AND q.tenant_id = ?',
+      [queueId, tenantId],
+      { tenantId }
+    );
+
+    if (!item) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Item de cola no encontrado.' }));
+      return true;
+    }
+
+    try {
+      if (item.store_id) {
+        await dispatchPriceUpdate(tenantId, item.id, item.product_id, item.suggested_price, item.store_id);
+      } else {
+        // Si no hay tienda conectada, actualizar el precio local directamente
+        await execute(
+          'UPDATE fourseee_products SET current_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+          [item.suggested_price, item.product_id, tenantId],
+          { tenantId }
+        );
+        await execute(
+          'UPDATE fourseee_price_update_queue SET status = \'APPLIED\', applied_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+          [item.id, tenantId],
+          { tenantId }
+        );
+      }
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, message: 'Precio aprobado y aplicado exitosamente.', newPrice: item.suggested_price }));
+      return true;
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: `Error aplicando precio: ${err.message}` }));
+      return true;
+    }
+  }
+
+  if (pathPart.startsWith('/api/4see/queue/') && pathPart.endsWith('/reject') && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:queue:approve')) {
+      sendPermissionError(res, '4see:queue:approve');
+      return true;
+    }
+
+    const queueId = pathPart.replace('/api/4see/queue/', '').replace('/reject', '').trim();
+    await execute(
+      'UPDATE fourseee_price_update_queue SET status = \'REJECTED\' WHERE id = ? AND tenant_id = ?',
+      [queueId, tenantId],
+      { tenantId }
+    );
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, message: 'Sugerencia rechazada.' }));
+    return true;
+  }
+
+  // 9. TRIGGER WORKER CYCLE ON-DEMAND (Para testing y cron)
+  if (pathPart === '/api/4see/worker/run-cycle' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+
+    const summary = await runScraperWorkerCycle({ tenantId, isSuperAdmin });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, summary }));
     return true;
   }
 

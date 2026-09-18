@@ -15,10 +15,12 @@ description: >
 
 1. **Definicion Unica en `/modules/themes/themes.json`**:
    Queda terminantemente prohibido hardcodear paletas de color, radios de borde o temas propios en subcarpetas de modulos individuales (`modules/kanban`, `modules/scanner`, etc.).
-2. **Los 5 Temas Oficiales**:
+2. **Los 7 Temas Oficiales (Dark y Light)**:
    - `omarchy_tiling` (Omarchy Tiling - Predeterminado, bordes marcados, estetica Window Manager)
+   - `omarchy_tiling_light` (Omarchy Light)
    - `omarchy_aetheria` (Omarchy Aetherial)
    - `soft_minimal_pastel` (Soft Pastel)
+   - `soft_minimal_pastel_light` (Soft Pastel Light)
    - `dark_glassmorphism` (Dark Glass)
    - `cyberpunk_glassmorphism` (Cyberpunk Glass)
 
@@ -61,3 +63,14 @@ async function applyCurrentTheme() {
 
 * **Animaciones de estrellas/asteroides**: Exclusivas del Landing Page (`/`) y de la pantalla de Login.
 * **Vistas de Trabajo**: Los modulos autenticados (`/tenant`, `/core`, `/kanban`, `/scanner` y nuevos modulos) deben usar **fondos solidos o gradientes estaticos sobrios** para optimizar el rendimiento y la legibilidad operativa.
+
+---
+
+## 4. Prohibicion Estricta de Hardcodes en UI (Cero Estilos Inline)
+
+1. **Barras y Navegacion Dinamica**:
+   - Queda prohibido escribir `style="background-color: #0F131A;"` o similares en elementos `<nav>`, `header` o barras de pestanas.
+   - Las barras de navegacion (`.header-nav-line`) y botones de pestanas (`.nav-tab`) deben usar siempre `background-color: var(--card-bg)` o `var(--bg-main)`, con bordes `var(--card-border)`.
+2. **Pestanas y Botones Activos (`.active`)**:
+   - Cada tema define su token de acento (`var(--emerald)` o `var(--cobalt)`).
+   - Queda prohibido forzar reglas globales con `#00d4ff` o colores estaticos que rompan la armonia visual de temas claros u oscuros.

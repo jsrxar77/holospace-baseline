@@ -27,6 +27,7 @@ const SUITES = [
   { name: '4see: Margin Calculations & Repricing', file: 'bin/test-4see.js', module: '4SEE' },
   { name: '4see: E-Commerce Ontology & On-The-Fly Audit', file: 'tests/test-4see-ontology.js', module: '4SEE' },
   { name: '4see: Multi-Store Persistence & RLS', file: 'tests/test-4see-stores.js', module: '4SEE' },
+  { name: '4see: SmartPrice 1:N & Hard Floor Protection', file: 'tests/test-4see-smartprice.js', module: '4SEE' },
   { name: 'Core/Tenant: Google OAuth2 & Role Quotas', file: 'tests/test-oauth-and-role-quotas.js', module: 'CORE' }
 ];
 

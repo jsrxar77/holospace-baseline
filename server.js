@@ -752,18 +752,14 @@ const server = http.createServer(async (req, res) => {
       // 5.1 SAAS: CATÁLOGO Y GESTIÓN DE PLANES (SUPERADMIN ONLY PARA CREACIÓN)
       if (req.url === '/api/plans' && req.method === 'GET') {
         try {
-          const plansList = await query('SELECT * FROM tenant_plans ORDER BY max_users ASC', [], { isSuperAdmin: true });
+          const plansList = await query('SELECT * FROM tenant_plans WHERE is_active = true ORDER BY max_users ASC', [], { isSuperAdmin: true });
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true, plans: plansList }));
         } catch (e) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             success: true,
-            plans: [
-              { code: 'starter', name: 'Plan Starter Inicial', max_users: 5, max_orders_monthly: 500, included_modules: ['core', 'kanban'] },
-              { code: 'pro', name: 'Plan Pro Profesional', max_users: 15, max_orders_monthly: 3000, included_modules: ['core', 'kanban', 'scanner', '4see'] },
-              { code: 'enterprise', name: 'Plan Enterprise Ilimitado', max_users: 999, max_orders_monthly: 999999, included_modules: ['tenant', 'core', 'kanban', 'scanner', '4see'] }
-            ]
+            plans: Object.values(PLANS)
           }));
         }
         return;
@@ -797,14 +793,31 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const tenants = await query(`
-          SELECT t.id, t.slug, t.name, t.status, t.created_at,
-                 s.plan_code, s.status as sub_status, s.max_users, s.max_orders_monthly
+          SELECT t.id, t.slug, t.name, t.status, t.created_at
           FROM tenant_tenants t
-          LEFT JOIN tenant_subscriptions s ON t.id = s.tenant_id
           ORDER BY t.created_at ASC
         `, [], { isSuperAdmin: true });
 
         for (const t of tenants) {
+          t.subscriptions = await query(
+            'SELECT plan_code, status as sub_status, max_users, max_orders_monthly FROM tenant_subscriptions WHERE tenant_id = ? AND status = \'active\' ORDER BY created_at ASC',
+            [t.id],
+            { isSuperAdmin: true }
+          );
+          t.kanban_plan = t.subscriptions.find(s => s.plan_code.startsWith('kanban_'))?.plan_code || null;
+          t.fourseee_plan = t.subscriptions.find(s => s.plan_code.startsWith('fourseee_'))?.plan_code || null;
+          t.plan_code = [t.kanban_plan, t.fourseee_plan].filter(Boolean).join(' + ') || (t.subscriptions[0]?.plan_code || 'kanban_simple');
+
+          let totalUsers = 0;
+          let totalOrders = 0;
+          for (const s of t.subscriptions) {
+            totalUsers += parseInt(s.max_users, 10) || 0;
+            totalOrders += parseInt(s.max_orders_monthly, 10) || 0;
+          }
+          t.max_users = totalUsers > 0 ? totalUsers : 4;
+          t.max_orders_monthly = totalOrders;
+          t.sub_status = t.subscriptions[0]?.sub_status || 'active';
+
           t.modules = await query('SELECT module_code, is_enabled FROM tenant_modules WHERE tenant_id = ?', [t.id], { isSuperAdmin: true });
           t.users = await query('SELECT id, email, name, role, is_active, theme_preference FROM core_users WHERE tenant_id = ? ORDER BY role, name', [t.id], { isSuperAdmin: true });
           const themeRow = await getOne("SELECT value FROM core_app_settings WHERE key = 'active_theme' AND tenant_id = ?", [t.id], { isSuperAdmin: true });
@@ -821,7 +834,7 @@ const server = http.createServer(async (req, res) => {
           sendPermissionError(res, 'tenant:tenants:manage');
           return;
         }
-        const { name, slug, planCode = 'starter', maxUsers, maxOrdersMonthly, adminName, adminEmail, adminPassword } = data || {};
+        const { name, slug, kanbanPlanCode, fourseeePlanCode, planCode, maxUsers, maxOrdersMonthly, adminName, adminEmail, adminPassword } = data || {};
         if (!name || !slug) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Nombre de empresa y slug son obligatorios.' }));
@@ -836,8 +849,6 @@ const server = http.createServer(async (req, res) => {
         }
 
         const newTenantId = crypto.randomUUID();
-        const subId = crypto.randomUUID();
-        const selectedPlan = PLANS[planCode] || PLANS.starter;
 
         await execute(
           'INSERT INTO tenant_tenants (id, slug, name, status, created_at, updated_at) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)',
@@ -845,14 +856,28 @@ const server = http.createServer(async (req, res) => {
           { isSuperAdmin: true }
         );
 
-        await execute(
-          "INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')",
-          [subId, newTenantId, selectedPlan.code, 'active', maxUsers || selectedPlan.maxUsers, maxOrdersMonthly || selectedPlan.maxOrdersMonthly],
-          { isSuperAdmin: true }
-        );
+        // Determinar planes a asignar por vertical
+        const plansToAssign = [];
+        if (kanbanPlanCode && kanbanPlanCode !== 'none') {
+          plansToAssign.push(PLANS[kanbanPlanCode] || PLANS.kanban_simple);
+        }
+        if (fourseeePlanCode && fourseeePlanCode !== 'none') {
+          plansToAssign.push(PLANS[fourseeePlanCode] || PLANS.fourseee_simple);
+        }
+        if (plansToAssign.length === 0) {
+          const fallback = PLANS[planCode] || (planCode === 'pro' ? PLANS.kanban_business : PLANS.kanban_simple);
+          plansToAssign.push(fallback);
+        }
 
-        for (const mod of selectedPlan.includedModules) {
-          await setTenantModuleState(newTenantId, mod, true, currentUser.email);
+        for (const p of plansToAssign) {
+          await execute(
+            "INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')",
+            [crypto.randomUUID(), newTenantId, p.code, 'active', maxUsers || p.maxUsers, maxOrdersMonthly !== undefined ? maxOrdersMonthly : p.maxOrdersMonthly],
+            { isSuperAdmin: true }
+          );
+          for (const mod of p.includedModules) {
+            await setTenantModuleState(newTenantId, mod, true, currentUser.email);
+          }
         }
 
         if (adminEmail && adminPassword && adminName) {
@@ -914,7 +939,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
 
-        const { tenantId: targetTenantId, name, planCode, maxUsers, maxOrdersMonthly, activeTheme, modules } = data || {};
+        const { tenantId: targetTenantId, name, kanbanPlanCode, fourseeePlanCode, planCode, maxUsers, maxOrdersMonthly, activeTheme, modules } = data || {};
         if (!targetTenantId || !name) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'El ID de la organización y el nombre son obligatorios.' }));
@@ -935,17 +960,69 @@ const server = http.createServer(async (req, res) => {
           { isSuperAdmin: true }
         );
 
-        // 2. Actualizar Suscripción y Cuotas si se especificó plan
-        if (planCode) {
-          const selectedPlan = PLANS[planCode] || PLANS.starter;
+        // 2. Actualizar Suscripciones Verticales
+        if (kanbanPlanCode !== undefined) {
+          if (kanbanPlanCode === 'none') {
+            await execute("DELETE FROM tenant_subscriptions WHERE tenant_id = ? AND plan_code LIKE 'kanban_%'", [targetTenant.id], { isSuperAdmin: true });
+            await setTenantModuleState(targetTenant.id, 'kanban', false, currentUser.email);
+            await setTenantModuleState(targetTenant.id, 'scanner', false, currentUser.email);
+          } else if (PLANS[kanbanPlanCode]) {
+            const kp = PLANS[kanbanPlanCode];
+            // Asegurar que solo exista una suscripción kanban para este tenant
+            await execute("DELETE FROM tenant_subscriptions WHERE tenant_id = ? AND plan_code LIKE 'kanban_%' AND plan_code != ?", [targetTenant.id, kp.code], { isSuperAdmin: true });
+            await execute(
+              `INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end)
+               VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')
+               ON CONFLICT (tenant_id, plan_code) DO UPDATE SET
+                 status = 'active',
+                 max_users = EXCLUDED.max_users,
+                 max_orders_monthly = EXCLUDED.max_orders_monthly,
+                 updated_at = CURRENT_TIMESTAMP`,
+              [crypto.randomUUID(), targetTenant.id, kp.code, maxUsers !== undefined ? parseInt(maxUsers, 10) : kp.maxUsers, maxOrdersMonthly !== undefined ? parseInt(maxOrdersMonthly, 10) : kp.maxOrdersMonthly],
+              { isSuperAdmin: true }
+            );
+            for (const mod of kp.includedModules) {
+              await setTenantModuleState(targetTenant.id, mod, true, currentUser.email);
+            }
+          }
+        }
+
+        if (fourseeePlanCode !== undefined) {
+          if (fourseeePlanCode === 'none') {
+            await execute("DELETE FROM tenant_subscriptions WHERE tenant_id = ? AND plan_code LIKE 'fourseee_%'", [targetTenant.id], { isSuperAdmin: true });
+            await setTenantModuleState(targetTenant.id, '4see', false, currentUser.email);
+          } else if (PLANS[fourseeePlanCode]) {
+            const fp = PLANS[fourseeePlanCode];
+            // Asegurar que solo exista una suscripción fourseee para este tenant
+            await execute("DELETE FROM tenant_subscriptions WHERE tenant_id = ? AND plan_code LIKE 'fourseee_%' AND plan_code != ?", [targetTenant.id, fp.code], { isSuperAdmin: true });
+            await execute(
+              `INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end)
+               VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')
+               ON CONFLICT (tenant_id, plan_code) DO UPDATE SET
+                 status = 'active',
+                 max_users = EXCLUDED.max_users,
+                 max_orders_monthly = EXCLUDED.max_orders_monthly,
+                 updated_at = CURRENT_TIMESTAMP`,
+              [crypto.randomUUID(), targetTenant.id, fp.code, fp.maxUsers, fp.maxOrdersMonthly],
+              { isSuperAdmin: true }
+            );
+            for (const mod of fp.includedModules) {
+              await setTenantModuleState(targetTenant.id, mod, true, currentUser.email);
+            }
+          }
+        }
+
+        // Compatibilidad hacia atrás: si solo enviaron planCode
+        if (planCode && kanbanPlanCode === undefined && fourseeePlanCode === undefined) {
+          const selectedPlan = PLANS[planCode] || (planCode === 'pro' ? PLANS.kanban_business : PLANS.kanban_simple);
           const finalMaxUsers = maxUsers !== undefined ? parseInt(maxUsers, 10) : selectedPlan.maxUsers;
           const finalMaxOrders = maxOrdersMonthly !== undefined ? parseInt(maxOrdersMonthly, 10) : selectedPlan.maxOrdersMonthly;
 
           await execute(
             `INSERT INTO tenant_subscriptions (id, tenant_id, plan_code, status, max_users, max_orders_monthly, current_period_start, current_period_end)
              VALUES (?, ?, ?, 'active', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + interval '30 days')
-             ON CONFLICT (tenant_id) DO UPDATE SET
-               plan_code = EXCLUDED.plan_code,
+             ON CONFLICT (tenant_id, plan_code) DO UPDATE SET
+               status = 'active',
                max_users = EXCLUDED.max_users,
                max_orders_monthly = EXCLUDED.max_orders_monthly,
                updated_at = CURRENT_TIMESTAMP`,
@@ -1455,23 +1532,36 @@ const server = http.createServer(async (req, res) => {
             return;
           }
 
-          // Validar límites de usuarios y cuotas por rol del plan
-          const subRow = await getOne(
+          // Validar límites de usuarios y cuotas por rol consolidados de todas las suscripciones activas
+          const activeSubs = await query(
             `SELECT s.plan_code, s.max_users, p.role_quotas
              FROM tenant_subscriptions s
              LEFT JOIN tenant_plans p ON s.plan_code = p.code
-             WHERE s.tenant_id = ? AND s.status = 'active'
-             ORDER BY s.created_at DESC LIMIT 1`,
+             WHERE s.tenant_id = ? AND s.status = 'active'`,
             [targetTenantId],
             { isSuperAdmin: true }
           );
 
-          if (subRow) {
-            const planMeta = (subRow && subRow.plan_code) ? (PLANS[subRow.plan_code] || {}) : {};
-            const roleQuotas = (subRow && subRow.role_quotas) ? subRow.role_quotas : (planMeta.roleQuotas || null);
+          if (activeSubs && activeSubs.length > 0) {
+            let consolidatedMaxUsers = 0;
+            const consolidatedRoleQuotas = { max_admins: 0, max_operators: 0, max_analysts: 0 };
+            let hasRoleQuotas = false;
+
+            for (const subRow of activeSubs) {
+              const planMeta = (subRow && subRow.plan_code) ? (PLANS[subRow.plan_code] || {}) : {};
+              const quotas = (subRow && subRow.role_quotas) ? subRow.role_quotas : (planMeta.roleQuotas || {});
+              consolidatedMaxUsers += (subRow.max_users || planMeta.maxUsers || 0);
+
+              if (quotas && typeof quotas === 'object') {
+                hasRoleQuotas = true;
+                if (typeof quotas.max_admins === 'number') consolidatedRoleQuotas.max_admins += quotas.max_admins;
+                if (typeof quotas.max_operators === 'number') consolidatedRoleQuotas.max_operators += quotas.max_operators;
+                if (typeof quotas.max_analysts === 'number') consolidatedRoleQuotas.max_analysts += quotas.max_analysts;
+              }
+            }
 
             // Validar límite total de usuarios
-            const maxUsers = subRow.max_users || planMeta.maxUsers || 9999;
+            const maxUsers = consolidatedMaxUsers > 0 ? consolidatedMaxUsers : 9999;
             const totalUsersRow = await getOne(
               'SELECT COUNT(*) as count FROM core_users WHERE tenant_id = ? AND is_active = true',
               [targetTenantId],
@@ -1483,13 +1573,13 @@ const server = http.createServer(async (req, res) => {
               res.end(JSON.stringify({
                 success: false,
                 code: 'USER_LIMIT_EXCEEDED',
-                error: `Límite total alcanzado: el plan actual permite hasta ${maxUsers} usuarios. Actualice su plan para continuar.`
+                error: `Límite total alcanzado: las suscripciones actuales permiten hasta ${maxUsers} usuarios. Actualice su suscripción para continuar.`
               }));
               return;
             }
 
             // Validar cuotas específicas por rol
-            if (roleQuotas) {
+            if (hasRoleQuotas) {
               let quotaKey = null;
               let roleLabel = '';
               const normalizedRole = targetRole.toUpperCase();
@@ -1505,8 +1595,8 @@ const server = http.createServer(async (req, res) => {
                 roleLabel = 'Analista';
               }
 
-              if (quotaKey && typeof roleQuotas[quotaKey] === 'number') {
-                const limit = roleQuotas[quotaKey];
+              if (quotaKey && typeof consolidatedRoleQuotas[quotaKey] === 'number') {
+                const limit = consolidatedRoleQuotas[quotaKey];
                 let countFilter = '';
                 if (quotaKey === 'max_admins') countFilter = "AND (role LIKE '%ADMIN%')";
                 if (quotaKey === 'max_operators') countFilter = "AND (role LIKE '%OPERATOR%')";

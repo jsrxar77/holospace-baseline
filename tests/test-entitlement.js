@@ -45,9 +45,9 @@ async function runTests() {
 
   // 4. Consulta de Suscripción y Cuotas
   const subData = await getTenantSubscriptionAndUsage(TEST_TENANT_ID);
-  assert(subData.subscription.planCode === 'pro', 'Plan de suscripción correcto (Pro)');
-  assert(subData.subscription.maxUsers === 15, 'Límite de usuarios correcto (15)');
-  assert(subData.subscription.maxOrdersMonthly === 3000, 'Límite de pedidos mensual correcto (3000)');
+  assert(subData.subscription.planCode.includes('kanban_enterprise') && subData.subscription.planCode.includes('fourseee_business'), 'Planes de suscripción vertical correctos (Kanban Enterprise + 4see Business)');
+  assert(subData.subscription.maxUsers >= 9999, 'Límite de usuarios correcto para Enterprise');
+  assert(subData.subscription.maxOrdersMonthly >= 999999, 'Límite de pedidos mensual ilimitado para Kanban Enterprise');
   assert(typeof subData.usage.currentUsers === 'number', 'Conteo de usuarios activos calculado');
   assert(Array.isArray(subData.entitlements) && subData.entitlements.includes('scanban'), 'Lista de entitlements incluye scanban');
 

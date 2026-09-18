@@ -32,9 +32,10 @@ function assert(condition, desc) {
 async function runTests() {
   // 1. Catálogo de Planes Comerciales
   console.log('\n--- 1. Catálogo de Planes Comerciales ---');
-  assert(PLANS.starter && PLANS.pro && PLANS.enterprise, 'Planes Starter, Pro y Enterprise definidos');
-  assert(PLANS.pro.priceUsd === 149, 'Precio del Plan Pro = $149 USD');
-  assert(PLANS.pro.includedModules.includes('kanban'), 'Plan Pro incluye módulo ScanBan');
+  assert(PLANS.kanban_simple && PLANS.kanban_business && PLANS.kanban_enterprise, 'Línea Vertical Logística Kanban definida');
+  assert(PLANS.fourseee_simple && PLANS.fourseee_business && PLANS.fourseee_enterprise, 'Línea Vertical E-Commerce 4see definida');
+  assert(PLANS.kanban_business.priceUsd === 119, 'Precio del Plan Kanban Business = $119 USD');
+  assert(PLANS.kanban_business.includedModules.includes('kanban'), 'Plan Kanban Business incluye módulo Kanban');
 
   // 2. Flujo de Auto-Registro de Nueva Organización (Tenant Onboarding)
   console.log('\n--- 2. Auto-Registro de Nueva Organización B2B ---');
@@ -47,7 +48,7 @@ async function runTests() {
     adminName: 'CEO Demo Corp',
     adminEmail: testEmail,
     password: 'PasswordSuperSegura2026!',
-    planCode: 'pro'
+    planCode: 'kanban_business'
   });
 
   assert(regResult.success === true, 'Auto-registro completado con éxito');
@@ -56,28 +57,28 @@ async function runTests() {
 
   // 3. Verificación de Aprovisionamiento de Suscripción y Módulos
   const subData = await getTenantSubscriptionAndUsage(regResult.tenant.id);
-  assert(subData.subscription.planCode === 'pro', 'Suscripción inicial asignada en Plan Pro');
+  assert(subData.subscription.planCode.includes('kanban_business'), 'Suscripción inicial asignada en Plan Kanban Business');
   assert(subData.entitlements.includes('kanban'), 'Módulo Kanban aprovisionado automáticamente');
 
   // 4. Creación de Sesión de Checkout
   console.log('\n--- 4. Generación de Checkout Session ---');
-  const checkout = await createCheckoutSession(regResult.tenant.id, 'enterprise');
+  const checkout = await createCheckoutSession(regResult.tenant.id, 'kanban_enterprise');
   assert(checkout.success === true, 'Sesión de checkout creada con éxito');
-  assert(checkout.checkoutUrl.includes('enterprise'), 'URL de checkout contiene el plan de destino');
+  assert(checkout.checkoutUrl.includes('kanban_enterprise'), 'URL de checkout contiene el plan de destino');
 
   // 5. Procesamiento de Webhook de Pago
   console.log('\n--- 5. Procesamiento de Webhooks de Pasarela ---');
   const webhookResult = await handlePaymentWebhook({
     eventType: 'payment.succeeded',
     tenantId: regResult.tenant.id,
-    planCode: 'enterprise',
+    planCode: 'kanban_enterprise',
     status: 'active'
   });
   assert(webhookResult.success === true, 'Webhook de pago procesado con éxito');
 
   const upgradedSub = await getTenantSubscriptionAndUsage(regResult.tenant.id);
-  assert(upgradedSub.subscription.planCode === 'enterprise', 'Suscripción actualizada a Enterprise tras webhook');
-  assert(upgradedSub.entitlements.includes('tenant'), 'Módulo Tenant desbloqueado automáticamente tras upgrade');
+  assert(upgradedSub.subscription.planCode.includes('kanban_enterprise'), 'Suscripción actualizada a Kanban Enterprise tras webhook');
+  assert(upgradedSub.entitlements.includes('scanner'), 'Módulo Scanner desbloqueado automáticamente tras upgrade');
 
   // Limpieza estricta de datos de prueba
   const { execute } = require('../lib/db');

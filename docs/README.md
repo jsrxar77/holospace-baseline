@@ -12,9 +12,9 @@ HoloSpace es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de 
 |---|---|---|---|---|
 | **Tenant** | `http://localhost:3001/tenant` | `SUPERADMIN` (Exclusivo) | Mandatorio (`tenant`) | **Gobierno SaaS Multi-Tenant:** Alta de empresas, gestión de planes, cuotas, asignación de usuarios y licenciamiento. |
 | **Core** | `http://localhost:3001/core` | `SUPERADMIN` / `ADMIN` | Mandatorio (`core`) | Plataforma base: autenticación centralizada, gestión de usuarios, administración dinámica de roles y permisos granulares (RBAC Nivel 2), motor de temas y auditoría. |
-| **Kanban** | `http://localhost:3001/kanban` | `ADMIN` / `OPERATOR` | Plan Starter/Pro/Enterprise (`kanban`) | Tablero Kanban interactivo 4 columnas, ingesta/parseo automático de remitos PDF y explorador de pedidos. |
-| **Scanner** | `http://localhost:8081/scanner` (App Expo) | `OPERATOR` / `ADMIN` | Plan Starter/Pro/Enterprise (`scanner`) | App móvil/web de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
-| **4see** | `http://localhost:3001/4see` | `ADMIN` / `OPERATOR` | Plan Pro/Enterprise (`4see`) | Inteligencia comercial e-commerce: vigilancia de precios de competidores, auditoría de catálogo y protección de margen neto. |
+| **Kanban** | `http://localhost:3001/kanban` | `ADMIN` / `OPERATOR` | Planes Kanban (`kanban_simple`, `kanban_business`, `kanban_enterprise`) | Tablero Kanban interactivo 4 columnas, ingesta/parseo automático de remitos PDF y explorador de pedidos. |
+| **Scanner** | `http://localhost:8081/scanner` (App Expo) | `OPERATOR` / `ADMIN` | Planes Kanban (`kanban_simple`, `kanban_business`, `kanban_enterprise`) | App móvil/web de escaneo de códigos de barra EAN-13, validación sonora en depósito y despacho con estampa digital. |
+| **4see** | `http://localhost:3001/4see` | `ADMIN` / `OPERATOR` | Planes 4see (`fourseee_simple`, `fourseee_business`, `fourseee_enterprise`) | Inteligencia comercial e-commerce: vigilancia de precios de competidores, auditoría de catálogo y protección de margen neto. |
 
 ---
 
@@ -27,7 +27,7 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 
 | Rol | Organización / Tenant | Email | Contraseña | Acceso / Propósito |
 |---|---|---|---|---|
-| **SUPERADMIN** | `holospace` | `superadmin@holospace.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. |
+| **SUPERADMIN** | `holospace` | `superadmin@holospace.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. Multi-suscripción `kanban_enterprise` + `fourseee_enterprise`. |
 
 ---
 
@@ -35,13 +35,15 @@ El **único** usuario facultado para crear/administrar tenants, otorgar licencia
 Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentro de su tenant:
 
 #### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
+*Plan Contratado: Vertical Logística `kanban_simple` (Sin módulo 4see)*
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
-| **CORE_ADMIN** | `admin@poke.com.ar` | `poke2026` | **Core, Kanban & 4see (Web `3001`):** Administración interna, tablero operativo e inteligencia e-commerce de Poke. |
+| **CORE_ADMIN** | `admin@poke.com.ar` | `poke2026` | **Core & Kanban (Web `3001`):** Administración interna y tablero operativo de Poke. |
 | **SCANNER_OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 | **SCANNER_OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
 
 #### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
+*Planes Contratados: Multi-Suscripción `kanban_enterprise` (Logística) + `fourseee_business` (E-Commerce Intelligence)*
 | Rol | Email | Contrasena | Acceso / Entorno |
 |---|---|---|---|
 | **CORE_ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026` | **Core, Kanban & 4see (Web `3001`):** Administración interna, tablero operativo e inteligencia e-commerce de DrinkLovers. |
@@ -58,38 +60,38 @@ El proyecto está completamente dockerizado. **Con un solo comando se levanta to
 docker compose up -d --build
 ```
 
-> ⚡ **Hot-Reload en Desarrollo:** Cualquier cambio en el frontend (`public/`, `modules/*/public/`) o backend (`server.js`, `lib/`) se sincroniza instantáneamente sin necesidad de reiniciar los contenedores.
+> **Hot-Reload en Desarrollo:** Cualquier cambio en el frontend (`public/`, `modules/*/public/`) o backend (`server.js`, `lib/`) se sincroniza instantáneamente sin necesidad de reiniciar los contenedores.
 
 ---
 
-### 📊 Comandos para Ver Logs de Docker en Tiempo Real
+### Comandos para Ver Logs de Docker en Tiempo Real
 
 Para monitorear la actividad de los contenedores, depurar peticiones y ver eventos en vivo:
 
 | Objetivo | Comando |
 |---|---|
-| 🌐 **Ver logs de TODOS los servicios en tiempo real** | `docker compose logs -f` |
-| 🚀 **Ver logs únicamente del Servidor de Aplicación (Node.js)** | `docker compose logs -f app` |
-| 🐘 **Ver logs de la Base de Datos PostgreSQL 16** | `docker compose logs -f postgres` |
-| ⚡ **Ver logs del Servidor de Caché Redis** | `docker compose logs -f redis` |
-| 📜 **Ver las últimas 100 líneas y seguir en vivo** | `docker compose logs --tail=100 -f` |
+| **Ver logs de TODOS los servicios en tiempo real** | `docker compose logs -f` |
+| **Ver logs únicamente del Servidor de Aplicación (Node.js)** | `docker compose logs -f app` |
+| **Ver logs de la Base de Datos PostgreSQL 16** | `docker compose logs -f postgres` |
+| **Ver logs del Servidor de Caché Redis** | `docker compose logs -f redis` |
+| **Ver las últimas 100 líneas y seguir en vivo** | `docker compose logs --tail=100 -f` |
 
 ---
 
-### 🛑 Comandos de Control de Contenedores:
+### Comandos de Control de Contenedores:
 * **Detener todos los servicios:** `docker compose down`
 * **Reiniciar el servidor de aplicación:** `docker compose restart app`
 * **Limpiar y resetear la base de datos PostgreSQL:** `bash bin/devops-db-refresh.sh`
 
 ---
 
-## 🖥️ ¿Cómo Acceder a Cada Módulo y Aplicación?
+## ¿Cómo Acceder a Cada Módulo y Aplicación?
 
 Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo por su URL directa según el rol y propósito:
 
 ---
 
-### 1. 🏛️ Módulo Tenant (`SUPERADMIN`)
+### 1. Módulo Tenant (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/tenant`](http://localhost:3001/tenant)
 * **Credenciales de Acceso:**
   * **Email:** `superadmin@holospace.com.ar`
@@ -97,11 +99,11 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 * **Funcionalidades:**
   * **Directorio de Organizaciones:** Gestión integral de Tenants (Nombre, Slug, Plan, Límites de Usuarios y Órdenes/Mes).
   * **Licenciamiento Dinámico:** Activación/desactivación de módulos **Kanban** y **Scanner** por empresa.
-  * **Tema Base por Defecto:** Asignación del tema visual corporativo (`Omarchy Tiling WM`, `Omarchy Aetheria`, `Dark Glassmorphism`, etc.).
+  * **Tema Base por Defecto:** Asignación del tema visual corporativo (`Omarchy Tiling WM`, `Omarchy Light`, `Soft Pastel Light`, `Omarchy Aetheria`, `Dark Glassmorphism`, etc.).
 
 ---
 
-### 2. ⚙️ Módulo Core (`SUPERADMIN`)
+### 2. Módulo Core (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/core`](http://localhost:3001/core)
 * **Credenciales de Acceso:**
   * **Email:** `superadmin@holospace.com.ar`
@@ -113,7 +115,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ---
 
-### 3. 📋 Módulo Kanban (`ADMIN` / `OPERATOR`)
+### 3. Módulo Kanban (`ADMIN` / `OPERATOR`)
 * **URL Directa:** [`http://localhost:3001/kanban`](http://localhost:3001/kanban)
 * **Credenciales de Acceso por Empresa:**
   * **Poke Argentina:**
@@ -129,7 +131,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ---
 
-### 4. 📱 Módulo Scanner (`OPERATOR` / `ADMIN`)
+### 4. Módulo Scanner (`OPERATOR` / `ADMIN`)
 * **URL Web Directa:** [`http://localhost:8081/scanner`](http://localhost:8081/scanner) (o [`http://localhost:8081`](http://localhost:8081))
 * **Celular Físico (Expo Go):** Escanear el código QR del botón **`QR`** en `http://localhost:3001/kanban`.
 * **Credenciales de Operarios de Depósito:**
@@ -141,12 +143,23 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ---
 
+### 5. Módulo 4see (`CORE_ADMIN` / `4SEE_ADMIN`)
+* **URL Web Directa:** [`http://localhost:3001/4see`](http://localhost:3001/4see) (o sección 4see en la barra de navegación)
+* **Funcionalidades Principales:**
+  * **SmartPrice 1:N:** Mapeo de un único producto propio contra múltiples URLs de competidores directos y marketplaces.
+  * **Piso Inquebrantable de Margen:** Blindaje matemático contra pérdidas: $\text{Piso} = \text{Costo} \times (1 + \text{Margen}) + \text{Costos Operativos}$.
+  * **Captura de Sobremargen:** Ajuste automático hacia el PVP máximo permitido ante quiebre de stock ajeno (*out-of-stock*).
+  * **Worker Asíncrono en Background:** Tareas de scraping no bloqueantes y cola de sugerencias con aprobación manual o despacho push automático hacia Tiendanube y WooCommerce.
+  * **Auditoría Ontológica:** Detección de ausencias de GTIN/EAN, normalización y generador de EAN-13 internos GS1 (prefijo 200).
+
+---
+
 ## Batería de Pruebas y Validación Automatizada
 
 El proyecto incluye un runner unificado que ejecuta secuencialmente todas las suites de prueba para cada uno de los módulos de la plataforma dentro del contenedor Docker de aplicación:
 
 ```bash
-# Ejecutar la suite completa consolidada (11 suites, todos los módulos)
+# Ejecutar la suite completa consolidada (15 suites, todos los módulos)
 docker compose exec app node tests/run-all-tests.js
 
 # O ejecutar suites individuales por módulo:
@@ -163,16 +176,18 @@ docker compose exec app node tests/test-scanner-module.js      # Scanner: Pickin
 docker compose exec app node bin/test-4see.js                 # 4see: Rentabilidad, extractor y repricing
 docker compose exec app node tests/test-4see-ontology.js       # 4see: Ontología universal y auditoría on-the-fly
 docker compose exec app node tests/test-4see-stores.js         # 4see: Gestión multi-tienda persistente y RLS
+docker compose exec app node tests/test-4see-smartprice.js     # 4see: SmartPrice 1:N y piso inquebrantable
+docker compose exec app node tests/test-oauth-and-role-quotas.js # Core: Google OAuth2 y cuotas por rol
 ```
 
-O ejecutar el orquestador unificado de las 14 suites completas:
+O ejecutar el orquestador unificado de las 15 suites completas:
 ```bash
 docker compose exec app node tests/run-all-tests.js
 ```
 
 ---
 
-## 🛡️ Respaldos y Exportación Aislada de Tenants
+## Respaldos y Exportación Aislada de Tenants
 
 HoloSpace cuenta con herramientas de backup seguras y trazables:
 
@@ -187,7 +202,7 @@ node bin/tenant-dump.sh drinklovers
 
 ---
 
-## 📂 Estructura del Repositorio
+## Estructura del Repositorio
 
 ```
 holospace-baseline/
@@ -245,6 +260,12 @@ holospace-baseline/
 | `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 / Workspace | Configurable en Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | Secreto de cliente Google OAuth2 | Configurable en Google Cloud Console |
 | `GOOGLE_CALLBACK_URL` | URL de redirección del callback OAuth2 | `https://holospace.com.ar/api/auth/google/callback` |
-* [Infraestructura Docker y Nginx](./docs/DOCKER_AND_INFRASTRUCTURE.md)
-* [Design System y Motor de Temas](./modules/core/theme/DESIGN_SYSTEM.md)
-* [Roadmap de Transformación SaaS](./roadmap/SAAS_MULTITENANT_ROADMAP.md)
+
+---
+
+## Documentación Canónica del Sistema (/docs)
+* [Arquitectura Técnica y Seguridad RLS](./ARCHITECTURE.md)
+* [Especificación de Módulos Oficiales](./MODULES.md)
+* [Matriz de Permisos RBAC y Catálogo de Planes](./FEATURES.md)
+* [Estrategia de Contenidos y Diseño](./CONTENT.md)
+* [Trazabilidad de Hitos y Roadmap](./ROADMAP.md)

@@ -150,6 +150,7 @@ async function loadActiveTheme() {
       const t = data.theme;
 
       if (t.background) {
+        root.style.setProperty('--bg-main', t.background);
         root.style.setProperty('--bg-dark', t.background);
         root.style.setProperty('--bg-black', t.background);
       }
@@ -716,7 +717,7 @@ function applyRoleVisibility() {
 }
 
 function showForbiddenView(moduleName) {
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewOrders', 'viewPlatform'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeSmartPrice', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -864,8 +865,8 @@ function switchTabMobile(tabName) {
 // NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
   // Limpiar clase activa de todos los feature tabs
-  ['tabTenants', 'tabKanban', 'tabUsers', 'tabRoles', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeCatalog', 'tab4seeMargins',
-   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabRoles', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabRoles', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeSmartPrice', 'tab4seeCatalog', 'tab4seeMargins',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabRoles', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeSmartPrice', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -876,6 +877,9 @@ function switchTab(tabName) {
   if (tabName === '4see-monitors') {
     tabId = 'tab4seeMonitors';
     mobTabId = 'mobTab4seeMonitors';
+  } else if (tabName === '4see-smartprice') {
+    tabId = 'tab4seeSmartPrice';
+    mobTabId = 'mobTab4seeSmartPrice';
   } else if (tabName === '4see-catalog') {
     tabId = 'tab4seeCatalog';
     mobTabId = 'mobTab4seeCatalog';
@@ -917,7 +921,7 @@ function switchTab(tabName) {
     kanbanAutoRefreshInterval = null;
   }
 
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeSmartPrice', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -934,6 +938,10 @@ function switchTab(tabName) {
     const view = document.getElementById('view4seeMonitors');
     if (view) view.classList.remove('hidden');
     load4seeMonitors();
+  } else if (tabName === '4see-smartprice') {
+    const view = document.getElementById('view4seeSmartPrice');
+    if (view) view.classList.remove('hidden');
+    load4seeSmartPriceQueue();
   } else if (tabName === '4see-catalog') {
     const view = document.getElementById('view4seeCatalog');
     if (view) view.classList.remove('hidden');
@@ -1000,7 +1008,7 @@ function switchTab(tabName) {
 // Soporte de navegación adelante/atrás del navegador (popstate)
 window.addEventListener('popstate', (e) => {
   const path = window.location.pathname.replace('/', '').toLowerCase();
-  if (['tenant', 'tenants', 'core', 'kanban', 'scanner'].includes(path)) {
+  if (['tenant', 'tenants', 'core', 'kanban', 'scanner', '4see'].includes(path)) {
     switchModule(path, false);
   }
 });
@@ -2842,12 +2850,31 @@ async function loadTenantsManagementData() {
     container.innerHTML = cachedTenantsList.map(t => {
       const isPlatform = t.slug === 'holospace';
       const isSuspended = t.status === 'suspended';
-      const planCode = t.plan_code || 'starter';
-      const planBadgeColors = {
-        starter: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', border: '#3B82F6' },
-        pro: { bg: 'rgba(0, 230, 118, 0.15)', color: 'var(--emerald)', border: 'var(--emerald)' },
-        enterprise: { bg: 'rgba(167, 139, 250, 0.15)', color: '#A78BFA', border: '#A78BFA' }
-      }[planCode] || { bg: 'rgba(255,255,255,0.1)', color: '#FFF', border: '#888' };
+      const renderPlanBadges = () => {
+        const badges = [];
+        const kanbanNames = {
+          kanban_simple: 'Kanban Simple',
+          kanban_business: 'Kanban Business',
+          kanban_enterprise: 'Kanban Enterprise'
+        };
+        const fourseeNames = {
+          fourseee_simple: '4see Simple',
+          fourseee_business: '4see Business',
+          fourseee_enterprise: '4see Enterprise'
+        };
+
+        if (t.kanban_plan && kanbanNames[t.kanban_plan]) {
+          badges.push(`<span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); color: #3B82F6; border: 1px solid #3B82F6;">${kanbanNames[t.kanban_plan]}</span>`);
+        }
+        if (t.fourseee_plan && fourseeNames[t.fourseee_plan]) {
+          badges.push(`<span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: rgba(167, 139, 250, 0.15); color: #A78BFA; border: 1px solid #A78BFA;">${fourseeNames[t.fourseee_plan]}</span>`);
+        }
+        if (badges.length === 0) {
+          const rawPlan = t.plan_code || 'kanban_simple';
+          badges.push(`<span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: rgba(0, 230, 118, 0.15); color: var(--emerald); border: 1px solid var(--emerald);">${rawPlan}</span>`);
+        }
+        return badges.join(' ');
+      };
 
       const modules = t.modules || [];
       const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
@@ -2876,10 +2903,8 @@ async function loadTenantsManagementData() {
                 Usuarios: <strong style="color: #FFF;">${users.length} / ${t.max_users || '—'}</strong> · Órdenes/Mes: <strong style="color: #FFF;">${t.max_orders_monthly || '—'}</strong>
               </div>
             </div>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <span style="font-size: 11px; font-weight: 900; padding: 4px 10px; border-radius: 10px; text-transform: uppercase; background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border: 1px solid ${planBadgeColors.border};">
-                Plan ${planCode}
-              </span>
+            <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+              ${renderPlanBadges()}
               <button class="btn-secondary" style="padding: 4px 10px; font-size: 11px; border-radius: 8px; border-color: var(--emerald); color: var(--emerald); font-weight: 800;" onclick="openEditTenantModal('${t.id}')" title="Editar Organización">
                 Editar
               </button>
@@ -2897,10 +2922,12 @@ async function loadTenantsManagementData() {
             <span style="font-size: 12px; font-weight: 700; color: #FFF; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
               ${{
                 omarchy_tiling: 'Omarchy Tiling',
+                omarchy_tiling_light: 'Omarchy Light',
                 omarchy_aetheria: 'Omarchy Aetherial',
+                soft_minimal_pastel: 'Soft Pastel',
+                soft_minimal_pastel_light: 'Soft Pastel Light',
                 dark_glassmorphism: 'Dark Glass',
-                cyberpunk_glassmorphism: 'Cyberpunk Glass',
-                soft_minimal_pastel: 'Soft Pastel'
+                cyberpunk_glassmorphism: 'Cyberpunk Glass'
               }[t.active_theme] || t.active_theme || 'Omarchy Tiling'}
             </span>
           </div>
@@ -2990,12 +3017,31 @@ function renderTenantsTable(tenantsList = []) {
   tbody.innerHTML = tenantsList.map(t => {
     const isPlatform = t.slug === 'holospace';
     const isSuspended = t.status === 'suspended';
-    const planCode = t.plan_code || 'starter';
-    const planBadgeColors = {
-      starter: { bg: 'rgba(59, 130, 246, 0.15)', color: '#3B82F6', border: '#3B82F6' },
-      pro: { bg: 'rgba(0, 230, 118, 0.15)', color: 'var(--emerald)', border: 'var(--emerald)' },
-      enterprise: { bg: 'rgba(167, 139, 250, 0.15)', color: '#A78BFA', border: '#A78BFA' }
-    }[planCode] || { bg: 'rgba(255,255,255,0.1)', color: '#FFF', border: '#888' };
+    const renderTablePlanBadges = () => {
+      const badges = [];
+      const kanbanNames = {
+        kanban_simple: 'Kanban Simple',
+        kanban_business: 'Kanban Business',
+        kanban_enterprise: 'Kanban Enterprise'
+      };
+      const fourseeNames = {
+        fourseee_simple: '4see Simple',
+        fourseee_business: '4see Business',
+        fourseee_enterprise: '4see Enterprise'
+      };
+
+      if (t.kanban_plan && kanbanNames[t.kanban_plan]) {
+        badges.push(`<span class="badge-role" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; border-color: #3B82F6; margin: 2px;">${kanbanNames[t.kanban_plan]}</span>`);
+      }
+      if (t.fourseee_plan && fourseeNames[t.fourseee_plan]) {
+        badges.push(`<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #A78BFA; margin: 2px;">${fourseeNames[t.fourseee_plan]}</span>`);
+      }
+      if (badges.length === 0) {
+        const rawPlan = t.plan_code || 'kanban_simple';
+        badges.push(`<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald); margin: 2px;">${rawPlan.toUpperCase()}</span>`);
+      }
+      return badges.join(' ');
+    };
 
     const modules = t.modules || [];
     const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
@@ -3015,9 +3061,9 @@ function renderTenantsTable(tenantsList = []) {
           ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}
         </td>
         <td>
-          <span class="badge-role" style="background: ${planBadgeColors.bg}; color: ${planBadgeColors.color}; border-color: ${planBadgeColors.border};">
-            ${planCode.toUpperCase()}
-          </span>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+            ${renderTablePlanBadges()}
+          </div>
         </td>
         <td>
           <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
@@ -3123,7 +3169,8 @@ async function handleCreateTenantSubmit(e) {
   e.preventDefault();
   const name = document.getElementById('tenantNameInput').value.trim();
   const slug = document.getElementById('tenantSlugInput').value.trim().toLowerCase();
-  const planCode = document.getElementById('tenantPlanSelect').value;
+  const kanbanPlanCode = document.getElementById('tenantKanbanPlanSelect') ? document.getElementById('tenantKanbanPlanSelect').value : 'kanban_simple';
+  const fourseeePlanCode = document.getElementById('tenant4seePlanSelect') ? document.getElementById('tenant4seePlanSelect').value : 'none';
   const adminName = document.getElementById('tenantAdminNameInput').value.trim();
   const adminUsername = document.getElementById('tenantAdminUsernameInput').value.trim().toLowerCase();
   const adminEmail = document.getElementById('tenantAdminEmailInput').value.trim().toLowerCase();
@@ -3138,7 +3185,7 @@ async function handleCreateTenantSubmit(e) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${getAuthToken()}`
       },
-      body: JSON.stringify({ name, slug, planCode, adminName, adminUsername, adminEmail, adminPassword })
+      body: JSON.stringify({ name, slug, kanbanPlanCode, fourseeePlanCode, adminName, adminUsername, adminEmail, adminPassword })
     });
     const data = await res.json();
 
@@ -3173,7 +3220,8 @@ function openEditTenantModal(tenantId) {
   const idInput = document.getElementById('editTenantId');
   const nameInput = document.getElementById('editTenantNameInput');
   const slugInput = document.getElementById('editTenantSlugInput');
-  const planSelect = document.getElementById('editTenantPlanSelect');
+  const kanbanSelect = document.getElementById('editTenantKanbanPlanSelect');
+  const fourseeSelect = document.getElementById('editTenant4seePlanSelect');
   const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
   const themeSelect = document.getElementById('editTenantThemeSelect');
@@ -3182,9 +3230,10 @@ function openEditTenantModal(tenantId) {
   if (idInput) idInput.value = tenant.id;
   if (nameInput) nameInput.value = tenant.name || '';
   if (slugInput) slugInput.value = tenant.slug || '';
-  if (planSelect) planSelect.value = tenant.plan_code || 'starter';
-  if (maxUsersInput) maxUsersInput.value = tenant.max_users || 5;
-  if (maxOrdersInput) maxOrdersInput.value = tenant.max_orders_monthly || 500;
+  if (kanbanSelect) kanbanSelect.value = tenant.kanban_plan || 'none';
+  if (fourseeSelect) fourseeSelect.value = tenant.fourseee_plan || 'none';
+  if (maxUsersInput) maxUsersInput.value = tenant.max_users || 4;
+  if (maxOrdersInput) maxOrdersInput.value = tenant.max_orders_monthly || 0;
   if (themeSelect) themeSelect.value = tenant.active_theme || 'omarchy_tiling';
 
   const modules = tenant.modules || [];
@@ -3206,12 +3255,26 @@ function closeEditTenantModal() {
   if (modal) modal.classList.add('hidden');
 }
 
-function handleEditTenantPlanChange(newPlan) {
-  const defaultQuotas = {
-    starter: { users: 5, orders: 500, board: true, scanner: false, foursee: false },
-    pro: { users: 20, orders: 2500, board: true, scanner: true, foursee: true },
-    enterprise: { users: 100, orders: 10000, board: true, scanner: true, foursee: true }
-  }[newPlan] || { users: 5, orders: 500, board: true, scanner: false, foursee: false };
+function handleEditTenantPlansChange() {
+  const kanbanPlan = document.getElementById('editTenantKanbanPlanSelect')?.value || 'none';
+  const fourseePlan = document.getElementById('editTenant4seePlanSelect')?.value || 'none';
+
+  const kanbanQuotas = {
+    none: { users: 0, orders: 0, board: false, scanner: false },
+    kanban_simple: { users: 4, orders: 500, board: true, scanner: true },
+    kanban_business: { users: 18, orders: 3000, board: true, scanner: true },
+    kanban_enterprise: { users: 9999, orders: 999999, board: true, scanner: true }
+  }[kanbanPlan] || { users: 0, orders: 0, board: false, scanner: false };
+
+  const fourseeQuotas = {
+    none: { users: 0, foursee: false },
+    fourseee_simple: { users: 3, foursee: true },
+    fourseee_business: { users: 10, foursee: true },
+    fourseee_enterprise: { users: 9999, foursee: true }
+  }[fourseePlan] || { users: 0, foursee: false };
+
+  const totalUsers = Math.max(1, kanbanQuotas.users + fourseeQuotas.users);
+  const totalOrders = kanbanQuotas.orders;
 
   const maxUsersInput = document.getElementById('editTenantMaxUsersInput');
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
@@ -3219,11 +3282,11 @@ function handleEditTenantPlanChange(newPlan) {
   const modScanner = document.getElementById('editTenantModScanner');
   const mod4see = document.getElementById('editTenantMod4see');
 
-  if (maxUsersInput) maxUsersInput.value = defaultQuotas.users;
-  if (maxOrdersInput) maxOrdersInput.value = defaultQuotas.orders;
-  if (modBoard) modBoard.checked = defaultQuotas.board;
-  if (modScanner) modScanner.checked = defaultQuotas.scanner;
-  if (mod4see) mod4see.checked = defaultQuotas.foursee;
+  if (maxUsersInput) maxUsersInput.value = totalUsers;
+  if (maxOrdersInput) maxOrdersInput.value = totalOrders;
+  if (modBoard) modBoard.checked = kanbanQuotas.board;
+  if (modScanner) modScanner.checked = kanbanQuotas.scanner;
+  if (mod4see) mod4see.checked = fourseeQuotas.foursee;
 }
 
 async function saveEditTenantSubmit(e) {
@@ -3231,7 +3294,8 @@ async function saveEditTenantSubmit(e) {
 
   const tenantId = document.getElementById('editTenantId').value;
   const name = document.getElementById('editTenantNameInput').value.trim();
-  const planCode = document.getElementById('editTenantPlanSelect').value;
+  const kanbanPlanCode = document.getElementById('editTenantKanbanPlanSelect')?.value || 'none';
+  const fourseeePlanCode = document.getElementById('editTenant4seePlanSelect')?.value || 'none';
   const maxUsers = parseInt(document.getElementById('editTenantMaxUsersInput').value, 10);
   const maxOrdersMonthly = parseInt(document.getElementById('editTenantMaxOrdersInput').value, 10);
   const activeTheme = document.getElementById('editTenantThemeSelect').value;
@@ -3240,13 +3304,13 @@ async function saveEditTenantSubmit(e) {
   const isScannerChecked = document.getElementById('editTenantModScanner') ? document.getElementById('editTenantModScanner').checked : false;
   const is4seeChecked = document.getElementById('editTenantMod4see') ? document.getElementById('editTenantMod4see').checked : false;
 
-  const modules = {
-    'kanban': isBoardChecked,
-    'scanban-board': isBoardChecked,
-    'scanner': isScannerChecked,
-    'scanban-scanner': isScannerChecked,
-    '4see': is4seeChecked
-  };
+  const modules = [
+    { code: 'kanban', enabled: isBoardChecked },
+    { code: 'scanban-board', enabled: isBoardChecked },
+    { code: 'scanner', enabled: isScannerChecked },
+    { code: 'scanban-scanner', enabled: isScannerChecked },
+    { code: '4see', enabled: is4seeChecked }
+  ];
 
   try {
     const res = await fetch('/api/tenants', {
@@ -3258,7 +3322,8 @@ async function saveEditTenantSubmit(e) {
       body: JSON.stringify({
         tenantId,
         name,
-        planCode,
+        kanbanPlanCode,
+        fourseeePlanCode,
         maxUsers,
         maxOrdersMonthly,
         activeTheme,
@@ -4729,4 +4794,364 @@ async function handleCreateMarginSubmit(e) {
     await showCustomAlert('Error', `Error de red: ${err.message}`);
   }
 }
+
+// ============================================================================
+// 4SEE SMARTPRICE & DYNAMIC PRICING (QUEUE, APPROVAL, WORKER)
+// ============================================================================
+let cached4seeQueue = [];
+
+async function load4seeSmartPriceQueue() {
+  const container = document.getElementById('smartpriceQueueContainer');
+  if (!container) return;
+
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando sugerencias de SmartPrice...</div>';
+
+  try {
+    const res = await fetch('/api/4see/queue', {
+      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+    });
+    const data = await res.json();
+
+    if (data.success && Array.isArray(data.queue)) {
+      cached4seeQueue = data.queue;
+      render4seeQueueTable(cached4seeQueue);
+      updateSmartPriceKpis(cached4seeQueue);
+    } else {
+      container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error al cargar sugerencias: ${data.error || 'Desconocido'}</div>`;
+    }
+  } catch (err) {
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error de conexión: ${err.message}</div>`;
+  }
+}
+window.load4seeSmartPriceQueue = load4seeSmartPriceQueue;
+
+function updateSmartPriceKpis(queue = []) {
+  const pending = queue.filter(q => q.status === 'PENDING').length;
+  const applied = queue.filter(q => q.status === 'APPLIED').length;
+  const shielded = queue.filter(q => Boolean(q.floor_applied)).length;
+
+  const kPending = document.getElementById('kpiQueuePending');
+  const kApplied = document.getElementById('kpiQueueApplied');
+  const kShielded = document.getElementById('kpiFloorShielded');
+
+  if (kPending) kPending.innerText = pending;
+  if (kApplied) kApplied.innerText = applied;
+  if (kShielded) kShielded.innerText = shielded;
+}
+
+function filter4seeQueue(queryText) {
+  const q = (queryText || '').toLowerCase().trim();
+  if (!q) {
+    render4seeQueueTable(cached4seeQueue);
+    return;
+  }
+  const filtered = cached4seeQueue.filter(item => {
+    const sku = (item.sku || '').toLowerCase();
+    const title = (item.product_title || '').toLowerCase();
+    const rule = (item.rule_name || '').toLowerCase();
+    const status = (item.status || '').toLowerCase();
+    return sku.includes(q) || title.includes(q) || rule.includes(q) || status.includes(q);
+  });
+  render4seeQueueTable(filtered);
+}
+window.filter4seeQueue = filter4seeQueue;
+
+function render4seeQueueTable(items = []) {
+  const container = document.getElementById('smartpriceQueueContainer');
+  if (!container) return;
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <table class="data-table">
+        <tbody>
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              No hay sugerencias de repricing en cola actualmente. Presiona <strong>⚡ Ejecutar Worker de Scraping</strong> para analizar precios de competidores.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    return;
+  }
+
+  let html = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="min-width: 180px;">Producto / SKU</th>
+          <th style="min-width: 130px;">Piso Blindado (Floor)</th>
+          <th style="min-width: 110px;">Precio Anterior</th>
+          <th style="min-width: 120px;">Precio Sugerido</th>
+          <th style="min-width: 160px;">Regla Aplicada</th>
+          <th style="min-width: 110px;">Estado</th>
+          <th style="min-width: 180px; text-align: right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  items.forEach(q => {
+    const prevPrice = parseFloat(q.previous_price || 0);
+    const suggPrice = parseFloat(q.suggested_price || 0);
+    const floorPrice = parseFloat(q.min_price_floor || 0);
+
+    let statusBadge = '';
+    if (q.status === 'PENDING') {
+      statusBadge = '<span class="status-indicator" style="color: var(--cobalt); font-weight: 800; font-size: 11px;">● PENDIENTE</span>';
+    } else if (q.status === 'APPLIED') {
+      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">✔ APLICADO</span>';
+    } else if (q.status === 'REJECTED') {
+      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">✕ RECHAZADO</span>';
+    } else {
+      statusBadge = `<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">${q.status}</span>`;
+    }
+
+    const floorShieldBadge = q.floor_applied
+      ? '<span style="display: block; font-size: 10px; color: var(--red); font-weight: 800; margin-top: 2px;">🛡 PISO ACTIVADO</span>'
+      : '';
+
+    html += `
+      <tr>
+        <td>
+          <strong style="color: #FFF; display: block;">${q.product_title || 'Producto'}</strong>
+          <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">SKU: ${q.sku || '-'}</span>
+        </td>
+        <td style="font-family: monospace; font-weight: 800; color: var(--emerald);">
+          $${floorPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+          ${floorShieldBadge}
+        </td>
+        <td style="font-family: monospace; font-weight: 700; color: var(--text-muted);">
+          $${prevPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+        </td>
+        <td style="font-family: monospace; font-weight: 900; color: #FFF; font-size: 14px;">
+          $${suggPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+        </td>
+        <td style="font-size: 12px; color: var(--text-main);">
+          ${q.rule_name || 'Protección de Margen'}
+        </td>
+        <td>${statusBadge}</td>
+        <td style="text-align: right;">
+          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+            ${q.status === 'PENDING' ? `
+              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aprobar 1-Clic</button>
+              <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
+            ` : `
+              <span style="color: var(--text-muted); font-size: 11px; font-family: monospace;">Procesado</span>
+            `}
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += `
+      </tbody>
+    </table>
+  `;
+  container.innerHTML = html;
+}
+
+async function handleApproveQueueItem(queueId) {
+  try {
+    const res = await fetch(`/api/4see/queue/${queueId}/approve`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      await showCustomAlert('Éxito', `Precio aprobado y aplicado exitosamente: $${parseFloat(data.newPrice).toLocaleString('es-AR')}`);
+      load4seeSmartPriceQueue();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo aprobar el precio.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+window.handleApproveQueueItem = handleApproveQueueItem;
+
+async function handleRejectQueueItem(queueId) {
+  try {
+    const res = await fetch(`/api/4see/queue/${queueId}/reject`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+    const data = await res.json();
+    if (data.success) {
+      load4seeSmartPriceQueue();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo rechazar la sugerencia.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+window.handleRejectQueueItem = handleRejectQueueItem;
+
+async function handleTriggerWorkerCycle() {
+  const btn = document.getElementById('btnRunWorkerCycle');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = '⏳ Ejecutando Scraping...';
+  }
+
+  try {
+    const res = await fetch('/api/4see/worker/run-cycle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      }
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      const s = data.summary || {};
+      await showCustomAlert('Ciclo Completado', `Scraping finalizado.\nMappings procesados: ${s.totalMappingsProcessed || 0}\nSugerencias encoladas: ${s.priceUpdatesQueued || 0}\nAuto-dispatches: ${s.autoDispatchesExecuted || 0}`);
+      load4seeSmartPriceQueue();
+    } else {
+      await showCustomAlert('Aviso', data.reason === 'CYCLE_ALREADY_IN_PROGRESS' ? 'Ya hay un ciclo de scraping en progreso.' : (data.error || 'Error al ejecutar worker.'));
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red al ejecutar worker: ${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '⚡ Ejecutar Worker de Scraping';
+    }
+  }
+}
+window.handleTriggerWorkerCycle = handleTriggerWorkerCycle;
+
+// Modales de Producto y Reglas
+function openCreateProductModal() {
+  const modal = document.getElementById('createProductModal');
+  if (modal) {
+    document.getElementById('createProductForm').reset();
+    calcProdFloorPreview();
+    modal.classList.remove('hidden');
+  }
+}
+window.openCreateProductModal = openCreateProductModal;
+
+function closeCreateProductModal() {
+  const modal = document.getElementById('createProductModal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeCreateProductModal = closeCreateProductModal;
+
+function calcProdFloorPreview() {
+  const cost = parseFloat(document.getElementById('prodCost')?.value) || 0;
+  const marginPct = parseFloat(document.getElementById('prodMarginPct')?.value) || 0;
+  const opCosts = parseFloat(document.getElementById('prodOpCosts')?.value) || 0;
+  const floor = cost * (1 + (marginPct / 100.0)) + opCosts;
+  const preview = document.getElementById('prodFloorPreviewText');
+  if (preview) {
+    preview.innerText = `$${floor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+}
+window.calcProdFloorPreview = calcProdFloorPreview;
+
+async function handleCreateProductSubmit(e) {
+  e.preventDefault();
+  const sku = document.getElementById('prodSku').value.trim();
+  const title = document.getElementById('prodTitle').value.trim();
+  const cost_price = document.getElementById('prodCost').value;
+  const min_margin_percentage = document.getElementById('prodMarginPct').value;
+  const operating_costs = document.getElementById('prodOpCosts').value;
+  const max_price_ceiling = document.getElementById('prodCeiling').value;
+  const current_price = document.getElementById('prodCurrentPrice').value;
+  const stock_quantity = document.getElementById('prodStockQty').value;
+
+  try {
+    const res = await fetch('/api/4see/products', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({
+        sku,
+        title,
+        cost_price,
+        min_margin_percentage,
+        operating_costs,
+        max_price_ceiling,
+        current_price,
+        stock_quantity
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeCreateProductModal();
+      await showCustomAlert('Éxito', `Producto ${sku} guardado con piso inquebrantable de $${parseFloat(data.product.min_price_floor).toLocaleString('es-AR')}`);
+      load4seeSmartPriceQueue();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo guardar el producto.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+window.handleCreateProductSubmit = handleCreateProductSubmit;
+
+function openCreateRuleModal() {
+  const modal = document.getElementById('createRuleModal');
+  if (modal) {
+    document.getElementById('createRuleForm').reset();
+    modal.classList.remove('hidden');
+  }
+}
+window.openCreateRuleModal = openCreateRuleModal;
+
+function closeCreateRuleModal() {
+  const modal = document.getElementById('createRuleModal');
+  if (modal) modal.classList.add('hidden');
+}
+window.closeCreateRuleModal = closeCreateRuleModal;
+
+async function handleCreateRuleSubmit(e) {
+  e.preventDefault();
+  const name = document.getElementById('ruleName').value.trim();
+  const trigger_condition = document.getElementById('ruleTrigger').value;
+  const action_type = document.getElementById('ruleAction').value;
+  const offset_value = document.getElementById('ruleOffset').value;
+  const auto_dispatch = document.getElementById('ruleAutoDispatch').checked;
+
+  try {
+    const res = await fetch('/api/4see/rules', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${getAuthToken()}`
+      },
+      body: JSON.stringify({
+        name,
+        trigger_condition,
+        action_type,
+        offset_value,
+        auto_dispatch
+      })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeCreateRuleModal();
+      await showCustomAlert('Éxito', `Regla SmartPrice "${name}" activada.`);
+      load4seeSmartPriceQueue();
+    } else {
+      await showCustomAlert('Error', data.error || 'No se pudo crear la regla.');
+    }
+  } catch (err) {
+    await showCustomAlert('Error', `Error de red: ${err.message}`);
+  }
+}
+window.handleCreateRuleSubmit = handleCreateRuleSubmit;
+
 

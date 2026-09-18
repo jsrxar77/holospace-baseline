@@ -61,6 +61,7 @@
 - [x] **8.1** Soporte de persistencia en base de datos para Tema Base de Organización y Preferencia Personal de Usuario.
 - [x] **8.2** Endpoints `GET /api/theme` y `POST /api/theme` con soporte de scopes.
 - [x] **8.3** Suite de pruebas jerárquicas (`tests/test-theme-hierarchy.js`).
+- [x] **8.12** Incorporación de temas Light canónicos (`omarchy_tiling_light` y `soft_minimal_pastel_light`) importados fielmente desde papeleta-baseline a `modules/themes/themes.json`, habilitación integral en el modal de asignación por Organización/Tenant (`#editTenantThemeSelect`), tarjetas informativas y selectores de UI.
 - [x] **8.4** Sincronización atómica y consistencia en asignación/toma de pedidos entre ScanBan y Scanner Mobile (`operator_email` + `assigned_operator_email`).
 - [x] **8.5** Escaneo asistido con tarjeta de producto pendiente, retículo láser, diagnóstico comparativo esperado vs. escaneado y modo de reintento/pausa interactivo en Mobile Scanner.
 - [x] **8.6** Modo de escaneo enfocado selectivo al tocar cualquier tarjeta de ítem en la pantalla de resumen del pedido.
@@ -142,11 +143,32 @@
 - [x] **15.5** Ampliación de la suite de pruebas `tests/test-4see-ontology.js` (38 pruebas unitarias ejecutadas, 100% PASS, 0 fallos).
 - [x] **15.6** Documentación canónica actualizada en `/docs/MODULES.md`, `/docs/ARCHITECTURE.md`, `/docs/ROADMAP.md` y `/docs/README.md`.
 
+### FASE 16: Dynamic Pricing 1:N, SmartPrice Engine y Piso Inquebrantable (Paridad Prisync 4see)
+- [x] **16.1** Normalización del modelo relacional 1:N en PostgreSQL 16 con RLS (`fourseee_products`, `fourseee_competitors`, `fourseee_product_competitor_mappings`, `fourseee_price_logs`, `fourseee_pricing_rules`, `fourseee_price_update_queue`).
+- [x] **16.2** Columna autogenerada inmutable en PostgreSQL para protección estricta del margen neto (`min_price_floor = ROUND(cost_price * (1 + margin/100) + op_costs, 2)`).
+- [x] **16.3** Motor determinista SmartPrice en `modules/4see/lib/smartprice.js` (`calculateHardFloor`, `clampPrice`, `evaluateSmartPrice`) con soporte para rival objetivo, competidor más barato y captura de sobremargen por quiebre ajeno (*out-of-stock*).
+- [x] **16.4** Worker asíncrono no bloqueante en segundo plano `modules/4see/workers/scraper_worker.js` con procesamiento concurrente por semáforo, logging inmutable de precios y cola de sugerencias.
+- [x] **16.5** Endpoints REST bajo `/api/4see/` (`/products`, `/competitors`, `/mappings`, `/rules`, `/queue`, `/worker/run-cycle`) con validación de cuotas de productos y competidores por plan.
+- [x] **16.6** Nuevos permisos granulares RBAC `4see:rules:manage` y `4see:queue:approve` integrados en `lib/rbac.js`, `data/init-schema.sql` y `docs/FEATURES.md`.
+- [x] **16.7** Suite de pruebas automatizadas `tests/test-4see-smartprice.js` añadida al runner maestro `tests/run-all-tests.js` (15 suites ejecutadas, 100% PASS, 0 fallos).
+- [x] **16.8** Documentación técnica sincronizada en los 6 documentos canónicos de `/docs`.
+- [x] **16.9** Interfaz Web SPA en `public/index.html` y `public/app.js`: pestaña y vista `SmartPrice & Repricing` (`view4seeSmartPrice`), tabla de la Cola de Aprobación en 1 Clic con badges de piso inquebrantable, buscador reactivo, botón de disparo de worker en vivo y modales para dar de alta productos 1:N (`#createProductModal`) y reglas SmartPrice (`#createRuleModal`).
+
+### FASE 17: Arquitectura 100% Vertical de Planes Comerciales y Multi-Suscripción Concurrente
+- [x] **17.1** Descontinuación definitiva de planes bundles (`starter`, `pro`, `enterprise`) en base de datos y backend (`lib/billing.js`).
+- [x] **17.2** Migración relacional de restricción `UNIQUE(tenant_id, plan_code)` en `tenant_subscriptions` para soporte nativo de multi-suscripción concurrente.
+- [x] **17.3** Reconfiguración de seeds: `poke` con `kanban_simple` (sin 4see), `drinklovers` con `kanban_enterprise` + `fourseee_business`, y `holospace` con `kanban_enterprise` + `fourseee_enterprise`.
+- [x] **17.4** Motor de consolidación acumulada de cuotas en `lib/entitlement.js` y `server.js` (totalización de usuarios, pedidos y cuotas de roles por plan activo).
+- [x] **17.5** Interfaz Web SPA en Módulo Tenant (`/tenant`): selectores de plan independientes por vertical en modales de creación/edición y badges discriminados por línea de producto.
+- [x] **17.6** Validación y ejecución exitosa de las 15 suites de pruebas en Docker (`tests/run-all-tests.js`, 15 suites, 100% PASS, 0 fallos).
+- [x] **17.7** Sincronización documental integral en los 6 archivos canónicos de `/docs`.
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 16:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
-- [ ] **FASE 17:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
-- [ ] **FASE 18:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+- [ ] **FASE 18:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
+- [ ] **FASE 19:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
+- [ ] **FASE 20:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
+
 
