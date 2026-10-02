@@ -56,6 +56,13 @@
 - [ ] **D-018 | Temas legados sin pares claro/oscuro** | Esfuerzo S
   - `omarchy_aetheria`, `dark_glassmorphism` y `cyberpunk_glassmorphism` no tienen version clara; sus tokens no incluyen superficies, estados ni graficos. Accion: decidir si se retiran o se migran al esquema `tokens` extendido.
 
+- [ ] **D-037 | Copias legadas de la SPA y del CSS** | `modules/core/public/`, `modules/kanban/public/`, `public/css/holospace-theme.css` | Esfuerzo M
+  - La SPA que se sirve es `public/index.html` + `public/app.js`. `modules/core/public/index.html`, `modules/kanban/public/index.html` y sus CSS son copias no servidas con logo pixelado y colores fijos. Accion: borrarlas o integrarlas (ver D-012 y D-013).
+- [ ] **D-038 | Colores fijos restantes y degradados en la SPA** | `public/index.html`, `public/app.js` | Esfuerzo M
+  - Tras migrar texto blanco, superficies oscuras y botones con degradado a tokens quedan degradados en tarjetas (`linear-gradient(135deg, ...)`), `border-left` de color, el color fijo del boton de Google (obligatorio por marca) y unos 800 estilos inline. Accion: mover a clases con tokens y quitar degradados.
+- [ ] **D-039 | Decidir el logo definitivo** | `public/brand/` | Esfuerzo S
+  - Esta aplicada la propuesta A (Cota). Alternativas B (hex y piso) y C (codigo) en `public/brand/proposals/`. Pendiente: version vectorial final, PNG de app y favicon multi-tamano, imagen Open Graph.
+
 ## P1: Producto vendible (mini-SaaS)
 
 - [ ] **D-020 | Cobro real** | Fase 18 del roadmap | Esfuerzo L
@@ -98,4 +105,5 @@
 - [x] **S-008** (era D-003) El seed de `init-schema.sql` guarda hashes scrypt reales en lugar de `scrypt:<texto plano>`; el login actualiza hashes legados. 2026-10-02.
 - [x] **S-009** (era D-004) CORS por lista de origenes (`CORS_ORIGINS`; en desarrollo origenes locales y de red privada), cabeceras de seguridad, y limite de intentos de login (`LOGIN_RATE_MAX`, 10 por 15 minutos por IP y email, respuesta 429). Residual en D-008. 2026-10-02.
 - [x] **S-010** (era D-007) El init de la base arranca desde cero sin errores: suscripciones del tenant 0 despues de sembrar los planes; verificado con `ON_ERROR_STOP=1` en una base nueva. 2026-10-02.
+- [x] **S-011** Estetica Holo en toda la plataforma: tema por defecto Holo Night con migracion unica, login de lamina (sin estrellas), logo H acotada en la SPA, landing y favicon, colores fijos de texto y superficies migrados a tokens y emojis eliminados de la SPA. Verificado con capturas de todas las vistas en Night y Day. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

@@ -13,6 +13,7 @@ La landing (`modules/landing/public/`) es una **lamina tecnica normalizada** con
 - **Tema:** Holo Night / Holo Day segun preferencia del sistema, con interruptor persistido en `hs_landing_theme`.
 - **Regla de contenido:** solo datos verificables. Precios y limites salen de `lib/billing.js`; no hay logos, testimonios ni metricas. Las maquetas y la simulacion llevan la leyenda "datos de ejemplo".
 - **Motion:** las lineas de los dibujos se trazan una vez al entrar en vista; el precio sugerido sube y se frena en la cota al cargar. Respeta `prefers-reduced-motion`.
+- **Marca:** logo H acotada (dos columnas y una cota con flechas), wordmark Geist 600 con `Space` en menta. Uso: marca sola en 16 a 32 px, lockup horizontal en cabeceras. Activos en `public/brand/`.
 - **SEO:** title, description, Open Graph, JSON-LD `SoftwareApplication` con ofertas. Pendiente: imagen Open Graph y capturas reales (D-024).
 
 > Las secciones 1 y 2 de este documento (sprites pixel art) quedan como referencia historica de marca.
