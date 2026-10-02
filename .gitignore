@@ -69,3 +69,8 @@ modules/kanban/orders/*.pdf
 
 # Claude Code local
 .claude/settings.local.json
+
+# Capturas de revision de diseno
+.impeccable/review/
+.impeccable/mocks/
+.impeccable/build/
