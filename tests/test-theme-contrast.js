@@ -35,7 +35,8 @@ ok(lum(THEMES.holo_dark.background) < 0.05 && lum(THEMES.holo_light.background) 
 
 const css = buildThemeCss();
 ok(css.includes('body.theme-holo_dark') && css.includes('body.theme-holo_light'), 'CSS generado incluye ambos temas');
-ok(!/!important/.test(css), 'CSS de temas sin !important');
+const tokenBlocks = css.slice(0, css.indexOf('/* Holo Design System'));
+ok(tokenBlocks.length > 0 && !/!important/.test(tokenBlocks), 'bloques de tokens sin !important');
 ok(!/[\u{1F300}-\u{1FAFF}]/u.test(css), 'CSS sin emojis');
 
 console.log(failed ? `\n${failed} verificaciones fallaron` : '\nContraste y tokens OK');

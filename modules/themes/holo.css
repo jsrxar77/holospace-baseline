@@ -105,3 +105,70 @@ body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollba
 @media (prefers-reduced-motion: reduce) {
   body:is(.theme-holo_dark, .theme-holo_light) * { transition: none; animation: none; }
 }
+
+/* ---------------------------------------------------------------- */
+/* Marca: logo HoloSpace (H acotada). Aplica a todos los temas.      */
+/* ---------------------------------------------------------------- */
+.hs-logo { display: inline-flex; align-items: center; gap: 0.38em; line-height: 1; }
+.hs-mark { width: 1.15em; height: 1.15em; flex: none; fill: none; }
+.hs-si { stroke: currentColor; }
+.hs-sm { stroke: var(--emerald); }
+.hs-fm { fill: var(--emerald); stroke: none; }
+.hs-word { font-weight: 600; letter-spacing: -0.04em; }
+.hs-word b { font-weight: 600; }
+.hs-word i { font-style: normal; color: var(--emerald); }
+
+/* ---------------------------------------------------------------- */
+/* Login y estado sin sesion con la estetica de lamina.              */
+/* Se usa !important solo para vencer reglas legadas (D-013).        */
+/* ---------------------------------------------------------------- */
+body:is(.theme-holo_dark, .theme-holo_light).state-logged-out,
+body:is(.theme-holo_dark, .theme-holo_light):has(#loginModal:not(.hidden)) {
+  background-color: var(--bg-main) !important;
+  background-image:
+    linear-gradient(var(--card-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--card-border) 1px, transparent 1px) !important;
+  background-size: 56px 56px !important;
+  background-position: 0 0 !important;
+  animation: none !important;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .space-ambient-layer { display: none !important; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal { background: transparent; backdrop-filter: none; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .modal-content {
+  position: relative;
+  width: min(440px, calc(100vw - 32px));
+  padding: 40px 36px 32px;
+  background: var(--bg-main) !important;
+  border: 1px solid var(--hw-border-strong) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .modal-content::before {
+  content: ""; position: absolute; inset: 6px; border: 1px solid var(--card-border); pointer-events: none;
+}
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .brand-title { font-size: 28px; justify-content: center; margin-bottom: 4px; }
+body:is(.theme-holo_dark, .theme-holo_light) .login-sheet {
+  margin: 0 0 22px; text-align: center; color: var(--hw-text-subtle);
+  font-family: var(--hw-font-mono), ui-monospace, monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase;
+}
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal :is(.input-field, .btn-primary, .btn-google-oauth, .btn-secondary) { border-radius: 0; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .btn-primary { min-height: 48px; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal label { font-family: var(--hw-font-mono), ui-monospace, monospace; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--hw-text-subtle); }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .modal-content > a:not(.btn-google-oauth),
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .modal-content form + * { color: var(--text-muted) !important; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal :is(.input-field, input) { background: var(--hw-surface-2) !important; color: var(--text-main) !important; border-color: var(--card-border) !important; }
+
+/* El wordmark ignora sombras y tipografias pixel de reglas legadas */
+body .hs-logo, body .hs-logo * { text-shadow: none !important; -webkit-text-stroke: 0 !important; }
+body .brand-title .hs-word, body .brand-title .hs-word * { font-family: var(--hw-font-family, 'Geist'), ui-sans-serif, system-ui, sans-serif !important; font-size: inherit !important; letter-spacing: -0.04em !important; line-height: 1 !important; }
+body:is(.theme-holo_dark, .theme-holo_light) #loginModal .brand-title { font-size: 34px; }
+
+/* Pestañas activas: relleno suave y texto de tinta, sin violeta fijo legado */
+body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab).active,
+body:is(.theme-holo_dark, .theme-holo_light) :is(.module-tab, .feature-tab).active {
+  background: var(--hw-accent-soft) !important;
+  color: var(--text-main) !important;
+  border-color: var(--hw-accent-border) !important;
+  box-shadow: none !important;
+}
+body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab):hover { background: var(--hw-surface-2) !important; }
