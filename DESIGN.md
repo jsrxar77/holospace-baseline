@@ -95,7 +95,7 @@ Plano y sin sombras. La profundidad es de linea: marco doble, hairlines, hatch c
 
 ## Shapes
 
-Esquinas rectas (0px) en todo; la unica forma curva es el circulo de los callouts numerados. El lenguaje formal es el de un plano: rectangulos, cotas con flechas, lineas de trazo.
+Esquinas rectas (0px) en todo, tambien en el login y en los modulos de la app (capa `modules/themes/holo.css`); la unica forma curva es el circulo de los callouts numerados. El lenguaje formal es el de un plano: rectangulos, cotas con flechas, lineas de trazo.
 
 ## Brand
 

@@ -232,8 +232,8 @@ La plataforma conserva **solo dos temas**, que forman un par claro y oscuro. Los
 
 | Clave (`key`) | Nombre Oficial | Modo | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
 | :--- | :--- | :---: | :--- | :--- | :--- | :--- |
-| **`holo_dark`** | **Holo Night** *(Predeterminado)* | Dark | `Geist` / `Geist Mono` | `14px` / `10px` | `#0B0C10` (grafito) | Menta (`#34D3A4`) / Violeta (`#8B7CFF`) |
-| **`holo_light`** | **Holo Day** | Light | `Geist` / `Geist Mono` | `14px` / `10px` | `#F6F7FB` | Verde (`#087A62`) / Violeta (`#5441D6`) |
+| **`holo_dark`** | **Holo Night** *(Predeterminado)* | Dark | `Geist` / `Geist Mono` | `0` (rectas) | `#0B0C10` (grafito) | Menta (`#34D3A4`) / Violeta (`#8B7CFF`) |
+| **`holo_light`** | **Holo Day** | Light | `Geist` / `Geist Mono` | `0` (rectas) | `#F6F7FB` | Verde (`#087A62`) / Violeta (`#5441D6`) |
 
 ### 7.3 Mapa de Tokens Estándar por Tema (`modules/themes/themes.json`)
 ```json
@@ -252,9 +252,9 @@ La plataforma conserva **solo dos temas**, que forman un par claro y oscuro. Los
   "textMuted": "#9BA3B5",
   "fontFamily": "Geist",
   "fontMono": "Geist Mono",
-  "radiusCard": 14,
-  "radiusBtn": 10,
-  "radiusBadge": 8,
+  "radiusCard": 0,
+  "radiusBtn": 0,
+  "radiusBadge": 0,
   "borderWidth": 1,
   "tokens": { "surface1": "#12141A", "accentFg": "#04130E", "...": "ver 7.3.1" }
 }
@@ -283,6 +283,8 @@ Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (
 **Cache de assets:** Cloudflare guarda CSS, JS e imagenes hasta 4 horas ignorando las cabeceras del origen. `lib/assets.js` agrega `?v=<mtime>` a las URLs estaticas del HTML (`/themes/holo.css`, `/css/holospace-theme.css`, `/app.js`, `/landing/landing.css`, `/brand/*`) al servirlo, de modo que cada cambio de archivo cambia la URL.
 
 **Marca:** wordmark `holospace.` (minuscula, punto menta) con la H acotada como componente `.hs-logo` (SVG inline). Iconos de producto como simbolos SVG (`#hs-pcore`, `#hs-p4see`, `#hs-plog`) y archivos `GET /brand/mark.svg`, `/brand/4see.svg` y `/brand/logistica.svg` (se adaptan al esquema claro u oscuro). El favicon cambia segun el modulo activo (`setModuleFavicon`). La app movil usa `modules/scanner/src/components/Brand.tsx`. Reglas completas en `docs/CONTENT.md` 0.1.
+
+**Lenguaje de lamina (landing, login y app):** esquinas rectas (`border-radius: 0`, forzado en la capa `holo.css`), sin sombras ni brillos, lineas finas (1px), marco doble en el area de trabajo y en los modales, rotulos, tablas y datos en Geist Mono, cabecera plana y pie como cajetin. Los radios en los tokens son 0 para que la app movil tambien salga recta.
 
 ### 7.4 Regla de Aislamiento de Fondos Dinámicos
 * La landing y el login usan una grilla de lamina estatica (sin estrellas ni asteroides). Se retiro el fondo espacial animado y todo el CSS de los temas anteriores.

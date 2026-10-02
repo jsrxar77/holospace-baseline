@@ -60,8 +60,6 @@
 - [ ] **D-040 | App movil guarda credenciales y no sigue Day/Night** | `modules/scanner/src/store/useAuthStore.ts` | Esfuerzo M
   - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
-- [ ] **D-041 | Lenguaje de forma distinto entre landing y app** | `public/index.html`, `modules/themes/holo.css` | Esfuerzo M
-  - La landing usa esquinas rectas, lineas finas y cajetines (lamina tecnica); la app usa radios de 10 a 16 px y tarjetas con relleno. Mismos colores y tipografia, distinta forma. Decision pendiente: llevar la app a esquinas rectas o mantener radios en la app.
 
 ## P1: Producto vendible (mini-SaaS)
 
@@ -111,4 +109,5 @@
 - [x] **S-014** Solo existen Holo Night y Holo Day: se retiraron los 5 temas anteriores de `themes.json`, de los selectores y de la base (migracion unica a `holo_dark`), se podo `public/css/holospace-theme.css` de 1.929 a unas 210 lineas y se quitaron la capa de asteroides y naves, las copias no servidas de `modules/core/public` y `modules/kanban/public` y las rutas muertas. Corrige ademas el cache de Cloudflare con URLs versionadas (`lib/assets.js`). Resuelve D-018 y D-037. 2026-10-02.
 - [x] **S-015** La SPA usa la misma tipografia que la landing: Geist y Geist Mono (antes casi todo el contenido salia en Outfit por una regla global `* { font-family }`). Titulos en Geist 600 con tracking -0.03em, pesos 800 y 900 bajan a 700, datos tecnicos en Geist Mono, y se dejan de cargar Outfit, JetBrains Mono y Plus Jakarta. 2026-10-02.
 - [x] **S-016** Login con Google: (1) el callback redirigia a `/`, que sirve la landing, asi que ninguna cuenta de Google llegaba a la app; ahora va a `/login`, con el token en el fragmento `#` para que no quede en logs. (2) Cierre de dos agujeros graves del modo simulado: `code=mock_code_<email>` emitia una sesion para cualquier usuario (incluido el SUPERADMIN) aun con claves reales, y sin claves el inicio entraba como un email por defecto o el de `?email=`. Ahora el modo simulado exige `OAUTH_MOCK=1` y `NODE_ENV` distinto de `production`. Cubierto en `tests/test-security-hardening.js`. 2026-10-02.
+- [x] **S-017** Login y modulos con el lenguaje de lamina de la landing: esquinas rectas (radios 0 en los tokens, tambien para la app movil), planos sin sombras, marco doble en el area de trabajo y en los modales, rotulos y tablas en Geist Mono, cajetin en el pie y cabecera plana. Resuelve D-041. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.
