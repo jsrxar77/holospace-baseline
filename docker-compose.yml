@@ -13,7 +13,7 @@ services:
       - HS_PORT=3001
       - DATABASE_URL=postgres://${POSTGRES_USER:-holospace_admin}:${POSTGRES_PASSWORD:-Secr3tP@ssword2026}@postgres:5432/${POSTGRES_DB:-holospace_saas}
       - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET:?Definir JWT_SECRET en .env (minimo 32 caracteres)}
+      - JWT_SECRET=${JWT_SECRET:-}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
     volumes:

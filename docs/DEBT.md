@@ -27,6 +27,10 @@
 - [ ] **D-009 | Credenciales de prueba como fixtures** | `tests/` | Esfuerzo S
   - Los tests conservan las claves del seed de desarrollo como valores por defecto (sobrescribibles con `SUPERADMIN_PASSWORD`, `TEST_JUAN_PASSWORD`, `TEST_VANESA_PASSWORD`). Accion: mover a un seed de test generado y rotar la clave real del SUPERADMIN (ver D-005).
 
+- [ ] **D-035 | Servidor de prueba sin variables ni rotacion de claves** | servidor remoto | Esfuerzo S
+  - Decision del 2026-10-02: el servidor es de prueba (no productivo) y se despliega sin configurar `JWT_SECRET`, `NODE_ENV=production` ni `CORS_ORIGINS`. Sin `JWT_SECRET` la app usa un secreto aleatorio por proceso (cada reinicio cierra todas las sesiones). Las claves de Postgres y del SUPERADMIN y las de demo no se rotaron (ver D-005 y D-009).
+  - Accion antes de usarlo con clientes reales: definir `JWT_SECRET` (32+ caracteres), `NODE_ENV=production`, `CORS_ORIGINS`, rotar todas las claves y volver a hacer obligatorio `JWT_SECRET` en `docker-compose.yml` (`${JWT_SECRET:?...}`).
+
 ## P1: Arquitectura y mantenibilidad
 
 - [ ] **D-010 | `server.js` monolitico** | 2.260 lineas, un unico despachador HTTP manual | Esfuerzo L
