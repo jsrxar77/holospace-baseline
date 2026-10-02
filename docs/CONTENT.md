@@ -10,15 +10,15 @@ Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > produ
 
 | Nivel | Nombre | Icono | Archivo | Donde aparece |
 | :--- | :--- | :--- | :--- | :--- |
-| Empresa | `hologrowth.dev` | solo texto | n/a | Firma `by hologrowth.dev` (login, pie de la app, nav y pie de la landing) |
+| Empresa | `hologrowth.dev` | solo texto | n/a | Firma `by hologrowth.dev` (login, pie de la app y pie de la landing; no va en el nav) |
 | Plataforma | `holospace.` | Cota: H hecha de dos columnas y una cota con flechas | `public/brand/mark.svg` | Logo, favicon, Core y Tenant |
 | Producto | `4see` | Hex y piso: hexagono atravesado por la linea de piso | `public/brand/4see.svg` | Pestana 4see, titulos de vistas 4see, hojas 2, 3, 5 y 8 de la landing, favicon al estar en 4see |
 | Producto | logistica (Kanban y Scanner) | Codigo: barras con la linea de lectura | `public/brand/logistica.svg` | Pestana Kanban, Explorador de pedidos, app Scanner (cabecera y login), landing, favicon al estar en Kanban |
 
 **Reglas de nombre y uso**
-- El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en el verde de marca** (`var(--hw-brand)`: `#34D3A4` en Holo Night y `#0E9F7A` en Holo Day, 3,1:1 sobre la hoja). El verde de acento de UI (`--emerald`) sigue siendo mas oscuro en Day porque debe cumplir 4,5:1 en texto y botones. No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
+- El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en el verde de acento del tema** (`var(--emerald)`: `#34D3A4` en Holo Night y `#087A62` en Holo Day, que cumple 4,5:1). No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
 - En texto corrido se escribe "HoloSpace" con mayuscula inicial (nombre propio). En etiquetas en mayusculas el tema ya las transforma.
-- La firma de paraguas es `by hologrowth.dev` en Geist Mono minuscula, tamano chico, en gris de apoyo, siempre enlazada a https://hologrowth.dev (excepto en el nav de la landing, donde el logo ya es un enlace).
+- La firma de paraguas es `by hologrowth.dev` en Geist Mono minuscula, tamano chico, en gris de apoyo, enlazada a https://hologrowth.dev. Va en pies y en el login, nunca en la barra de navegacion.
 - Los iconos usan una sola tinta (`currentColor`) y una linea o flecha en menta; en SVG sueltos se adaptan al esquema claro u oscuro del sistema. No se agregan sombras, degradados ni versiones multicolor.
 - El lazo dorado anterior de HoloGrowth queda retirado.
 
@@ -34,7 +34,7 @@ Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > produ
 | `og.png` (1200 x 630) | Imagen Open Graph y Twitter de la landing |
 | `sistema-marca.png` | Lamina de referencia del sistema de marca |
 
-Los PNG se generan desde HTML con Playwright (fuente Geist) y se reducen con `sips`; el verde del punto y de las lineas sale de `tokens.brand` en `themes.json`.
+Los PNG se generan desde HTML con Playwright (fuente Geist) y se reducen con `sips`; el verde sale de `emerald` de cada tema en `themes.json`.
 
 ## 0. Landing comercial v3: lamina tecnica (vigente)
 

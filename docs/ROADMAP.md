@@ -171,6 +171,7 @@
 - [x] **17.5.5** Landing comercial v3 (`modules/landing/public/`): lamina tecnica con Holo Night/Day, simulador del piso de margen, 9 hojas, precios reales de `lib/billing.js`, FAQ, JSON-LD y accesibilidad. Contexto en `PRODUCT.md` y `DESIGN.md`.
 - [x] **17.5.7** Endurecimiento de seguridad con suite `tests/test-security-hardening.js` (17 suites, 0 fallos).
 - [x] **17.5.8** Holo como estetica unica de la plataforma: tema por defecto, login de lamina, logo H acotada (3 propuestas en `public/brand/`) y SPA migrada a tokens (ver S-011 en DEBT).
+- [x] **17.5.9** Solo temas Holo (Night y Day), CSS legado podado, login y modulos sin estetica anterior, assets versionados por `mtime` para sortear la cache de Cloudflare.
 - [x] **17.5.6** Registro de deuda tecnica en [DEBT.md](./DEBT.md) (septimo documento canonico).
 
 ---

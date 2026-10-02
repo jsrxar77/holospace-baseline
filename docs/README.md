@@ -74,7 +74,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 * **Funcionalidades:**
   * **Directorio de Organizaciones:** Gestión integral de Tenants (Nombre, Slug, Plan, Límites de Usuarios y Órdenes/Mes).
   * **Licenciamiento Dinámico:** Activación/desactivación de módulos **Kanban** y **Scanner** por empresa.
-  * **Tema Base por Defecto:** Asignación del tema visual corporativo (`Omarchy Tiling WM`, `Omarchy Light`, `Soft Pastel Light`, `Omarchy Aetheria`, `Dark Glassmorphism`, etc.).
+  * **Tema Base por Defecto:** Asignación del tema visual corporativo (`Holo Night` o `Holo Day`).
 
 ---
 

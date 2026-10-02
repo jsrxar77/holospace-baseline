@@ -53,11 +53,6 @@
   - Accion: especificacion OpenAPI generada o mantenida junto a las rutas; base para tests de contrato y SDK.
 - [ ] **D-017 | Tests dependen de Docker y de datos de seed** | Esfuerzo M
   - No hay tests unitarios puros de `lib/` ni de `smartprice`. Accion: separar unitarios (rapidos, sin DB) de integracion; agregar cobertura.
-- [ ] **D-018 | Temas legados sin pares claro/oscuro** | Esfuerzo S
-  - `omarchy_aetheria`, `dark_glassmorphism` y `cyberpunk_glassmorphism` no tienen version clara; sus tokens no incluyen superficies, estados ni graficos. Accion: decidir si se retiran o se migran al esquema `tokens` extendido.
-
-- [ ] **D-037 | Copias legadas de la SPA y del CSS** | `modules/core/public/`, `modules/kanban/public/`, `public/css/holospace-theme.css` | Esfuerzo M
-  - La SPA que se sirve es `public/index.html` + `public/app.js`. `modules/core/public/index.html`, `modules/kanban/public/index.html` y sus CSS son copias no servidas con logo pixelado y colores fijos. Accion: borrarlas o integrarlas (ver D-012 y D-013).
 - [ ] **D-038 | Colores fijos restantes y degradados en la SPA** | `public/index.html`, `public/app.js` | Esfuerzo M
   - Tras migrar texto blanco, superficies oscuras y botones con degradado a tokens quedan degradados en tarjetas (`linear-gradient(135deg, ...)`), `border-left` de color, el color fijo del boton de Google (obligatorio por marca) y unos 800 estilos inline. Accion: mover a clases con tokens y quitar degradados.
 - [ ] **D-039 | Reproducir los activos de marca con un script** | `public/brand/` | Esfuerzo S
@@ -109,5 +104,6 @@
 - [x] **S-010** (era D-007) El init de la base arranca desde cero sin errores: suscripciones del tenant 0 despues de sembrar los planes; verificado con `ON_ERROR_STOP=1` en una base nueva. 2026-10-02.
 - [x] **S-011** Estetica Holo en toda la plataforma: tema por defecto Holo Night con migracion unica, login de lamina (sin estrellas), logo H acotada en la SPA, landing y favicon, colores fijos de texto y superficies migrados a tokens y emojis eliminados de la SPA. Verificado con capturas de todas las vistas en Night y Day. 2026-10-02.
 - [x] **S-012** Sistema de marca decidido y aplicado: wordmark `holospace.` en minuscula con punto menta, firma `by hologrowth.dev`, y familia de iconos (cota para la plataforma, hex para 4see, codigo para logistica) en landing, login, pestanas y titulos de la SPA, favicon por modulo y app Scanner (cabecera y login). 2026-10-02.
-- [x] **S-013** Verde de marca unico para el punto del wordmark y las lineas de los iconos (token `brand`: `#34D3A4` en Night y `#0E9F7A` en Day, verificado por test). Generados favicon, `.ico`, iconos de app y maskable, iconos por producto, lockups transparentes y la imagen Open Graph 1200x630; enlazados en landing y SPA, con `site.webmanifest`. 2026-10-02.
+- [x] **S-013** Generados favicon, `.ico`, iconos de app y maskable, iconos por producto, lockups transparentes y la imagen Open Graph 1200x630; enlazados en landing y SPA, con `site.webmanifest`. El punto del wordmark conserva el verde de acento del tema (se descarto un token de marca aparte). La firma `by hologrowth.dev` sale del nav de la landing y queda en pies y login. Se desactivo la cache de `landing.css` (Cloudflare la guardaba 4 horas) y los CSS se versionan con `?v=`. 2026-10-02.
+- [x] **S-014** Solo existen Holo Night y Holo Day: se retiraron los 5 temas anteriores de `themes.json`, de los selectores y de la base (migracion unica a `holo_dark`), se podo `public/css/holospace-theme.css` de 1.929 a unas 210 lineas y se quitaron la capa de asteroides y naves, las copias no servidas de `modules/core/public` y `modules/kanban/public` y las rutas muertas. Corrige ademas el cache de Cloudflare con URLs versionadas (`lib/assets.js`). Resuelve D-018 y D-037. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

@@ -225,49 +225,43 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
      - **Fallback de Plataforma:** `holo_dark` (Holo Night). Sin sesion (login) se elige Holo Night o Holo Day segun la preferencia guardada en la landing (`hs_landing_theme`) o la del sistema.
 5. **Cero Hardcodes de Color en UI (Regla de Oro):** Queda terminantemente prohibido incorporar estilos inline con colores fijos (`style="background-color: #..."`) o clases fijas saturadas en barras de navegación, menús de módulos, submenús de features o tarjetas. Todos los componentes deben consumir obligatoriamente los tokens dinámicos del sistema (`var(--bg-main)`, `var(--card-bg)`, `var(--card-border)`, `var(--cobalt)`, `var(--emerald)`).
 
-### 7.2 Catálogo Oficial de Temas de Plataforma (Dark y Light)
+### 7.2 Catálogo Oficial de Temas de Plataforma
+
+La plataforma conserva **solo dos temas**, que forman un par claro y oscuro. Los temas anteriores (Omarchy, Soft Pastel, Dark Glass, Cyberpunk Glass) se retiraron el 2026-10-02; cualquier valor guardado se migra a `holo_dark`.
 
 | Clave (`key`) | Nombre Oficial | Modo | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
 | :--- | :--- | :---: | :--- | :--- | :--- | :--- |
-| **`omarchy_tiling`** | **Omarchy Tiling** *(Predeterminado)* | Dark | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#121317` | Verde Menta (`#A6DA95`) |
-| **`omarchy_tiling_light`** | **Omarchy Light** | Light | `JetBrains Mono` | `4px` (Tiling estricto) | `#F6F8FA` | Esmeralda (`#059669`) / Cobalto (`#6366F1`) |
-| **`omarchy_aetheria`** | **Omarchy Aetherial** | Dark | `JetBrains Mono` / `Press Start 2P` | `4px` (Tiling estricto) | `#0E091D` (OLED) | Teal (`#14B9B5`) / Violeta (`#7C3AED`) |
-| **`soft_minimal_pastel`** | **Soft Pastel** | Dark | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#1E1E2E` (Catppuccin Mocha) | Menta (`#A6E3A1`) / Lavanda (`#89B4FA`) |
-| **`soft_minimal_pastel_light`** | **Soft Pastel Light** | Light | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#EFF1F5` (Catppuccin Latte) | Verde (`#40A02B`) / Azul (`#1E66F5`) |
-| **`dark_glassmorphism`** | **Dark Glass** | Dark | `Outfit` | `24px` (Glass) | `#0B0E14` (Cristal oscuro) | Esmeralda (`#00E676`) / Cobalto (`#3B82F6`) |
-| **`cyberpunk_glassmorphism`**| **Cyberpunk Glass** | Dark | `Press Start 2P` | `8px` (Synthwave) | `#05050A` (Neon) | Cian (`#00FFCC`) / Magenta (`#FF007F`) |
-| **`holo_dark`** | **Holo Night** | Dark | `Geist` / `Geist Mono` | `14px` / `10px` | `#0B0C10` (grafito) | Menta (`#34D3A4`) / Violeta (`#8B7CFF`) |
+| **`holo_dark`** | **Holo Night** *(Predeterminado)* | Dark | `Geist` / `Geist Mono` | `14px` / `10px` | `#0B0C10` (grafito) | Menta (`#34D3A4`) / Violeta (`#8B7CFF`) |
 | **`holo_light`** | **Holo Day** | Light | `Geist` / `Geist Mono` | `14px` / `10px` | `#F6F7FB` | Verde (`#087A62`) / Violeta (`#5441D6`) |
 
 ### 7.3 Mapa de Tokens Estándar por Tema (`modules/themes/themes.json`)
 ```json
 {
-  "key": "omarchy_tiling",
-  "name": "Omarchy Tiling",
-  "background": "#121317",
-  "cardBg": "#1A1B22",
-  "cardBorder": "#2E303E",
-  "emerald": "#A6DA95",
-  "cobalt": "#BD93F9",
-  "amber": "#F1FA8C",
-  "red": "#FF5555",
-  "textMain": "#F8F8F2",
-  "textMuted": "#6272A4",
-  "fontFamily": "JetBrains Mono",
-  "fontMono": "JetBrains Mono",
-  "borderRadius": 4,
-  "radiusCard": 4,
-  "radiusBtn": 4,
-  "radiusBadge": 2,
+  "key": "holo_dark",
+  "name": "Holo Night",
+  "mode": "dark",
+  "background": "#0B0C10",
+  "cardBg": "#12141A",
+  "cardBorder": "#252936",
+  "emerald": "#34D3A4",
+  "cobalt": "#8B7CFF",
+  "amber": "#F5B84B",
+  "red": "#FF6B6B",
+  "textMain": "#EDEFF5",
+  "textMuted": "#9BA3B5",
+  "fontFamily": "Geist",
+  "fontMono": "Geist Mono",
+  "radiusCard": 14,
+  "radiusBtn": 10,
+  "radiusBadge": 8,
   "borderWidth": 1,
-  "backdropBlur": "none",
-  "boxShadow": "none"
+  "tokens": { "surface1": "#12141A", "accentFg": "#04130E", "...": "ver 7.3.1" }
 }
 ```
 
-### 7.3.1 Familia Holo (tema recomendado para SaaS) y tokens extendidos
+### 7.3.1 Familia Holo y tokens extendidos
 
-`holo_dark` y `holo_light` son el par oficial pensado para aplicaciones SaaS de uso diario. Criterios de diseno (relevamiento 2026: Linear, Vercel, Supabase): oscuro primero con claro de igual calidad, grises neutros con tinte frio (no negro puro), elevacion por luminosidad de superficie, un unico acento saturado (menta) con violeta como secundario y un degradado de marca usado solo en puntos focales.
+`holo_dark` y `holo_light` son el par oficial y unico. Criterios de diseno (relevamiento 2026: Linear, Vercel, Supabase): oscuro primero con claro de igual calidad, grises neutros con tinte frio (no negro puro), elevacion por luminosidad de superficie, un unico acento saturado (menta) con violeta como secundario y un degradado de marca usado solo en puntos focales.
 
 Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (no rompe temas legados):
 
@@ -283,12 +277,14 @@ Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (
 
 **Verificacion:** `tests/test-theme-contrast.js` (sin base de datos) exige texto principal 7:1, texto secundario 4.5:1, acentos y series de grafico 3:1 sobre cada superficie, texto sobre boton primario 4.5:1 y CSS sin `!important`.
 
-**Migracion del tema por defecto (2026-10-02):** al iniciar, el servidor ejecuta una vez `migrateDefaultThemeToHolo()` (marcador `migration_default_theme_holo` en `core_app_settings`): los tenants con `active_theme = omarchy_tiling` pasan a `holo_dark` y se limpian las preferencias de usuario con ese valor. Los demas temas siguen disponibles en el selector.
+**Migracion a solo Holo (2026-10-02):** al iniciar, el servidor ejecuta una vez `migrateDefaultThemeToHolo()` (marcador `migration_only_holo_themes` en `core_app_settings`): todo `active_theme` distinto de `holo_dark` o `holo_light` pasa a `holo_dark` y se limpian las preferencias de usuario con otro valor. `POST /api/theme` normaliza claves desconocidas a `holo_dark`.
+
+**Cache de assets:** Cloudflare guarda CSS, JS e imagenes hasta 4 horas ignorando las cabeceras del origen. `lib/assets.js` agrega `?v=<mtime>` a las URLs estaticas del HTML (`/themes/holo.css`, `/css/holospace-theme.css`, `/app.js`, `/landing/landing.css`, `/brand/*`) al servirlo, de modo que cada cambio de archivo cambia la URL.
 
 **Marca:** wordmark `holospace.` (minuscula, punto menta) con la H acotada como componente `.hs-logo` (SVG inline). Iconos de producto como simbolos SVG (`#hs-pcore`, `#hs-p4see`, `#hs-plog`) y archivos `GET /brand/mark.svg`, `/brand/4see.svg` y `/brand/logistica.svg` (se adaptan al esquema claro u oscuro). El favicon cambia segun el modulo activo (`setModuleFavicon`). La app movil usa `modules/scanner/src/components/Brand.tsx`. Reglas completas en `docs/CONTENT.md` 0.1.
 
 ### 7.4 Regla de Aislamiento de Fondos Dinámicos
-* Con los temas Holo, la landing y el login usan una grilla de lamina estatica (sin estrellas ni asteroides). El fondo espacial animado queda solo para los temas legados.
+* La landing y el login usan una grilla de lamina estatica (sin estrellas ni asteroides). Se retiro el fondo espacial animado y todo el CSS de los temas anteriores.
 * Módulos Internos Autenticados (/tenant, /core, /kanban, /scanner): Fondo estático sólido limpio sin animaciones para garantizar máximo rendimiento, legibilidad y ahorro de batería.
 
 ### 7.5 Capa Ontológica E-Commerce On-The-Fly y Conectores Multitienda (Módulo 4see)

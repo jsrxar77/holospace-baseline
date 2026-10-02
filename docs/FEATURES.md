@@ -95,13 +95,13 @@ La plataforma no utiliza paquetes o bundles cerrados; cada organización (tenant
 1. **Scope Tenant (Nivel Empresa):** Tema base para toda la organización (`POST /api/theme` con `scope: 'tenant'`).
 2. **Scope Usuario (Nivel Personal):** Preferencia personal de cada usuario (`POST /api/theme` con `scope: 'user'`).
 3. **Resolución en Cascada:**
-   `Preferencia de Usuario` $ightarrow$ `Tema Base del Tenant` $ightarrow$ `Omarchy Tiling WM (Default)`.
+   `Preferencia de Usuario` $
+ightarrow$ `Tema Base del Tenant` $
+ightarrow$ `Holo Night (Default)`.
 
 ### B. Catálogo de Temas Disponibles:
-- **Omarchy Tiling WM:** Dracula palette, bordes 2px solid, tipografía JetBrains Mono y logo Press Start 2P.
-- **Omarchy Aetheria:** Acentos Teal y Violeta suave.
-- **Dark Glassmorphism:** Fondos translúcidos con blur(12px) y acentos Esmeralda.
-- **Cyberpunk Glassmorphism:** Alto contraste Neón.
+- **Holo Night (`holo_dark`):** grafito `#0B0C10`, acento menta `#34D3A4`, tipografia Geist.
+- **Holo Day (`holo_light`):** hoja `#F6F7FB`, acento verde `#087A62`, mismos tokens de forma.
 - **Soft Minimal Pastel:** Colores pasteles y bordes suaves.
 
 ### C. Cero Alerts del Sistema:

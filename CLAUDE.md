@@ -18,7 +18,7 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 6. **Multi-tenancy**: todo dato lleva `tenant_id` + RLS y filtro `WHERE tenant_id` defensivo. Sin fuga entre organizaciones. Skill `holospace-multi-tenant-security`.
 7. **RBAC granular**: permisos `modulo:recurso:accion` via `lib/rbac.js`; prohibido `role === 'ADMIN'` para autorizar. 403 con contrato canonico `INSUFFICIENT_PERMISSIONS` (error, code, required_permission, module, message, timestamp); el frontend lo muestra con `showPermissionDeniedModal`. SUPERADMIN tiene `*`.
 8. **Rutas**: core `/api/login|users|theme|modules|platform-audit|tenants`; modulos `/api/<modulo>/...`. LocalStorage: `hs_` (plataforma) y `hs_<modulo>_` (modulo).
-9. **Temas**: unica fuente `modules/themes/themes.json`, consumida por `/api/theme` (web y RN). Cero colores hex/rgba/gradientes inline ni `!important` para forzar acentos; solo tokens `var(--...)`. Fondos animados solo en landing y login. Skill `holospace-theme-system`.
+9. **Temas**: solo dos, `holo_dark` y `holo_light`; unica fuente `modules/themes/themes.json`, consumida por `/api/theme` (web y RN). Cero colores hex/rgba/gradientes inline ni `!important` para forzar acentos; solo tokens `var(--...)`. Sin fondos animados ni estetica espacial. Skill `holospace-theme-system`.
 10. **ABM/CRUD**: seguir skill `holospace-crud-template` (busqueda reactiva, anti-truncado, soft delete, modal 403).
 11. **Tests por feature**: toda feature/endpoint/modulo nuevo trae suite en `tests/` registrada en `SUITES` de `tests/run-all-tests.js`.
 12. **Navegador/Playwright**: no abrirlo sin pedido explicito; preferir terminal e inspeccion de codigo. Ante duda real, preguntar antes de cambios masivos.
@@ -30,7 +30,7 @@ Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tie
 Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth.dev`; iconos de producto: cota (plataforma), hex (4see), codigo (logistica). Reglas y archivos en `docs/CONTENT.md` 0.1 y `public/brand/`. En texto corrido: "HoloSpace".
 
 ## Diseno
-Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Tema vigente recomendado: familia Holo (`docs/ARCHITECTURE.md` 7.3.1).
+Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Los dos temas Holo son los unicos (`docs/ARCHITECTURE.md` 7.2 y 7.3.1).
 
 ## Skills del proyecto (`.claude/skills/`)
 `holospace-architect`, `holospace-module-creator`, `holospace-multi-tenant-security`, `holospace-theme-system`, `holospace-testing-verification`, `holospace-docker-deploy`, `holospace-crud-template`, `impeccable`.

@@ -15,14 +15,10 @@ description: >
 
 1. **Definicion Unica en `/modules/themes/themes.json`**:
    Queda terminantemente prohibido hardcodear paletas de color, radios de borde o temas propios en subcarpetas de modulos individuales (`modules/kanban`, `modules/scanner`, etc.).
-2. **Los 7 Temas Oficiales (Dark y Light)**:
-   - `omarchy_tiling` (Omarchy Tiling - Predeterminado, bordes marcados, estetica Window Manager)
-   - `omarchy_tiling_light` (Omarchy Light)
-   - `omarchy_aetheria` (Omarchy Aetherial)
-   - `soft_minimal_pastel` (Soft Pastel)
-   - `soft_minimal_pastel_light` (Soft Pastel Light)
-   - `dark_glassmorphism` (Dark Glass)
-   - `cyberpunk_glassmorphism` (Cyberpunk Glass)
+2. **Los 2 Temas Oficiales (par claro y oscuro)**:
+   - `holo_dark` (Holo Night, predeterminado)
+   - `holo_light` (Holo Day)
+   Los temas anteriores se retiraron; no reintroducirlos. Tokens extendidos y verificacion de contraste en `docs/ARCHITECTURE.md` 7.3.1 y `tests/test-theme-contrast.js`.
 
 ---
 
