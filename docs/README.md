@@ -222,7 +222,10 @@ holospace-baseline/
 | :--- | :--- | :--- |
 | `PORT` | Puerto HTTP del servidor Express | `3001` |
 | `DATABASE_URL` | String de conexión a PostgreSQL 16 RLS | `postgresql://holospace_admin:****@postgres:5432/holospace_saas` |
-| `JWT_SECRET` | Clave secreta para firma de tokens. Obligatoria en produccion, minimo 32 caracteres aleatorios | definir en `.env` |
+| `JWT_SECRET` | Clave secreta para firma de tokens. Obligatoria (compose no arranca sin ella), minimo 32 caracteres aleatorios (`openssl rand -hex 32`) | definir en `.env` |
+| `NODE_ENV` | `production` activa HSTS, exige `JWT_SECRET` fuerte y limita CORS a `CORS_ORIGINS` | `development` |
+| `CORS_ORIGINS` | Origenes permitidos para la API, separados por coma (en produccion) | `https://app.tudominio.com` |
+| `LOGIN_RATE_MAX` | Intentos fallidos de login por IP y email cada 15 minutos | `10` |
 | `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 / Workspace | Configurable en Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | Secreto de cliente Google OAuth2 | Configurable en Google Cloud Console |
 | `GOOGLE_CALLBACK_URL` | URL de redirección del callback OAuth2 | `https://holospace.com.ar/api/auth/google/callback` |

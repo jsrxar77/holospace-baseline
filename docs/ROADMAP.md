@@ -169,13 +169,14 @@
 - [x] **17.5.3** Higiene: credenciales fuera de `docs/README.md` y de la config MCP, `.env.example`, PDFs reales fuera del indice.
 - [x] **17.5.4** Temas `holo_dark` y `holo_light` con tokens extendidos, CSS generado en `GET /themes/holo.css` y test de contraste `tests/test-theme-contrast.js` registrado en el runner.
 - [x] **17.5.5** Landing comercial v3 (`modules/landing/public/`): lamina tecnica con Holo Night/Day, simulador del piso de margen, 9 hojas, precios reales de `lib/billing.js`, FAQ, JSON-LD y accesibilidad. Contexto en `PRODUCT.md` y `DESIGN.md`.
+- [x] **17.5.7** Endurecimiento de seguridad con suite `tests/test-security-hardening.js` (17 suites, 0 fallos).
 - [x] **17.5.6** Registro de deuda tecnica en [DEBT.md](./DEBT.md) (septimo documento canonico).
 
 ---
 
 ## 3. Próximas Fases Planificadas
 
-- [ ] **FASE 17.9 (P0):** Cerrar los items de seguridad D-001 a D-006 de [DEBT.md](./DEBT.md) antes de comercializar.
+- [x] **FASE 17.9 (P0, parcial):** Seguridad D-001 a D-004 y D-007 resueltos (identidad solo por JWT, secreto JWT obligatorio, seeds con hash, CORS y rate limit, init desde cero). Quedan D-005, D-006, D-008 y D-009 en [DEBT.md](./DEBT.md).
 - [ ] **FASE 18:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
 - [ ] **FASE 19:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
 - [ ] **FASE 20:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.

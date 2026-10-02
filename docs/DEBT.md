@@ -14,29 +14,18 @@
 
 ## P0: Seguridad (resolver antes de vender)
 
-- [ ] **D-001 | Autenticacion por email sin JWT valido** | `server.js:499-520` | Esfuerzo M
-  - **Confirmado en vivo (2026-10-02):** `curl -H 'x-user-email: <email>' /api/users` y `Authorization: Bearer <email>` devuelven los datos del usuario sin contrasena.
-  - Hallazgo: si `Authorization: Bearer <valor>` no es un JWT valido, el valor se usa como email del usuario. Tambien se acepta el header `x-user-email` y los campos `email`/`userEmail` del body. El usuario se carga desde la base por ese email sin verificar identidad.
-  - Impacto: cualquiera que conozca un email puede actuar como ese usuario, incluido el SUPERADMIN. Anula RBAC y el aislamiento por tenant a nivel aplicacion.
-  - Causa probable: compatibilidad con el cliente web (`core.js` envia el email como token si no hay `hs_token`) y con la app movil.
-  - Accion: aceptar unicamente JWT verificado; eliminar `x-user-email` y el email en body como fuente de identidad; migrar clientes y tests a login real; agregar test negativo.
-- [ ] **D-002 | JWT secret con valor por defecto** | `lib/auth.js:9,51`, `docker-compose.yml:16` | Esfuerzo S
-  - Si falta `JWT_SECRET` se usa una clave publica en el repositorio, con lo que cualquiera puede forjar tokens.
-  - Accion: fallar el arranque si `JWT_SECRET` falta o tiene menos de 32 caracteres (en produccion); quitar el valor por defecto de compose.
-- [ ] **D-003 | Contrasenas de seed en texto plano y conocidas** | `data/init-schema.sql:976,1015-1052`, `tests/test-modules-toggle.js:44`, `tests/test-plans-and-user-edit.js:45` | Esfuerzo M
-  - Los seeds guardan `scrypt:<contrasena>` (prefijo mas texto plano, no un hash). Las claves de demo y la del SUPERADMIN estan en el SQL y en tests.
-  - Accion: seed sin usuarios en produccion; en desarrollo generar hash real a partir de variables de entorno; los tests leen credenciales de `.env`. Rotar la clave del SUPERADMIN.
-- [ ] **D-004 | Endurecimiento HTTP ausente** | `server.js:358` | Esfuerzo M
-  - CORS abierto a `*` para toda la API, sin cabeceras de seguridad (CSP, HSTS, X-Frame-Options), sin rate limiting (login incluido) y sin validacion de esquema de entrada.
-  - Accion: allowlist de origenes por entorno, cabeceras de seguridad, rate limit en `/api/login` y `/api/auth/*`, validacion con zod en endpoints de escritura.
+> D-001, D-002, D-003, D-004 y D-007 fueron resueltos el 2026-10-02 (ver Saldada). Quedan D-005 y D-006 (accion del dueno sobre el historial) y los residuales D-008 y D-009.
+
 - [ ] **D-005 | Secretos en el historial de git** | historial | Esfuerzo S (accion del dueno)
   - La clave de Postgres y las credenciales de demo estuvieron versionadas (`.agents/mcp_config.json`, `docs/README.md`). Ya se quitaron del arbol de trabajo, pero siguen en commits anteriores.
   - Accion: rotar todas las claves involucradas; si el repositorio es o sera publico, reescribir historial (`git filter-repo`) y forzar push de forma coordinada.
-- [ ] **D-007 | El arranque desde cero falla** | `data/init-schema.sql:786` | Esfuerzo S
-  - En un volumen nuevo, `docker compose up` aborta el init: el seed inserta `tenant_subscriptions` (linea 786) antes de poblar `tenant_plans` (FK `tenant_subscriptions_plan_code_fkey`), y el entrypoint corre psql con `ON_ERROR_STOP`. La base queda a medias (sin usuarios ni planes) y 11 de 16 suites fallan. Reejecutar el script a mano lo completa (es idempotente).
-  - Accion: reordenar el seed (planes y catalogo antes de suscripciones) y agregar un test de arranque en frio en CI.
 - [ ] **D-006 | Datos de clientes reales en el repositorio** | `modules/kanban/orders/*.pdf` | Esfuerzo S
   - Los PDFs ya salieron del indice y estan en `.gitignore`, pero siguen en el historial. Se resuelve junto con D-005.
+
+- [ ] **D-008 | Endurecimiento HTTP residual** | `server.js` | Esfuerzo M
+  - Pendiente tras D-004: Content-Security-Policy (la SPA usa scripts y estilos inline), rate limit compartido entre instancias (hoy en memoria del proceso), limite tambien en `/api/auth/google` y alta de cuentas, validacion de esquema de entrada con zod en endpoints de escritura, renovacion y revocacion de tokens JWT.
+- [ ] **D-009 | Credenciales de prueba como fixtures** | `tests/` | Esfuerzo S
+  - Los tests conservan las claves del seed de desarrollo como valores por defecto (sobrescribibles con `SUPERADMIN_PASSWORD`, `TEST_JUAN_PASSWORD`, `TEST_VANESA_PASSWORD`). Accion: mover a un seed de test generado y rotar la clave real del SUPERADMIN (ver D-005).
 
 ## P1: Arquitectura y mantenibilidad
 
@@ -96,4 +85,9 @@
 - [x] **S-002** Credenciales y clave de Postgres retiradas de `docs/README.md` y de la configuracion MCP (queda D-005 para el historial). 2026-10-02.
 - [x] **S-003** PDFs de pedidos reales y archivos `.rooignore`/`.agents` fuera del indice de git. 2026-10-02.
 - [x] **S-004** Nueva familia de temas Holo (`holo_dark`, `holo_light`) con contraste WCAG verificado por test, generada desde `themes.json`. 2026-10-02.
+- [x] **S-006** (era D-001) La identidad solo sale de un JWT firmado y vigente; se eliminaron Bearer <email>, `x-user-email` y el email en body/query como credencial, y ya no se acepta `userEmail` de clientes para operar como otro usuario. El usuario del token debe existir y estar activo. Test: `tests/test-security-hardening.js`. 2026-10-02.
+- [x] **S-007** (era D-002) Sin secreto JWT por defecto: obligatorio y de 32+ caracteres en produccion, aleatorio por proceso en desarrollo; compose exige `JWT_SECRET`; comparacion de firma en tiempo constante. 2026-10-02.
+- [x] **S-008** (era D-003) El seed de `init-schema.sql` guarda hashes scrypt reales en lugar de `scrypt:<texto plano>`; el login actualiza hashes legados. 2026-10-02.
+- [x] **S-009** (era D-004) CORS por lista de origenes (`CORS_ORIGINS`; en desarrollo origenes locales y de red privada), cabeceras de seguridad, y limite de intentos de login (`LOGIN_RATE_MAX`, 10 por 15 minutos por IP y email, respuesta 429). Residual en D-008. 2026-10-02.
+- [x] **S-010** (era D-007) El init de la base arranca desde cero sin errores: suscripciones del tenant 0 despues de sembrar los planes; verificado con `ON_ERROR_STOP=1` en una base nueva. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

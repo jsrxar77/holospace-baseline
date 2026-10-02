@@ -146,6 +146,13 @@ CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
 
 ---
 
+**Modelo de identidad y endurecimiento HTTP (2026-10-02):**
+- La identidad de cada peticion sale unicamente de un JWT firmado (HS256) y vigente en `Authorization: Bearer`. Un email nunca es credencial: no se aceptan `x-user-email`, ni `email`/`userEmail` en body o query. El usuario del token se vuelve a cargar de la base y debe estar activo.
+- `JWT_SECRET` es obligatorio (32+ caracteres) en produccion; en desarrollo, si falta, se genera uno aleatorio por proceso. La firma se compara en tiempo constante.
+- CORS por lista de origenes (`CORS_ORIGINS`; en desarrollo se aceptan origenes locales y de red privada). Cabeceras `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` y HSTS tras HTTPS en produccion.
+- Login con limite de intentos fallidos por IP y email (`LOGIN_RATE_MAX`, ventana de 15 minutos, HTTP 429).
+- Cobertura: `tests/test-security-hardening.js`. Pendientes en `docs/DEBT.md` (D-008).
+
 ## 6. Estrategia de Respaldos y Recuperación ante Desastres (Disaster Recovery)
 
 HoloSpace implementa un modelo de respaldos redundante de dos niveles para garantizar la continuidad del negocio y la integridad de datos de todas las empresas clientes:
