@@ -2100,6 +2100,8 @@ async function loadTenantsManagementData() {
               <option value="dark_glassmorphism" ${t.active_theme === 'dark_glassmorphism' ? 'selected' : ''}>Dark Glassmorphism</option>
               <option value="cyberpunk_glassmorphism" ${t.active_theme === 'cyberpunk_glassmorphism' ? 'selected' : ''}>Cyberpunk Glassmorphism</option>
               <option value="soft_minimal_pastel" ${t.active_theme === 'soft_minimal_pastel' ? 'selected' : ''}>Soft Minimal Pastel</option>
+              <option value="holo_dark" ${t.active_theme === 'holo_dark' ? 'selected' : ''}>Holo Night</option>
+              <option value="holo_light" ${t.active_theme === 'holo_light' ? 'selected' : ''}>Holo Day</option>
             </select>
           </div>
 

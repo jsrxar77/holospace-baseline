@@ -407,6 +407,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // CSS de temas Holo generado desde modules/themes/themes.json (fuente unica)
+  if (reqPath === '/themes/holo.css') {
+    res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'no-cache' });
+    res.end(require('./modules/themes').buildThemeCss());
+    return;
+  }
+
   if (reqPath === '/css/holospace-theme.css' || reqPath.startsWith('/css/')) {
     let cssPath = path.join(__dirname, 'public', reqPath);
     if (!fs.existsSync(cssPath)) {

@@ -1,0 +1,110 @@
+/* Holo Design System: capa de componentes para los temas holo_dark y holo_light.
+   Solo consume tokens (--hw-*, --card-bg, ...). Los valores viven en themes.json. */
+
+body:is(.theme-holo_dark, .theme-holo_light) {
+  font-family: var(--hw-font-family), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.005em;
+}
+
+body:is(.theme-holo_dark, .theme-holo_light) ::selection { background: var(--hw-accent-soft); color: var(--text-main); }
+body:is(.theme-holo_dark, .theme-holo_light) .font-mono,
+body:is(.theme-holo_dark, .theme-holo_light) code { font-family: var(--hw-font-mono), ui-monospace, monospace; }
+
+/* Encabezado y navegacion */
+body:is(.theme-holo_dark, .theme-holo_light) .app-header-shell,
+body:is(.theme-holo_dark, .theme-holo_light) header {
+  background: var(--hw-surface-1);
+  border-bottom: var(--hw-border-width) solid var(--card-border);
+  box-shadow: var(--hw-shadow-sm);
+  border-radius: 0;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .header-nav-line { background: var(--hw-surface-1); border-color: var(--card-border); }
+body:is(.theme-holo_dark, .theme-holo_light) .nav-tab {
+  color: var(--text-muted);
+  border-radius: var(--hw-radius-btn);
+  border: var(--hw-border-width) solid transparent;
+  background: transparent;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .nav-tab:hover { color: var(--text-main); background: var(--hw-surface-2); }
+body:is(.theme-holo_dark, .theme-holo_light) .nav-tab.active {
+  color: var(--text-main);
+  background: var(--hw-accent-soft);
+  border-color: var(--hw-accent-border);
+}
+body:is(.theme-holo_dark, .theme-holo_light) .logo-holo { color: var(--text-main); }
+body:is(.theme-holo_dark, .theme-holo_light) .logo-space {
+  background: var(--hw-gradient-brand);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+/* Superficies */
+body:is(.theme-holo_dark, .theme-holo_light) :is(.kanban-col, .modal-content, .upload-dropzone, .module-card, .kanban-card, .invoice-card, .user-group, .operator-group) {
+  background: var(--hw-surface-1);
+  border: var(--hw-border-width) solid var(--card-border);
+  border-radius: var(--hw-radius-card);
+  box-shadow: var(--hw-shadow-sm);
+}
+body:is(.theme-holo_dark, .theme-holo_light) .modal-content { background: var(--hw-surface-overlay); box-shadow: var(--hw-shadow-lg); border-radius: var(--hw-radius-xl); }
+body:is(.theme-holo_dark, .theme-holo_light) .modal-overlay { backdrop-filter: blur(6px); }
+body:is(.theme-holo_dark, .theme-holo_light) :is(.kanban-card, .module-card):hover { border-color: var(--hw-border-strong); box-shadow: var(--hw-shadow-md); }
+
+/* Botones */
+body:is(.theme-holo_dark, .theme-holo_light) .btn-primary {
+  background: var(--emerald);
+  color: var(--hw-accent-fg);
+  border: var(--hw-border-width) solid transparent;
+  border-radius: var(--hw-radius-btn);
+  font-weight: 600;
+  box-shadow: var(--hw-shadow-sm);
+  transition: transform .12s ease, box-shadow .15s ease, filter .15s ease;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .btn-primary:hover { filter: brightness(1.08); box-shadow: var(--hw-glow); }
+body:is(.theme-holo_dark, .theme-holo_light) .btn-primary:active { transform: translateY(1px); }
+body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary {
+  background: var(--hw-surface-2);
+  color: var(--text-main);
+  border: var(--hw-border-width) solid var(--hw-border-strong);
+  border-radius: var(--hw-radius-btn);
+  transition: background-color .15s ease, border-color .15s ease;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary:hover { background: var(--hw-surface-3); }
+
+/* Formularios */
+body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search, .theme-select, select, textarea) {
+  background: var(--hw-surface-2);
+  color: var(--text-main);
+  border: var(--hw-border-width) solid var(--card-border);
+  border-radius: var(--hw-radius-btn);
+}
+body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search)::placeholder { color: var(--hw-text-subtle); }
+body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search, select, textarea):focus { outline: none; border-color: var(--cobalt); box-shadow: var(--hw-focus-ring); }
+body:is(.theme-holo_dark, .theme-holo_light) :is(button, a, [tabindex]):focus-visible { outline: none; box-shadow: var(--hw-focus-ring); }
+
+/* Tablas */
+body:is(.theme-holo_dark, .theme-holo_light) .data-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+body:is(.theme-holo_dark, .theme-holo_light) .data-table th {
+  background: var(--hw-surface-2); color: var(--text-muted);
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+  border-bottom: var(--hw-border-width) solid var(--card-border);
+}
+body:is(.theme-holo_dark, .theme-holo_light) .data-table td { border-bottom: var(--hw-border-width) solid var(--card-border); }
+body:is(.theme-holo_dark, .theme-holo_light) .data-table tbody tr:hover td { background: var(--hw-surface-2); }
+
+/* Badges */
+body:is(.theme-holo_dark, .theme-holo_light) :is(.badge-role, .context-badge, .superadmin-badge) {
+  background: var(--hw-violet-soft); color: var(--text-main);
+  border: var(--hw-border-width) solid var(--hw-border-strong);
+  border-radius: var(--hw-radius-badge);
+}
+
+/* Scrollbars discretos */
+body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollbar-color: var(--hw-border-strong) transparent; }
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  body:is(.theme-holo_dark, .theme-holo_light) * { transition: none; animation: none; }
+}

@@ -18,6 +18,7 @@ const SUITES = [
   { name: 'Core: Auth JWT & Passwords (scrypt)', file: 'tests/test-auth-jwt.js', module: 'CORE' },
   { name: 'Core: RBAC Granular Permissions', file: 'tests/test-rbac-granular.js', module: 'CORE' },
   { name: 'Core: Theme Engine Hierarchy (HW-DS)', file: 'tests/test-theme-hierarchy.js', module: 'CORE' },
+  { name: 'Core: Holo Theme Contrast & Tokens (WCAG)', file: 'tests/test-theme-contrast.js', module: 'CORE' },
   { name: 'Tenant: Governance & Isolation', file: 'tests/test-tenants-module.js', module: 'TENANT' },
   { name: 'Tenant: Entitlements & Licensing', file: 'tests/test-entitlement.js', module: 'TENANT' },
   { name: 'Tenant: Billing Plans & Onboarding', file: 'tests/test-billing-onboarding.js', module: 'TENANT' },
