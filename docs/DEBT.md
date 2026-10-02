@@ -60,6 +60,9 @@
 - [ ] **D-040 | App movil guarda credenciales y no sigue Day/Night** | `modules/scanner/src/store/useAuthStore.ts` | Esfuerzo M
   - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
+- [ ] **D-041 | Lenguaje de forma distinto entre landing y app** | `public/index.html`, `modules/themes/holo.css` | Esfuerzo M
+  - La landing usa esquinas rectas, lineas finas y cajetines (lamina tecnica); la app usa radios de 10 a 16 px y tarjetas con relleno. Mismos colores y tipografia, distinta forma. Decision pendiente: llevar la app a esquinas rectas o mantener radios en la app.
+
 ## P1: Producto vendible (mini-SaaS)
 
 - [ ] **D-020 | Cobro real** | Fase 18 del roadmap | Esfuerzo L
@@ -106,4 +109,5 @@
 - [x] **S-012** Sistema de marca decidido y aplicado: wordmark `holospace.` en minuscula con punto menta, firma `by hologrowth.dev`, y familia de iconos (cota para la plataforma, hex para 4see, codigo para logistica) en landing, login, pestanas y titulos de la SPA, favicon por modulo y app Scanner (cabecera y login). 2026-10-02.
 - [x] **S-013** Generados favicon, `.ico`, iconos de app y maskable, iconos por producto, lockups transparentes y la imagen Open Graph 1200x630; enlazados en landing y SPA, con `site.webmanifest`. El punto del wordmark conserva el verde de acento del tema (se descarto un token de marca aparte). La firma `by hologrowth.dev` sale del nav de la landing y queda en pies y login. Se desactivo la cache de `landing.css` (Cloudflare la guardaba 4 horas) y los CSS se versionan con `?v=`. 2026-10-02.
 - [x] **S-014** Solo existen Holo Night y Holo Day: se retiraron los 5 temas anteriores de `themes.json`, de los selectores y de la base (migracion unica a `holo_dark`), se podo `public/css/holospace-theme.css` de 1.929 a unas 210 lineas y se quitaron la capa de asteroides y naves, las copias no servidas de `modules/core/public` y `modules/kanban/public` y las rutas muertas. Corrige ademas el cache de Cloudflare con URLs versionadas (`lib/assets.js`). Resuelve D-018 y D-037. 2026-10-02.
+- [x] **S-015** La SPA usa la misma tipografia que la landing: Geist y Geist Mono (antes casi todo el contenido salia en Outfit por una regla global `* { font-family }`). Titulos en Geist 600 con tracking -0.03em, pesos 800 y 900 bajan a 700, datos tecnicos en Geist Mono, y se dejan de cargar Outfit, JetBrains Mono y Plus Jakarta. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

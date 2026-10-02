@@ -1471,7 +1471,7 @@ async function openInvoiceModal(orderId) {
     const order = data.order;
     const itemsHtml = order.items.map(item => `
       <tr>
-        <td style="font-family: monospace;">${item.code}</td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${item.code}</td>
         <td>${item.description}</td>
         <td style="text-align: center;">$${(item.unitPrice || 0).toLocaleString('es-AR')}</td>
         <td style="text-align: center; font-weight: 900;">${item.quantityScanned} / ${item.quantityRequired} U</td>
@@ -1782,9 +1782,9 @@ function renderUsersTable(usersList = []) {
 
     return `
       <tr>
-        <td><strong style="color: var(--emerald); font-family: monospace;">@${displayNick}</strong></td>
+        <td><strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${displayNick}</strong></td>
         <td><strong style="color: var(--text-main);">${u.name}</strong></td>
-        <td style="font-family: monospace; font-size: 13px;">${u.email}</td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 13px;">${u.email}</td>
         <td>
           <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-main); border: 1px solid var(--card-border);">
             ${orgName}
@@ -2150,10 +2150,10 @@ function renderRolesTable(roles = []) {
     
     let permsDisplay = '';
     if (hasWildcard) {
-      permsDisplay = `<code style="font-family: monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Acceso Total (*)</code>`;
+      permsDisplay = `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Acceso Total (*)</code>`;
     } else {
       const topPerms = (r.permissions || []).slice(0, 3).map(p => 
-        `<span style="font-size: 11px; font-family: monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
+        `<span style="font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
       ).join(' ');
       const extra = permsCount > 3 ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">+${permsCount - 3} más</span>` : '';
       permsDisplay = `<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${topPerms}${extra}</div>`;
@@ -2164,7 +2164,7 @@ function renderRolesTable(roles = []) {
     return `
       <tr>
         <td><strong style="color: var(--text-main);">${r.name}</strong></td>
-        <td><code style="font-family: monospace; color: var(--text-muted);">@${r.slug}</code></td>
+        <td><code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-muted);">@${r.slug}</code></td>
         <td style="color: var(--text-muted); font-size: 13px;">${r.description || '-'}</td>
         <td>${typeBadge}</td>
         <td>${permsDisplay}</td>
@@ -2238,7 +2238,7 @@ async function openRoleModal(roleIdToEdit = null) {
             <input type="checkbox" name="role_perm" value="${perm.key}" ${isChecked ? 'checked' : ''} ${isSuperadminRole ? 'disabled' : ''} style="margin-top: 3px;">
             <div>
               <span style="font-weight: 700; color: var(--text-main);">${titleLabel}</span>
-              <code style="font-family: monospace; font-size: 11px; color: var(--amber); margin-left: 4px;">(${perm.key})</code>
+              <code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--amber); margin-left: 4px;">(${perm.key})</code>
               ${descLabel}
             </div>
           </label>
@@ -2720,7 +2720,7 @@ function renderModulesGrid(modules) {
         <div class="module-info">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <div class="module-name" style="display:flex; align-items:center; gap:6px;">
-              <span class="badge" style="font-size:10px; font-family:monospace; padding:2px 6px;">[${urlInfo.tag}]</span>
+              <span class="badge" style="font-size:10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; padding:2px 6px;">[${urlInfo.tag}]</span>
               <span>${mod.name}</span>
             </div>
             <span style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px;
@@ -2729,7 +2729,7 @@ function renderModulesGrid(modules) {
               ${isActive ? 'ACTIVO' : 'INACTIVO'}
             </span>
             <a href="${urlInfo.path}" target="${mod.key === 'scanner' || mod.key === 'landing' ? '_blank' : '_self'}" 
-               style="display:inline-flex; align-items:center; gap:4px; font-family:monospace; font-size:11px; font-weight:700; color:var(--cobalt); text-decoration:none; background:rgba(138,173,244,0.12); padding:3px 8px; border-radius:4px; border:1px solid rgba(138,173,244,0.25);">
+               style="display:inline-flex; align-items:center; gap:4px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size:11px; font-weight:700; color:var(--cobalt); text-decoration:none; background:rgba(138,173,244,0.12); padding:3px 8px; border-radius:4px; border:1px solid rgba(138,173,244,0.25);">
                ${urlInfo.label}
             </a>
             ${isCore ? '<span style="font-size:11px; color:#F59E0B; font-weight:800;">[CORE PLATAFORMA]</span>' : ''}
@@ -2819,7 +2819,7 @@ function renderPlatformAuditLog(logs) {
         <div style="flex:1;">
           <div style="font-size:13px; font-weight:800; color: var(--text-main);">${label}</div>
           <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${log.userEmail || log.user_email || 'Sistema'} · ${ts}</div>
-          ${detailsText ? `<div style="font-size:11px; color:${color}; margin-top:2px; font-family:monospace;">${detailsText}</div>` : ''}
+          ${detailsText ? `<div style="font-size:11px; color:${color}; margin-top:2px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${detailsText}</div>` : ''}
         </div>
       </div>
     `;
@@ -2913,7 +2913,7 @@ async function loadTenantsManagementData() {
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <h3 style="font-size: 18px; font-weight: 900; color: var(--text-main);">${t.name}</h3>
-                <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-muted); font-family: monospace;">
+                <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">
                   ${t.slug}
                 </span>
                 ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA;">PLATAFORMA</span>' : ''}
@@ -2978,7 +2978,7 @@ async function loadTenantsManagementData() {
               ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Sin usuarios asignados</div>' : users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
                   <div>
-                    <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family:monospace;">(@${u.username})</span>` : ''}</div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">(@${u.username})</span>` : ''}</div>
                     <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
                   </div>
                   <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: var(--hw-surface-2, var(--card-bg));">
@@ -3065,14 +3065,14 @@ function renderTenantsTable(tenantsList = []) {
 
     const moduleChips = ['core', 'tenant', 'kanban', 'scanner', '4see'].map(mCode => {
       const active = (mCode === 'core' || (mCode === 'tenant' && isPlatform)) ? true : hasModule(mCode);
-      return `<span style="font-size: 10px; font-family: monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'rgba(255,255,255,0.04)'}; background: ${active ? 'rgba(255,255,255,0.06)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
+      return `<span style="font-size: 10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'rgba(255,255,255,0.04)'}; background: ${active ? 'rgba(255,255,255,0.06)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
     }).join(' ');
 
     const users = t.users || [];
 
     return `
       <tr style="opacity: ${isSuspended ? '0.75' : '1'};">
-        <td><strong style="color: var(--emerald); font-family: monospace;">@${t.slug}</strong></td>
+        <td><strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${t.slug}</strong></td>
         <td>
           <div style="font-weight: 800; color: var(--text-main);">${t.name}</div>
           ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}
@@ -3467,12 +3467,12 @@ function render4seeMonitorsTable(monitors = []) {
             ${m.competitor_name || 'Ver Tienda'} ↗
           </a>
         </td>
-        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">
           $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
         </td>
         <td>${stockBadge}</td>
-        <td style="color: var(--text-muted); font-size: 12px; font-family: monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
+        <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
             <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="recheckMonitor('${m.id}')">Re-verificar</button>
@@ -3699,13 +3699,13 @@ function render4seeCatalog(items = []) {
         <!-- Cabecera de la Tarjeta -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-family: monospace; font-size: 11px; font-weight: 800; color: var(--text-main); background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
-            <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
+            <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; color: var(--text-main); background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
+            <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
             ${brand 
               ? `<span style="font-size: 12px; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">Marca: <strong>${brand}</strong></span>` 
               : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Falta Marca</span>`}
             ${!isMissingGtin 
-              ? `<span style="font-size: 12px; color: var(--text-main); font-family: monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
+              ? `<span style="font-size: 12px; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
               : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Falta EAN</span>`}
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -3736,7 +3736,7 @@ function render4seeCatalog(items = []) {
             ${isMissingGtin ? `
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                 <span style="font-size: 11px; font-weight: 800; color: var(--red);">Cargar EAN:</span>
-                <input type="text" id="inline_gtin_${itemId}" class="input-field" placeholder="8-14 dígitos..." style="padding: 3px 8px; font-size: 12px; max-width: 160px; font-family: monospace;" value="">
+                <input type="text" id="inline_gtin_${itemId}" class="input-field" placeholder="8-14 dígitos..." style="padding: 3px 8px; font-size: 12px; max-width: 160px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;" value="">
                 <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="updateItemGtin('${itemId}', document.getElementById('inline_gtin_${itemId}').value)">Asignar</button>
                 ${suggestedGtin ? `
                   <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px; color: var(--emerald); border-color: rgba(0,230,118,0.4);" onclick="updateItemGtin('${itemId}', '${suggestedGtin}')">Generar EAN interno: ${suggestedGtin}</button>
@@ -3998,7 +3998,7 @@ function renderManageStoresList() {
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${s.store_url || 'N/A'}</div>
         </td>
         <td>
-          <span style="font-family: monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
+          <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
         </td>
         <td style="font-size: 12px; color: var(--text-main);">${lastScan}</td>
         <td style="text-align: right; white-space: nowrap;">
@@ -4732,18 +4732,18 @@ function render4seeMarginsTable(rules = []) {
       <tr>
         <td>
           <div style="font-weight: 800; color: var(--text-main);">${r.product_name || r.product_sku}</div>
-          <div style="font-family: monospace; font-size: 11px; color: var(--emerald);">SKU: ${r.product_sku}</div>
+          <div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">SKU: ${r.product_sku}</div>
         </td>
-        <td style="font-family: monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
           $${parseFloat(r.net_profit).toLocaleString('es-AR')}
         </td>
-        <td style="font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : 'var(--text-main)'};">
+        <td style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${isRed ? 'var(--red)' : 'var(--text-main)'};">
           ${r.real_margin_pct}%
         </td>
         <td>${alertBadge}</td>
-        <td style="font-family: monospace; font-weight: 800; color: var(--cobalt); text-align: right;">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--cobalt); text-align: right;">
           $${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)
         </td>
       </tr>
@@ -4932,16 +4932,16 @@ function render4seeQueueTable(items = []) {
       <tr>
         <td>
           <strong style="color: var(--text-main); display: block;">${q.product_title || 'Producto'}</strong>
-          <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">SKU: ${q.sku || '-'}</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">SKU: ${q.sku || '-'}</span>
         </td>
-        <td style="font-family: monospace; font-weight: 800; color: var(--emerald);">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">
           $${floorPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
           ${floorShieldBadge}
         </td>
-        <td style="font-family: monospace; font-weight: 700; color: var(--text-muted);">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">
           $${prevPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
         </td>
-        <td style="font-family: monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">
           $${suggPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
         </td>
         <td style="font-size: 12px; color: var(--text-main);">
@@ -4954,7 +4954,7 @@ function render4seeQueueTable(items = []) {
               <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aprobar 1-Clic</button>
               <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
             ` : `
-              <span style="color: var(--text-muted); font-size: 11px; font-family: monospace;">Procesado</span>
+              <span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Procesado</span>
             `}
           </div>
         </td>

@@ -6,7 +6,7 @@
   <title>holospace.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/holospace-theme.css">
   <style>
     :root {
@@ -25,8 +25,11 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: 'Outfit', -apple-system, sans-serif;
     }
+
+    /* Tipografia del tema (Geist) para todo; los controles de formulario no la heredan por defecto */
+    body { font-family: var(--hw-font-family, 'Geist'), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    button, input, select, textarea { font-family: inherit; }
 
     body {
       color: var(--text-main);
@@ -309,7 +312,7 @@
     }
 
     .font-mono {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;
     }
 
     /* Mobile Drawer */
@@ -1420,7 +1423,7 @@
         </div>
         <div style="background-color: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB PostgreSQL 16</div>
-          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: var(--text-main); font-family: monospace;">PostgreSQL (RLS Multi-Tenant)</div>
+          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">PostgreSQL (RLS Multi-Tenant)</div>
         </div>
       </div>
     </div>
@@ -1732,7 +1735,7 @@
         <div id="loginError" style="color: var(--red); font-size: 13px; display: none; text-align: center;"></div>
         <button type="submit" class="btn-primary" style="margin-top: 10px;">Iniciar Sesión</button>
         <div style="display: flex; justify-content: flex-end; margin-top: 12px;">
-          <a href="/" style="font-size: 12px; color: var(--text-muted); text-decoration: none; font-family: monospace; transition: color 0.2s;" onmouseover="this.style.color='var(--emerald)'" onmouseout="this.style.color='var(--text-muted)'">Volver a Inicio →</a>
+          <a href="/" style="font-size: 12px; color: var(--text-muted); text-decoration: none; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; transition: color 0.2s;" onmouseover="this.style.color='var(--emerald)'" onmouseout="this.style.color='var(--text-muted)'">Volver a Inicio →</a>
         </div>
       </form>
     </div>
@@ -2167,7 +2170,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
         <div>
           <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar y Cargar Atributos</h3>
-          <div id="editAttrSubtitle" style="font-size: 12px; color: var(--emerald); font-family: monospace; margin-top: 2px;">SKU: N/A</div>
+          <div id="editAttrSubtitle" style="font-size: 12px; color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; margin-top: 2px;">SKU: N/A</div>
         </div>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditProductModal()">×</button>
       </div>
@@ -2206,10 +2209,10 @@
             <span id="editAttrGtinStatusBadge" style="font-size: 11px; font-weight: 800;">-</span>
           </div>
           <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
-            <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">EAN interno generado (GS1): <strong id="editAttrSuggestedGtinText" style="font-family: monospace;">-</strong></div>
+            <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">EAN interno generado (GS1): <strong id="editAttrSuggestedGtinText" style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">-</strong></div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('gtin')">Usar Sugerencia</button>
           </div>
-          <input type="text" id="editAttrGtinInput" class="input-field" style="width: 100%; font-size: 13px; font-family: monospace;" placeholder="8 a 14 dígitos numéricos (ej: 7791234567890)...">
+          <input type="text" id="editAttrGtinInput" class="input-field" style="width: 100%; font-size: 13px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;" placeholder="8 a 14 dígitos numéricos (ej: 7791234567890)...">
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
@@ -2315,7 +2318,7 @@
         <!-- Preview del Piso Inquebrantable -->
         <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 10px 14px;">
           <div style="font-size: 11px; color: var(--emerald); font-weight: 800; text-transform: uppercase;">Piso Inquebrantable Estimado (Hard Floor):</div>
-          <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: var(--text-main); font-family: monospace; margin-top: 2px;">$6.000,00</div>
+          <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; margin-top: 2px;">$6.000,00</div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Ninguna regla de dynamic pricing podrá bajar de este valor.</div>
         </div>
 
@@ -2402,7 +2405,7 @@
         <img id="qrImage" src="" alt="HoloSpace Scanner QR Code" style="width: 220px; height: 220px; display: block;">
       </div>
 
-      <p id="qrText" style="font-size: 13px; font-weight: 700; color: var(--emerald); font-family: monospace; word-break: break-all;">Obteniendo enlace...</p>
+      <p id="qrText" style="font-size: 13px; font-weight: 700; color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; word-break: break-all;">Obteniendo enlace...</p>
       
       <div id="qrCustomHostContainer" style="margin-top: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;">
         <span style="font-size: 12px; color: var(--text-muted);">Host / URL:</span>
@@ -2471,7 +2474,7 @@
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Permiso Requerido:</span>
-          <code id="deniedPermissionChip" style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--amber); background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">core:roles:manage</code>
+          <code id="deniedPermissionChip" style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; color: var(--amber); background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">core:roles:manage</code>
         </div>
       </div>
       <button class="btn-primary" style="width: 100%;" onclick="closePermissionDeniedModal()">Entendido</button>

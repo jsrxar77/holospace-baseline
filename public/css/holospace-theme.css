@@ -110,17 +110,6 @@ body .mobile-nav-tab.feature-tab.active {
   width: 90% !important;
   position: relative !important;
 }
-
-#loginModal .brand-title {
-  font-family: 'Press Start 2P', monospace !important;
-  font-size: 22px !important;
-  text-shadow: 2px 2px 0px #363A4F, 4px 4px 0px #0F101A !important;
-  display: flex !important;
-  justify-content: center !important;
-  letter-spacing: 0px !important;
-  margin-bottom: 8px !important;
-}
-
 #loginModal .brand-title .logo-holo {
   color: #FFFFFF !important;
 }
