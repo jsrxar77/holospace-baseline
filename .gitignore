@@ -63,3 +63,9 @@ backups/weekly/
 backups/monthly/
 backups/last/
 !backups/.gitkeep
+
+# Pedidos reales (datos de clientes)
+modules/kanban/orders/*.pdf
+
+# Claude Code local
+.claude/settings.local.json

@@ -18,37 +18,14 @@ HoloSpace es una infraestructura modular y multi-empresa (SaaS Multi-Tenant) de 
 
 ---
 
-## Cuentas y Credenciales Oficiales (Entorno Multi-Tenant)
+## Cuentas y Acceso
 
-Todos los formularios de autenticación inician limpios por seguridad. La jerarquía de roles se organiza estrictamente en dos niveles:
+Este documento no contiene credenciales. La regla del proyecto es cero secretos en el repositorio.
 
-### Nivel 1: Gobierno Global de la Plataforma (Proveedor SaaS)
-El **único** usuario facultado para crear/administrar tenants, otorgar licencias y cambiar la configuración global de la infraestructura:
-
-| Rol | Organización / Tenant | Email | Contraseña | Acceso / Propósito |
-|---|---|---|---|---|
-| **SUPERADMIN** | `holospace` | `superadmin@holospace.com.ar` | `BrunaSeRelambe22!` | **Módulos Tenant & Core (Web):** Gestión total de Tenants, activación de módulos y auditoría global. Multi-suscripción `kanban_enterprise` + `fourseee_enterprise`. |
-
----
-
-### Nivel 2: Organizaciones Clientes (Tenants Aislados)
-Cada empresa solo administra a sus propios usuarios y opera exclusivamente dentro de su tenant:
-
-#### Organizacion: `poke` (Poke Argentina — `poke.com.ar`)
-*Plan Contratado: Vertical Logística `kanban_simple` (Sin módulo 4see)*
-| Rol | Email | Contrasena | Acceso / Entorno |
-|---|---|---|---|
-| **CORE_ADMIN** | `admin@poke.com.ar` | `poke2026` | **Core & Kanban (Web `3001`):** Administración interna y tablero operativo de Poke. |
-| **SCANNER_OPERATOR** | `juan@poke.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
-| **SCANNER_OPERATOR** | `vanesa@poke.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
-
-#### Organizacion: `drinklovers` (Drink Lovers Argentina — `drinklovers.com.ar`)
-*Planes Contratados: Multi-Suscripción `kanban_enterprise` (Logística) + `fourseee_business` (E-Commerce Intelligence)*
-| Rol | Email | Contrasena | Acceso / Entorno |
-|---|---|---|---|
-| **CORE_ADMIN** | `admin@drinklovers.com.ar` | `drinklovers2026` | **Core, Kanban & 4see (Web `3001`):** Administración interna, tablero operativo e inteligencia e-commerce de DrinkLovers. |
-| **SCANNER_OPERATOR** | `juan@drinklovers.com.ar` | `juan2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
-| **SCANNER_OPERATOR** | `vanesa@drinklovers.com.ar` | `vanesa2026` | **Scanner (Web/Mobile `8081`):** Escaneo y preparación en depósito. |
+* **SUPERADMIN de plataforma:** su email y contraseña se definen en `.env` (`SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`). Copiar `.env.example` a `.env` y completar.
+* **Usuarios de demostracion (tenants `poke` y `drinklovers`):** los crea el seed de `data/init-schema.sql` solo en entornos de desarrollo. Sus claves se consultan con el responsable del proyecto. Ver deuda D-003 en [DEBT.md](./DEBT.md).
+* **Jerarquia de roles:** Nivel 1 `SUPERADMIN` (gobierno global: tenants, licencias, auditoria). Nivel 2 roles por organizacion (`CORE_ADMIN`, `SCANNER_OPERATOR` y roles personalizados RBAC), siempre aislados por `tenant_id`.
+* **Organizaciones demo:** `poke` (plan `kanban_simple`, sin 4see) y `drinklovers` (`kanban_enterprise` + `fourseee_business`).
 
 ---
 
@@ -93,9 +70,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ### 1. Módulo Tenant (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/tenant`](http://localhost:3001/tenant)
-* **Credenciales de Acceso:**
-  * **Email:** `superadmin@holospace.com.ar`
-  * **Contraseña:** `BrunaSeRelambe22!`
+* **Acceso:** usuario SUPERADMIN definido en `.env`.
 * **Funcionalidades:**
   * **Directorio de Organizaciones:** Gestión integral de Tenants (Nombre, Slug, Plan, Límites de Usuarios y Órdenes/Mes).
   * **Licenciamiento Dinámico:** Activación/desactivación de módulos **Kanban** y **Scanner** por empresa.
@@ -105,9 +80,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ### 2. Módulo Core (`SUPERADMIN`)
 * **URL Directa:** [`http://localhost:3001/core`](http://localhost:3001/core)
-* **Credenciales de Acceso:**
-  * **Email:** `superadmin@holospace.com.ar`
-  * **Contraseña:** `BrunaSeRelambe22!`
+* **Acceso:** usuario SUPERADMIN definido en `.env`.
 * **Funcionalidades:**
   * **Usuarios Globales:** Alta, edición y desactivación de usuarios en toda la plataforma.
   * **Plataforma y Módulos:** Estado de base de datos PostgreSQL, servidor Node.js y catálogo oficial.
@@ -117,13 +90,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 
 ### 3. Módulo Kanban (`ADMIN` / `OPERATOR`)
 * **URL Directa:** [`http://localhost:3001/kanban`](http://localhost:3001/kanban)
-* **Credenciales de Acceso por Empresa:**
-  * **Poke Argentina:**
-    * Admin: `admin@poke.com.ar` / `poke2026!`
-    * Operarios: `juan@poke.com.ar` / `juan2026` · `vanesa@poke.com.ar` / `vanesa2026`
-  * **Drink Lovers Argentina:**
-    * Admin: `admin@drinklovers.com.ar` / `drinklovers2026!`
-    * Operarios: `juan@drinklovers.com.ar` / `juan2026` · `vanesa@drinklovers.com.ar` / `vanesa2026`
+* **Acceso:** usuarios de la organizacion con permisos `kanban:*` (ver Cuentas y Acceso).
 * **Funcionalidades:**
   * **Tablero Kanban 4 Columnas:** `BACKLOG` (Subida de remito PDF), `READY` (Listos para tomar), `DOING` (En preparación por operario), `DONE` (Completados y estampados).
   * **Explorador de Pedidos:** Búsqueda rápida por comprobante, cliente y filtros por operario.
@@ -134,9 +101,7 @@ Una vez levantado Docker (`docker compose up -d --build`), accede a cada módulo
 ### 4. Módulo Scanner (`OPERATOR` / `ADMIN`)
 * **URL Web Directa:** [`http://localhost:8081/scanner`](http://localhost:8081/scanner) (o [`http://localhost:8081`](http://localhost:8081))
 * **Celular Físico (Expo Go):** Escanear el código QR del botón **`QR`** en `http://localhost:3001/kanban`.
-* **Credenciales de Operarios de Depósito:**
-  * **Poke Argentina:** `juan@poke.com.ar` / `juan2026` (o `vanesa@poke.com.ar` / `vanesa2026`)
-  * **Drink Lovers:** `juan@drinklovers.com.ar` / `juan2026` (o `vanesa@drinklovers.com.ar` / `vanesa2026`)
+* **Acceso:** operarios de la organizacion con el rol `SCANNER_OPERATOR`.
 * **Funcionalidades:**
   * **Toma 1 a 1 de Pedidos:** Escaneo enfocado con prioridad del pedido activo en primer lugar.
   * **Validación Sonora y Visual:** Lector de código de barras EAN-13, progreso en tiempo real y despacho con estampa digital.
@@ -206,7 +171,7 @@ node bin/tenant-dump.sh drinklovers
 
 ```
 holospace-baseline/
-├── .agents/                        ← Directivas y reglas de gobernanza del Agente
+├── .claude/                        ← Skills, hooks y reglas del agente (Claude Code)
 ├── bin/                            ← Herramientas DevOps, migradores y test suites
 │   ├── devops-db-backup.sh          ← Script universal de backups
 │   ├── migrate-sqlite-to-postgres.js ← Migrador SQLite a Postgres RLS
@@ -219,13 +184,14 @@ holospace-baseline/
 │   ├── init-schema.sql             ← DDL PostgreSQL 16 con políticas RLS
 │   ├── schema-sqlite.sql           ← DDL SQLite Multi-Tenant
 │   └── holospace.db                 ← Base de datos SQLite local
-├── docs/                           ← Los Únicos 6 Documentos Canónicos del Sistema
+├── docs/                           ← Los 7 Documentos Canónicos del Sistema
 │   ├── README.md                   ← Guía de inicio rápido, cuentas y comandos Docker
 │   ├── ARCHITECTURE.md             ← Arquitectura desacoplada, PostgreSQL 16 RLS y OAuth2
 │   ├── MODULES.md                  ← Especificación de los módulos oficiales y creación
 │   ├── FEATURES.md                 ← Matriz de permisos RBAC, catálogo de planes y cuotas
 │   ├── CONTENT.md                  ← Estrategia de contenidos, sprites pixel art y copy
-│   └── ROADMAP.md                  ← Trazabilidad de hitos y fases planificadas
+│   ├── ROADMAP.md                  ← Trazabilidad de hitos y fases planificadas
+│   └── DEBT.md                     ← Deuda tecnica priorizada
 ├── lib/                            ← Capas y motores desacoplados
 │   ├── auth.js                     ← Hashing scrypt, firma JWT y RBAC
 │   ├── billing.js                  ← Planes comerciales, checkout y webhooks
@@ -256,7 +222,7 @@ holospace-baseline/
 | :--- | :--- | :--- |
 | `PORT` | Puerto HTTP del servidor Express | `3001` |
 | `DATABASE_URL` | String de conexión a PostgreSQL 16 RLS | `postgresql://holospace_admin:****@postgres:5432/holospace_saas` |
-| `JWT_SECRET` | Clave secreta para firma criptográfica de tokens | `clave_secreta_jwt_produccion_2026` |
+| `JWT_SECRET` | Clave secreta para firma de tokens. Obligatoria en produccion, minimo 32 caracteres aleatorios | definir en `.env` |
 | `GOOGLE_CLIENT_ID` | Client ID de Google OAuth2 / Workspace | Configurable en Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | Secreto de cliente Google OAuth2 | Configurable en Google Cloud Console |
 | `GOOGLE_CALLBACK_URL` | URL de redirección del callback OAuth2 | `https://holospace.com.ar/api/auth/google/callback` |
@@ -269,3 +235,4 @@ holospace-baseline/
 * [Matriz de Permisos RBAC y Catálogo de Planes](./FEATURES.md)
 * [Estrategia de Contenidos y Diseño](./CONTENT.md)
 * [Trazabilidad de Hitos y Roadmap](./ROADMAP.md)
+* [Deuda Tecnica](./DEBT.md)
