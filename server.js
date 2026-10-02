@@ -1,4 +1,5 @@
 const handleLandingRoutes = require('./modules/landing/routes/landing.routes');
+const { withAssetVersions } = require('./lib/assets');
 const { handle4seeApi } = require('./modules/4see/routes/api');
 const http = require('http');
 const fs = require('fs');
@@ -420,11 +421,8 @@ const server = http.createServer(async (req, res) => {
   // Rutas estáticas & Rutas directas de Módulos (SPA routing: /login, /tenant, /core, /kanban, /scanner, /4see)
   const isSpaModuleRoute = ['/login', '/app', '/tenant', '/tenants', '/core', '/kanban', '/scanner', '/orders', '/stockflow', '/scanban', '/scanflow', '/4see', '/foresee'].includes(reqPath);
   if (isSpaModuleRoute) {
-    let indexPath = path.join(__dirname, 'public', 'index.html');
-    if (!fs.existsSync(indexPath)) {
-      indexPath = path.join(__dirname, 'modules', 'core', 'public', 'index.html');
-    }
-    const content = fs.readFileSync(indexPath, 'utf8');
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    const content = withAssetVersions(fs.readFileSync(indexPath, 'utf8'));
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -436,10 +434,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (reqPath === '/app.js') {
-    let jsPath = path.join(__dirname, 'public', 'app.js');
-    if (!fs.existsSync(jsPath)) {
-      jsPath = path.join(__dirname, 'modules', 'core', 'public', 'core.js');
-    }
+    const jsPath = path.join(__dirname, 'public', 'app.js');
     fs.readFile(jsPath, (err, content) => {
       if (err) {
         res.writeHead(500, { 'Content-Type': 'text/plain' });
@@ -477,10 +472,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (reqPath === '/css/holospace-theme.css' || reqPath.startsWith('/css/')) {
-    let cssPath = path.join(__dirname, 'public', reqPath);
-    if (!fs.existsSync(cssPath)) {
-      cssPath = path.join(__dirname, 'modules', 'core', 'public', reqPath);
-    }
+    const cssPath = path.join(__dirname, 'public', reqPath);
     if (fs.existsSync(cssPath)) {
       fs.readFile(cssPath, (err, content) => {
         if (err) {
@@ -2317,15 +2309,15 @@ server.listen(PORT, '0.0.0.0', () => {
   migrateDefaultThemeToHolo().catch((e) => console.error('[THEME] Migracion del tema por defecto fallo:', e.message));
 });
 
-// Migracion unica: el tema por defecto de la plataforma pasa de Omarchy Tiling a Holo Night.
-// Un marcador en core_app_settings evita revertir elecciones posteriores en cada reinicio.
+// Migracion unica: la plataforma conserva solo Holo Night y Holo Day. Cualquier otro valor guardado
+// (tenants o preferencias de usuario) pasa a Holo Night. Un marcador en core_app_settings evita repetirla.
 async function migrateDefaultThemeToHolo() {
-  const MARK = 'migration_default_theme_holo';
+  const MARK = 'migration_only_holo_themes';
   const done = await getOne("SELECT value FROM core_app_settings WHERE key = ? AND tenant_id = ?", [MARK, DEFAULT_TENANT_ID], { isSuperAdmin: true });
   if (done) return;
-  await execute("UPDATE core_app_settings SET value = 'holo_dark' WHERE key = 'active_theme' AND value = 'omarchy_tiling'", [], { isSuperAdmin: true });
-  await execute("UPDATE core_users SET theme_preference = NULL WHERE theme_preference = 'omarchy_tiling'", [], { isSuperAdmin: true });
+  await execute("UPDATE core_app_settings SET value = 'holo_dark' WHERE key = 'active_theme' AND value NOT IN ('holo_dark', 'holo_light')", [], { isSuperAdmin: true });
+  await execute("UPDATE core_users SET theme_preference = NULL WHERE theme_preference IS NOT NULL AND theme_preference NOT IN ('holo_dark', 'holo_light')", [], { isSuperAdmin: true });
   await execute("INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, ?, 'done') ON CONFLICT (tenant_id, key) DO NOTHING", [DEFAULT_TENANT_ID, MARK], { isSuperAdmin: true });
-  console.log('[THEME] Tema por defecto migrado a Holo Night');
+  console.log('[THEME] Temas migrados: solo Holo Night y Holo Day');
 }
 
