@@ -218,7 +218,7 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
      - **Fallback de Plataforma:** `omarchy_tiling`.
 5. **Cero Hardcodes de Color en UI (Regla de Oro):** Queda terminantemente prohibido incorporar estilos inline con colores fijos (`style="background-color: #..."`) o clases fijas saturadas en barras de navegación, menús de módulos, submenús de features o tarjetas. Todos los componentes deben consumir obligatoriamente los tokens dinámicos del sistema (`var(--bg-main)`, `var(--card-bg)`, `var(--card-border)`, `var(--cobalt)`, `var(--emerald)`).
 
-### 7.2 Catálogo Oficial de los 7 Temas de Plataforma (Dark y Light)
+### 7.2 Catálogo Oficial de Temas de Plataforma (Dark y Light)
 
 | Clave (`key`) | Nombre Oficial | Modo | Tipografía | Radio Borde | Fondo Principal | Acento Principal |
 | :--- | :--- | :---: | :--- | :--- | :--- | :--- |
@@ -229,6 +229,8 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
 | **`soft_minimal_pastel_light`** | **Soft Pastel Light** | Light | `Plus Jakarta Sans` | `16px` / `20px` (Píldoras) | `#EFF1F5` (Catppuccin Latte) | Verde (`#40A02B`) / Azul (`#1E66F5`) |
 | **`dark_glassmorphism`** | **Dark Glass** | Dark | `Outfit` | `24px` (Glass) | `#0B0E14` (Cristal oscuro) | Esmeralda (`#00E676`) / Cobalto (`#3B82F6`) |
 | **`cyberpunk_glassmorphism`**| **Cyberpunk Glass** | Dark | `Press Start 2P` | `8px` (Synthwave) | `#05050A` (Neon) | Cian (`#00FFCC`) / Magenta (`#FF007F`) |
+| **`holo_dark`** | **Holo Night** | Dark | `Geist` / `Geist Mono` | `14px` / `10px` | `#0B0C10` (grafito) | Menta (`#34D3A4`) / Violeta (`#8B7CFF`) |
+| **`holo_light`** | **Holo Day** | Light | `Geist` / `Geist Mono` | `14px` / `10px` | `#F6F7FB` | Verde (`#087A62`) / Violeta (`#5441D6`) |
 
 ### 7.3 Mapa de Tokens Estándar por Tema (`modules/themes/themes.json`)
 ```json
@@ -255,6 +257,24 @@ gunzip -c backups/holospace_pg_YYYYMMDD_HHMMSS.sql.gz | docker exec -i holospace
   "boxShadow": "none"
 }
 ```
+
+### 7.3.1 Familia Holo (tema recomendado para SaaS) y tokens extendidos
+
+`holo_dark` y `holo_light` son el par oficial pensado para aplicaciones SaaS de uso diario. Criterios de diseno (relevamiento 2026: Linear, Vercel, Supabase): oscuro primero con claro de igual calidad, grises neutros con tinte frio (no negro puro), elevacion por luminosidad de superficie, un unico acento saturado (menta) con violeta como secundario y un degradado de marca usado solo en puntos focales.
+
+Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (no rompe temas legados):
+
+| Grupo | Tokens |
+| :--- | :--- |
+| Superficies | `surface1`, `surface2`, `surface3`, `surfaceOverlay` |
+| Bordes y texto | `borderStrong`, `textSubtle`, `accentFg` |
+| Estados | `accentSoft`, `accentBorder`, `violetSoft`, `info`, `infoSoft`, `successSoft`, `warningSoft`, `dangerSoft` |
+| Efectos | `gradientBrand`, `gradientMesh`, `glow`, `focusRing`, `shadowSm`, `shadowMd`, `shadowLg`, `radiusXl`, `colorScheme` |
+| Datos | `chart1` a `chart6` (series de graficos, contraste minimo 3:1 sobre superficies) |
+
+**Entrega:** `GET /themes/holo.css` genera las variables CSS `--hw-*` desde `themes.json` (`modules/themes/index.js`, funcion `buildThemeCss`) y concatena la capa de componentes `modules/themes/holo.css`, que solo consume tokens. Los selectores son `body.theme-<key>` y `:root[data-theme="<key>"]` (usado por la landing).
+
+**Verificacion:** `tests/test-theme-contrast.js` (sin base de datos) exige texto principal 7:1, texto secundario 4.5:1, acentos y series de grafico 3:1 sobre cada superficie, texto sobre boton primario 4.5:1 y CSS sin `!important`.
 
 ### 7.4 Regla de Aislamiento de Fondos Dinámicos
 * Fondo Dinámico Espacial (Estrellas a 60s, grilla y asteroides): Confinado exclusivamente a Landing Page (/landing) y Pantalla de Login (/login).

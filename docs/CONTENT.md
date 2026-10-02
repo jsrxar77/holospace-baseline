@@ -4,6 +4,21 @@
 
 ---
 
+## 0. Landing comercial v2 (vigente)
+
+La landing (`modules/landing/public/`) reemplaza a la version pixel art. Estructura: hero con maqueta de producto, franja de capacidades, bento de modulos, "como funciona" por linea, spotlight de 4see con la formula del piso de margen, seguridad, precios, FAQ, CTA final.
+
+- **Titular:** "Pedidos sin errores. Precios sin perdidas." (menos de 8 palabras).
+- **CTA principal unico:** "Empezar con Google" (`/api/auth/google`). Secundarios: "Ingresar" (`/login`) y ancla a precios.
+- **Tema:** Holo Night / Holo Day, segun preferencia del sistema y toggle persistido en `hs_landing_theme`.
+- **Regla de contenido:** solo datos verificables. Precios y limites salen de `lib/billing.js`; no hay logos, testimonios ni metricas inventadas. Las maquetas llevan la leyenda "Vista ilustrativa".
+- **Imagenes:** maquetas HTML/SVG propias (sin dependencias externas). Pendiente: capturas reales e imagen Open Graph (D-024).
+- **SEO:** title, description, Open Graph, JSON-LD `SoftwareApplication` con ofertas.
+
+> Las secciones 1 y 2 de este documento (sprites pixel art) quedan como referencia historica de marca.
+
+---
+
 ## 1. Propuesta de Valor Central (Hero Section)
 
 ### Titular de Alto Impacto (H1):

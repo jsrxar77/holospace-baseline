@@ -163,10 +163,19 @@
 - [x] **17.6** Validación y ejecución exitosa de las 15 suites de pruebas en Docker (`tests/run-all-tests.js`, 15 suites, 100% PASS, 0 fallos).
 - [x] **17.7** Sincronización documental integral en los 6 archivos canónicos de `/docs`.
 
+### FASE 17.5: Migracion a Claude Code, familia de temas Holo y Landing comercial (2026-10-02)
+- [x] **17.5.1** Migracion de `.agents/` (Antigravity) a Claude Code: `CLAUDE.md`, 7 skills en `.claude/skills/`, hooks de reglas en `.claude/hooks/`, permisos en `.claude/settings.json` y servidores MCP en `.mcp.json` (postgres de solo lectura, github, context7, playwright).
+- [x] **17.5.2** Skill de diseno `impeccable` instalada (sin los hooks del plugin; ver D-034).
+- [x] **17.5.3** Higiene: credenciales fuera de `docs/README.md` y de la config MCP, `.env.example`, PDFs reales fuera del indice.
+- [x] **17.5.4** Temas `holo_dark` y `holo_light` con tokens extendidos, CSS generado en `GET /themes/holo.css` y test de contraste `tests/test-theme-contrast.js` registrado en el runner.
+- [x] **17.5.5** Landing comercial rediseniada (`modules/landing/public/`) con ambos temas, precios reales de `lib/billing.js`, FAQ, JSON-LD y accesibilidad.
+- [x] **17.5.6** Registro de deuda tecnica en [DEBT.md](./DEBT.md) (septimo documento canonico).
+
 ---
 
 ## 3. Próximas Fases Planificadas
 
+- [ ] **FASE 17.9 (P0):** Cerrar los items de seguridad D-001 a D-006 de [DEBT.md](./DEBT.md) antes de comercializar.
 - [ ] **FASE 18:** Integración con Pasarela de Pagos Real (Stripe / Mercado Pago).
 - [ ] **FASE 19:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
 - [ ] **FASE 20:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
