@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HoloSpace | Pedidos sin errores, precios sin pérdidas</title>
+  <title>holospace. | Pedidos sin errores, precios sin pérdidas</title>
   <meta name="description" content="Sistema para depósitos y tiendas online: vigilancia de precios con piso de margen inquebrantable, Kanban con remitos PDF y escáner móvil EAN-13. Cada empresa aislada con PostgreSQL RLS.">
   <meta name="theme-color" content="#0B0C10" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#F6F7FB" media="(prefers-color-scheme: light)">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="HoloSpace | Pedidos sin errores, precios sin pérdidas">
+  <meta property="og:title" content="holospace. | Pedidos sin errores, precios sin pérdidas">
   <meta property="og:description" content="Un solo sistema para el depósito y la tienda online. Piso de margen que ninguna regla cruza.">
   <meta property="og:locale" content="es_AR">
   <meta name="twitter:card" content="summary">
@@ -62,7 +62,7 @@
       <marker id="ah-act" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1l9 4-9 4z" style="fill:var(--emerald)"/></marker>
       <pattern id="hatchA" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="hatch-a"/></pattern>
       <pattern id="hatchB" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="8" class="hatch-b"/></pattern>
-    </defs>
+    <symbol id="p-core" viewBox="0 0 64 64"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></symbol><symbol id="p-4see" viewBox="0 0 64 64"><path d="M32 5l23 13.5v27L32 59 9 45.5v-27z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M2 41h60M2 34v14M62 34v14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol><symbol id="p-log" viewBox="0 0 64 64"><path fill="currentColor" d="M9 9h5v46H9zM17 9h2v46h-2zM22 9h3v46h-3zM39 9h3v46h-3zM45 9h2v46h-2zM50 9h5v46h-5z"/><path d="M4 32h56" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol></defs>
   </svg>
 
   <a class="skip-link" href="#hoja-1">Saltar al contenido</a>
@@ -70,10 +70,11 @@
   <!-- Franja de rótulo -->
   <header class="strip">
     <div class="strip-in">
-      <a href="/" class="brand" aria-label="HoloSpace, inicio">
+      <a href="/" class="brand" aria-label="holospace, inicio">
         <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></svg>
-        <span><b>Holo</b><i>Space</i></span>
+        <span class="brand-word">holospace<i>.</i></span>
       </a>
+      <span class="by-nav">by hologrowth.dev</span>
       <nav class="index" aria-label="Índice de hojas">
         <a href="#hoja-3"><span>3</span>4see</a>
         <a href="#hoja-4"><span>4</span>Logística</a>
@@ -110,7 +111,7 @@
         </div>
         <div class="hero-block">
           <div class="row"><span>Sistema</span><b>Depósito + tienda online</b></div>
-          <div class="row"><span>Líneas</span><b>Logística · 4see</b></div>
+          <div class="row"><span>Líneas</span><b class="lines"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Logística<span class="sep"></span><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see</b></div>
           <div class="row"><span>Acceso</span><b>Cuenta de Google</b></div>
           <div class="row"><span>Planes</span><b>Desde USD 39 por mes</b></div>
           <p class="pitch">Une la preparación de pedidos con escaneo EAN-13 y la vigilancia de precios de tu competencia. Cada empresa queda aislada de las demás por la base de datos.</p>
@@ -169,33 +170,33 @@
         </form>
       </div>
 
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 1 · Piso de margen</b></div><div><span>Hoja</span><b>1 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 1 · Piso de margen</b></div><div><span>Hoja</span><b>1 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 2: REFERENCIAS -->
     <section class="sheet" id="hoja-2" aria-labelledby="h-ref">
       <div class="sheet-body">
-        <h2 id="h-ref">Dos líneas, un solo sistema.</h2>
+        <div class="sheet-head"><svg class="pi pi-lg" aria-hidden="true"><use href="#p-core"/></svg><h2 id="h-ref">Dos líneas, un solo sistema.</h2></div>
         <p class="lead">Podés contratar solo la que necesitás o las dos. Los módulos comparten usuarios, permisos, auditoría y tema visual.</p>
         <table class="legend-table">
           <thead><tr><th>Ref.</th><th>Módulo</th><th>Qué resuelve</th><th>Línea</th></tr></thead>
           <tbody>
-            <tr><td>4S</td><td>4see</td><td>Vigila los precios de tus competidores y propone ajustes que nunca cruzan tu piso de margen. Aprobación en un clic o aplicación automática hacia tu tienda.</td><td>E-commerce</td></tr>
-            <tr><td>AC</td><td>Auditoría de catálogo</td><td>Detecta productos sin GTIN, normaliza atributos y genera códigos EAN-13 internos para los que no tienen.</td><td>E-commerce</td></tr>
-            <tr><td>KB</td><td>Kanban de pedidos</td><td>Convierte remitos PDF en pedidos y los mueve de Backlog a Despachado, con el operario asignado y su avance a la vista.</td><td>Logística</td></tr>
-            <tr><td>SC</td><td>Scanner móvil</td><td>Escaneo EAN-13 con la cámara del celular, un pedido a la vez, con sonido y vibración. Guarda los datos en el dispositivo para trabajar sin Wi-Fi.</td><td>Logística</td></tr>
-            <tr><td>CO</td><td>Core</td><td>Usuarios, roles con permisos granulares, auditoría de eventos y temas claro y oscuro para todo el equipo.</td><td>Plataforma</td></tr>
-            <tr><td>TN</td><td>Multi-empresa</td><td>Alta de organizaciones, planes, cuotas y módulos que se activan o desactivan en caliente.</td><td>Plataforma</td></tr>
+            <tr><td>4S</td><td><svg class="pi" aria-hidden="true"><use href="#p-4see"/></svg>4see</td><td>Vigila los precios de tus competidores y propone ajustes que nunca cruzan tu piso de margen. Aprobación en un clic o aplicación automática hacia tu tienda.</td><td>E-commerce</td></tr>
+            <tr><td>AC</td><td><svg class="pi" aria-hidden="true"><use href="#p-4see"/></svg>Auditoría de catálogo</td><td>Detecta productos sin GTIN, normaliza atributos y genera códigos EAN-13 internos para los que no tienen.</td><td>E-commerce</td></tr>
+            <tr><td>KB</td><td><svg class="pi" aria-hidden="true"><use href="#p-log"/></svg>Kanban de pedidos</td><td>Convierte remitos PDF en pedidos y los mueve de Backlog a Despachado, con el operario asignado y su avance a la vista.</td><td>Logística</td></tr>
+            <tr><td>SC</td><td><svg class="pi" aria-hidden="true"><use href="#p-log"/></svg>Scanner móvil</td><td>Escaneo EAN-13 con la cámara del celular, un pedido a la vez, con sonido y vibración. Guarda los datos en el dispositivo para trabajar sin Wi-Fi.</td><td>Logística</td></tr>
+            <tr><td>CO</td><td><svg class="pi" aria-hidden="true"><use href="#p-core"/></svg>Core</td><td>Usuarios, roles con permisos granulares, auditoría de eventos y temas claro y oscuro para todo el equipo.</td><td>Plataforma</td></tr>
+            <tr><td>TN</td><td><svg class="pi" aria-hidden="true"><use href="#p-core"/></svg>Multi-empresa</td><td>Alta de organizaciones, planes, cuotas y módulos que se activan o desactivan en caliente.</td><td>Plataforma</td></tr>
           </tbody>
         </table>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 2 · Referencias</b></div><div><span>Hoja</span><b>2 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 2 · Referencias</b></div><div><span>Hoja</span><b>2 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 3: 4SEE -->
     <section class="sheet" id="hoja-3" aria-labelledby="h-4see">
       <div class="sheet-body">
-        <h2 id="h-4see">El piso de margen es una cota, no una sugerencia.</h2>
+        <div class="sheet-head"><svg class="pi pi-lg" aria-hidden="true"><use href="#p-4see"/></svg><h2 id="h-4see">El piso de margen es una cota, no una sugerencia.</h2></div>
         <p class="lead">Cada producto tiene un piso calculado con tu costo, tu margen mínimo y tus costos operativos. La base de datos lo guarda como columna calculada: ninguna regla de repricing puede fijar un precio por debajo.</p>
 
         <div class="eq"><div>Ecuación</div><div class="formula">piso = <b>costo</b> × (1 + <b>margen</b>) + <b>costos operativos</b></div></div>
@@ -252,13 +253,13 @@
         </div>
         <p class="sheet-note">Datos de ejemplo. Conectores disponibles hoy: Tiendanube y WooCommerce, para importar el catálogo y enviar los precios aprobados.</p>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 3 · 4see</b></div><div><span>Hoja</span><b>3 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 3 · 4see</b></div><div><span>Hoja</span><b>3 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 4: LOGISTICA -->
     <section class="sheet" id="hoja-4" aria-labelledby="h-log">
       <div class="sheet-body">
-        <h2 id="h-log">Del remito PDF al despacho, sin volver a tipear.</h2>
+        <div class="sheet-head"><svg class="pi pi-lg" aria-hidden="true"><use href="#p-log"/></svg><h2 id="h-log">Del remito PDF al despacho, sin volver a tipear.</h2></div>
         <p class="lead">El tablero se arma desde el comprobante y el operario trabaja un pedido por vez con el celular. Todo lo que no figura en el PDF queda vacío: nunca se completa con datos inventados.</p>
 
         <div class="two">
@@ -320,7 +321,7 @@
           </div>
         </div>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 4 · Logística</b></div><div><span>Hoja</span><b>4 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 4 · Logística</b></div><div><span>Hoja</span><b>4 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 5: PROCESO -->
@@ -330,7 +331,7 @@
         <p class="lead">Cada línea se pone en marcha por separado. Si contratás las dos, comparten la misma organización y el mismo equipo.</p>
         <div class="proc">
           <div>
-            <h3>E-commerce con 4see</h3>
+            <h3><svg class="pi pi-m" aria-hidden="true"><use href="#p-4see"/></svg>E-commerce con 4see</h3>
             <svg viewBox="0 0 520 90" role="img" aria-label="Conectar, mapear, aprobar">
               <rect class="box" x="4" y="20" width="136" height="50"/><text class="d-text" x="72" y="50" text-anchor="middle">Conectar</text>
               <rect class="box" x="192" y="20" width="136" height="50"/><text class="d-text" x="260" y="50" text-anchor="middle">Mapear</text>
@@ -344,7 +345,7 @@
             </ol>
           </div>
           <div>
-            <h3>Logística con Kanban y Scanner</h3>
+            <h3><svg class="pi pi-m" aria-hidden="true"><use href="#p-log"/></svg>Logística con Kanban y Scanner</h3>
             <svg viewBox="0 0 520 90" role="img" aria-label="Cargar, escanear, despachar">
               <rect class="box" x="4" y="20" width="136" height="50"/><text class="d-text" x="72" y="50" text-anchor="middle">Cargar</text>
               <rect class="box" x="192" y="20" width="136" height="50"/><text class="d-text" x="260" y="50" text-anchor="middle">Escanear</text>
@@ -359,7 +360,7 @@
           </div>
         </div>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 5 · Proceso</b></div><div><span>Hoja</span><b>5 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 5 · Proceso</b></div><div><span>Hoja</span><b>5 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 6: SEGURIDAD -->
@@ -403,7 +404,7 @@
           </div>
         </div>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 6 · Seguridad</b></div><div><span>Hoja</span><b>6 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 6 · Seguridad</b></div><div><span>Hoja</span><b>6 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 7: PARA QUIEN -->
@@ -421,7 +422,7 @@
           </table>
         </div>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 7 · Perfiles</b></div><div><span>Hoja</span><b>7 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 7 · Perfiles</b></div><div><span>Hoja</span><b>7 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 8: PLANES -->
@@ -431,17 +432,17 @@
         <p class="lead">Precios mensuales en dólares. Podés contratar una línea o las dos: los límites de usuarios y volumen se acumulan en tu organización.</p>
 
         <div class="tabs" role="tablist" aria-label="Línea de precios">
-          <button role="tab" id="tabEc" aria-selected="true" aria-controls="plEc" type="button">E-commerce · 4see</button>
-          <button role="tab" id="tabLg" aria-selected="false" aria-controls="plLg" type="button">Logística · Kanban</button>
+          <button role="tab" id="tabEc" aria-selected="true" aria-controls="plEc" type="button"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>E-commerce · 4see</button>
+          <button role="tab" id="tabLg" aria-selected="false" aria-controls="plLg" type="button"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Logística · Kanban</button>
         </div>
 
         <div class="tbl-wrap" id="plEc" role="tabpanel" aria-labelledby="tabEc">
           <table class="tbl plans-t">
             <thead><tr>
               <th>Incluye</th>
-              <th><span class="pname">4see Simple</span><span class="pdesc">Vigilancia de precios y márgenes para vendedores individuales.</span><span class="pprice">$49<small>USD / mes</small></span></th>
-              <th class="rec"><span class="badge">Recomendado</span><span class="pname">4see Business</span><span class="pdesc">Inteligencia de catálogo y repricing para tiendas en expansión.</span><span class="pprice">$149<small>USD / mes</small></span></th>
-              <th><span class="pname">4see Enterprise</span><span class="pdesc">Monitoreo corporativo sin límites.</span><span class="pprice">$349<small>USD / mes</small></span></th>
+              <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Simple</span><span class="pdesc">Vigilancia de precios y márgenes para vendedores individuales.</span><span class="pprice">$49<small>USD / mes</small></span></th>
+              <th class="rec"><span class="badge">Recomendado</span><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Business</span><span class="pdesc">Inteligencia de catálogo y repricing para tiendas en expansión.</span><span class="pprice">$149<small>USD / mes</small></span></th>
+              <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Enterprise</span><span class="pdesc">Monitoreo corporativo sin límites.</span><span class="pprice">$349<small>USD / mes</small></span></th>
             </tr></thead>
             <tbody>
               <tr><td>Administradores</td><td>1</td><td class="rec">2</td><td>Ilimitados</td></tr>
@@ -464,9 +465,9 @@
           <table class="tbl plans-t">
             <thead><tr>
               <th>Incluye</th>
-              <th><span class="pname">Kanban Simple</span><span class="pdesc">Para depósitos individuales o pequeñas operaciones.</span><span class="pprice">$39<small>USD / mes</small></span></th>
-              <th class="rec"><span class="badge">Recomendado</span><span class="pname">Kanban Business</span><span class="pdesc">Para centros de distribución con varios operarios y supervisores.</span><span class="pprice">$119<small>USD / mes</small></span></th>
-              <th><span class="pname">Kanban Enterprise</span><span class="pdesc">Capacidad ilimitada para grandes redes logísticas.</span><span class="pprice">$299<small>USD / mes</small></span></th>
+              <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Kanban Simple</span><span class="pdesc">Para depósitos individuales o pequeñas operaciones.</span><span class="pprice">$39<small>USD / mes</small></span></th>
+              <th class="rec"><span class="badge">Recomendado</span><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Kanban Business</span><span class="pdesc">Para centros de distribución con varios operarios y supervisores.</span><span class="pprice">$119<small>USD / mes</small></span></th>
+              <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Kanban Enterprise</span><span class="pdesc">Capacidad ilimitada para grandes redes logísticas.</span><span class="pprice">$299<small>USD / mes</small></span></th>
             </tr></thead>
             <tbody>
               <tr><td>Administradores</td><td>1</td><td class="rec">3</td><td>Ilimitados</td></tr>
@@ -485,7 +486,7 @@
         </div>
         <p class="bundle">Si tenés depósito y tienda online, contratá una suscripción de cada línea. Son independientes y las cuotas se suman.</p>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 8 · Planes</b></div><div><span>Hoja</span><b>8 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 8 · Planes</b></div><div><span>Hoja</span><b>8 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
     <!-- HOJA 9: NOTAS + CIERRE -->
@@ -510,14 +511,14 @@
           <a class="btn line block" href="/login">Ya tengo cuenta</a>
         </div>
       </div>
-      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 9 · Notas y cierre</b></div><div><span>Hoja</span><b>9 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+      <div class="cajetin"><div><span class="cj-brand">holospace.</span><b>Hoja 9 · Notas y cierre</b></div><div><span>Hoja</span><b>9 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
   </main>
 
   <footer>
     <div class="foot">
       <div>
-        <a href="/" class="brand" style="border:0;padding:0"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></svg><span><b>Holo</b><i>Space</i></span></a>
+        <a href="/" class="brand" style="border:0;padding:0"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></svg><span class="brand-word">holospace<i>.</i></span></a>
         <p>Sistema multi-empresa para logística de depósitos e inteligencia de precios de e-commerce.</p>
       </div>
       <div><h3>Producto</h3><ul><li><a href="#hoja-3">4see</a></li><li><a href="#hoja-4">Logística</a></li><li><a href="#hoja-8">Planes</a></li></ul></div>
@@ -526,7 +527,7 @@
     </div>
     <div class="legal">
       <span>&copy; 2026 HoloSpace. Todos los derechos reservados.</span>
-      <span>Diseñado y desarrollado por <a href="https://hologrowth.com.ar/" target="_blank" rel="noopener noreferrer">HoloGrowth</a></span>
+      <span>holospace. es un producto de <a href="https://hologrowth.dev" target="_blank" rel="noopener noreferrer">hologrowth.dev</a></span>
     </div>
   </footer>
 
