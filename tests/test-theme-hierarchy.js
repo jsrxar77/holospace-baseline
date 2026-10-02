@@ -84,10 +84,10 @@ async function runTests() {
     const pokeTenant = await getOne("SELECT id FROM tenant_tenants WHERE slug = 'poke'", [], { isSuperAdmin: true });
     assert(pokeTenant && pokeTenant.id, 'Tenant Poke Argentina recuperado');
 
-    // 2. Definir tema por defecto para Poke (Cyberpunk Glassmorphism) como SuperAdmin (scope: 'tenant')
+    // 2. Definir tema por defecto para Poke (Holo Day) como SuperAdmin (scope: 'tenant')
     console.log('\n--- 1. Definición de Tema Base del Tenant (Scope: Tenant) ---');
     const setTenantThemeRes = await requestJson('POST', '/api/theme', {
-      themeKey: 'cyberpunk_glassmorphism',
+      themeKey: 'holo_light',
       scope: 'tenant',
       targetTenantId: pokeTenant.id
     }, {
@@ -96,7 +96,7 @@ async function runTests() {
 
     assert(setTenantThemeRes.status === 200, 'Endpoint POST /api/theme respondió 200 para scope tenant');
     assert(setTenantThemeRes.data.success === true, 'Tema base del Tenant guardado con éxito');
-    assert(setTenantThemeRes.data.themeKey === 'cyberpunk_glassmorphism', 'Tema guardado es cyberpunk_glassmorphism');
+    assert(setTenantThemeRes.data.themeKey === 'holo_light', 'Tema guardado es holo_light');
 
     // 3. Consultar tema como usuario Juan de Poke (sin preferencia personal) -> Debe heredar cyberpunk
     console.log('\n--- 2. Herencia del Tema Base por Usuario sin Preferencia ---');
@@ -105,12 +105,12 @@ async function runTests() {
     });
 
     assert(juanThemeRes.status === 200, 'GET /api/theme respondió 200 para juan@poke.com.ar');
-    assert(juanThemeRes.data.themeKey === 'cyberpunk_glassmorphism', 'Juan hereda correctamente el tema base del Tenant (Cyberpunk)');
+    assert(juanThemeRes.data.themeKey === 'holo_light', 'Juan hereda correctamente el tema base del Tenant (Holo Day)');
 
-    // 4. Juan cambia su tema personal a 'dark_glassmorphism' (scope: 'user')
+    // 4. Juan cambia su tema personal a 'holo_dark' (scope: 'user')
     console.log('\n--- 3. Preferencia Personal de Usuario (Scope: User) ---');
     const setJuanPersonalThemeRes = await requestJson('POST', '/api/theme', {
-      themeKey: 'dark_glassmorphism',
+      themeKey: 'holo_dark',
       scope: 'user'
     }, {
       'Authorization': `Bearer ${tokens.juan}`
@@ -123,18 +123,25 @@ async function runTests() {
     const juanUpdatedThemeRes = await requestJson('GET', '/api/theme', null, {
       'Authorization': `Bearer ${tokens.juan}`
     });
-    assert(juanUpdatedThemeRes.data.themeKey === 'dark_glassmorphism', 'Juan ahora ve su tema personal (Dark Glassmorphism)');
+    assert(juanUpdatedThemeRes.data.themeKey === 'holo_dark', 'Juan ahora ve su tema personal (Holo Night)');
 
-    // 6. Verificar que Vanesa (otra usuaria de Poke) sigue viendo el tema base del Tenant (Cyberpunk)
+    // 6. Verificar que Vanesa (otra usuaria de Poke) sigue viendo el tema base del Tenant (Holo Day)
     console.log('\n--- 4. Aislamiento Estricto entre Usuarios del Mismo Tenant ---');
     const vanesaThemeRes = await requestJson('GET', '/api/theme', null, {
       'Authorization': `Bearer ${tokens.vanesa}`
     });
-    assert(vanesaThemeRes.data.themeKey === 'cyberpunk_glassmorphism', 'Vanesa NO se ve afectada por el cambio de Juan y mantiene el tema del Tenant');
+    assert(vanesaThemeRes.data.themeKey === 'holo_light', 'Vanesa NO se ve afectada por el cambio de Juan y mantiene el tema del Tenant');
 
-    // 7. Limpieza: restaurar tema base de Poke a omarchy_tiling y resetear preferencia de Juan
+    // 6b. Solo existen los dos temas Holo: la lista expone exactamente 2 y una clave legada cae en Holo Night
+    const listRes = await requestJson('GET', '/api/theme', null, { 'Authorization': `Bearer ${tokens.juan}` });
+    const keys = (listRes.data.availableThemes || []).map(t => t.key).sort().join(',');
+    assert(keys === 'holo_dark,holo_light', 'availableThemes expone solo holo_dark y holo_light');
+    const legacyRes = await requestJson('POST', '/api/theme', { themeKey: 'omarchy_tiling', scope: 'user' }, { 'Authorization': `Bearer ${tokens.juan}` });
+    assert(legacyRes.data && legacyRes.data.themeKey === 'holo_dark', 'Una clave de tema legada se normaliza a holo_dark');
+
+    // 7. Limpieza: restaurar tema base de Poke a holo_dark y resetear preferencia de Juan
     await execute("UPDATE core_users SET theme_preference = NULL WHERE LOWER(email) = 'juan@poke.com.ar'", [], { isSuperAdmin: true });
-    await execute("INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, 'active_theme', 'omarchy_tiling') ON CONFLICT (tenant_id, key) DO UPDATE SET value = 'omarchy_tiling'", [pokeTenant.id], { isSuperAdmin: true });
+    await execute("INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, 'active_theme', 'holo_dark') ON CONFLICT (tenant_id, key) DO UPDATE SET value = 'holo_dark'", [pokeTenant.id], { isSuperAdmin: true });
 
   } catch (err) {
     console.error('Error durante la ejecución de los tests:', err);

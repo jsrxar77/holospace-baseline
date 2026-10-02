@@ -112,10 +112,10 @@ body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollba
 .hs-logo { display: inline-flex; align-items: center; gap: 0.38em; line-height: 1; }
 .hs-mark { width: 1.15em; height: 1.15em; flex: none; fill: none; }
 .hs-si { stroke: currentColor; }
-.hs-sm { stroke: var(--hw-brand, var(--emerald)); }
-.hs-fm { fill: var(--hw-brand, var(--emerald)); stroke: none; }
+.hs-sm { stroke: var(--emerald); }
+.hs-fm { fill: var(--emerald); stroke: none; }
 .hs-word { font-weight: 600; letter-spacing: -0.05em; text-transform: none; }
-.hs-word i { font-style: normal; color: var(--hw-brand, var(--emerald)); }
+.hs-word i { font-style: normal; color: var(--emerald); }
 
 /* Iconos de producto: cota (plataforma), hex y piso (4see), codigo (logistica) */
 .hs-pi { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; margin-right: 0.5em; color: inherit; }
@@ -182,3 +182,20 @@ body:is(.theme-holo_dark, .theme-holo_light) :is(.module-tab, .feature-tab).acti
   box-shadow: none !important;
 }
 body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab):hover { background: var(--hw-surface-2) !important; }
+
+/* Login: la app queda oculta detras del modal y el modal ocupa toda la pantalla */
+body:has(#loginModal:not(.hidden)) :is(.app-header-shell, main, .app-status-bar, #mobileNavDrawer, #mobileDrawerOverlay) { display: none !important; }
+#loginModal:not(.hidden) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+  backdrop-filter: none !important;
+}
+#loginModal .modal-content { position: relative; z-index: 1001; animation: holoLoginIn .5s cubic-bezier(.16, 1, .3, 1) both; }
+@keyframes holoLoginIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
