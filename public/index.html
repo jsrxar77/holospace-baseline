@@ -16,7 +16,7 @@
       --emerald: #00E676;
       --cobalt: #3B82F6;
       --amber: #F59E0B;
-      --red: #FF5252;
+      --red: var(--red);
       --text-main: #FFFFFF;
       --text-muted: #8B949E;
     }
@@ -474,7 +474,7 @@
     }
 
     .btn-danger {
-      background-color: rgba(255, 82, 82, 0.15);
+      background-color: var(--hw-danger-soft);
       color: var(--red);
       border: 1px solid var(--red);
       padding: 8px 14px;
@@ -699,9 +699,9 @@
       position: absolute;
       top: 14px;
       right: 14px;
-      background: rgba(255, 82, 82, 0.15);
-      color: #FF5252;
-      border: 1px solid #FF5252;
+      background: var(--hw-danger-soft);
+      color: var(--red);
+      border: 1px solid var(--red);
       border-radius: 8px;
       padding: 4px 8px;
       font-size: 12px;
@@ -1440,7 +1440,7 @@
     <div id="viewForbidden" class="view-panel hidden">
       <div style="min-height: 50vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 40px 32px; max-width: 520px; width: 100%; text-align: center; box-shadow: 0 12px 32px rgba(0,0,0,0.3);">
-          <div style="display: inline-block; padding: 6px 16px; border-radius: 12px; background: rgba(239,68,68,0.15); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
+          <div style="display: inline-block; padding: 6px 16px; border-radius: 12px; background: var(--hw-danger-soft); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
             Acceso Restringido (403)
           </div>
           <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main); margin-top: 20px;" id="forbiddenModuleTitle">No tenés acceso a esta sección</h2>
@@ -1554,7 +1554,7 @@
           <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Listos, sin nada que corregir</div>
           <div id="kpiOptimized" style="font-size: 24px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
         </div>
-        <div style="background: var(--hw-danger-soft, rgba(239,68,68,0.08)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-danger-soft, var(--hw-danger-soft)); border: 1px solid color-mix(in srgb, var(--red) 30%, transparent); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--red); text-transform: uppercase;">Sin código de barras</div>
           <div id="kpiMissingGtin" style="font-size: 24px; font-weight: 900; color: var(--red); margin-top: 4px;">0</div>
         </div>
@@ -2499,8 +2499,8 @@
 
   <!-- MODAL ERROR CENTRALIZADO 403 PERMISO DENEGADO -->
   <div id="permissionDeniedModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 480px; text-align: center; border: 1px solid rgba(255, 82, 82, 0.4); box-shadow: 0 8px 32px rgba(255, 82, 82, 0.2);">
-      <div style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 82, 82, 0.15); border: 1px solid var(--red); color: var(--red); font-size: 24px; font-weight: 900; margin-bottom: 16px;">
+    <div class="modal-content" style="max-width: 480px; text-align: center; border: 1px solid color-mix(in srgb, var(--red) 40%, transparent); box-shadow: 0 8px 32px color-mix(in srgb, var(--red) 20%, transparent);">
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: var(--hw-danger-soft); border: 1px solid var(--red); color: var(--red); font-size: 24px; font-weight: 900; margin-bottom: 16px;">
         !
       </div>
       <h3 style="font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px;">No tenés permiso para esto</h3>

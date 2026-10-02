@@ -28,7 +28,7 @@ export const DEFAULT_THEME: ThemeTokens = {
   emerald: '#34D3A4',
   cobalt: '#8B7CFF',
   amber: '#F5B84B',
-  red: '#FF6B6B',
+  red: '#F5B84B',
   textMain: '#EDEFF5',
   textMuted: '#9BA3B5',
   fontFamily: 'Geist',

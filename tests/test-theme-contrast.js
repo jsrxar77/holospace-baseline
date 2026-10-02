@@ -33,6 +33,13 @@ for (const key of ['holo_dark', 'holo_light']) {
 }
 ok(lum(THEMES.holo_dark.background) < 0.05 && lum(THEMES.holo_light.background) > 0.85, 'par oscuro/claro con modos opuestos');
 
+// Una sola senal de alerta: el rojo se reemplaza por ambar en ambos temas
+for (const key of ['holo_dark', 'holo_light']) {
+  const th = THEMES[key];
+  ok(th.red.toLowerCase() === th.amber.toLowerCase(), `${key}: la alerta (red) usa el ambar de la paleta`);
+  ok(th.tokens.dangerSoft.includes(th.amber === '#F5B84B' ? '245,184,75' : '169,79,8'), `${key}: dangerSoft es el ambar suave`);
+}
+
 const css = buildThemeCss();
 ok(css.includes('body.theme-holo_dark') && css.includes('body.theme-holo_light'), 'CSS generado incluye ambos temas');
 const tokenBlocks = css.slice(0, css.indexOf('/* Holo Design System'));

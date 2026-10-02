@@ -449,3 +449,6 @@ Para permitir máxima flexibilidad comercial sin acoplar módulos innecesarios a
 - **Estetica:** lamina tecnica (esquinas rectas, hairlines, mono en ejes, sin sombras ni degradados), movimiento reducido respetado, `aria` activo.
 - **Uso actual:** 4see > SmartPrice (KPIs en celdas, dona por estado, precio contra piso) y 4see > Monitor (stock de rivales, mi precio contra rivales), con selector Tabla / Dashboard. Guardian de Margenes reutilizara la misma suite.
 - **Skill:** `.claude/skills/holospace-charts/SKILL.md`. Pruebas: `tests/test-charts.js`.
+
+### 7.x Alerta en ambar y eleccion de tema
+Los temas Holo no usan rojo: el token `red` (y `dangerSoft`) vale lo mismo que `amber` en cada tema, de modo que errores, riesgos y acciones destructivas comparten una sola senal. El selector de tema (Holo Night / Holo Day) esta en la cabecera de todos los modulos para cualquier usuario; `POST /api/theme` con `scope: user` guarda la ultima eleccion en `core_users.theme_preference` y se aplica en el proximo ingreso.

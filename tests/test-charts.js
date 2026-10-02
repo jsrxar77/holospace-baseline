@@ -71,6 +71,11 @@ const app = read('public/app.js');
 ok(/function updateOpsOnlyControls\(moduleName\)[\s\S]{0,200}'kanban'[\s\S]{0,80}'scanner'/.test(app), 'visible solo si el modulo es kanban o scanner');
 ok(app.includes('updateOpsOnlyControls(normMod)') && app.includes('updateOpsOnlyControls(parentModule)'), 'se actualiza al cambiar de modulo y de pestana');
 
+console.log('Selector de tema para todos los usuarios');
+ok(/themeContainer\.style\.display = 'flex'; \/\/ el tema se elige en todos los modulos/.test(app), 'el selector Night/Day se muestra en todos los modulos y roles');
+ok(!/themeContainer\) themeContainer\.style\.display = 'none'/.test(app), 'ya no se oculta para usuarios que no son superadmin');
+ok(!/rgba\(\s*(239|255)\s*,\s*(68|82)\s*,\s*(68|82)/.test(app + html), 'sin rojos fijos en la app (se usa var(--red), que es ambar)');
+
 console.log('Vistas Tabla / Dashboard');
 ok(html.includes('id="smartpriceDashboard"') && html.includes('id="monitorsDashboard"'), 'SmartPrice y Monitor tienen dashboard');
 ok(/kpi-cell tone-pending/.test(html) && /kpi-cell tone-applied/.test(html) && /kpi-cell tone-risk/.test(html), 'KPIs de SmartPrice con codigo de color semantico');

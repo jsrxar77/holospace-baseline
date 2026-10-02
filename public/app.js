@@ -605,6 +605,7 @@ function applyRoleVisibility() {
   const isSuperAdmin = currentUser.role === 'SUPERADMIN';
 
   const themeContainer = document.getElementById('headerThemeContainer');
+  if (themeContainer) themeContainer.style.display = 'flex'; // el tema se elige en todos los modulos y se guarda en las preferencias del usuario
   const badge = document.getElementById('activeContextBadge');
   const userBadge = document.getElementById('userBadge');
   const mobActiveCtx = document.getElementById('mobileActiveContext');
@@ -682,7 +683,6 @@ function applyRoleVisibility() {
     if (modKanban) modKanban.style.display = access.modules.kanban ? 'inline-flex' : 'none';
     if (mod4see) mod4see.style.display = access.modules['4see'] ? 'inline-flex' : 'none';
 
-    if (themeContainer) themeContainer.style.display = 'none';
 
     if (mobModTenant) mobModTenant.style.display = 'none';
     if (mobModCore) mobModCore.style.display = 'none';
@@ -1150,7 +1150,7 @@ async function loadKanbanData() {
       ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">No hay remitos nuevos. Cargá un PDF arriba para empezar.</div>'
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-          <button class="btn-delete-card" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px; border-color: rgba(255, 82, 82, 0.4); color: var(--red);" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
+          <button class="btn-delete-card" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px; border-color: color-mix(in srgb, var(--red) 40%, transparent); color: var(--red);" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
           <div class="card-meta">Pedido: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
@@ -1658,8 +1658,8 @@ function showUploadDiagnosticsModal(result, fileName) {
     const renderStep = (num, step) => {
       const icon = step.passed ? '✓' : '✗';
       const color = step.passed ? 'var(--emerald)' : 'var(--red)';
-      const bg = step.passed ? 'var(--hw-accent-soft, rgba(0,230,118,0.08))' : 'rgba(255, 82, 82, 0.08)';
-      const border = step.passed ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 82, 82, 0.25)';
+      const bg = step.passed ? 'var(--hw-accent-soft, rgba(0,230,118,0.08))' : 'var(--hw-danger-soft)';
+      const border = step.passed ? 'rgba(0, 230, 118, 0.25)' : 'color-mix(in srgb, var(--red) 25%, transparent)';
 
       return `
         <div style="background: ${bg}; border: 1px solid ${border}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; text-align: left; transition: all 0.2s;">
@@ -1682,7 +1682,7 @@ function showUploadDiagnosticsModal(result, fileName) {
         ${renderStep(3, step3)}
       </div>
       ${!isSuccess ? `
-        <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
+        <div style="margin-top: 14px; padding: 10px 12px; background: var(--hw-danger-soft); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
           <span style="font-size: 12px; color: var(--text-main); font-weight: 700;">Qué hacer:</span>
           <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
             Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
@@ -2973,7 +2973,7 @@ async function loadTenantsManagementData() {
                   ${t.slug}
                 </span>
                 ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA;">PLATAFORMA</span>' : ''}
-                <span style="font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; background: ${isSuspended ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.1)'};">
+                <span style="font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; background: ${isSuspended ? 'var(--hw-danger-soft)' : 'rgba(16,185,129,0.1)'};">
                   ${isSuspended ? '○ Suspendido' : '● Activo'}
                 </span>
               </div>
@@ -3734,7 +3734,7 @@ function render4seeCatalog(items = []) {
       : (typeof item.diagnostics === 'string' ? JSON.parse(item.diagnostics) : (item.diagnostics || []));
 
     const diagBadges = diagnostics.map(d => {
-      const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
+      const bg = d.severity === 'HIGH' ? 'var(--hw-danger-soft)' : 'rgba(234, 179, 8, 0.15)';
       const color = d.severity === 'HIGH' ? 'var(--red)' : 'var(--amber)';
       return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
     }).join('');
@@ -3763,7 +3763,7 @@ function render4seeCatalog(items = []) {
               : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Sin marca</span>`}
             ${!isMissingGtin 
               ? `<span style="font-size: 12px; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
-              : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Sin código de barras</span>`}
+              : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: var(--hw-danger-soft); padding: 2px 8px; border-radius: 4px;">Sin código de barras</span>`}
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
             <button class="btn-secondary" style="padding: 5px 12px; font-size: 11px;" onclick="openEditProductModal('${itemId}')">Completar datos</button>
@@ -4061,7 +4061,7 @@ function renderManageStoresList() {
         <td style="text-align: right; white-space: nowrap;">
           <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">Revisar ahora</button>
           <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="editStoreConnection('${s.id}')">Editar</button>
-          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: rgba(239,68,68,0.4);" onclick="disconnectStore('${s.id}')">×</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, transparent);" onclick="disconnectStore('${s.id}')">×</button>
         </td>
       </tr>
     `;
