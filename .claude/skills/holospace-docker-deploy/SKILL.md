@@ -22,8 +22,8 @@ description: >
 
 | Contenedor | Puerto Host | Descripcion |
 |---|---|---|
-| `holospace_app` | `3001` | Servidor Node.js (API + Web Core + ScanBan Board) |
-| `holospace_mobile` | `8081` | Expo Metro Bundler (ScanBan Scanner Web y QR Expo Go) |
+| `holospace_app` | `3001` | Servidor Node.js (API + Web Core + Kanban) |
+| `holospace_mobile` | `8081` | Expo Metro Bundler (Scanner Web y QR Expo Go) |
 | `holospace_postgres` | `5434` | PostgreSQL 16 con RLS |
 | `holospace_redis` | `6382` | Cache de entitlements y sesiones |
 | `holospace_proxy` | `80, 443` | Nginx proxy reverso |
@@ -38,7 +38,7 @@ description: >
 Estos archivos estan montados como volumenes en los contenedores.
 Metro y Node --watch los detectan solos sin necesidad de reiniciar nada:
 
-- `modules/*/public/*.js` - frontend web del Core y ScanBan Board
+- `modules/*/public/*.js` - frontend web del Core y Kanban
 - `modules/*/src/*.ts` y `*.tsx` - Scanner Expo (Metro rebundlea automaticamente)
 - `modules/*/routes/*.js` - rutas de API
 - `server.js` - servidor Node con --watch, se reinicia solo
@@ -99,7 +99,7 @@ docker compose restart mobile
 ```bash
 curl -s -X POST http://localhost:3001/api/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"juan@poke.com.ar","password":"juan2026"}' | \
+  -d "{\"email\":\"$HS_TEST_EMAIL\",\"password\":\"$HS_TEST_PASSWORD\"}" | \
   node -e "const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')); console.log(d.success ? 'OK: '+d.user?.name : 'FAIL: '+JSON.stringify(d.message))"
 ```
 
@@ -127,11 +127,11 @@ docker compose logs -f app
 
 ## Como funciona SERVER_URL en config.ts
 
-El archivo `modules/scanban/src/config.ts` determina la URL del servidor:
+El archivo `modules/scanner/src/config.ts` determina la URL del servidor:
 
 - **Expo Web (browser):** usa `window.location.hostname` automaticamente.
   Si accedes desde `localhost:8081` apunta a `http://localhost:3001`.
-  Si accedes desde `192.168.100.247:8081` apunta a `http://192.168.100.247:3001`.
+  Si accedes desde `<IP_LAN>:8081` apunta a `http://<IP_LAN>:3001`.
   No requiere configuracion ni rebuild de Docker.
 
 - **Expo Go / Native (iOS, Android):** usa `EXPO_PUBLIC_SERVER_IP` del
@@ -159,6 +159,6 @@ Luego: `docker compose up -d --build mobile`
 
 | Modulo | Misma maquina | Red local (otro dispositivo) |
 |---|---|---|
-| HoloSpace Core y ScanBan Board | `http://localhost:3001` | `http://192.168.100.247:3001` |
-| ScanBan Scanner (web) | `http://localhost:8081` | `http://192.168.100.247:8081` |
-| Expo Go (QR) | `http://localhost:8081` | `http://192.168.100.247:8081` |
+| HoloSpace Core y Kanban | `http://localhost:3001` | `http://<IP_LAN>:3001` |
+| Scanner (web) | `http://localhost:8081` | `http://<IP_LAN>:8081` |
+| Expo Go (QR) | `http://localhost:8081` | `http://<IP_LAN>:8081` |

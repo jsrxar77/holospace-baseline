@@ -8,7 +8,7 @@ description: >
 
 # Skill: Creador Oficial de Modulos HoloSpace Baseline
 
-> Esta habilidad define el procedimiento estricto para crear un nuevo modulo desacoplado dentro de `modules/`, registrarlo en la base de datos, protegerlo con entitlements y documentarlo en los 6 archivos canonicos de `/docs`.
+> Esta habilidad define el procedimiento estricto para crear un nuevo modulo desacoplado dentro de `modules/`, registrarlo en la base de datos, protegerlo con entitlements y documentarlo en los 7 archivos canonicos de `/docs`.
 
 ---
 
@@ -111,7 +111,7 @@ CREATE POLICY rls_<tabla_modulo>_tenant_isolation ON <tabla_modulo>
    Validar que todas las suites pasen con 0 errores antes de dar por terminado el módulo.
 
 ### Paso 7: Sincronizacion Mandatoria de Documentacion en `/docs`
-Actualizar obligatoriamente los 6 archivos canonicos:
+Actualizar obligatoriamente los 7 archivos canonicos:
 1. `docs/MODULES.md`: Especificar el modulo, clave, endpoints y proposito.
 2. `docs/FEATURES.md`: Anadir a la matriz RBAC de roles y al catalogo de planes.
 3. `docs/ARCHITECTURE.md`: Registrar nuevas tablas, politicas RLS y permisos del modulo.

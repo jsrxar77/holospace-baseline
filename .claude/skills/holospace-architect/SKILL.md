@@ -9,23 +9,24 @@ description: Arquitecto de Software especialista en aplicaciones modulares HoloS
 
 ---
 
-## 📋 Flujo de Trabajo Obligatorio para el Agente
+## Flujo de Trabajo Obligatorio para el Agente
 
 ### 1. Fase de Lectura de Contexto (/docs)
 Antes de responder o realizar cambios estructurales, consultar los documentos canónicos en `/docs/` según corresponda:
-- `docs/README.md` (Guía de inicio, credenciales y Docker)
+- `docs/README.md` (Guía de inicio y Docker)
 - `docs/ARCHITECTURE.md` (Arquitectura técnica, PostgreSQL RLS, Docker y temas)
 - `docs/MODULES.md` (Especificación oficial de módulos y guía de creación)
 - `docs/FEATURES.md` (Permisos RBAC, planes SaaS y facturación)
 - `docs/CONTENT.md` (Diseño, copy y sprites)
 - `docs/ROADMAP.md` (Trazabilidad y estados de desarrollo)
+- `docs/DEBT.md` (Deuda tecnica priorizada)
 
 ### 2. Workflow de Impacto Integral 360° (Obligatorio en Cada Tarea)
 Ante cada requerimiento o cambio, ejecutar el ciclo de verificación en los 4 pilares:
 1. **Código:** Aplicar cambios aditivos sin romper funcionalidades previas ni estilos existentes (ej. temas y bordes Omarchy 4px).
-2. **Tests:** Ejecutar la suite automatizada (`node bin/verify-db-integrity.js && node bin/test-auth-jwt.js && node bin/test-entitlement.js && node bin/test-billing-onboarding.js`) asegurando 0 errores.
+2. **Tests:** Ejecutar la suite automatizada (`docker compose exec app node tests/run-all-tests.js`) asegurando 0 errores.
 3. **Documentación:** Actualizar `README.md` y los archivos correspondientes en `/docs/` eliminando discrepancias o redundancias.
-4. **Roadmap & Auditoría:** Actualizar `roadmap/SAAS_MULTITENANT_ROADMAP.md` marcando casillas `[x]` y registrar acciones en `platform_audit_logs`.
+4. **Roadmap & Auditoría:** Actualizar `docs/ROADMAP.md` marcando casillas `[x]` y registrar acciones en `platform_audit_logs`.
 
 ### 3. Checklist de Validación Arquitectónica
 Verificar que todo nuevo cambio o propuesta cumpla con:
