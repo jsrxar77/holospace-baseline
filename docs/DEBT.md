@@ -60,8 +60,8 @@
   - La SPA que se sirve es `public/index.html` + `public/app.js`. `modules/core/public/index.html`, `modules/kanban/public/index.html` y sus CSS son copias no servidas con logo pixelado y colores fijos. Accion: borrarlas o integrarlas (ver D-012 y D-013).
 - [ ] **D-038 | Colores fijos restantes y degradados en la SPA** | `public/index.html`, `public/app.js` | Esfuerzo M
   - Tras migrar texto blanco, superficies oscuras y botones con degradado a tokens quedan degradados en tarjetas (`linear-gradient(135deg, ...)`), `border-left` de color, el color fijo del boton de Google (obligatorio por marca) y unos 800 estilos inline. Accion: mover a clases con tokens y quitar degradados.
-- [ ] **D-039 | Activos de marca finales** | `public/brand/` | Esfuerzo S
-  - Decididos: wordmark `holospace.` y familia de iconos (cota, hex, codigo). Pendiente: PNG de app y favicon multi-tamano (16, 32, 180, 512), imagen Open Graph y version del lockup con firma de paraguas como SVG.
+- [ ] **D-039 | Reproducir los activos de marca con un script** | `public/brand/` | Esfuerzo S
+  - Los PNG, el `.ico` y la imagen Open Graph se generaron con un script temporal (HTML + Playwright + sips) que no esta en el repo. Accion: versionar el generador (por ejemplo `bin/brand-build.js`) para regenerarlos si cambia la marca. Pendiente tambien una version SVG del lockup con la firma de paraguas.
 - [ ] **D-040 | App movil guarda credenciales y no sigue Day/Night** | `modules/scanner/src/store/useAuthStore.ts` | Esfuerzo M
   - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
@@ -109,4 +109,5 @@
 - [x] **S-010** (era D-007) El init de la base arranca desde cero sin errores: suscripciones del tenant 0 despues de sembrar los planes; verificado con `ON_ERROR_STOP=1` en una base nueva. 2026-10-02.
 - [x] **S-011** Estetica Holo en toda la plataforma: tema por defecto Holo Night con migracion unica, login de lamina (sin estrellas), logo H acotada en la SPA, landing y favicon, colores fijos de texto y superficies migrados a tokens y emojis eliminados de la SPA. Verificado con capturas de todas las vistas en Night y Day. 2026-10-02.
 - [x] **S-012** Sistema de marca decidido y aplicado: wordmark `holospace.` en minuscula con punto menta, firma `by hologrowth.dev`, y familia de iconos (cota para la plataforma, hex para 4see, codigo para logistica) en landing, login, pestanas y titulos de la SPA, favicon por modulo y app Scanner (cabecera y login). 2026-10-02.
+- [x] **S-013** Verde de marca unico para el punto del wordmark y las lineas de los iconos (token `brand`: `#34D3A4` en Night y `#0E9F7A` en Day, verificado por test). Generados favicon, `.ico`, iconos de app y maskable, iconos por producto, lockups transparentes y la imagen Open Graph 1200x630; enlazados en landing y SPA, con `site.webmanifest`. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

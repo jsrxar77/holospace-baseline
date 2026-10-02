@@ -16,11 +16,25 @@ Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > produ
 | Producto | logistica (Kanban y Scanner) | Codigo: barras con la linea de lectura | `public/brand/logistica.svg` | Pestana Kanban, Explorador de pedidos, app Scanner (cabecera y login), landing, favicon al estar en Kanban |
 
 **Reglas de nombre y uso**
-- El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en menta** (`var(--emerald)`). No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
+- El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en el verde de marca** (`var(--hw-brand)`: `#34D3A4` en Holo Night y `#0E9F7A` en Holo Day, 3,1:1 sobre la hoja). El verde de acento de UI (`--emerald`) sigue siendo mas oscuro en Day porque debe cumplir 4,5:1 en texto y botones. No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
 - En texto corrido se escribe "HoloSpace" con mayuscula inicial (nombre propio). En etiquetas en mayusculas el tema ya las transforma.
 - La firma de paraguas es `by hologrowth.dev` en Geist Mono minuscula, tamano chico, en gris de apoyo, siempre enlazada a https://hologrowth.dev (excepto en el nav de la landing, donde el logo ya es un enlace).
 - Los iconos usan una sola tinta (`currentColor`) y una linea o flecha en menta; en SVG sueltos se adaptan al esquema claro u oscuro del sistema. No se agregan sombras, degradados ni versiones multicolor.
 - El lazo dorado anterior de HoloGrowth queda retirado.
+
+**Activos generados (`public/brand/`)**
+
+| Archivo | Uso |
+| :--- | :--- |
+| `mark.svg`, `4see.svg`, `logistica.svg` | Iconos vectoriales que se adaptan al esquema claro u oscuro del sistema |
+| `favicon.ico` (16, 32 y 48), `favicon-16/32/48.png` | Pestana del navegador (tambien `/favicon.ico`) |
+| `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` | iOS, Android y PWA (`site.webmanifest`) |
+| `4see-512.png`, `4see-180.png`, `logistica-512.png`, `logistica-180.png` | Iconos de aplicacion por producto |
+| `logo-night.png`, `logo-day.png`, `logo-by-night.png`, `logo-by-day.png` | Lockups transparentes para fondos oscuros y claros, con y sin firma `by hologrowth.dev` |
+| `og.png` (1200 x 630) | Imagen Open Graph y Twitter de la landing |
+| `sistema-marca.png` | Lamina de referencia del sistema de marca |
+
+Los PNG se generan desde HTML con Playwright (fuente Geist) y se reducen con `sips`; el verde del punto y de las lineas sale de `tokens.brand` en `themes.json`.
 
 ## 0. Landing comercial v3: lamina tecnica (vigente)
 
