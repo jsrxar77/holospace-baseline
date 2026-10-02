@@ -778,13 +778,6 @@ CREATE POLICY rls_audit_logs_isolation ON core_platform_audit_logs
 INSERT INTO tenant_tenants (id, slug, name, status)
 VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace', 'active')
 ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
-VALUES 
-  ('a0000000-0000-0000-0000-000000000001', 'kanban_enterprise', 'active', 9999, 999999),
-  ('a0000000-0000-0000-0000-000000000001', 'fourseee_enterprise', 'active', 9999, 0)
-ON CONFLICT (tenant_id, plan_code) DO NOTHING;
-
 -- Catálogo de Módulos Oficiales de la Plataforma HoloSpace
 INSERT INTO tenant_modules_catalog (key, name, description, category, is_active, activated_by)
 VALUES
@@ -820,6 +813,13 @@ ON CONFLICT (code) DO UPDATE SET
 
 -- Inactivar planes legados bundles
 UPDATE tenant_plans SET is_active = false WHERE code IN ('starter', 'pro', 'enterprise');
+
+-- Suscripciones del Tenant 0 (requieren los planes ya sembrados por la FK plan_code)
+INSERT INTO tenant_subscriptions (tenant_id, plan_code, status, max_users, max_orders_monthly)
+VALUES 
+  ('a0000000-0000-0000-0000-000000000001', 'kanban_enterprise', 'active', 9999, 999999),
+  ('a0000000-0000-0000-0000-000000000001', 'fourseee_enterprise', 'active', 9999, 0)
+ON CONFLICT (tenant_id, plan_code) DO NOTHING;
 
 -- Catálogo Universal de Permisos Granulares de la Plataforma
 INSERT INTO core_permissions (key, module_code, name, description, category)
@@ -973,7 +973,7 @@ ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
 -- ÚNICO SuperAdmin Global de la Plataforma
 INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'superadmin', 'superadmin@holospace.com.ar', 'scrypt:BrunaSeRelambe22!', 'Super Administrador Global', 'SUPERADMIN')
+VALUES ('a0000000-0000-0000-0000-000000000001', 'superadmin', 'superadmin@holospace.com.ar', 'b3569cc30bce35709ae4fbd02fb1d0fb:658bb7874ffc9737d7c01ad83ee40f3b8ed0470a4cf0e7284dab337f0402a29f65b8063c5b75e13a79fba1440335d883c134e182a770a65b0384a4c02179c774', 'Super Administrador Global', 'SUPERADMIN')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 INSERT INTO core_app_settings (tenant_id, key, value)
@@ -1012,9 +1012,9 @@ ON CONFLICT (tenant_id, key) DO NOTHING;
 -- Usuarios Drink Lovers
 INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@drinklovers.com.ar', 'scrypt:drinklovers2026', 'Admin DrinkLovers', 'CORE_ADMIN'),
-  ('550e8400-e29b-41d4-a716-446655440000', 'juan', 'juan@drinklovers.com.ar', 'scrypt:juan2026', 'Juan (Operario DrinkLovers)', 'SCANNER_OPERATOR'),
-  ('550e8400-e29b-41d4-a716-446655440000', 'vanesa', 'vanesa@drinklovers.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria DrinkLovers)', 'SCANNER_OPERATOR')
+  ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@drinklovers.com.ar', '1f0c3b2384a45250e1e9d9a2216b8563:7278290bb9fef67b1b3dcfa3b4cb55f4c1b742e954031f2f630fe4025ac2566a7f787ec9a60f7de987e2deaa1f9f2fbdb71eb45d11b7f43e39904df6d5bc0f08', 'Admin DrinkLovers', 'CORE_ADMIN'),
+  ('550e8400-e29b-41d4-a716-446655440000', 'juan', 'juan@drinklovers.com.ar', '7dd575631dc3a26b015ae901039f0ede:07c92d4cccb947a6baa3a8f17e3248f534a7e48514a1939bb4b3fd0e0d615919c75d9c70bc7c1b5b88833cb1fb79661dfdbe4cf1357a8e0faa429d484cb9ccdc', 'Juan (Operario DrinkLovers)', 'SCANNER_OPERATOR'),
+  ('550e8400-e29b-41d4-a716-446655440000', 'vanesa', 'vanesa@drinklovers.com.ar', '39ef0433bf705b3c60826ff6eea719fa:cd5aa1de8025b37c83fef0f3b0bfa4254acaea96ffc18718e45e2acbd859a93a84b209e6ae0eefd7d5803928a51d5c337e26bf65c2de1eace31c19182ed34b78', 'Vanesa (Operaria DrinkLovers)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Tenant 2: Poke Argentina (Exclusivo Logística)
@@ -1047,9 +1047,9 @@ ON CONFLICT (tenant_id, key) DO NOTHING;
 -- Usuarios Poke Argentina
 INSERT INTO core_users (tenant_id, username, email, password_hash, name, role)
 VALUES 
-  ('550e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@poke.com.ar', 'scrypt:poke2026', 'Admin Poke', 'CORE_ADMIN'),
-  ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', 'scrypt:juan2026', 'Juan (Operario Poke)', 'SCANNER_OPERATOR'),
-  ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'scrypt:vanesa2026', 'Vanesa (Operaria Poke)', 'SCANNER_OPERATOR')
+  ('550e8400-e29b-41d4-a716-446655440001', 'admin', 'admin@poke.com.ar', '93f68d2a6a60ee5939cd9dbc547d2035:28adf8ddec72874703313c92917f6dadc665b3d4739643e6f7d32fa1bf66fa47ee02d9231c1cd19d59bb57dd69546450330d101ba69fd2f4450bb85f02fc7b9e', 'Admin Poke', 'CORE_ADMIN'),
+  ('550e8400-e29b-41d4-a716-446655440001', 'juan', 'juan@poke.com.ar', '0653267d53f29fd2af150c664c54cc3b:4242b1a581d2f3b00e1c989c30c560738dadef409b494d68bc78cb0805e854b88eb3e625d268486211e843da191add01e0d7957de140abdd5f578801bd9a4201', 'Juan (Operario Poke)', 'SCANNER_OPERATOR'),
+  ('550e8400-e29b-41d4-a716-446655440001', 'vanesa', 'vanesa@poke.com.ar', 'b40dfca6d8b64c44d4a12d8144773f0f:5e885e435ec39307017c363626d245f84af97425061d397999ee5f0277e518c14caec82e1af72a6a7dcc26de5d31fee9b333f908ddd5126fd860db0d08699094', 'Vanesa (Operaria Poke)', 'SCANNER_OPERATOR')
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 -- Sincronización automática de role_id en core_users
