@@ -70,7 +70,7 @@
 - [ ] **D-023 | Paginas legales y de confianza** | Esfuerzo S
   - Terminos, privacidad y politica de datos; pagina de estado. La landing los necesita para vender a empresas.
 - [ ] **D-024 | Landing sin activos de marca reales** | Esfuerzo M
-  - Los visuales son maquetas HTML/SVG. Faltan capturas reales del producto, imagen Open Graph, casos de clientes reales y analitica de conversion. Regla: no publicar logos ni testimonios que no existan.
+  - Los visuales son planos y maquetas HTML/SVG propios. Faltan capturas reales del producto, imagen Open Graph, casos de clientes reales y analitica de conversion. Regla: no publicar logos ni testimonios que no existan.
 - [ ] **D-025 | URL del Scanner fija en la landing** | `modules/landing/public/index.html` | Esfuerzo S
   - Apunta a `https://m.holospace.com.ar`. Debe salir de configuracion.
 - [ ] **D-026 | Dominios personalizados** | Fase 19 del roadmap | Esfuerzo L
@@ -96,4 +96,4 @@
 - [x] **S-002** Credenciales y clave de Postgres retiradas de `docs/README.md` y de la configuracion MCP (queda D-005 para el historial). 2026-10-02.
 - [x] **S-003** PDFs de pedidos reales y archivos `.rooignore`/`.agents` fuera del indice de git. 2026-10-02.
 - [x] **S-004** Nueva familia de temas Holo (`holo_dark`, `holo_light`) con contraste WCAG verificado por test, generada desde `themes.json`. 2026-10-02.
-- [x] **S-005** Landing rediseniada para venta (ver `docs/CONTENT.md`). 2026-10-02.
+- [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

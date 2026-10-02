@@ -4,16 +4,16 @@
 
 ---
 
-## 0. Landing comercial v2 (vigente)
+## 0. Landing comercial v3: lamina tecnica (vigente)
 
-La landing (`modules/landing/public/`) reemplaza a la version pixel art. Estructura: hero con maqueta de producto, franja de capacidades, bento de modulos, "como funciona" por linea, spotlight de 4see con la formula del piso de margen, seguridad, precios, FAQ, CTA final.
+La landing (`modules/landing/public/`) es una **lamina tecnica normalizada** con los temas Holo Night y Holo Day, para que pagina y producto compartan sistema visual. Direccion y razones en `DESIGN.md` y en `.impeccable/surfaces/` (contrato de direccion). Audiencia: duenos y gerentes de pymes; el relato lidera con e-commerce (4see) y presenta ambas lineas.
 
-- **Titular:** "Pedidos sin errores. Precios sin perdidas." (menos de 8 palabras).
-- **CTA principal unico:** "Empezar con Google" (`/api/auth/google`). Secundarios: "Ingresar" (`/login`) y ancla a precios.
-- **Tema:** Holo Night / Holo Day, segun preferencia del sistema y toggle persistido en `hs_landing_theme`.
-- **Regla de contenido:** solo datos verificables. Precios y limites salen de `lib/billing.js`; no hay logos, testimonios ni metricas inventadas. Las maquetas llevan la leyenda "Vista ilustrativa".
-- **Imagenes:** maquetas HTML/SVG propias (sin dependencias externas). Pendiente: capturas reales e imagen Open Graph (D-024).
-- **SEO:** title, description, Open Graph, JSON-LD `SoftwareApplication` con ofertas.
+- **Estructura (9 hojas, cada una con cajetin):** 1 Hero con simulador del piso de margen (sliders reales de costo, margen y costos operativos, y competidor sin stock); 2 Referencias de modulos; 3 4see (ecuacion, mapeo 1 a N, cola de aprobacion); 4 Logistica (tablero en planta y escaner); 5 Proceso por linea; 6 Seguridad (corte con RLS y cuadro de controles); 7 Perfiles; 8 Planes (tabla tecnica por linea); 9 Notas generales (FAQ) y cierre.
+- **Titular:** "Pedidos sin errores. Precios sin perdidas." CTA principal unico: "Empezar con Google" (`/api/auth/google`); secundarios: "Ingresar" y planes.
+- **Tema:** Holo Night / Holo Day segun preferencia del sistema, con interruptor persistido en `hs_landing_theme`.
+- **Regla de contenido:** solo datos verificables. Precios y limites salen de `lib/billing.js`; no hay logos, testimonios ni metricas. Las maquetas y la simulacion llevan la leyenda "datos de ejemplo".
+- **Motion:** las lineas de los dibujos se trazan una vez al entrar en vista; el precio sugerido sube y se frena en la cota al cargar. Respeta `prefers-reduced-motion`.
+- **SEO:** title, description, Open Graph, JSON-LD `SoftwareApplication` con ofertas. Pendiente: imagen Open Graph y capturas reales (D-024).
 
 > Las secciones 1 y 2 de este documento (sprites pixel art) quedan como referencia historica de marca.
 

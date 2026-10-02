@@ -168,7 +168,7 @@
 - [x] **17.5.2** Skill de diseno `impeccable` instalada (sin los hooks del plugin; ver D-034).
 - [x] **17.5.3** Higiene: credenciales fuera de `docs/README.md` y de la config MCP, `.env.example`, PDFs reales fuera del indice.
 - [x] **17.5.4** Temas `holo_dark` y `holo_light` con tokens extendidos, CSS generado en `GET /themes/holo.css` y test de contraste `tests/test-theme-contrast.js` registrado en el runner.
-- [x] **17.5.5** Landing comercial rediseniada (`modules/landing/public/`) con ambos temas, precios reales de `lib/billing.js`, FAQ, JSON-LD y accesibilidad.
+- [x] **17.5.5** Landing comercial v3 (`modules/landing/public/`): lamina tecnica con Holo Night/Day, simulador del piso de margen, 9 hojas, precios reales de `lib/billing.js`, FAQ, JSON-LD y accesibilidad. Contexto en `PRODUCT.md` y `DESIGN.md`.
 - [x] **17.5.6** Registro de deuda tecnica en [DEBT.md](./DEBT.md) (septimo documento canonico).
 
 ---
