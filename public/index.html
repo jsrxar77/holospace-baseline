@@ -12,7 +12,7 @@
     :root {
       --bg-black: #0B0E14;
       --card-bg: #161B22;
-      --card-border: #30363D;
+      --card-border: var(--hw-border-strong, var(--card-border));
       --emerald: #00E676;
       --cobalt: #3B82F6;
       --amber: #F59E0B;
@@ -37,7 +37,7 @@
 
     /* Header Shell (2 Líneas Horizontales) */
     .app-header-shell {
-      background-color: #161B22;
+      background-color: var(--hw-surface-1, var(--card-bg));
       border-bottom: 1px solid var(--card-border);
       display: flex;
       flex-direction: column;
@@ -86,7 +86,7 @@
     }
 
     .brand-title .logo-holo {
-      color: #FFFFFF;
+      color: var(--text-main);
     }
 
     .brand-title .logo-space {
@@ -144,8 +144,8 @@
       font-weight: 700 !important;
       border-radius: 8px;
       border: 1px solid var(--card-border);
-      background-color: #21262D;
-      color: #FFF;
+      background-color: var(--hw-surface-2, var(--card-bg));
+      color: var(--text-main);
       outline: none;
       cursor: pointer;
       max-width: 170px;
@@ -184,8 +184,8 @@
       font-weight: 700 !important;
       border-radius: 8px;
       border: 1px solid var(--card-border);
-      background-color: #21262D;
-      color: #FFF;
+      background-color: var(--hw-surface-2, var(--card-bg));
+      color: var(--text-main);
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -223,7 +223,7 @@
       align-items: center;
       gap: 8px;
       padding: 8px 28px;
-      background-color: rgba(0, 0, 0, 0.15);
+      background-color: var(--hw-surface-2, var(--card-bg));
       min-height: 44px;
       overflow-x: auto;
     }
@@ -242,8 +242,8 @@
     }
 
     .nav-tab:hover {
-      color: #FFF;
-      background-color: #21262D;
+      color: var(--text-main);
+      background-color: var(--hw-surface-2, var(--card-bg));
     }
 
 
@@ -280,7 +280,7 @@
     /* Status Bar Footer */
     .app-status-bar {
       height: 32px;
-      background-color: #161B22;
+      background-color: var(--hw-surface-1, var(--card-bg));
       border-top: 1px solid var(--card-border);
       display: flex;
       align-items: center;
@@ -327,7 +327,7 @@
       left: 0;
       bottom: 0;
       width: 280px;
-      background-color: #161B22;
+      background-color: var(--hw-surface-1, var(--card-bg));
       border-right: 1px solid var(--card-border);
       z-index: 310;
       padding: 20px;
@@ -383,7 +383,7 @@
 
     /* Colores específicos para jerarquía de Módulos vs Features */
     .nav-tab.module-tab.active, .mobile-nav-tab.module-tab.active {
-      color: #FFF !important;
+      color: var(--text-main) !important;
       background-color: #A78BFA !important;
       border-color: #A78BFA !important;
       font-weight: 900 !important;
@@ -440,8 +440,8 @@
     }
 
     .btn-secondary {
-      background-color: #21262D;
-      color: #FFF;
+      background-color: var(--hw-surface-2, var(--card-bg));
+      color: var(--text-main);
       border: 1px solid var(--card-border);
       padding: 10px 18px;
       border-radius: 12px;
@@ -483,7 +483,7 @@
 
     .btn-danger:hover {
       background-color: var(--red);
-      color: #FFF;
+      color: var(--text-main);
     }
 
     /* Container & Views */
@@ -530,7 +530,7 @@
 
     .input-search {
       width: 100%;
-      background-color: rgba(255, 255, 255, 0.04);
+      background-color: var(--hw-surface-2, var(--card-bg));
       border: 1px solid var(--card-border);
       border-radius: 8px;
       padding: 10px 14px;
@@ -594,7 +594,7 @@
     }
 
     .col-count {
-      background-color: #21262D;
+      background-color: var(--hw-surface-2, var(--card-bg));
       color: var(--text-muted);
       padding: 4px 12px;
       border-radius: 12px;
@@ -616,7 +616,7 @@
     }
 
     .cards-list::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.03);
+      background: var(--hw-surface-2, var(--card-bg));
       border-radius: 4px;
     }
 
@@ -633,26 +633,26 @@
     .user-group {
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      background-color: #0F131A;
+      background-color: var(--hw-surface-1, var(--card-bg));
       overflow: hidden;
       margin-bottom: 10px;
     }
 
     .user-group-header {
       padding: 14px 18px;
-      background-color: #1A202C;
+      background-color: var(--hw-surface-2, var(--card-bg));
       display: flex;
       align-items: center;
       justify-content: space-between;
       cursor: pointer;
       font-weight: 800;
       font-size: 14px;
-      color: #FFF;
+      color: var(--text-main);
       user-select: none;
     }
 
     .user-group-header:hover {
-      background-color: #252D3C;
+      background-color: var(--hw-surface-3, var(--card-bg));
     }
 
     .user-group-body {
@@ -663,7 +663,7 @@
     }
 
     .kanban-card {
-      background-color: #0B0E14;
+      background-color: var(--bg-main);
       border: 1px solid var(--card-border);
       border-radius: 18px;
       padding: 18px;
@@ -709,7 +709,7 @@
     .progress-bar-bg {
       width: 100%;
       height: 8px;
-      background-color: #21262D;
+      background-color: var(--hw-surface-2, var(--card-bg));
       border-radius: 4px;
       overflow: hidden;
     }
@@ -752,11 +752,11 @@
 
     .input-field {
       width: 100%;
-      background-color: #0B0E14;
+      background-color: var(--bg-main);
       border: 1px solid var(--card-border);
       border-radius: 14px;
       padding: 14px 18px;
-      color: #FFF;
+      color: var(--text-main);
       font-size: 16px;
       outline: none;
     }
@@ -795,7 +795,7 @@
     }
 
     .data-table th {
-      background-color: #1A202C;
+      background-color: var(--hw-surface-2, var(--card-bg));
       color: var(--text-muted);
       font-weight: 800;
       font-size: 12px;
@@ -812,7 +812,7 @@
     }
 
     .invoice-card {
-      background-color: #0B0E14;
+      background-color: var(--bg-main);
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 24px;
@@ -859,7 +859,7 @@
 
     .module-card.active-module {
       border-color: var(--emerald);
-      background: linear-gradient(135deg, rgba(0,230,118,0.06), #0F131A);
+      background: linear-gradient(135deg, var(--hw-accent-soft, rgba(0,230,118,0.08)), #0F131A);
     }
 
     .module-card.inactive-module {
@@ -876,7 +876,7 @@
     .module-name {
       font-size: 20px;
       font-weight: 900;
-      color: #FFF;
+      color: var(--text-main);
     }
 
     .module-desc {
@@ -908,7 +908,7 @@
       position: absolute;
       cursor: pointer;
       inset: 0;
-      background-color: #21262D;
+      background-color: var(--hw-surface-2, var(--card-bg));
       border-radius: 28px;
       transition: 0.3s;
       border: 1px solid var(--card-border);
@@ -938,7 +938,7 @@
 
     .superadmin-badge {
       background: linear-gradient(135deg, #7C3AED, #4F46E5);
-      color: #FFF;
+      color: var(--text-main);
       border: none;
       padding: 6px 14px;
       border-radius: 20px;
@@ -970,6 +970,7 @@
     .hidden { display: none !important; }
   </style>
   <link rel="stylesheet" href="/css/holospace-theme.css">
+  <link rel="icon" type="image/svg+xml" href="/brand/mark.svg">
   <link rel="stylesheet" href="/themes/holo.css">
 </head>
 <body>
@@ -1057,28 +1058,7 @@
         </button>
         <div class="brand-group">
           <div class="brand-title" id="brandTitleContainer">
-            <span id="brandLogoText" style="letter-spacing: 0px; display: inline-flex; align-items: center;"><span class="logo-holo">Holo</span><span class="logo-space">Space</span><svg class="pixel-rocket-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="rotate(45 14 14)">
-    <!-- Cabina / Punta Celeste Lavanda -->
-    <rect x="12" y="3" width="4" height="4" fill="#8AADF4" />
-    
-    <!-- Fuselaje Central Blanco y Malva -->
-    <rect x="10" y="7" width="8" height="6" fill="#CAD3F5" />
-    <rect x="6" y="9" width="16" height="4" fill="#C6A0F6" />
-    <rect x="4" y="13" width="20" height="4" fill="#8AADF4" />
-    
-    <!-- Alas / Alerones Fucsia y Coral -->
-    <rect x="4" y="17" width="4" height="4" fill="#ED8796" />
-    <rect x="20" y="17" width="4" height="4" fill="#ED8796" />
-    <rect x="2" y="19" width="2" height="4" fill="#F5BDE6" />
-    <rect x="24" y="19" width="2" height="4" fill="#F5BDE6" />
-    
-    <!-- Propulsor Menta y Fuego Naranja -->
-    <rect x="12" y="17" width="4" height="6" fill="#A6DA95" />
-    <rect x="13" y="23" width="2" height="4" fill="#FE8019" />
-    <rect x="14" y="27" width="1" height="2" fill="#EED49F" />
-  </g>
-</svg></span>
+            <span id="brandLogoText" style="letter-spacing: 0px; display: inline-flex; align-items: center;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span></span>
           </div>
           <span id="activeContextBadge" class="context-badge">
             SUPERADMIN
@@ -1115,7 +1095,7 @@
           <div id="userDropdownMenu" class="user-dropdown-menu hidden" style="position: absolute; right: 0; top: calc(100% + 8px); min-width: 240px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.7); z-index: 1200; display: flex; flex-direction: column; gap: 10px;">
             <div style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
-                <div id="dropdownUserName" style="font-size: 14px; font-weight: 800; color: #FFF;">superadmin</div>
+                <div id="dropdownUserName" style="font-size: 14px; font-weight: 800; color: var(--text-main);">superadmin</div>
                 <span id="dropdownUserRoleBadge" class="badge-role" style="font-size: 10px; padding: 2px 6px;">SUPERADMIN</span>
               </div>
               <div id="dropdownUserEmail" style="font-size: 12px; color: var(--text-muted);">superadmin@holospace.com.ar</div>
@@ -1165,9 +1145,9 @@
   <aside id="mobileNavDrawer" class="mobile-nav-drawer">
     <div class="mobile-drawer-header">
       <div class="brand-title">
-        <span id="mobileBrandLogoText" style="letter-spacing: 0px; display: inline-flex;"><span class="logo-holo">Holo</span><span class="logo-space">Space</span></span>
+        <span id="mobileBrandLogoText" style="letter-spacing: 0px; display: inline-flex;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span></span>
       </div>
-      <button class="btn-close-drawer" onclick="closeMobileDrawer()">✕</button>
+      <button class="btn-close-drawer" onclick="closeMobileDrawer()">×</button>
     </div>
     <div class="mobile-drawer-body">
       <div class="mobile-context-info" style="margin-bottom: 12px;">
@@ -1212,7 +1192,7 @@
       <!-- Tenants Header Banner -->
       <div style="background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(0, 0, 0, 0.4)); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 28px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden;">
         <div style="max-width: 720px; position: relative; z-index: 2;">
-          <h2 style="font-size: 28px; font-weight: 900; color: #FFF; letter-spacing: -0.5px;">Gobierno de Organizaciones SaaS (Tenants)</h2>
+          <h2 style="font-size: 28px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px;">Gobierno de Organizaciones SaaS (Tenants)</h2>
           <p style="color: var(--text-muted); font-size: 15px; margin-top: 8px; line-height: 22px;">
             Panel exclusivo del SuperAdmin para crear empresas, gestionar planes, asignar usuarios y licenciar módulos en vivo.
           </p>
@@ -1227,7 +1207,7 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Organizaciones</div>
-          <div id="kpiTenantsCount" style="font-size: 32px; font-weight: 900; color: #FFF; margin-top: 4px;">0</div>
+          <div id="kpiTenantsCount" style="font-size: 32px; font-weight: 900; color: var(--text-main); margin-top: 4px;">0</div>
         </div>
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase; letter-spacing: 0.5px;">Tenants Activos</div>
@@ -1239,7 +1219,7 @@
         </div>
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Aislamiento de Datos</div>
-          <div style="font-size: 18px; font-weight: 900; color: #FFF; margin-top: 10px;">PostgreSQL RLS</div>
+          <div style="font-size: 18px; font-weight: 900; color: var(--text-main); margin-top: 10px;">PostgreSQL RLS</div>
         </div>
       </div>
 
@@ -1450,7 +1430,7 @@
       <div class="table-responsive-container" style="max-height: calc(100vh - 340px); overflow-y: auto; margin-top: 20px;">
         <table class="data-table">
           <thead>
-            <tr style="position: sticky; top: 0; background-color: #161B22; z-index: 2;">
+            <tr style="position: sticky; top: 0; background-color: var(--hw-surface-1, var(--card-bg)); z-index: 2;">
               <th style="min-width: 140px;"># Comprobante</th>
               <th style="min-width: 200px;">Cliente / Razón Social</th>
               <th style="min-width: 160px;">Operario Asignado</th>
@@ -1479,7 +1459,7 @@
 
       <!-- Modules Section -->
       <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
-        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">Módulos del Sistema</h3>
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: var(--text-main);">Módulos del Sistema</h3>
         <div id="modulesGrid" style="display: flex; flex-direction: column; gap: 16px;">
           <div style="color: var(--text-muted); font-size: 14px;">Cargando módulos...</div>
         </div>
@@ -1487,7 +1467,7 @@
 
       <!-- Platform Audit Log -->
       <div style="background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 24px; padding: 28px;">
-        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: #FFF;">Auditoría de Plataforma</h3>
+        <h3 style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: var(--text-main);">Auditoría de Plataforma</h3>
         <div id="platformAuditLog" style="max-height: 320px; overflow-y: auto;">
           <div style="color: var(--text-muted); font-size: 14px;">Cargando eventos...</div>
         </div>
@@ -1497,19 +1477,19 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: #A78BFA; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Super Admin</div>
-          <div id="platformInfoAdmin" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
+          <div id="platformInfoAdmin" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: var(--text-main);">—</div>
         </div>
-        <div style="background: linear-gradient(135deg, rgba(0,230,118,0.08), rgba(0,230,118,0.02)); border: 1px solid rgba(0,230,118,0.3); border-radius: 20px; padding: 20px;">
+        <div style="background: linear-gradient(135deg, var(--hw-accent-soft, rgba(0,230,118,0.08)), rgba(0,230,118,0.02)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--emerald); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Módulos Activos</div>
           <div id="platformInfoActiveModules" style="font-size: 32px; font-weight: 900; margin-top: 4px; color: var(--emerald);">—</div>
         </div>
-        <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+        <div style="background-color: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Tema Activo</div>
-          <div id="platformInfoTheme" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: #FFF;">—</div>
+          <div id="platformInfoTheme" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: var(--text-main);">—</div>
         </div>
-        <div style="background-color: #161B22; border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
+        <div style="background-color: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--text-muted); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">DB PostgreSQL 16</div>
-          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: #FFF; font-family: monospace;">PostgreSQL (RLS Multi-Tenant)</div>
+          <div id="platformInfoDb" style="font-size: 14px; font-weight: 700; margin-top: 8px; color: var(--text-main); font-family: monospace;">PostgreSQL (RLS Multi-Tenant)</div>
         </div>
       </div>
     </div>
@@ -1523,15 +1503,15 @@
           <div style="display: inline-block; padding: 6px 16px; border-radius: 12px; background: rgba(239,68,68,0.15); border: 1px solid var(--red); color: var(--red); font-size: 12px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase;">
             Acceso Restringido (403)
           </div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #FFF; margin-top: 20px;" id="forbiddenModuleTitle">Módulo No Autorizado</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main); margin-top: 20px;" id="forbiddenModuleTitle">Módulo No Autorizado</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 10px; line-height: 22px;" id="forbiddenModuleDesc">
             Tu rol y organización no cuentan con los permisos requeridos para acceder a este módulo.
           </p>
           
-          <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 16px; margin: 24px 0; text-align: left; font-size: 13px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin: 24px 0; text-align: left; font-size: 13px; display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; justify-content: space-between;">
               <span style="color: var(--text-muted);">Usuario:</span>
-              <strong style="color: #FFF;" id="forbiddenUserDisplay">—</strong>
+              <strong style="color: var(--text-main);" id="forbiddenUserDisplay">—</strong>
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: var(--text-muted);">Rol de Acceso:</span>
@@ -1539,7 +1519,7 @@
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: var(--text-muted);">Organización:</span>
-              <strong style="color: #FFF;" id="forbiddenTenantDisplay">—</strong>
+              <strong style="color: var(--text-main);" id="forbiddenTenantDisplay">—</strong>
             </div>
           </div>
 
@@ -1556,7 +1536,7 @@
     <div id="view4seeMonitors" class="view-panel hidden">
       <div class="actions-bar">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Monitor — Vigilancia de Competencia</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Monitor — Vigilancia de Competencia</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Rastreo automático de precios y quiebres de stock en competidores (Extracción en Cascada y Mercado Libre).</p>
         </div>
         <div class="actions-controls">
@@ -1584,7 +1564,7 @@
     <div id="view4seeCatalog" class="view-panel hidden">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Catalog — Auditoría Técnica y Diff View</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Catalog — Auditoría Técnica y Diff View</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Diagnóstico de salud de tienda (GTIN/EAN, marcas, SEO) y optimización de títulos con write-back directo.</p>
         </div>
         <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
@@ -1601,7 +1581,7 @@
           <select id="savedStoresSelect" class="input-field" style="max-width: 240px; font-size: 13px;" onchange="handleSelectSavedStore(this.value)">
             <option value="">-- Conectar Nueva Tienda --</option>
           </select>
-          <button id="btnQuickAuditStore" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="handleQuickScanSelectedStore()">⚡ Escanear Tienda en Vivo</button>
+          <button id="btnQuickAuditStore" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="handleQuickScanSelectedStore()"> Escanear Tienda en Vivo</button>
           <button class="btn-secondary" style="font-size: 13px;" onclick="openManageStoresModal()">Tiendas Guardadas</button>
           <button class="btn-secondary" style="font-size: 13px;" onclick="openAuditItemModal()">+ Probar Ítem</button>
         </div>
@@ -1609,15 +1589,15 @@
 
       <!-- Resumen KPI de Salud del Catálogo (Se muestra tras auditar) -->
       <div id="catalogHealthKpis" style="display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
-        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Total Auditados</div>
-          <div id="kpiTotalAudited" style="font-size: 24px; font-weight: 900; color: #FFF; margin-top: 4px;">0</div>
+          <div id="kpiTotalAudited" style="font-size: 24px; font-weight: 900; color: var(--text-main); margin-top: 4px;">0</div>
         </div>
-        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Listos / Óptimos</div>
           <div id="kpiOptimized" style="font-size: 24px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
         </div>
-        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-danger-soft, rgba(239,68,68,0.08)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--red); text-transform: uppercase;">Falta GTIN / EAN</div>
           <div id="kpiMissingGtin" style="font-size: 24px; font-weight: 900; color: var(--red); margin-top: 4px;">0</div>
         </div>
@@ -1634,8 +1614,8 @@
           <span style="font-size: 13px; color: var(--text-main);">Las aprobaciones se simulan interactivamente sin alterar datos en tu tienda real.</span>
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button class="btn-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="exportCatalogAuditCsv()">📥 Exportar Reporte CSV</button>
-          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="bulkApproveCatalogMock()">⚡ Aprobar Todo (Simulación)</button>
+          <button class="btn-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="exportCatalogAuditCsv()"> Exportar Reporte CSV</button>
+          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="bulkApproveCatalogMock()"> Aprobar Todo (Simulación)</button>
         </div>
       </div>
 
@@ -1650,7 +1630,7 @@
     <div id="view4seeMargins" class="view-panel hidden">
       <div class="actions-bar">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see Margins — Guardián de Rentabilidad</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Margins — Guardián de Rentabilidad</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Protección del margen neto frente a comisiones, impuestos (IVA/IIBB) y alertas de Zona Roja.</p>
         </div>
         <div class="actions-controls">
@@ -1678,7 +1658,7 @@
     <div id="view4seeSmartPrice" class="view-panel hidden">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #FFF;">4see SmartPrice — Dynamic Pricing con Piso Inquebrantable</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see SmartPrice — Dynamic Pricing con Piso Inquebrantable</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Sugerencias de repricing deterministas, blindaje de margen contra pérdidas y aprobación en 1 clic.</p>
         </div>
         <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
@@ -1691,7 +1671,7 @@
               oninput="filter4seeQueue(this.value)"
             />
           </div>
-          <button id="btnRunWorkerCycle" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="handleTriggerWorkerCycle()">⚡ Ejecutar Worker de Scraping</button>
+          <button id="btnRunWorkerCycle" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="handleTriggerWorkerCycle()"> Ejecutar Worker de Scraping</button>
           <button class="btn-secondary" style="font-size: 13px;" onclick="openCreateProductModal()">+ Nuevo Producto 1:N</button>
           <button class="btn-secondary" style="font-size: 13px;" onclick="openCreateRuleModal()">+ Nueva Regla SmartPrice</button>
         </div>
@@ -1699,15 +1679,15 @@
 
       <!-- Resumen KPI de SmartPrice -->
       <div id="smartpriceKpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
-        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Sugerencias Pendientes</div>
           <div id="kpiQueuePending" style="font-size: 24px; font-weight: 900; color: var(--cobalt); margin-top: 4px;">0</div>
         </div>
-        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Precios Aplicados</div>
           <div id="kpiQueueApplied" style="font-size: 24px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
         </div>
-        <div style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
+        <div style="background: var(--hw-danger-soft, rgba(239,68,68,0.08)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--red); text-transform: uppercase;">Pisos Inquebrantables Activos</div>
           <div id="kpiFloorShielded" style="font-size: 24px; font-weight: 900; color: var(--red); margin-top: 4px;">0</div>
         </div>
@@ -1726,8 +1706,8 @@
   <div id="createTenantModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Crear Nueva Organización</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateTenantModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Crear Nueva Organización</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateTenantModal()">×</button>
       </div>
       <form id="createTenantForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateTenantSubmit(event)">
         <div>
@@ -1784,31 +1764,9 @@
   <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
       <h2 class="brand-title" style="font-size: 28px; display: flex; justify-content: center; align-items: center;">
-        <span class="logo-holo">Holo</span><span class="logo-space">Space</span>
-        <svg class="pixel-rocket-icon" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <g transform="rotate(45 14 14)">
-    <!-- Cabina / Punta Celeste Lavanda -->
-    <rect x="12" y="3" width="4" height="4" fill="#8AADF4" />
-    
-    <!-- Fuselaje Central Blanco y Malva -->
-    <rect x="10" y="7" width="8" height="6" fill="#CAD3F5" />
-    <rect x="6" y="9" width="16" height="4" fill="#C6A0F6" />
-    <rect x="4" y="13" width="20" height="4" fill="#8AADF4" />
-    
-    <!-- Alas / Alerones Fucsia y Coral -->
-    <rect x="4" y="17" width="4" height="4" fill="#ED8796" />
-    <rect x="20" y="17" width="4" height="4" fill="#ED8796" />
-    <rect x="2" y="19" width="2" height="4" fill="#F5BDE6" />
-    <rect x="24" y="19" width="2" height="4" fill="#F5BDE6" />
-    
-    <!-- Propulsor Menta y Fuego Naranja -->
-    <rect x="12" y="17" width="4" height="6" fill="#A6DA95" />
-    <rect x="13" y="23" width="2" height="4" fill="#FE8019" />
-    <rect x="14" y="27" width="1" height="2" fill="#EED49F" />
-  </g>
-</svg>
+        <span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span>
       </h2>
-      <p style="color: var(--text-muted); text-align: center; font-size: 14px;">Iniciar Sesión</p>
+      <p class="login-sheet">Hoja de acceso</p>
       
       <!-- BOTÓN FEDERADO GOOGLE OAUTH2 -->
       <a href="/api/auth/google" class="btn-google-oauth" style="display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 16px; background: #ffffff; color: #1f1f1f; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid #dadce0; margin-top: 14px; transition: background 0.2s, box-shadow 0.2s;">
@@ -1853,7 +1811,7 @@
     <div class="modal-content" style="max-width: 680px; width: 92%; max-height: 90vh; overflow-y: auto;">
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 12px; margin-bottom: 16px;">
         <h3 style="font-size: 20px; font-weight: 800; margin: 0; color: var(--text-main);">Bienvenido a HoloSpace</h3>
-        <button type="button" onclick="closeOnboardingPlanModal()" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">✕</button>
+        <button type="button" onclick="closeOnboardingPlanModal()" style="background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer;">×</button>
       </div>
 
       <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">
@@ -1861,7 +1819,7 @@
       </p>
 
       <!-- Perfil Verificado de Google -->
-      <div style="display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px;">
         <img id="obAvatarImg" src="" alt="Avatar" style="width: 38px; height: 38px; border-radius: 50%; display: none; object-fit: cover;">
         <div id="obAvatarPlaceholder" style="width: 38px; height: 38px; border-radius: 50%; background: var(--card-border); display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--text-main);">G</div>
         <div style="overflow: hidden;">
@@ -1898,7 +1856,7 @@
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$39 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">1 Admin, 3 Operarios. Hasta 500 pedidos/mes.</div>
           </div>
-          <div class="plan-card-option selected" data-plan="kanban_business" onclick="selectOnboardingPlan('kanban_business')" style="border: 2px solid var(--emerald); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.04);">
+          <div class="plan-card-option selected" data-plan="kanban_business" onclick="selectOnboardingPlan('kanban_business')" style="border: 2px solid var(--emerald); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2, var(--card-bg));">
             <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Business</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$119 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">3 Admins, 15 Operarios. Hasta 3.000 pedidos/mes.</div>
@@ -1941,7 +1899,7 @@
   <!-- MODAL DIÁLOGO PERSONALIZADO (CERO ALERT DEL SISTEMA) -->
   <div id="customDialogModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 440px; text-align: center;">
-      <h3 id="dialogTitle" style="font-size: 22px; font-weight: 900; color: #FFF;"></h3>
+      <h3 id="dialogTitle" style="font-size: 22px; font-weight: 900; color: var(--text-main);"></h3>
       <p id="dialogMessage" style="color: var(--text-muted); font-size: 15px; margin-top: 8px; line-height: 22px;"></p>
       <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
         <button id="dialogCancelBtn" class="btn-secondary" style="flex: 1;" onclick="closeCustomDialog(false)">Cancelar</button>
@@ -1955,7 +1913,7 @@
     <div class="modal-content" style="max-width: 440px;">
       <h3 style="font-size: 22px; font-weight: 900; color: var(--emerald);">Asignar Pedido a Operario</h3>
       <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px; line-height: 20px;">
-        Selecciona el operario que realizará la auditoría de stock para el <strong id="assignOrderTitleText" style="color: #FFF;">Pedido</strong>:
+        Selecciona el operario que realizará la auditoría de stock para el <strong id="assignOrderTitleText" style="color: var(--text-main);">Pedido</strong>:
       </p>
       <div style="margin-top: 16px;">
         <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Operario Asignado</label>
@@ -1980,7 +1938,7 @@
         <div>
           <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Organización <span style="color: var(--red);">*</span></label>
           <select id="userTenantSelect" class="input-field" required></select>
-          <input type="text" id="userTenantStatic" class="input-field" style="display: none; background: rgba(255,255,255,0.04); cursor: not-allowed;" readonly>
+          <input type="text" id="userTenantStatic" class="input-field" style="display: none; background: var(--hw-surface-2, var(--card-bg)); cursor: not-allowed;" readonly>
         </div>
 
         <div>
@@ -2027,7 +1985,7 @@
     <div class="modal-content" style="max-width: 520px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <h3 id="editTenantModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Editar Organización</h3>
-        <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="closeEditTenantModal()">✕</button>
+        <button type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="closeEditTenantModal()">×</button>
       </div>
 
       <form id="editTenantForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="saveEditTenantSubmit(event)">
@@ -2041,7 +1999,7 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
           <div>
             <label style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px;">Slug del Tenant</label>
-            <input type="text" id="editTenantSlugInput" class="input-field" style="background: rgba(255,255,255,0.04); cursor: not-allowed;" readonly>
+            <input type="text" id="editTenantSlugInput" class="input-field" style="background: var(--hw-surface-2, var(--card-bg)); cursor: not-allowed;" readonly>
           </div>
 
           <div>
@@ -2093,18 +2051,18 @@
         </div>
 
         <!-- Módulos Licenciados en Modal -->
-        <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 12px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px;">
           <div style="font-size: 12px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px;">Módulos Licenciados</div>
           <div style="display: flex; flex-direction: column; gap: 8px;">
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-main); cursor: pointer;">
               <span>Kanban (Tablero Web)</span>
               <input type="checkbox" id="editTenantModBoard">
             </label>
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-main); cursor: pointer;">
               <span>Scanner (App Móvil EAN-13)</span>
               <input type="checkbox" id="editTenantModScanner">
             </label>
-            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: #FFF; cursor: pointer;">
+            <label style="display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-main); cursor: pointer;">
               <span>4see (Inteligencia E-Commerce)</span>
               <input type="checkbox" id="editTenantMod4see">
             </label>
@@ -2124,8 +2082,8 @@
   <div id="createMonitorModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Agregar URL Competidora</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMonitorModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar URL Competidora</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMonitorModal()">×</button>
       </div>
       <form id="createMonitorForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMonitorSubmit(event)">
         <div>
@@ -2156,8 +2114,8 @@
   <div id="connectStoreModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 540px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 id="connectStoreModalTitle" style="font-size: 20px; font-weight: 900; color: #FFF;">Conectar Tienda E-Commerce</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeConnectStoreModal()">✕</button>
+        <h3 id="connectStoreModalTitle" style="font-size: 20px; font-weight: 900; color: var(--text-main);">Conectar Tienda E-Commerce</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeConnectStoreModal()">×</button>
       </div>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
         Conecta tu tienda para auditar catálogo on-the-fly, detectar faltantes de GTIN/EAN y aplicar optimizaciones.
@@ -2209,8 +2167,8 @@
         </div>
 
         <!-- Checkbox de Guardado Permanente de Tienda -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px;">
-          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #FFF; cursor: pointer;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px;">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-main); cursor: pointer;">
             <input type="checkbox" id="connSaveStore" checked style="accent-color: var(--emerald); width: 16px; height: 16px;">
             <span>Guardar esta conexión de forma permanente para no volver a ingresar credenciales</span>
           </label>
@@ -2218,7 +2176,7 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 10px;">
           <button type="button" class="btn-secondary" onclick="runDemoCatalogScan()">Cargar Muestra Demo</button>
-          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;">Conectar y Escanear Ahora</button>
+          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;">Conectar y Escanear Ahora</button>
         </div>
       </form>
     </div>
@@ -2228,8 +2186,8 @@
   <div id="manageStoresModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 680px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Tiendas Conectadas Guardadas</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeManageStoresModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Tiendas Conectadas Guardadas</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeManageStoresModal()">×</button>
       </div>
       <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;">
         Gestiona las conexiones activas de tu organización. Las credenciales se conservan seguras y encriptadas por tenant.
@@ -2251,8 +2209,8 @@
   <div id="auditItemModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Auditar Producto en Catálogo</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAuditItemModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Auditar Producto en Catálogo</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAuditItemModal()">×</button>
       </div>
       <form id="auditItemForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleAuditItemSubmit(event)">
         <div>
@@ -2283,20 +2241,20 @@
     <div class="modal-content" style="max-width: 580px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
         <div>
-          <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Editar y Cargar Atributos</h3>
+          <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar y Cargar Atributos</h3>
           <div id="editAttrSubtitle" style="font-size: 12px; color: var(--emerald); font-family: monospace; margin-top: 2px;">SKU: N/A</div>
         </div>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditProductModal()">✕</button>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditProductModal()">×</button>
       </div>
 
       <form id="editProductAttributesForm" style="display: flex; flex-direction: column; gap: 16px;" onsubmit="handleSaveProductAttributes(event)">
         <input type="hidden" id="editAttrItemId" value="">
 
         <!-- Bloque Título -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
           <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Título del Producto</label>
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Original en Tienda: <span id="editAttrOriginalTitle" style="color: #FFF; font-weight: 600;">-</span></div>
-          <div id="editAttrTitleSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Original en Tienda: <span id="editAttrOriginalTitle" style="color: var(--text-main); font-weight: 600;">-</span></div>
+          <div id="editAttrTitleSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;" id="editAttrSuggestedTitleText">-</div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('title')">Usar Sugerencia</button>
           </div>
@@ -2304,12 +2262,12 @@
         </div>
 
         <!-- Bloque Marca -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Marca del Producto</label>
             <span id="editAttrCurrentBrandBadge" style="font-size: 11px; color: var(--text-muted);">Sin marca</span>
           </div>
-          <div id="editAttrBrandSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div id="editAttrBrandSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">Sugerencia detectada: <strong id="editAttrSuggestedBrandText">-</strong></div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('brand')">Usar Sugerencia</button>
           </div>
@@ -2317,12 +2275,12 @@
         </div>
 
         <!-- Bloque Código GTIN / EAN -->
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
             <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Código de Barras GTIN / EAN-13</label>
             <span id="editAttrGtinStatusBadge" style="font-size: 11px; font-weight: 800;">-</span>
           </div>
-          <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: rgba(0,230,118,0.08); border: 1px dashed rgba(0,230,118,0.3); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">EAN interno generado (GS1): <strong id="editAttrSuggestedGtinText" style="font-family: monospace;">-</strong></div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('gtin')">Usar Sugerencia</button>
           </div>
@@ -2331,7 +2289,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
           <button type="button" class="btn-secondary" onclick="closeEditProductModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;">Guardar y Re-auditar Producto</button>
+          <button type="submit" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;">Guardar y Re-auditar Producto</button>
         </div>
       </form>
     </div>
@@ -2341,8 +2299,8 @@
   <div id="createMarginModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Configurar Regla de Rentabilidad</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMarginModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Configurar Regla de Rentabilidad</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMarginModal()">×</button>
       </div>
       <form id="createMarginForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMarginSubmit(event)">
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
@@ -2392,8 +2350,8 @@
   <div id="createProductModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 540px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Nuevo Producto para Monitoreo 1:N</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateProductModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Nuevo Producto para Monitoreo 1:N</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateProductModal()">×</button>
       </div>
       <form id="createProductForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateProductSubmit(event)">
         <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
@@ -2430,9 +2388,9 @@
         </div>
 
         <!-- Preview del Piso Inquebrantable -->
-        <div style="background: rgba(0, 230, 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.3); border-radius: 8px; padding: 10px 14px;">
+        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 10px 14px;">
           <div style="font-size: 11px; color: var(--emerald); font-weight: 800; text-transform: uppercase;">Piso Inquebrantable Estimado (Hard Floor):</div>
-          <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: #FFF; font-family: monospace; margin-top: 2px;">$6.000,00</div>
+          <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: var(--text-main); font-family: monospace; margin-top: 2px;">$6.000,00</div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Ninguna regla de dynamic pricing podrá bajar de este valor.</div>
         </div>
 
@@ -2456,8 +2414,8 @@
   <div id="createRuleModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: #FFF;">Nueva Regla SmartPrice</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateRuleModal()">✕</button>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Nueva Regla SmartPrice</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateRuleModal()">×</button>
       </div>
       <form id="createRuleForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateRuleSubmit(event)">
         <div>
@@ -2491,8 +2449,8 @@
           </div>
         </div>
 
-        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px;">
-          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #FFF; cursor: pointer;">
+        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 14px;">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-main); cursor: pointer;">
             <input type="checkbox" id="ruleAutoDispatch" style="accent-color: var(--emerald); width: 16px; height: 16px;">
             <span>Auto-Dispatch: Actualizar automáticamente la tienda sin pedir aprobación manual</span>
           </label>
@@ -2535,7 +2493,7 @@
     <div class="modal-content" style="max-width: 680px; max-height: 90vh; display: flex; flex-direction: column;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 id="roleModalTitle" style="font-size: 22px; font-weight: 900; color: var(--emerald);">Crear Rol Personalizado</h3>
-        <button type="button" class="btn-secondary" style="padding: 4px 10px;" onclick="closeRoleModal()">✕</button>
+        <button type="button" class="btn-secondary" style="padding: 4px 10px;" onclick="closeRoleModal()">×</button>
       </div>
       <form id="roleForm" style="display: flex; flex-direction: column; gap: 16px; overflow-y: auto; padding-right: 4px;" onsubmit="saveRoleSubmit(event)">
         <input type="hidden" id="roleId">
@@ -2559,7 +2517,7 @@
               <button type="button" class="btn-secondary" style="padding: 2px 8px; font-size: 11px;" onclick="selectAllRolePermissions(false)">Ninguno</button>
             </div>
           </div>
-          <div id="rolePermissionsContainer" style="display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; max-height: 280px; overflow-y: auto;">
+          <div id="rolePermissionsContainer" style="display: flex; flex-direction: column; gap: 12px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; max-height: 280px; overflow-y: auto;">
             <!-- Rellenado dinámicamente con checkboxes agrupados por módulo -->
           </div>
         </div>
@@ -2577,11 +2535,11 @@
       <div style="display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 50%; background: rgba(255, 82, 82, 0.15); border: 1px solid var(--red); color: var(--red); font-size: 24px; font-weight: 900; margin-bottom: 16px;">
         !
       </div>
-      <h3 style="font-size: 22px; font-weight: 900; color: #FFF; margin-bottom: 8px;">Acceso Restringido (403)</h3>
+      <h3 style="font-size: 22px; font-weight: 900; color: var(--text-main); margin-bottom: 8px;">Acceso Restringido (403)</h3>
       <p id="deniedMessageText" style="color: var(--text-muted); font-size: 14px; line-height: 20px; margin-bottom: 16px;">
         No dispones de los permisos necesarios para realizar esta acción.
       </p>
-      <div style="display: flex; flex-direction: column; gap: 8px; background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left;">
+      <div style="display: flex; flex-direction: column; gap: 8px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Módulo:</span>
           <span id="deniedModuleChip" class="badge-role" style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--cobalt); color: var(--cobalt); font-size: 11px;">CORE</span>

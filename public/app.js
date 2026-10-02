@@ -136,14 +136,26 @@ function toggleLoginPasswordVisibility() {
   }
 }
 
+function holoLoggedOutThemeKey() {
+  let saved = null;
+  try { saved = localStorage.getItem('hs_landing_theme'); } catch (e) {}
+  if (saved === 'holo_dark' || saved === 'holo_light') return saved;
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'holo_light' : 'holo_dark';
+}
+
 async function loadActiveTheme() {
   try {
+    // Sin sesion: Holo Night o Holo Day segun la landing o la preferencia del sistema
+    if (!getAuthToken()) {
+      document.body.className = 'theme-' + holoLoggedOutThemeKey() + ' state-logged-out';
+      return;
+    }
     const token = getAuthToken() || (currentUser ? currentUser.email : '');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     const res = await fetch('/api/theme', { headers });
     const data = await res.json();
     if (data && data.theme) {
-      const activeKey = data.themeKey || 'omarchy_tiling';
+      const activeKey = data.themeKey || 'holo_dark';
       const isLoggedOut = !document.getElementById('loginModal') || !document.getElementById('loginModal').classList.contains('hidden');
       document.body.className = 'theme-' + activeKey + (isLoggedOut ? ' state-logged-out' : ' state-logged-in');
       const root = document.documentElement;
@@ -624,8 +636,8 @@ function applyRoleVisibility() {
       userBadge.innerHTML = `<span class="badge-user-name">${displaySuperUser}</span><span style="font-size:9px; opacity:0.7; margin-left:2px;">▾</span>`;
       userBadge.title = `${displaySuperUser} (SUPERADMIN)`;
       userBadge.style.background = 'rgba(167, 139, 250, 0.15)';
-      userBadge.style.color = '#A78BFA';
-      userBadge.style.borderColor = '#A78BFA';
+      userBadge.style.color = 'var(--cobalt)';
+      userBadge.style.borderColor = 'var(--cobalt)';
     }
 
     const dropName = document.getElementById('dropdownUserName');
@@ -636,7 +648,7 @@ function applyRoleVisibility() {
     if (dropRoleBadge) {
       dropRoleBadge.innerText = 'SUPERADMIN';
       dropRoleBadge.style.background = 'rgba(167, 139, 250, 0.15)';
-      dropRoleBadge.style.color = '#A78BFA';
+      dropRoleBadge.style.color = 'var(--cobalt)';
       dropRoleBadge.style.border = '1px solid #A78BFA';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
@@ -1128,7 +1140,7 @@ async function loadKanbanData() {
           <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
             <div class="card-order-no" style="color: var(--cobalt);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
             <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
-            <div class="card-meta" style="color: #FFF; font-weight: 700;">Cliente: ${item.clientName}</div>
+            <div class="card-meta" style="color: var(--text-main); font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" style="width: ${item.progressPercentage}%;"></div>
@@ -1460,12 +1472,12 @@ async function openInvoiceModal(orderId) {
     const totalCalculated = order.items.reduce((acc, i) => acc + (i.unitPrice || 0) * i.quantityRequired, 0);
 
     const logsHtml = (order.auditLogs || []).map(log => `
-      <div style="background: #161B22; border-left: 3px solid var(--cobalt); padding: 10px 14px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
+      <div style="background: var(--hw-surface-1, var(--card-bg)); border-left: 3px solid var(--cobalt); padding: 10px 14px; border-radius: 8px; font-size: 13px; display: flex; flex-direction: column; gap: 4px;">
         <div style="display: flex; justify-content: space-between; font-weight: 700;">
           <span style="color: var(--emerald);">${log.userEmail}</span>
           <span style="color: var(--text-muted); font-size: 11px;">${log.timestamp}</span>
         </div>
-        <div style="color: #FFF;">${log.details}</div>
+        <div style="color: var(--text-main);">${log.details}</div>
       </div>
     `).join('');
 
@@ -1580,14 +1592,14 @@ function showUploadDiagnosticsModal(result, fileName) {
     const renderStep = (num, step) => {
       const icon = step.passed ? '✓' : '✗';
       const color = step.passed ? 'var(--emerald)' : 'var(--red)';
-      const bg = step.passed ? 'rgba(0, 230, 118, 0.08)' : 'rgba(255, 82, 82, 0.08)';
+      const bg = step.passed ? 'var(--hw-accent-soft, rgba(0,230,118,0.08))' : 'rgba(255, 82, 82, 0.08)';
       const border = step.passed ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 82, 82, 0.25)';
 
       return `
         <div style="background: ${bg}; border: 1px solid ${border}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; text-align: left; transition: all 0.2s;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-            <span style="font-weight: 800; font-size: 13px; color: #FFF; letter-spacing: 0.3px;">Paso ${num}: ${step.title}</span>
-            <span style="font-weight: 900; font-size: 14px; color: ${color}; background: rgba(0,0,0,0.3); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${icon}</span>
+            <span style="font-weight: 800; font-size: 13px; color: var(--text-main); letter-spacing: 0.3px;">Paso ${num}: ${step.title}</span>
+            <span style="font-weight: 900; font-size: 14px; color: ${color}; background: var(--hw-surface-2, var(--card-bg)); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">${icon}</span>
           </div>
           <p style="font-size: 12px; color: var(--text-muted); margin: 0; line-height: 18px;">${step.details}</p>
         </div>
@@ -1596,7 +1608,7 @@ function showUploadDiagnosticsModal(result, fileName) {
 
     msgElem.innerHTML = `
       <div style="text-align: left; margin-bottom: 12px; font-size: 13px; color: var(--text-muted);">
-        Archivo: <strong style="color: #FFF;">${fileName}</strong>
+        Archivo: <strong style="color: var(--text-main);">${fileName}</strong>
       </div>
       <div style="margin-top: 10px;">
         ${renderStep(1, step1)}
@@ -1605,7 +1617,7 @@ function showUploadDiagnosticsModal(result, fileName) {
       </div>
       ${!isSuccess ? `
         <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
-          <span style="font-size: 12px; color: #FFF; font-weight: 700;">Recomendación:</span>
+          <span style="font-size: 12px; color: var(--text-main); font-weight: 700;">Recomendación:</span>
           <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
             Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
           </p>
@@ -1613,7 +1625,7 @@ function showUploadDiagnosticsModal(result, fileName) {
       ` : `
         <div style="margin-top: 14px; padding: 10px 12px; background: rgba(0, 230, 118, 0.12); border-left: 3px solid var(--emerald); border-radius: 6px; text-align: left;">
           <span style="font-size: 12px; color: var(--emerald); font-weight: 700;">Estado de Carga:</span>
-          <p style="font-size: 12px; color: #FFF; margin: 4px 0 0 0; line-height: 16px;">
+          <p style="font-size: 12px; color: var(--text-main); margin: 4px 0 0 0; line-height: 16px;">
             El pedido #${result.orderNumber || ''} se encuentra disponible en la columna <strong>BACKLOG</strong> de tu organización.
           </p>
         </div>
@@ -1761,10 +1773,10 @@ function renderUsersTable(usersList = []) {
     return `
       <tr>
         <td><strong style="color: var(--emerald); font-family: monospace;">@${displayNick}</strong></td>
-        <td><strong style="color: #FFF;">${u.name}</strong></td>
+        <td><strong style="color: var(--text-main);">${u.name}</strong></td>
         <td style="font-family: monospace; font-size: 13px;">${u.email}</td>
         <td>
-          <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,0.06); color: var(--text-main); border: 1px solid var(--card-border);">
+          <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-main); border: 1px solid var(--card-border);">
             ${orgName}
           </span>
         </td>
@@ -1787,7 +1799,7 @@ function renderUsersTable(usersList = []) {
               </button>
             </div>
           ` : `
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px;">
+            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px;">
               Protegido (SuperAdmin)
             </span>
           `}
@@ -2131,7 +2143,7 @@ function renderRolesTable(roles = []) {
       permsDisplay = `<code style="font-family: monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Acceso Total (*)</code>`;
     } else {
       const topPerms = (r.permissions || []).slice(0, 3).map(p => 
-        `<span style="font-size: 11px; font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
+        `<span style="font-size: 11px; font-family: monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
       ).join(' ');
       const extra = permsCount > 3 ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">+${permsCount - 3} más</span>` : '';
       permsDisplay = `<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${topPerms}${extra}</div>`;
@@ -2141,12 +2153,12 @@ function renderRolesTable(roles = []) {
 
     return `
       <tr>
-        <td><strong style="color: #FFF;">${r.name}</strong></td>
+        <td><strong style="color: var(--text-main);">${r.name}</strong></td>
         <td><code style="font-family: monospace; color: var(--text-muted);">@${r.slug}</code></td>
         <td style="color: var(--text-muted); font-size: 13px;">${r.description || '-'}</td>
         <td>${typeBadge}</td>
         <td>${permsDisplay}</td>
-        <td style="text-align: center;"><strong style="color: #FFF;">${r.user_count || 0}</strong></td>
+        <td style="text-align: center;"><strong style="color: var(--text-main);">${r.user_count || 0}</strong></td>
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
             <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openRoleModal('${r.id}')">Editar</button>
@@ -2212,10 +2224,10 @@ async function openRoleModal(roleIdToEdit = null) {
         const titleLabel = perm.name || perm.description || perm.key;
         const descLabel = perm.description ? `<span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px;">${perm.description}</span>` : '';
         html += `
-          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; cursor: pointer; color: var(--text-main); background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.04);">
+          <label style="display: flex; align-items: flex-start; gap: 8px; font-size: 12px; cursor: pointer; color: var(--text-main); background: rgba(255,255,255,0.02); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--card-border);">
             <input type="checkbox" name="role_perm" value="${perm.key}" ${isChecked ? 'checked' : ''} ${isSuperadminRole ? 'disabled' : ''} style="margin-top: 3px;">
             <div>
-              <span style="font-weight: 700; color: #FFF;">${titleLabel}</span>
+              <span style="font-weight: 700; color: var(--text-main);">${titleLabel}</span>
               <code style="font-family: monospace; font-size: 11px; color: var(--amber); margin-left: 4px;">(${perm.key})</code>
               ${descLabel}
             </div>
@@ -2343,7 +2355,7 @@ async function renderOperatorPills() {
     const allPill = `
       <button type="button" 
         onclick="clearOperatorFilter()"
-        style="background: ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : '#21262D'}; color: ${selectedExplorerOperators.size === 0 ? '#000' : '#FFF'}; border: 1px solid ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer;">
+        style="background: ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : 'var(--hw-surface-2, #21262D)'}; color: ${selectedExplorerOperators.size === 0 ? 'var(--hw-accent-fg, #000)' : 'var(--text-main)'}; border: 1px solid ${selectedExplorerOperators.size === 0 ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer;">
         Todos los Operarios
       </button>
     `;
@@ -2355,7 +2367,7 @@ async function renderOperatorPills() {
         return `
         <button type="button" 
           onclick="toggleOperatorFilter('${email}')"
-          style="background: ${isSelected ? 'var(--emerald)' : '#21262D'}; color: ${isSelected ? '#000' : '#FFF'}; border: 1px solid ${isSelected ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
+          style="background: ${isSelected ? 'var(--emerald)' : 'var(--hw-surface-2, #21262D)'}; color: ${isSelected ? 'var(--hw-accent-fg, #000)' : 'var(--text-main)'}; border: 1px solid ${isSelected ? 'var(--emerald)' : 'var(--card-border)'}; border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.2s;">
           ${u.name} (@${u.username || email.split('@')[0]})
         </button>
       `;
@@ -2715,7 +2727,7 @@ function renderModulesGrid(modules) {
           <div class="module-desc">${mod.description || '—'}</div>
           <div class="module-meta">
             Ruta Oficial: <strong style="color:var(--emerald);">${urlInfo.path}</strong>
-            · Activado por: <strong style="color:#FFF;">${activatedBy}</strong>
+            · Activado por: <strong style="color: var(--text-main);">${activatedBy}</strong>
             · Fecha: ${activatedAt}
           </div>
         </div>
@@ -2763,10 +2775,10 @@ function renderPlatformAuditLog(logs) {
   }
 
   const actionColors = {
-    'MODULE_ACTIVATED':   '#00E676',
-    'MODULE_DEACTIVATED': '#FF5252',
-    'THEME_CHANGED':      '#3B82F6',
-    'TENANT_THEME_CHANGED':'#A78BFA'
+    'MODULE_ACTIVATED':   'var(--emerald)',
+    'MODULE_DEACTIVATED': 'var(--red)',
+    'THEME_CHANGED':      'var(--cobalt)',
+    'TENANT_THEME_CHANGED':'var(--cobalt)'
   };
   const actionLabels = {
     'MODULE_ACTIVATED':   'Módulo activado',
@@ -2776,7 +2788,7 @@ function renderPlatformAuditLog(logs) {
   };
 
   container.innerHTML = [...logs].slice(0, 50).map(log => {
-    const color = actionColors[log.action] || '#8B949E';
+    const color = actionColors[log.action] || 'var(--text-muted)';
     const label = actionLabels[log.action] || log.action;
     const ts = new Date(log.timestamp).toLocaleString('es-AR');
     let detailsText = '';
@@ -2795,7 +2807,7 @@ function renderPlatformAuditLog(logs) {
       <div class="platform-audit-row">
         <div class="audit-dot" style="background-color:${color};"></div>
         <div style="flex:1;">
-          <div style="font-size:13px; font-weight:800; color:#FFF;">${label}</div>
+          <div style="font-size:13px; font-weight:800; color: var(--text-main);">${label}</div>
           <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">${log.userEmail || log.user_email || 'Sistema'} · ${ts}</div>
           ${detailsText ? `<div style="font-size:11px; color:${color}; margin-top:2px; font-family:monospace;">${detailsText}</div>` : ''}
         </div>
@@ -2890,8 +2902,8 @@ async function loadTenantsManagementData() {
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
             <div>
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <h3 style="font-size: 18px; font-weight: 900; color: #FFF;">${t.name}</h3>
-                <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: rgba(255,255,255,0.08); color: var(--text-muted); font-family: monospace;">
+                <h3 style="font-size: 18px; font-weight: 900; color: var(--text-main);">${t.name}</h3>
+                <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-muted); font-family: monospace;">
                   ${t.slug}
                 </span>
                 ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA;">PLATAFORMA</span>' : ''}
@@ -2900,7 +2912,7 @@ async function loadTenantsManagementData() {
                 </span>
               </div>
               <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-                Usuarios: <strong style="color: #FFF;">${users.length} / ${t.max_users || '—'}</strong> · Órdenes/Mes: <strong style="color: #FFF;">${t.max_orders_monthly || '—'}</strong>
+                Usuarios: <strong style="color: var(--text-main);">${users.length} / ${t.max_users || '—'}</strong> · Órdenes/Mes: <strong style="color: var(--text-main);">${t.max_orders_monthly || '—'}</strong>
               </div>
             </div>
             <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
@@ -2917,9 +2929,9 @@ async function loadTenantsManagementData() {
           </div>
 
           <!-- Tema Base por Defecto del Tenant (Solo lectura en tarjeta) -->
-          <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+          <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
             <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
-            <span style="font-size: 12px; font-weight: 700; color: #FFF; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+            <span style="font-size: 12px; font-weight: 700; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--card-border);">
               ${{
                 omarchy_tiling: 'Omarchy Tiling',
                 omarchy_tiling_light: 'Omarchy Light',
@@ -2933,18 +2945,18 @@ async function loadTenantsManagementData() {
           </div>
 
           <!-- Módulos Licenciados Toggles (Solo lectura en tarjeta) -->
-          <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+          <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
             <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos Licenciados en Vivo</div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
               <!-- Kanban -->
-              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: var(--hw-surface-2, var(--card-bg)); padding: 8px 12px; border-radius: 10px;">
                 <span style="font-size: 12px; font-weight: 700; color: ${isKanbanActive ? 'var(--emerald)' : 'var(--text-muted)'};">Kanban</span>
                 <input type="checkbox" ${isKanbanActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
 
               <!-- Scanner -->
-              <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 10px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; background: var(--hw-surface-2, var(--card-bg)); padding: 8px 12px; border-radius: 10px;">
                 <span style="font-size: 12px; font-weight: 700; color: ${isScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">Scanner</span>
                 <input type="checkbox" ${isScannerActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
@@ -2959,12 +2971,12 @@ async function loadTenantsManagementData() {
 
             <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
               ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Sin usuarios asignados</div>' : users.map(u => `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
                   <div>
-                    <div style="font-size: 12px; font-weight: 700; color: #FFF;">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family:monospace;">(@${u.username})</span>` : ''}</div>
+                    <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family:monospace;">(@${u.username})</span>` : ''}</div>
                     <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
                   </div>
-                  <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? '#A78BFA' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: rgba(255,255,255,0.05);">
+                  <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: var(--hw-surface-2, var(--card-bg));">
                     ${u.role}
                   </span>
                 </div>
@@ -3057,7 +3069,7 @@ function renderTenantsTable(tenantsList = []) {
       <tr style="opacity: ${isSuspended ? '0.75' : '1'};">
         <td><strong style="color: var(--emerald); font-family: monospace;">@${t.slug}</strong></td>
         <td>
-          <div style="font-weight: 800; color: #FFF;">${t.name}</div>
+          <div style="font-weight: 800; color: var(--text-main);">${t.name}</div>
           ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}
         </td>
         <td>
@@ -3071,7 +3083,7 @@ function renderTenantsTable(tenantsList = []) {
           </div>
         </td>
         <td style="text-align: center;">
-          <strong style="color: #FFF;">${users.length}</strong>
+          <strong style="color: var(--text-main);">${users.length}</strong>
           <span style="color: var(--text-muted); font-size: 11px;"> / ${t.max_users || '—'}</span>
         </td>
         <td style="text-align: center;">
@@ -3234,7 +3246,7 @@ function openEditTenantModal(tenantId) {
   if (fourseeSelect) fourseeSelect.value = tenant.fourseee_plan || 'none';
   if (maxUsersInput) maxUsersInput.value = tenant.max_users || 4;
   if (maxOrdersInput) maxOrdersInput.value = tenant.max_orders_monthly || 0;
-  if (themeSelect) themeSelect.value = tenant.active_theme || 'omarchy_tiling';
+  if (themeSelect) themeSelect.value = tenant.active_theme || 'holo_dark';
 
   const modules = tenant.modules || [];
   const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
@@ -3365,7 +3377,7 @@ async function load4seeMonitors() {
       cached4seeMonitors = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay URLs de competidores monitoreadas</div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">No hay URLs de competidores monitoreadas</div>
           <div style="font-size: 13px; margin-top: 6px;">Agrega la primera URL de la competencia para rastrear precios y stock automáticamente.</div>
           <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMonitorModal()">+ Agregar URL Competidora</button>
         </div>
@@ -3444,14 +3456,14 @@ function render4seeMonitorsTable(monitors = []) {
 
     html += `
       <tr>
-        <td><strong style="color: #FFF;">${m.product_name}</strong></td>
+        <td><strong style="color: var(--text-main);">${m.product_name}</strong></td>
         <td>
           <a href="${m.competitor_url}" target="_blank" rel="noopener noreferrer" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
             ${m.competitor_name || 'Ver Tienda'} ↗
           </a>
         </td>
-        <td style="font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: monospace; font-weight: 800; color: #FFF;">
+        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">
           $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
         </td>
         <td>${stockBadge}</td>
@@ -3585,12 +3597,12 @@ async function load4seeCatalog() {
 
       container.innerHTML = `
         <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
-          <div style="font-size: 16px; font-weight: 800; color: #FFF;">Diagnóstico de Salud de Catálogo (On-the-Fly)</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--text-main);">Diagnóstico de Salud de Catálogo (On-the-Fly)</div>
           <div style="font-size: 13px; margin-top: 8px; max-width: 540px; margin-left: auto; margin-right: auto; line-height: 1.5;">
             Conecta tu tienda de Tiendanube o WooCommerce para escanear en caliente productos sin código de barras GTIN/EAN, marcas faltantes y optimizar títulos para Google Shopping y buscadores.
           </div>
           <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
-            <button class="btn-primary" style="background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 800;" onclick="openConnectStoreModal()">⚡ Conectar y Escanear Tienda</button>
+            <button class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="openConnectStoreModal()"> Conectar y Escanear Tienda</button>
             <button class="btn-secondary" onclick="runDemoCatalogScan()">Cargar Muestra Demo</button>
           </div>
         </div>
@@ -3661,7 +3673,7 @@ function render4seeCatalog(items = []) {
 
     const diagBadges = diagnostics.map(d => {
       const bg = d.severity === 'HIGH' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(234, 179, 8, 0.15)';
-      const color = d.severity === 'HIGH' ? 'var(--red)' : '#EAB308';
+      const color = d.severity === 'HIGH' ? 'var(--red)' : 'var(--amber)';
       return `<span style="background: ${bg}; color: ${color}; border: 1px solid ${color}; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; display: inline-block; margin-right: 6px; margin-bottom: 4px;">${d.message}</span>`;
     }).join('');
 
@@ -3678,17 +3690,17 @@ function render4seeCatalog(items = []) {
     const isMissingBrand = !brand;
 
     html += `
-      <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
+      <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 20px;">
         <!-- Cabecera de la Tarjeta -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <span style="font-family: monospace; font-size: 11px; font-weight: 800; color: #FFF; background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
+            <span style="font-family: monospace; font-size: 11px; font-weight: 800; color: var(--text-main); background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
             <span style="font-family: monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
             ${brand 
-              ? `<span style="font-size: 12px; color: var(--text-main); background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">Marca: <strong>${brand}</strong></span>` 
+              ? `<span style="font-size: 12px; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">Marca: <strong>${brand}</strong></span>` 
               : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Falta Marca</span>`}
             ${!isMissingGtin 
-              ? `<span style="font-size: 12px; color: var(--text-main); font-family: monospace; background: rgba(255,255,255,0.06); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
+              ? `<span style="font-size: 12px; color: var(--text-main); font-family: monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
               : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Falta EAN</span>`}
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
@@ -3731,18 +3743,18 @@ function render4seeCatalog(items = []) {
 
         <!-- Vista Diff de Título con Edición en Vivo -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 6px;">
-          <div style="background: #10141D; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;">
+          <div style="background: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
             <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Actual en Tienda</div>
-            <div style="font-size: 13px; color: #FFF; font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
+            <div style="font-size: 13px; color: var(--text-main); font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
           </div>
-          <div style="background: #10141D; border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
+          <div style="background: var(--hw-surface-1, var(--card-bg)); border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título Optimizado (Editable Libre)</span>
               <span style="font-size: 10px; color: var(--text-muted);">Puedes modificarlo antes de aprobar</span>
             </div>
             ${isApproved 
               ? `<div style="font-size: 13px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>`
-              : `<input type="text" class="input-field" style="width: 100%; font-size: 13px; font-weight: 600; color: #FFF; border-color: rgba(0, 230, 118, 0.4);" value="${suggestedTitle.replace(/"/g, '&quot;')}" onchange="updateItemSuggestedTitle('${itemId}', this.value)">`
+              : `<input type="text" class="input-field" style="width: 100%; font-size: 13px; font-weight: 600; color: var(--text-main); border-color: rgba(0, 230, 118, 0.4);" value="${suggestedTitle.replace(/"/g, '&quot;')}" onchange="updateItemSuggestedTitle('${itemId}', this.value)">`
             }
           </div>
         </div>
@@ -3800,11 +3812,11 @@ function updateQuickScanButtonText() {
   if (currentSelectedStoreId) {
     const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
     if (store) {
-      btn.innerText = `⚡ Escanear ${store.name}`;
+      btn.innerText = ` Escanear ${store.name}`;
       return;
     }
   }
-  btn.innerText = '⚡ Escanear Tienda en Vivo';
+  btn.innerText = ' Escanear Tienda en Vivo';
 }
 
 function handleSelectSavedStore(val) {
@@ -3827,7 +3839,7 @@ async function handleQuickScanSelectedStore() {
 
   const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
   const btn = document.getElementById('btnQuickAuditStore');
-  const originalText = btn ? btn.innerText : '⚡ Escanear Tienda en Vivo';
+  const originalText = btn ? btn.innerText : ' Escanear Tienda en Vivo';
   if (btn) {
     btn.innerText = `Escaneando ${store ? store.name : 'tienda'}...`;
     btn.disabled = true;
@@ -3974,20 +3986,20 @@ function renderManageStoresList() {
     html += `
       <tr style="${isSelected ? 'background: rgba(0, 230, 118, 0.05);' : ''}">
         <td>
-          <div style="font-weight: 800; color: #FFF; display: flex; align-items: center; gap: 8px;">
+          <div style="font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
             ${s.name}
             ${isSelected ? '<span style="font-size: 10px; color: var(--emerald); background: rgba(0,230,118,0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}
           </div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${s.store_url || 'N/A'}</div>
         </td>
         <td>
-          <span style="font-family: monospace; font-size: 11px; font-weight: 800; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
+          <span style="font-family: monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
         </td>
         <td style="font-size: 12px; color: var(--text-main);">${lastScan}</td>
         <td style="text-align: right; white-space: nowrap;">
-          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">⚡ Escanear</button>
+          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();"> Escanear</button>
           <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="editStoreConnection('${s.id}')">Editar</button>
-          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: rgba(239,68,68,0.4);" onclick="disconnectStore('${s.id}')">✕</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: rgba(239,68,68,0.4);" onclick="disconnectStore('${s.id}')">×</button>
         </td>
       </tr>
     `;
@@ -4548,7 +4560,7 @@ async function approveCatalogOptimization(id) {
     render4seeCatalog(cached4seeCatalog);
     await showCustomAlert(
       'Aprobado (Modo Simulación)',
-      `El título sugerido fue aprobado en memoria con éxito.\n\n🛡️ Modo Mock Seguro: No se realizaron cambios en tu tienda real (${item.platform || 'E-Commerce'}).`
+      `El título sugerido fue aprobado en memoria con éxito.\n\n Modo Mock Seguro: No se realizaron cambios en tu tienda real (${item.platform || 'E-Commerce'}).`
     );
   }
 }
@@ -4580,7 +4592,7 @@ async function bulkApproveCatalogMock() {
   render4seeCatalog(cached4seeCatalog);
   await showCustomAlert(
     'Aprobación Masiva Completada',
-    `Se aprobaron ${count} productos en simulación.\n\n🛡️ Modo Mock Seguro: Tu tienda conectada se mantiene intacta.`
+    `Se aprobaron ${count} productos en simulación.\n\n Modo Mock Seguro: Tu tienda conectada se mantiene intacta.`
   );
 }
 window.bulkApproveCatalogMock = bulkApproveCatalogMock;
@@ -4640,7 +4652,7 @@ async function load4seeMargins() {
       cached4seeMargins = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: #FFF;">No hay reglas de margen configuradas</div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">No hay reglas de margen configuradas</div>
           <div style="font-size: 13px; margin-top: 6px;">Fija tus costos, comisiones e impuestos para proteger el margen neto frente a ventas a pérdida.</div>
           <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMarginModal()">+ Nueva Regla de Margen</button>
         </div>
@@ -4714,15 +4726,15 @@ function render4seeMarginsTable(rules = []) {
     html += `
       <tr>
         <td>
-          <div style="font-weight: 800; color: #FFF;">${r.product_name || r.product_sku}</div>
+          <div style="font-weight: 800; color: var(--text-main);">${r.product_name || r.product_sku}</div>
           <div style="font-family: monospace; font-size: 11px; color: var(--emerald);">SKU: ${r.product_sku}</div>
         </td>
-        <td style="font-family: monospace; color: #FFF;">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: monospace; font-weight: 800; color: #FFF;">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
+        <td style="font-family: monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
         <td style="font-family: monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
           $${parseFloat(r.net_profit).toLocaleString('es-AR')}
         </td>
-        <td style="font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : '#FFF'};">
+        <td style="font-weight: 800; font-family: monospace; color: ${isRed ? 'var(--red)' : 'var(--text-main)'};">
           ${r.real_margin_pct}%
         </td>
         <td>${alertBadge}</td>
@@ -4866,7 +4878,7 @@ function render4seeQueueTable(items = []) {
         <tbody>
           <tr>
             <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No hay sugerencias de repricing en cola actualmente. Presiona <strong>⚡ Ejecutar Worker de Scraping</strong> para analizar precios de competidores.
+              No hay sugerencias de repricing en cola actualmente. Presiona <strong> Ejecutar Worker de Scraping</strong> para analizar precios de competidores.
             </td>
           </tr>
         </tbody>
@@ -4900,21 +4912,21 @@ function render4seeQueueTable(items = []) {
     if (q.status === 'PENDING') {
       statusBadge = '<span class="status-indicator" style="color: var(--cobalt); font-weight: 800; font-size: 11px;">● PENDIENTE</span>';
     } else if (q.status === 'APPLIED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">✔ APLICADO</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;"> APLICADO</span>';
     } else if (q.status === 'REJECTED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">✕ RECHAZADO</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">× RECHAZADO</span>';
     } else {
       statusBadge = `<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">${q.status}</span>`;
     }
 
     const floorShieldBadge = q.floor_applied
-      ? '<span style="display: block; font-size: 10px; color: var(--red); font-weight: 800; margin-top: 2px;">🛡 PISO ACTIVADO</span>'
+      ? '<span style="display: block; font-size: 10px; color: var(--red); font-weight: 800; margin-top: 2px;"> PISO ACTIVADO</span>'
       : '';
 
     html += `
       <tr>
         <td>
-          <strong style="color: #FFF; display: block;">${q.product_title || 'Producto'}</strong>
+          <strong style="color: var(--text-main); display: block;">${q.product_title || 'Producto'}</strong>
           <span style="font-size: 11px; color: var(--text-muted); font-family: monospace;">SKU: ${q.sku || '-'}</span>
         </td>
         <td style="font-family: monospace; font-weight: 800; color: var(--emerald);">
@@ -4924,7 +4936,7 @@ function render4seeQueueTable(items = []) {
         <td style="font-family: monospace; font-weight: 700; color: var(--text-muted);">
           $${prevPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
         </td>
-        <td style="font-family: monospace; font-weight: 900; color: #FFF; font-size: 14px;">
+        <td style="font-family: monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">
           $${suggPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
         </td>
         <td style="font-size: 12px; color: var(--text-main);">
@@ -4934,7 +4946,7 @@ function render4seeQueueTable(items = []) {
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
             ${q.status === 'PENDING' ? `
-              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: linear-gradient(135deg, #00E676, #00B0FF); color: #000; font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aprobar 1-Clic</button>
+              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aprobar 1-Clic</button>
               <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
             ` : `
               <span style="color: var(--text-muted); font-size: 11px; font-family: monospace;">Procesado</span>
@@ -5024,7 +5036,7 @@ async function handleTriggerWorkerCycle() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerText = '⚡ Ejecutar Worker de Scraping';
+      btn.innerText = ' Ejecutar Worker de Scraping';
     }
   }
 }
