@@ -776,6 +776,14 @@ function redirectAllowedModule() {
   }
 }
 
+function setModuleFavicon(mod) {
+  const map = { '4see': '/brand/4see.svg', kanban: '/brand/logistica.svg', scanner: '/brand/logistica.svg' };
+  let link = document.querySelector('link[rel="icon"]');
+  if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
+  link.type = 'image/svg+xml';
+  link.href = map[mod] || '/brand/mark.svg';
+}
+
 function switchModule(moduleName, updateUrl = true) {
   const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
 
@@ -799,6 +807,8 @@ function switchModule(moduleName, updateUrl = true) {
     showForbiddenView(normMod);
     return;
   }
+
+  setModuleFavicon(normMod);
 
   // 1. Ocultar vista de acceso denegado si estaba visible
   const forbidView = document.getElementById('viewForbidden');

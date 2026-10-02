@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HoloSpace Baseline</title>
+  <title>holospace.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;600;700;800&family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
@@ -974,6 +974,7 @@
   <link rel="stylesheet" href="/themes/holo.css">
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="hs-pcore" viewBox="0 0 64 64"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></symbol><symbol id="hs-p4see" viewBox="0 0 64 64"><path d="M32 5l23 13.5v27L32 59 9 45.5v-27z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M2 41h60M2 34v14M62 34v14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol><symbol id="hs-plog" viewBox="0 0 64 64"><path fill="currentColor" d="M9 9h5v46H9zM17 9h2v46h-2zM22 9h3v46h-3zM39 9h3v46h-3zM45 9h2v46h-2zM50 9h5v46h-5z"/><path d="M4 32h56" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol></defs></svg>
 
   <!-- ELEMENTOS ESPACIALES PIXEL ART FLOTANTES (ASTEROIDES Y NAVES) -->
   <div class="space-ambient-layer" aria-hidden="true">
@@ -1058,7 +1059,7 @@
         </button>
         <div class="brand-group">
           <div class="brand-title" id="brandTitleContainer">
-            <span id="brandLogoText" style="letter-spacing: 0px; display: inline-flex; align-items: center;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span></span>
+            <span id="brandLogoText" style="letter-spacing: 0px; display: inline-flex; align-items: center;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word">holospace<i>.</i></span></span></span>
           </div>
           <span id="activeContextBadge" class="context-badge">
             SUPERADMIN
@@ -1112,10 +1113,10 @@
 
     <!-- Línea 2: Módulos Principales -->
     <nav class="header-nav-line" id="desktopNavModules">
-      <button class="nav-tab module-tab" id="modTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
-      <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;">Core</button>
-      <button class="nav-tab module-tab" id="modKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-      <button class="nav-tab module-tab" id="mod4see" onclick="switchModule('4see')" style="display:none;">4see</button>
+      <button class="nav-tab module-tab" id="modTenant" onclick="switchModule('tenant')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-pcore"/></svg>Tenant</button>
+      <button class="nav-tab module-tab" id="modCore" onclick="switchModule('core')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-pcore"/></svg>Core</button>
+      <button class="nav-tab module-tab" id="modKanban" onclick="switchModule('kanban')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-plog"/></svg>Kanban</button>
+      <button class="nav-tab module-tab" id="mod4see" onclick="switchModule('4see')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-p4see"/></svg>4see</button>
     </nav>
 
     <!-- Línea 3: Features del Módulo Activo -->
@@ -1145,7 +1146,7 @@
   <aside id="mobileNavDrawer" class="mobile-nav-drawer">
     <div class="mobile-drawer-header">
       <div class="brand-title">
-        <span id="mobileBrandLogoText" style="letter-spacing: 0px; display: inline-flex;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span></span>
+        <span id="mobileBrandLogoText" style="letter-spacing: 0px; display: inline-flex;"><span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word">holospace<i>.</i></span></span></span>
       </div>
       <button class="btn-close-drawer" onclick="closeMobileDrawer()">×</button>
     </div>
@@ -1156,10 +1157,10 @@
       </div>
       <nav class="mobile-drawer-nav" id="mobileNavModules">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Módulos</div>
-        <button class="mobile-nav-tab module-tab" id="mobModTenant" onclick="switchModule('tenant')" style="display:none;">Tenant</button>
-        <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;">Core</button>
-        <button class="mobile-nav-tab module-tab" id="mobModKanban" onclick="switchModule('kanban')" style="display:none;">Kanban</button>
-        <button class="mobile-nav-tab module-tab" id="mobMod4see" onclick="switchModule('4see')" style="display:none;">4see</button>
+        <button class="mobile-nav-tab module-tab" id="mobModTenant" onclick="switchModule('tenant')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-pcore"/></svg>Tenant</button>
+        <button class="mobile-nav-tab module-tab" id="mobModCore" onclick="switchModule('core')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-pcore"/></svg>Core</button>
+        <button class="mobile-nav-tab module-tab" id="mobModKanban" onclick="switchModule('kanban')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-plog"/></svg>Kanban</button>
+        <button class="mobile-nav-tab module-tab" id="mobMod4see" onclick="switchModule('4see')" style="display:none;"><svg class="hs-pi" aria-hidden="true"><use href="#hs-p4see"/></svg>4see</button>
       </nav>
       <nav class="mobile-drawer-nav" id="mobileNavFeatures" style="margin-top: 16px;">
         <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; padding-left: 14px;">Funcionalidades</div>
@@ -1394,7 +1395,7 @@
     <div id="viewOrders" class="view-panel hidden">
       <div class="actions-bar">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900;">Explorador de Pedidos</h2>
+          <h2 style="font-size: 24px; font-weight: 900;"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-plog"/></svg>Explorador de Pedidos</h2>
           <p style="color: var(--text-muted); font-size: 14px;">Buscador universal con filtros avanzados de comprobantes</p>
         </div>
       </div>
@@ -1536,7 +1537,7 @@
     <div id="view4seeMonitors" class="view-panel hidden">
       <div class="actions-bar">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Monitor — Vigilancia de Competencia</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>4see Monitor — Vigilancia de Competencia</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Rastreo automático de precios y quiebres de stock en competidores (Extracción en Cascada y Mercado Libre).</p>
         </div>
         <div class="actions-controls">
@@ -1564,7 +1565,7 @@
     <div id="view4seeCatalog" class="view-panel hidden">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Catalog — Auditoría Técnica y Diff View</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>4see Catalog — Auditoría Técnica y Diff View</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Diagnóstico de salud de tienda (GTIN/EAN, marcas, SEO) y optimización de títulos con write-back directo.</p>
         </div>
         <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
@@ -1630,7 +1631,7 @@
     <div id="view4seeMargins" class="view-panel hidden">
       <div class="actions-bar">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see Margins — Guardián de Rentabilidad</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>4see Margins — Guardián de Rentabilidad</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Protección del margen neto frente a comisiones, impuestos (IVA/IIBB) y alertas de Zona Roja.</p>
         </div>
         <div class="actions-controls">
@@ -1658,7 +1659,7 @@
     <div id="view4seeSmartPrice" class="view-panel hidden">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);">4see SmartPrice — Dynamic Pricing con Piso Inquebrantable</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>4see SmartPrice — Dynamic Pricing con Piso Inquebrantable</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Sugerencias de repricing deterministas, blindaje de margen contra pérdidas y aprobación en 1 clic.</p>
         </div>
         <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
@@ -1764,8 +1765,9 @@
   <div id="loginModal" class="modal-overlay">
     <div class="modal-content">
       <h2 class="brand-title" style="font-size: 28px; display: flex; justify-content: center; align-items: center;">
-        <span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word"><b>Holo</b><i>Space</i></span></span>
+        <span class="hs-logo"><svg class="hs-mark" viewBox="0 0 64 64" aria-hidden="true"><path class="hs-si" d="M13 8v48M51 8v48" stroke-width="7"/><path class="hs-sm" d="M25 32h14" stroke-width="3"/><path class="hs-fm" d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z"/></svg><span class="hs-word">holospace<i>.</i></span></span>
       </h2>
+      <a class="by-hg" href="https://hologrowth.dev" target="_blank" rel="noopener noreferrer">by hologrowth.dev</a>
       <p class="login-sheet">Hoja de acceso</p>
       
       <!-- BOTÓN FEDERADO GOOGLE OAUTH2 -->
@@ -2575,6 +2577,7 @@
       <span id="footerTenantStatus">Organización: HoloSpace Cloud Platform</span>
     </div>
     <div class="status-bar-right">
+      <a class="by-hg" href="https://hologrowth.dev" target="_blank" rel="noopener noreferrer">by hologrowth.dev</a>
       <span id="footerAppVersion" class="font-mono">HoloSpace SaaS v1.2.1</span>
     </div>
   </footer>
