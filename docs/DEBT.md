@@ -31,6 +31,10 @@
   - Decision del 2026-10-02: el servidor es de prueba (no productivo) y se despliega sin configurar `JWT_SECRET`, `NODE_ENV=production` ni `CORS_ORIGINS`. Sin `JWT_SECRET` la app usa un secreto aleatorio por proceso (cada reinicio cierra todas las sesiones). Las claves de Postgres y del SUPERADMIN y las de demo no se rotaron (ver D-005 y D-009).
   - Accion antes de usarlo con clientes reales: definir `JWT_SECRET` (32+ caracteres), `NODE_ENV=production`, `CORS_ORIGINS`, rotar todas las claves y volver a hacer obligatorio `JWT_SECRET` en `docker-compose.yml` (`${JWT_SECRET:?...}`).
 
+- [ ] **D-036 | Auto-deploy a main cada 2 minutos en el servidor de prueba** | servidor `5.161.237.189` | Esfuerzo M
+  - Desde el 2026-10-02 la crontab de root ejecuta `/opt/holospace/bin/helper/deploy.sh` cada 2 minutos, igual que los otros proyectos del servidor. `deploy.sh` hace `git reset --hard origin/main` y `docker compose up -d --build`, de modo que cualquier push a `main` se publica sin revision ni pruebas. Copia previa de la crontab en `/root/crontab.backup.*`.
+  - Accion antes de produccion: quitar el cron y desplegar desde CI solo si pasan los tests, con aprobacion manual y rollback; `deploy.sh` ademas no verifica salud tras el build ni conserva la imagen anterior.
+
 ## P1: Arquitectura y mantenibilidad
 
 - [ ] **D-010 | `server.js` monolitico** | 2.260 lineas, un unico despachador HTTP manual | Esfuerzo L
