@@ -350,14 +350,64 @@ async function getFullOrderFromDb(identifier, context = {}) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Endurecimiento HTTP: CORS con lista de origenes, cabeceras de seguridad y limite de intentos de login
+// ---------------------------------------------------------------------------
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean);
+// En desarrollo se aceptan origenes locales y de red privada (Expo Web, celulares en la LAN).
+const DEV_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2\d|3[01])\.\d+\.\d+)(:\d+)?$/;
+
+function applyCors(req, res) {
+  const origin = req.headers.origin;
+  res.setHeader('Vary', 'Origin');
+  if (origin && (CORS_ORIGINS.includes(origin) || (!IS_PRODUCTION && DEV_ORIGIN_RE.test(origin)))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Max-Age', '600');
+  }
+}
+
+function applySecurityHeaders(req, res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(), geolocation=()');
+  if (IS_PRODUCTION && req.headers['x-forwarded-proto'] === 'https') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+}
+
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILS = parseInt(process.env.LOGIN_RATE_MAX || '10', 10);
+const loginFails = new Map();
+
+function loginKey(req, email) {
+  const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '').toString().split(',')[0].trim();
+  return `${ip}|${email}`;
+}
+function loginBlockedFor(key) {
+  const rec = loginFails.get(key);
+  if (!rec) return 0;
+  if (Date.now() - rec.first > LOGIN_WINDOW_MS) { loginFails.delete(key); return 0; }
+  return rec.count >= LOGIN_MAX_FAILS ? Math.ceil((LOGIN_WINDOW_MS - (Date.now() - rec.first)) / 1000) : 0;
+}
+function loginRegisterFail(key) {
+  const rec = loginFails.get(key);
+  if (!rec || Date.now() - rec.first > LOGIN_WINDOW_MS) loginFails.set(key, { count: 1, first: Date.now() });
+  else rec.count += 1;
+}
+setInterval(() => { const now = Date.now(); for (const [k, r] of loginFails) if (now - r.first > LOGIN_WINDOW_MS) loginFails.delete(k); }, LOGIN_WINDOW_MS).unref();
+
 // Servidor HTTP
 const server = http.createServer(async (req, res) => {
     // 0. LANDING ROUTING (hologrowth.com.ar or /landing)
+    applySecurityHeaders(req, res);
     if (handleLandingRoutes(req, res)) return;
 
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applySecurityHeaders(req, res);
+  applyCors(req, res);
 
   if (req.method === 'OPTIONS') {
     res.writeHead(200);
@@ -496,36 +546,20 @@ const server = http.createServer(async (req, res) => {
       try { data = JSON.parse(body); } catch (e) { }
     }
 
+    // Identidad: unicamente JWT firmado y vigente. Nunca se acepta un email como credencial.
     let currentUser = null;
     const authHeader = req.headers['authorization'] || '';
-    const userHeader = req.headers['x-user-email'] || '';
-    let emailToFind = '';
+    const jwtPayload = authHeader.startsWith('Bearer ') ? verifyJwt(authHeader.substring(7).trim()) : null;
 
-    if (authHeader.startsWith('Bearer ')) {
-      const rawToken = authHeader.substring(7).trim();
-      const jwtPayload = verifyJwt(rawToken);
-      if (jwtPayload && jwtPayload.email) {
-        emailToFind = jwtPayload.email;
-        currentUser = jwtPayload;
-      } else {
-        emailToFind = rawToken;
-      }
-    } else if (userHeader) {
-      emailToFind = userHeader.trim();
-    } else if (data && (data.userEmail || data.email)) {
-      emailToFind = (data.userEmail || data.email).trim();
-    }
-
-    if (emailToFind) {
+    if (jwtPayload && jwtPayload.email) {
       try {
         const dbUser = await getOne(
           'SELECT email as id, email, password_hash as password, name, role, role_id, is_active as active, tenant_id, theme_preference FROM core_users WHERE LOWER(email) = ? AND is_active = true',
-          [emailToFind.toLowerCase()],
+          [String(jwtPayload.email).toLowerCase()],
           { isSuperAdmin: true }
         );
-        if (dbUser) {
-          currentUser = { ...(currentUser || {}), ...dbUser };
-        }
+        // El usuario debe seguir existiendo y activo; los datos vigentes de la base mandan sobre el payload.
+        if (dbUser) currentUser = { ...jwtPayload, ...dbUser };
       } catch (e) { }
     }
 
@@ -1306,6 +1340,14 @@ const server = http.createServer(async (req, res) => {
         const { email, password } = data || {};
         const normalizedEmail = (email || '').toLowerCase().trim();
 
+        const rateKey = loginKey(req, normalizedEmail);
+        const retryAfter = loginBlockedFor(rateKey);
+        if (retryAfter > 0) {
+          res.writeHead(429, { 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) });
+          res.end(JSON.stringify({ success: false, error: 'Demasiados intentos. Probá de nuevo más tarde.', code: 'TOO_MANY_ATTEMPTS', retryAfterSeconds: retryAfter }));
+          return;
+        }
+
         const user = await getOne(
           'SELECT email as id, email, username, password_hash as password, name, role, role_id, is_active as active, tenant_id FROM core_users WHERE (LOWER(email) = ? OR LOWER(username) = ?) AND is_active = true',
           [normalizedEmail, normalizedEmail],
@@ -1313,14 +1355,17 @@ const server = http.createServer(async (req, res) => {
         );
 
         if (!user || !verifyPassword(password, user.password)) {
+          loginRegisterFail(rateKey);
           console.log(`[AUTH] Intento de login fallido para: ${normalizedEmail}`);
           res.writeHead(401, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: false, error: 'Credenciales inválidas o usuario inactivo' }));
           return;
         }
 
-        // Auto-upgrade de hash si era legado
-        if (!user.password.includes(':')) {
+        loginFails.delete(rateKey);
+
+        // Auto-upgrade de hash si era legado (texto plano o formato scrypt:<texto>)
+        if (!user.password.includes(':') || user.password.startsWith('scrypt:')) {
           try {
             const secureHash = hashPassword(password);
             await execute('UPDATE core_users SET password_hash = ? WHERE LOWER(email) = ?', [secureHash, normalizedEmail], { isSuperAdmin: true });
@@ -1788,7 +1833,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data;
-        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const email = ((currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1813,7 +1858,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data;
-        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const email = ((currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1838,7 +1883,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, operatorEmail, userEmail } = data;
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const adminEmail = ((currentUser && currentUser.email) || '').toLowerCase();
         const targetOperator = (operatorEmail || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
@@ -1864,7 +1909,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data;
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const adminEmail = ((currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1889,7 +1934,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data || {};
-        const adminEmail = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const adminEmail = ((currentUser && currentUser.email) || '').toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -1918,7 +1963,7 @@ const server = http.createServer(async (req, res) => {
 
         const buffer = Buffer.from(pdfBase64, 'base64');
         const cleanName = fileName.endsWith('.pdf') ? fileName : `${fileName}.pdf`;
-        const email = (userEmail || (currentUser && currentUser.email) || '').toLowerCase();
+        const email = ((currentUser && currentUser.email) || '').toLowerCase();
 
         const parsed = await parsePdfBuffer(buffer, cleanName);
         if (!parsed.success || !parsed.items || parsed.items.length === 0) {
@@ -2006,7 +2051,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
 
         if (!opEmail) {
           res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2032,7 +2077,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const urlParams = new URLSearchParams(req.url.includes('?') ? req.url.split('?')[1] : '');
-        const opEmail = (urlParams.get('userEmail') || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
         const requestedId = urlParams.get('id') || urlParams.get('orderId') || urlParams.get('orderNumber');
 
         if (!opEmail) {
@@ -2077,7 +2122,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data || {};
-        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -2128,7 +2173,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, items, totalItemsScanned, userEmail } = data || {};
-        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {
@@ -2177,7 +2222,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail } = data;
-        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const existingOrder = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (existingOrder) {
@@ -2207,7 +2252,7 @@ const server = http.createServer(async (req, res) => {
           return;
         }
         const { orderId, orderNumber, userEmail, watermarkText } = data;
-        const opEmail = (userEmail || (currentUser && currentUser.email) || '').trim().toLowerCase();
+        const opEmail = ((currentUser && currentUser.email) || '').trim().toLowerCase();
 
         const order = await getFullOrderFromDb(orderId || orderNumber, { tenantId });
         if (order) {

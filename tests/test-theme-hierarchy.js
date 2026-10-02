@@ -54,7 +54,27 @@ async function requestJson(method, path, body = null, headers = {}) {
   });
 }
 
+// Las credenciales de prueba pueden venir del entorno; los valores por defecto son los del seed de desarrollo.
+const CREDS = {
+  superadmin: [process.env.SUPERADMIN_EMAIL || 'superadmin@holospace.com.ar', process.env.SUPERADMIN_PASSWORD || 'BrunaSeRelambe22!'],
+  juan: ['juan@poke.com.ar', process.env.TEST_JUAN_PASSWORD || 'juan2026'],
+  vanesa: ['vanesa@poke.com.ar', process.env.TEST_VANESA_PASSWORD || 'vanesa2026']
+};
+
+async function loginToken(key) {
+  const [email, password] = CREDS[key];
+  const res = await requestJson('POST', '/api/login', { email, password });
+  if (!res.data || !res.data.token) throw new Error(`Login fallido para ${email}: HTTP ${res.status}`);
+  return res.data.token;
+}
+
 async function runTests() {
+  const tokens = {
+    superadmin: await loginToken('superadmin'),
+    juan: await loginToken('juan'),
+    vanesa: await loginToken('vanesa')
+  };
+
   console.log('======================================================');
   console.log('🧪 TEST SUITE: JERARQUÍA DE TEMAS (TENANT VS USUARIO)');
   console.log('======================================================\n');
@@ -71,7 +91,7 @@ async function runTests() {
       scope: 'tenant',
       targetTenantId: pokeTenant.id
     }, {
-      'Authorization': 'Bearer superadmin@holospace.com.ar'
+      'Authorization': `Bearer ${tokens.superadmin}`
     });
 
     assert(setTenantThemeRes.status === 200, 'Endpoint POST /api/theme respondió 200 para scope tenant');
@@ -81,7 +101,7 @@ async function runTests() {
     // 3. Consultar tema como usuario Juan de Poke (sin preferencia personal) -> Debe heredar cyberpunk
     console.log('\n--- 2. Herencia del Tema Base por Usuario sin Preferencia ---');
     const juanThemeRes = await requestJson('GET', '/api/theme', null, {
-      'Authorization': 'Bearer juan@poke.com.ar'
+      'Authorization': `Bearer ${tokens.juan}`
     });
 
     assert(juanThemeRes.status === 200, 'GET /api/theme respondió 200 para juan@poke.com.ar');
@@ -93,7 +113,7 @@ async function runTests() {
       themeKey: 'dark_glassmorphism',
       scope: 'user'
     }, {
-      'Authorization': 'Bearer juan@poke.com.ar'
+      'Authorization': `Bearer ${tokens.juan}`
     });
 
     assert(setJuanPersonalThemeRes.status === 200, 'POST /api/theme respondió 200 para preferencia de Juan');
@@ -101,14 +121,14 @@ async function runTests() {
 
     // 5. Verificar que Juan ahora tiene su tema personal
     const juanUpdatedThemeRes = await requestJson('GET', '/api/theme', null, {
-      'Authorization': 'Bearer juan@poke.com.ar'
+      'Authorization': `Bearer ${tokens.juan}`
     });
     assert(juanUpdatedThemeRes.data.themeKey === 'dark_glassmorphism', 'Juan ahora ve su tema personal (Dark Glassmorphism)');
 
     // 6. Verificar que Vanesa (otra usuaria de Poke) sigue viendo el tema base del Tenant (Cyberpunk)
     console.log('\n--- 4. Aislamiento Estricto entre Usuarios del Mismo Tenant ---');
     const vanesaThemeRes = await requestJson('GET', '/api/theme', null, {
-      'Authorization': 'Bearer vanesa@poke.com.ar'
+      'Authorization': `Bearer ${tokens.vanesa}`
     });
     assert(vanesaThemeRes.data.themeKey === 'cyberpunk_glassmorphism', 'Vanesa NO se ve afectada por el cambio de Juan y mantiene el tema del Tenant');
 
