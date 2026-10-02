@@ -314,8 +314,7 @@ details p { padding: 0 32px 24px 64px; max-width: 80ch; color: var(--text-muted)
 
 /* ---------- Marca: wordmark en minuscula, firma de paraguas e iconos de producto ---------- */
 .brand-word { font-weight: 600; letter-spacing: -0.05em; text-transform: none; }
-.brand-word i { font-style: normal; color: var(--hw-brand, var(--emerald)); }
-.by-nav { align-self: center; margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--hw-border-strong); font-family: var(--hw-font-mono), monospace; font-size: 11px; color: var(--hw-text-subtle); white-space: nowrap; }
+.brand-word i { font-style: normal; color: var(--emerald); }
 .pi { width: 22px; height: 22px; flex: none; display: inline-block; vertical-align: -4px; margin-right: 8px; }
 .pi-s { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
 .pi-m { width: 28px; height: 28px; margin-right: 10px; vertical-align: -6px; }
@@ -327,7 +326,6 @@ details p { padding: 0 32px 24px 64px; max-width: 80ch; color: var(--text-muted)
 .tabs button { display: inline-flex; align-items: center; }
 .tabs button[aria-selected="true"] .pi { color: var(--bg-main); }
 .plans-t .pname { display: flex; align-items: center; }
-@media (max-width: 1100px) { .by-nav { display: none; } }
 @media (max-width: 720px) { .pi-lg { width: 40px; height: 40px; } .sheet-head { gap: 16px; } }
 
 .cajetin .cj-brand { text-transform: none; letter-spacing: -0.02em; font-size: 12px; color: var(--hw-text-subtle); }

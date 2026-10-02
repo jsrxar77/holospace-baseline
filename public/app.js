@@ -2943,13 +2943,8 @@ async function loadTenantsManagementData() {
             <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
             <span style="font-size: 12px; font-weight: 700; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--card-border);">
               ${{
-                omarchy_tiling: 'Omarchy Tiling',
-                omarchy_tiling_light: 'Omarchy Light',
-                omarchy_aetheria: 'Omarchy Aetherial',
-                soft_minimal_pastel: 'Soft Pastel',
-                soft_minimal_pastel_light: 'Soft Pastel Light',
-                dark_glassmorphism: 'Dark Glass',
-                cyberpunk_glassmorphism: 'Cyberpunk Glass'
+                holo_dark: 'Holo Night',
+                holo_light: 'Holo Day'
               }[t.active_theme] || t.active_theme || 'Omarchy Tiling'}
             </span>
           </div>
