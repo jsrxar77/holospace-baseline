@@ -208,7 +208,8 @@
       "chart3": "#F5B84B",
       "chart4": "#4CC9F0",
       "chart5": "#FF7AA2",
-      "chart6": "#B6E35B"
+      "chart6": "#B6E35B",
+      "brand": "#34D3A4"
     }
   },
   "holo_light": {
@@ -264,7 +265,8 @@
       "chart3": "#A94F08",
       "chart4": "#0B6F9E",
       "chart5": "#B02A66",
-      "chart6": "#557D08"
+      "chart6": "#557D08",
+      "brand": "#0E9F7A"
     }
   }
 }

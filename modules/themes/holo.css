@@ -112,10 +112,10 @@ body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollba
 .hs-logo { display: inline-flex; align-items: center; gap: 0.38em; line-height: 1; }
 .hs-mark { width: 1.15em; height: 1.15em; flex: none; fill: none; }
 .hs-si { stroke: currentColor; }
-.hs-sm { stroke: var(--emerald); }
-.hs-fm { fill: var(--emerald); stroke: none; }
+.hs-sm { stroke: var(--hw-brand, var(--emerald)); }
+.hs-fm { fill: var(--hw-brand, var(--emerald)); stroke: none; }
 .hs-word { font-weight: 600; letter-spacing: -0.05em; text-transform: none; }
-.hs-word i { font-style: normal; color: var(--emerald); }
+.hs-word i { font-style: normal; color: var(--hw-brand, var(--emerald)); }
 
 /* Iconos de producto: cota (plataforma), hex y piso (4see), codigo (logistica) */
 .hs-pi { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; margin-right: 0.5em; color: inherit; }

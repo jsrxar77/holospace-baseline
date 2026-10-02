@@ -27,6 +27,7 @@ for (const key of ['holo_dark', 'holo_light']) {
     }
     for (let i = 1; i <= 6; i++) ok(ratio(k['chart' + i], s) >= 3, `chart${i} sobre ${s} >= 3:1`);
   }
+  for (const s of [t.background, k.surface1]) ok(ratio(k.brand, s) >= 3, `verde de marca (brand) sobre ${s} >= 3:1 (${ratio(k.brand, s).toFixed(2)})`);
   ok(ratio(k.accentFg, t.emerald) >= 4.5, `texto sobre boton primario >= 4.5:1 (${ratio(k.accentFg, t.emerald).toFixed(2)})`);
   ok(ratio(t.cardBorder, t.background) >= 1.1, 'borde visible respecto al fondo');
   ok(lum(k.surface3) !== lum(k.surface1), 'elevacion distinguible entre superficies');
