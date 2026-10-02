@@ -977,7 +977,7 @@ VALUES ('a0000000-0000-0000-0000-000000000001', 'superadmin', 'superadmin@holosp
 ON CONFLICT (tenant_id, email) DO NOTHING;
 
 INSERT INTO core_app_settings (tenant_id, key, value)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'active_theme', 'omarchy_tiling')
+VALUES ('a0000000-0000-0000-0000-000000000001', 'active_theme', 'holo_dark')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Tenant 1: Drink Lovers Argentina
@@ -1006,7 +1006,7 @@ VALUES
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = true;
 
 INSERT INTO core_app_settings (tenant_id, key, value)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', 'active_theme', 'omarchy_tiling')
+VALUES ('550e8400-e29b-41d4-a716-446655440000', 'active_theme', 'holo_dark')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Usuarios Drink Lovers
@@ -1041,7 +1041,7 @@ VALUES
 ON CONFLICT (tenant_id, module_code) DO UPDATE SET is_enabled = EXCLUDED.is_enabled;
 
 INSERT INTO core_app_settings (tenant_id, key, value)
-VALUES ('550e8400-e29b-41d4-a716-446655440001', 'active_theme', 'omarchy_tiling')
+VALUES ('550e8400-e29b-41d4-a716-446655440001', 'active_theme', 'holo_dark')
 ON CONFLICT (tenant_id, key) DO NOTHING;
 
 -- Usuarios Poke Argentina

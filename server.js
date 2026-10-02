@@ -457,6 +457,18 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Activos de marca (logo): solo archivos .svg y .png directos de public/brand
+  if (reqPath.startsWith('/brand/')) {
+    const file = path.join(__dirname, 'public', 'brand', path.basename(reqPath));
+    const ext = path.extname(file).toLowerCase();
+    const types = { '.svg': 'image/svg+xml', '.png': 'image/png' };
+    if (types[ext] && fs.existsSync(file)) {
+      res.writeHead(200, { 'Content-Type': types[ext], 'Cache-Control': 'public, max-age=3600' });
+      res.end(fs.readFileSync(file));
+      return;
+    }
+  }
+
   // CSS de temas Holo generado desde modules/themes/themes.json (fuente unica)
   if (reqPath === '/themes/holo.css') {
     res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'no-cache' });
@@ -620,9 +632,9 @@ const server = http.createServer(async (req, res) => {
         }
         if (!themeKey) {
           const row = await getOne("SELECT value FROM core_app_settings WHERE key = 'active_theme' AND tenant_id = ?", [tenantId], { tenantId });
-          themeKey = row ? row.value : 'omarchy_tiling';
+          themeKey = row ? row.value : 'holo_dark';
         }
-        const theme = THEMES[themeKey] || THEMES.omarchy_tiling;
+        const theme = THEMES[themeKey] || DEFAULT_THEME;
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({
@@ -636,7 +648,7 @@ const server = http.createServer(async (req, res) => {
 
       if (req.url === '/api/theme' && req.method === 'POST') {
         const { themeKey, scope = 'user', targetTenantId } = data || {};
-        const targetKey = THEMES[themeKey] ? themeKey : 'omarchy_tiling';
+        const targetKey = THEMES[themeKey] ? themeKey : 'holo_dark';
 
         if (scope === 'tenant') {
           const destTenantId = targetTenantId || tenantId;
@@ -862,7 +874,7 @@ const server = http.createServer(async (req, res) => {
           t.modules = await query('SELECT module_code, is_enabled FROM tenant_modules WHERE tenant_id = ?', [t.id], { isSuperAdmin: true });
           t.users = await query('SELECT id, email, name, role, is_active, theme_preference FROM core_users WHERE tenant_id = ? ORDER BY role, name', [t.id], { isSuperAdmin: true });
           const themeRow = await getOne("SELECT value FROM core_app_settings WHERE key = 'active_theme' AND tenant_id = ?", [t.id], { isSuperAdmin: true });
-          t.active_theme = themeRow ? themeRow.value : 'omarchy_tiling';
+          t.active_theme = themeRow ? themeRow.value : 'holo_dark';
         }
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -2302,4 +2314,18 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[SERVER] HoloSpace Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
+  migrateDefaultThemeToHolo().catch((e) => console.error('[THEME] Migracion del tema por defecto fallo:', e.message));
 });
+
+// Migracion unica: el tema por defecto de la plataforma pasa de Omarchy Tiling a Holo Night.
+// Un marcador en core_app_settings evita revertir elecciones posteriores en cada reinicio.
+async function migrateDefaultThemeToHolo() {
+  const MARK = 'migration_default_theme_holo';
+  const done = await getOne("SELECT value FROM core_app_settings WHERE key = ? AND tenant_id = ?", [MARK, DEFAULT_TENANT_ID], { isSuperAdmin: true });
+  if (done) return;
+  await execute("UPDATE core_app_settings SET value = 'holo_dark' WHERE key = 'active_theme' AND value = 'omarchy_tiling'", [], { isSuperAdmin: true });
+  await execute("UPDATE core_users SET theme_preference = NULL WHERE theme_preference = 'omarchy_tiling'", [], { isSuperAdmin: true });
+  await execute("INSERT INTO core_app_settings (tenant_id, key, value) VALUES (?, ?, 'done') ON CONFLICT (tenant_id, key) DO NOTHING", [DEFAULT_TENANT_ID, MARK], { isSuperAdmin: true });
+  console.log('[THEME] Tema por defecto migrado a Holo Night');
+}
+
