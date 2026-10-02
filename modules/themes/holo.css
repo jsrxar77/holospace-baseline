@@ -114,9 +114,19 @@ body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollba
 .hs-si { stroke: currentColor; }
 .hs-sm { stroke: var(--emerald); }
 .hs-fm { fill: var(--emerald); stroke: none; }
-.hs-word { font-weight: 600; letter-spacing: -0.04em; }
-.hs-word b { font-weight: 600; }
+.hs-word { font-weight: 600; letter-spacing: -0.05em; text-transform: none; }
 .hs-word i { font-style: normal; color: var(--emerald); }
+
+/* Iconos de producto: cota (plataforma), hex y piso (4see), codigo (logistica) */
+.hs-pi { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; margin-right: 0.5em; color: inherit; }
+.hs-pi-h { width: 1.3em; height: 1.3em; margin-right: 0.45em; vertical-align: -0.28em; }
+.module-tab .hs-pi, .mobile-nav-tab .hs-pi { width: 15px; height: 15px; margin-right: 8px; vertical-align: -2px; }
+
+/* Firma de paraguas: by hologrowth.dev */
+.by-hg { font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; letter-spacing: .02em; color: var(--hw-text-subtle, var(--text-muted)); text-decoration: none; text-transform: none; }
+.by-hg:hover { color: var(--text-main); text-decoration: underline; text-underline-offset: 3px; }
+.status-bar-right { display: flex; align-items: center; gap: 16px; }
+#loginModal .by-hg { display: block; text-align: center; margin: 0 0 14px; }
 
 /* ---------------------------------------------------------------- */
 /* Login y estado sin sesion con la estetica de lamina.              */
@@ -160,7 +170,7 @@ body:is(.theme-holo_dark, .theme-holo_light) #loginModal :is(.input-field, input
 
 /* El wordmark ignora sombras y tipografias pixel de reglas legadas */
 body .hs-logo, body .hs-logo * { text-shadow: none !important; -webkit-text-stroke: 0 !important; }
-body .brand-title .hs-word, body .brand-title .hs-word * { font-family: var(--hw-font-family, 'Geist'), ui-sans-serif, system-ui, sans-serif !important; font-size: inherit !important; letter-spacing: -0.04em !important; line-height: 1 !important; }
+body .brand-title .hs-word, body .brand-title .hs-word * { font-family: var(--hw-font-family, 'Geist'), ui-sans-serif, system-ui, sans-serif !important; font-size: inherit !important; letter-spacing: -0.05em !important; line-height: 1 !important; text-transform: none !important; }
 body:is(.theme-holo_dark, .theme-holo_light) #loginModal .brand-title { font-size: 34px; }
 
 /* Pestañas activas: relleno suave y texto de tinta, sin violeta fijo legado */

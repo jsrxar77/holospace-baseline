@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-<style>.si{stroke:#11141B}.fi{fill:#11141B}.sm{stroke:#087A62}.fm{fill:#087A62}@media (prefers-color-scheme:dark){.si{stroke:#EDEFF5}.fi{fill:#EDEFF5}.sm{stroke:#34D3A4}.fm{fill:#34D3A4}}</style>
-<path class="si" d="M32 5l23 13.5v27L32 59 9 45.5v-27z" stroke-width="4" stroke-linejoin="miter"/>
-<path class="sm" d="M2 41h60M2 34v14M62 34v14" stroke-width="3"/>
-</svg>
