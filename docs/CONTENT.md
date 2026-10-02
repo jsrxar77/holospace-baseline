@@ -17,7 +17,7 @@ Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > produ
 
 **Reglas de nombre y uso**
 - El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en el verde de acento del tema** (`var(--emerald)`: `#34D3A4` en Holo Night y `#087A62` en Holo Day, que cumple 4,5:1). No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
-- En texto corrido se escribe "HoloSpace" con mayuscula inicial (nombre propio). En etiquetas en mayusculas el tema ya las transforma.
+- **El nombre aparece siempre como `holospace.`**, tambien dentro de frases. En HTML se usa el componente `<span class="hs-name">holospace<i>.</i></span>` (punto en verde, sin transformar a mayusculas) y en textos armados por JavaScript la constante `BRAND_HTML` de `public/app.js`. Donde solo hay texto plano (titulos de pagina, `alt`, nombre de la app movil, datos como el nombre del tenant de plataforma) se escribe `holospace.` en minuscula. Si el nombre cierra una frase, su punto hace de punto final. Excepciones: dominios y correos (`holospace.com.ar`), identificadores (`slug`, claves) y comentarios de codigo.
 - La firma de paraguas es `by hologrowth.dev` en Geist Mono minuscula, tamano chico, en gris de apoyo, enlazada a https://hologrowth.dev. Va en pies y en el login, nunca en la barra de navegacion.
 - Los iconos usan una sola tinta (`currentColor`) y una linea o flecha en menta; en SVG sueltos se adaptan al esquema claro u oscuro del sistema. No se agregan sombras, degradados ni versiones multicolor.
 - El lazo dorado anterior de HoloGrowth queda retirado.

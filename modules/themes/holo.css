@@ -117,6 +117,10 @@ body:is(.theme-holo_dark, .theme-holo_light) * { scrollbar-width: thin; scrollba
 .hs-word { font-weight: 600; letter-spacing: -0.05em; text-transform: none; }
 .hs-word i { font-style: normal; color: var(--emerald); }
 
+/* Nombre de marca dentro de texto: holospace. en minuscula con el punto en verde */
+.hs-name { font-weight: 600; letter-spacing: -0.04em; text-transform: none; white-space: nowrap; }
+.hs-name i { font-style: normal; color: var(--emerald); }
+
 /* Iconos de producto: cota (plataforma), hex y piso (4see), codigo (logistica) */
 .hs-pi { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.2em; margin-right: 0.5em; color: inherit; }
 .hs-pi-h { width: 1.3em; height: 1.3em; margin-right: 0.45em; vertical-align: -0.28em; }
@@ -243,7 +247,7 @@ body:is(.theme-holo_dark, .theme-holo_light) label {
   font-family: var(--hw-font-mono), ui-monospace, monospace;
   letter-spacing: .04em;
 }
-body:is(.theme-holo_dark, .theme-holo_light) :is(.badge-role, .context-badge) { text-transform: uppercase; font-size: 11px; font-weight: 500 !important; }
+body:is(.theme-holo_dark, .theme-holo_light) .badge-role { text-transform: uppercase; font-size: 11px; font-weight: 500 !important; }
 
 /* Pie de la app como cajetin */
 body:is(.theme-holo_dark, .theme-holo_light) .app-status-bar {
@@ -260,3 +264,6 @@ body:is(.theme-holo_dark, .theme-holo_light) :is(.status-bar-center) { border-le
   body:is(.theme-holo_dark, .theme-holo_light) .top-line-right { min-width: 0; }
   body:is(.theme-holo_dark, .theme-holo_light) .status-bar-center { display: none; }
 }
+
+/* La insignia de organizacion muestra el nombre tal cual (el nombre de marca no se pasa a mayusculas) */
+body:is(.theme-holo_dark, .theme-holo_light) :is(.context-badge, #activeContextBadge, #mobileContextBadge) { text-transform: none !important; }

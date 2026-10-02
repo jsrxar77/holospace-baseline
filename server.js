@@ -720,7 +720,7 @@ const server = http.createServer(async (req, res) => {
             modules: [
               { key: 'landing', name: 'Landing Page & Showcase', description: 'Portal comercial público con precios en ARS, vitrina interactiva y login.', category: 'marketing', is_active: true },
               { key: 'tenant', name: 'Gestión Multi-Tenant', description: 'Panel exclusivo SUPERADMIN para administración de organizaciones.', category: 'admin', is_active: true },
-              { key: 'core', name: 'HoloSpace Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
+              { key: 'core', name: 'holospace. Core', description: 'Plataforma base: autenticación, motor de temas y auditoría.', category: 'system', is_active: true },
               { key: 'kanban', name: 'Kanban Board', description: 'Módulo Web de logística: Tablero Kanban 4 columnas y explorador.', category: 'operational', is_active: true },
               { key: 'scanner', name: 'Scanner App', description: 'Módulo Móvil Expo: Escáner de códigos de barra EAN-13.', category: 'operational', is_active: true }
             ]
@@ -1142,7 +1142,7 @@ const server = http.createServer(async (req, res) => {
 
         if (targetTenant.slug === 'holospace' || targetTenant.id === 'a0000000-0000-0000-0000-000000000001') {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: false, error: 'La Organización de Plataforma HoloSpace no puede ser suspendida.' }));
+          res.end(JSON.stringify({ success: false, error: 'La organización de plataforma (holospace.) no puede ser suspendida.' }));
           return;
         }
 
@@ -2312,8 +2312,14 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[SERVER] HoloSpace Server 100% PostgreSQL 16 Activo en http://0.0.0.0:${PORT}`);
+  brandPlatformTenantName().catch((e) => console.error('[BRAND] Renombrado del tenant de plataforma fallo:', e.message));
   migrateDefaultThemeToHolo().catch((e) => console.error('[THEME] Migracion del tema por defecto fallo:', e.message));
 });
+
+// Idempotente: el tenant de la plataforma se muestra con el nombre de marca (holospace.)
+async function brandPlatformTenantName() {
+  await execute("UPDATE tenant_tenants SET name = 'holospace.' WHERE slug = 'holospace' AND name IN ('HoloSpace', 'HoloSpace Cloud Platform')", [], { isSuperAdmin: true });
+}
 
 // Migracion unica: la plataforma conserva solo Holo Night y Holo Day. Cualquier otro valor guardado
 // (tenants o preferencias de usuario) pasa a Holo Night. Un marcador en core_app_settings evita repetirla.

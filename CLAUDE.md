@@ -27,7 +27,7 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist.
 
 ## Marca
-Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth.dev`; iconos de producto: cota (plataforma), hex (4see), codigo (logistica). Reglas y archivos en `docs/CONTENT.md` 0.1 y `public/brand/`. En texto corrido: "HoloSpace".
+Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth.dev`; iconos de producto: cota (plataforma), hex (4see), codigo (logistica). Reglas y archivos en `docs/CONTENT.md` 0.1 y `public/brand/`. En cualquier texto visible el nombre es `holospace.` (HTML: `<span class="hs-name">holospace<i>.</i></span>`; JS: `BRAND_HTML`); nunca "HoloSpace".
 
 ## Diseno
 Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Los dos temas Holo son los unicos (`docs/ARCHITECTURE.md` 7.2 y 7.3.1).

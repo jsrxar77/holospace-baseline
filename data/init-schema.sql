@@ -776,7 +776,7 @@ CREATE POLICY rls_audit_logs_isolation ON core_platform_audit_logs
 
 -- Tenant 0: HoloSpace Cloud Platform (Tenant Proveedor Global)
 INSERT INTO tenant_tenants (id, slug, name, status)
-VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'HoloSpace', 'active')
+VALUES ('a0000000-0000-0000-0000-000000000001', 'holospace', 'holospace.', 'active')
 ON CONFLICT (slug) DO NOTHING;
 -- Catálogo de Módulos Oficiales de la Plataforma HoloSpace
 INSERT INTO tenant_modules_catalog (key, name, description, category, is_active, activated_by)

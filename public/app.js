@@ -1,3 +1,6 @@
+// Nombre de marca con el punto en verde para textos que se arman por JavaScript
+const BRAND_HTML = '<span class="hs-name">holospace<i>.</i></span>';
+
 let currentUser = null;
 let customDialogResolver = null;
 let collapsedUserGroups = new Set(); // Guarda los usuarios colapsados en DOING/DONE
@@ -256,7 +259,7 @@ async function loadAppConfig() {
     if (data.success && data.version) {
       const verEl = document.getElementById('footerAppVersion');
       if (verEl) {
-        verEl.innerText = `HoloSpace SaaS v${data.version}`;
+        verEl.innerHTML = `${BRAND_HTML} SaaS v${String(data.version).replace(/[^0-9A-Za-z.\-]/g, '')}`;
       }
     }
   } catch (e) { }
@@ -490,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (token && userObj) {
     currentUser = userObj;
-    const tenant = tenantObj || { name: 'HoloSpace' };
+    const tenant = tenantObj || { name: 'holospace.' };
 
     // Si viene con redirect hacia m.holospace.com.ar o /scanner, transferir credenciales de inmediato
     if (redirectTarget && (redirectTarget.includes('m.holospace') || redirectTarget.includes('scanner'))) {
@@ -509,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const userBadgeEl = document.getElementById('userBadge');
     if (userBadgeEl) {
-      userBadgeEl.innerText = `${currentUser.role}: ${currentUser.email} (${tenant.name || 'HoloSpace'})`;
+      userBadgeEl.innerText = `${currentUser.role}: ${currentUser.email} (${tenant.name || 'holospace.'})`;
     }
     applyRoleVisibility();
   } else {
@@ -608,8 +611,9 @@ function applyRoleVisibility() {
   const footerTenant = document.getElementById('footerTenantStatus');
 
   const orgName = currentUser.tenantName || currentUser.tenantSlug || 'SUPERADMIN';
-  if (badge) badge.innerText = orgName.toUpperCase();
-  if (mobActiveCtx) mobActiveCtx.innerText = orgName.toUpperCase();
+  // El nombre de la organizacion se muestra tal cual (el nombre de marca va en minuscula)
+  if (badge) badge.innerText = orgName;
+  if (mobActiveCtx) mobActiveCtx.innerText = orgName;
 
   const modTenant = document.getElementById('modTenant') || document.getElementById('modTenants');
   const modCore = document.getElementById('modCore');
@@ -656,10 +660,10 @@ function applyRoleVisibility() {
       dropRoleBadge.style.border = '1px solid #A78BFA';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
-    if (dropOrg) dropOrg.innerText = 'Organización: HoloSpace Global Platform';
+    if (dropOrg) dropOrg.innerHTML = `Organización: ${BRAND_HTML} Global Platform`;
 
     if (footerTenant) {
-      footerTenant.innerText = 'Organización: HoloSpace Global Platform (SUPERADMIN)';
+      footerTenant.innerHTML = `Organización: ${BRAND_HTML} Global Platform (SUPERADMIN)`;
     }
 
     const path = window.location.pathname.toLowerCase();
@@ -756,7 +760,7 @@ function showForbiddenView(moduleName) {
   if (titleEl) titleEl.innerText = modTitles[moduleName] || `Módulo ${moduleName}`;
   if (descEl) {
     if (currentUser && currentUser.role !== 'SUPERADMIN') {
-      descEl.innerText = `Este módulo está reservado exclusivamente para el Super Administrador de HoloSpace. Tu organización actual no tiene permisos de acceso.`;
+      descEl.innerHTML = `Este módulo está reservado exclusivamente para el Super Administrador de ${BRAND_HTML}. Tu organización actual no tiene permisos de acceso.`;
     } else {
       descEl.innerText = `No tienes los permisos asignados para interactuar con este módulo.`;
     }
@@ -765,7 +769,7 @@ function showForbiddenView(moduleName) {
   const displayUser = (currentUser && (currentUser.username || currentUser.name)) || (currentUser && currentUser.email) || 'Usuario';
   if (userEl) userEl.innerText = displayUser;
   if (roleEl) roleEl.innerText = (currentUser && currentUser.role) || 'OPERATOR';
-  if (tenantEl) tenantEl.innerText = (currentUser && (currentUser.tenantName || currentUser.tenantSlug)) || 'HoloSpace';
+  if (tenantEl) tenantEl.innerText = (currentUser && (currentUser.tenantName || currentUser.tenantSlug)) || 'holospace.';
 }
 
 function redirectAllowedModule() {
@@ -1781,7 +1785,7 @@ function renderUsersTable(usersList = []) {
   tbody.innerHTML = usersList.map((u, idx) => {
     const isTargetSuperAdmin = u.role === 'SUPERADMIN';
     const canEdit = isSuperAdmin || !isTargetSuperAdmin;
-    const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'HoloSpace Cloud Platform' : 'Organización');
+    const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'holospace.' : 'Organización');
     const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
 
     return `

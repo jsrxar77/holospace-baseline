@@ -128,7 +128,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Header title="HoloSpace · ScanBan Scanner" badgeText={`OP: ${operatorId}`} />
+      <Header title="holospace. · scanner" badgeText={`OP: ${operatorId}`} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
