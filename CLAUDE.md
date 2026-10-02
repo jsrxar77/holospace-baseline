@@ -26,6 +26,9 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 ## Flujo por cambio (impacto 360)
 Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist.
 
+## Marca
+Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth.dev`; iconos de producto: cota (plataforma), hex (4see), codigo (logistica). Reglas y archivos en `docs/CONTENT.md` 0.1 y `public/brand/`. En texto corrido: "HoloSpace".
+
 ## Diseno
 Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Tema vigente recomendado: familia Holo (`docs/ARCHITECTURE.md` 7.3.1).
 

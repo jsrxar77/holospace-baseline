@@ -1,5 +1,5 @@
 ---
-name: HoloSpace
+name: holospace.
 description: Lamina tecnica normalizada para vender un sistema de deposito y precios, en Holo Night y Holo Day.
 colors:
   emerald-signal: "#34D3A4"
@@ -63,7 +63,7 @@ components:
     height: "56px"
 ---
 
-# Design System: HoloSpace
+# Design System: holospace.
 
 ## Overview
 
@@ -96,6 +96,10 @@ Plano y sin sombras. La profundidad es de linea: marco doble, hairlines, hatch c
 ## Shapes
 
 Esquinas rectas (0px) en todo; la unica forma curva es el circulo de los callouts numerados. El lenguaje formal es el de un plano: rectangulos, cotas con flechas, lineas de trazo.
+
+## Brand
+
+Wordmark `holospace.` en minuscula (Geist 600, tracking -0.05em, punto en menta), firma `by hologrowth.dev` en Geist Mono. Iconos de producto de una tinta y una linea menta: cota (plataforma), hex y piso (4see), codigo (logistica). Detalle en `docs/CONTENT.md` 0.1.
 
 ## Components
 

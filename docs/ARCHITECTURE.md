@@ -285,7 +285,7 @@ Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (
 
 **Migracion del tema por defecto (2026-10-02):** al iniciar, el servidor ejecuta una vez `migrateDefaultThemeToHolo()` (marcador `migration_default_theme_holo` en `core_app_settings`): los tenants con `active_theme = omarchy_tiling` pasan a `holo_dark` y se limpian las preferencias de usuario con ese valor. Los demas temas siguen disponibles en el selector.
 
-**Marca:** logo "H acotada" (dos columnas y una cota con flechas) como componente `.hs-logo` (SVG inline + wordmark) y archivo `GET /brand/mark.svg` (se adapta al esquema claro/oscuro). Propuestas descartadas en `public/brand/proposals/` y lamina comparativa en `public/brand/propuestas-logo.png`.
+**Marca:** wordmark `holospace.` (minuscula, punto menta) con la H acotada como componente `.hs-logo` (SVG inline). Iconos de producto como simbolos SVG (`#hs-pcore`, `#hs-p4see`, `#hs-plog`) y archivos `GET /brand/mark.svg`, `/brand/4see.svg` y `/brand/logistica.svg` (se adaptan al esquema claro u oscuro). El favicon cambia segun el modulo activo (`setModuleFavicon`). La app movil usa `modules/scanner/src/components/Brand.tsx`. Reglas completas en `docs/CONTENT.md` 0.1.
 
 ### 7.4 Regla de Aislamiento de Fondos Dinámicos
 * Con los temas Holo, la landing y el login usan una grilla de lamina estatica (sin estrellas ni asteroides). El fondo espacial animado queda solo para los temas legados.

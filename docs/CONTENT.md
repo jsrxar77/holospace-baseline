@@ -4,6 +4,24 @@
 
 ---
 
+## 0.1 Sistema de marca (vigente)
+
+Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > productos con icono propio. Referencia visual: `public/brand/sistema-marca.png`.
+
+| Nivel | Nombre | Icono | Archivo | Donde aparece |
+| :--- | :--- | :--- | :--- | :--- |
+| Empresa | `hologrowth.dev` | solo texto | n/a | Firma `by hologrowth.dev` (login, pie de la app, nav y pie de la landing) |
+| Plataforma | `holospace.` | Cota: H hecha de dos columnas y una cota con flechas | `public/brand/mark.svg` | Logo, favicon, Core y Tenant |
+| Producto | `4see` | Hex y piso: hexagono atravesado por la linea de piso | `public/brand/4see.svg` | Pestana 4see, titulos de vistas 4see, hojas 2, 3, 5 y 8 de la landing, favicon al estar en 4see |
+| Producto | logistica (Kanban y Scanner) | Codigo: barras con la linea de lectura | `public/brand/logistica.svg` | Pestana Kanban, Explorador de pedidos, app Scanner (cabecera y login), landing, favicon al estar en Kanban |
+
+**Reglas de nombre y uso**
+- El wordmark es `holospace.` siempre en **minuscula**, Geist 600 con tracking -0.05em y el **punto en menta** (`var(--emerald)`). No se corta en dos colores ni se escribe `HoloSpace` en logos, cabeceras o titulos de pagina.
+- En texto corrido se escribe "HoloSpace" con mayuscula inicial (nombre propio). En etiquetas en mayusculas el tema ya las transforma.
+- La firma de paraguas es `by hologrowth.dev` en Geist Mono minuscula, tamano chico, en gris de apoyo, siempre enlazada a https://hologrowth.dev (excepto en el nav de la landing, donde el logo ya es un enlace).
+- Los iconos usan una sola tinta (`currentColor`) y una linea o flecha en menta; en SVG sueltos se adaptan al esquema claro u oscuro del sistema. No se agregan sombras, degradados ni versiones multicolor.
+- El lazo dorado anterior de HoloGrowth queda retirado.
+
 ## 0. Landing comercial v3: lamina tecnica (vigente)
 
 La landing (`modules/landing/public/`) es una **lamina tecnica normalizada** con los temas Holo Night y Holo Day, para que pagina y producto compartan sistema visual. Direccion y razones en `DESIGN.md` y en `.impeccable/surfaces/` (contrato de direccion). Audiencia: duenos y gerentes de pymes; el relato lidera con e-commerce (4see) y presenta ambas lineas.
@@ -13,7 +31,7 @@ La landing (`modules/landing/public/`) es una **lamina tecnica normalizada** con
 - **Tema:** Holo Night / Holo Day segun preferencia del sistema, con interruptor persistido en `hs_landing_theme`.
 - **Regla de contenido:** solo datos verificables. Precios y limites salen de `lib/billing.js`; no hay logos, testimonios ni metricas. Las maquetas y la simulacion llevan la leyenda "datos de ejemplo".
 - **Motion:** las lineas de los dibujos se trazan una vez al entrar en vista; el precio sugerido sube y se frena en la cota al cargar. Respeta `prefers-reduced-motion`.
-- **Marca:** logo H acotada (dos columnas y una cota con flechas), wordmark Geist 600 con `Space` en menta. Uso: marca sola en 16 a 32 px, lockup horizontal en cabeceras. Activos en `public/brand/`.
+- **Marca:** ver 0.1. Los iconos de producto aparecen en la tabla de referencias, los encabezados de las hojas 2, 3 y 4, el bloque de proceso, las pestanas y tablas de planes y la linea de productos del hero.
 - **SEO:** title, description, Open Graph, JSON-LD `SoftwareApplication` con ofertas. Pendiente: imagen Open Graph y capturas reales (D-024).
 
 > Las secciones 1 y 2 de este documento (sprites pixel art) quedan como referencia historica de marca.

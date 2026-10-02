@@ -60,8 +60,10 @@
   - La SPA que se sirve es `public/index.html` + `public/app.js`. `modules/core/public/index.html`, `modules/kanban/public/index.html` y sus CSS son copias no servidas con logo pixelado y colores fijos. Accion: borrarlas o integrarlas (ver D-012 y D-013).
 - [ ] **D-038 | Colores fijos restantes y degradados en la SPA** | `public/index.html`, `public/app.js` | Esfuerzo M
   - Tras migrar texto blanco, superficies oscuras y botones con degradado a tokens quedan degradados en tarjetas (`linear-gradient(135deg, ...)`), `border-left` de color, el color fijo del boton de Google (obligatorio por marca) y unos 800 estilos inline. Accion: mover a clases con tokens y quitar degradados.
-- [ ] **D-039 | Decidir el logo definitivo** | `public/brand/` | Esfuerzo S
-  - Esta aplicada la propuesta A (Cota). Alternativas B (hex y piso) y C (codigo) en `public/brand/proposals/`. Pendiente: version vectorial final, PNG de app y favicon multi-tamano, imagen Open Graph.
+- [ ] **D-039 | Activos de marca finales** | `public/brand/` | Esfuerzo S
+  - Decididos: wordmark `holospace.` y familia de iconos (cota, hex, codigo). Pendiente: PNG de app y favicon multi-tamano (16, 32, 180, 512), imagen Open Graph y version del lockup con firma de paraguas como SVG.
+- [ ] **D-040 | App movil guarda credenciales y no sigue Day/Night** | `modules/scanner/src/store/useAuthStore.ts` | Esfuerzo M
+  - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
 ## P1: Producto vendible (mini-SaaS)
 
@@ -106,4 +108,5 @@
 - [x] **S-009** (era D-004) CORS por lista de origenes (`CORS_ORIGINS`; en desarrollo origenes locales y de red privada), cabeceras de seguridad, y limite de intentos de login (`LOGIN_RATE_MAX`, 10 por 15 minutos por IP y email, respuesta 429). Residual en D-008. 2026-10-02.
 - [x] **S-010** (era D-007) El init de la base arranca desde cero sin errores: suscripciones del tenant 0 despues de sembrar los planes; verificado con `ON_ERROR_STOP=1` en una base nueva. 2026-10-02.
 - [x] **S-011** Estetica Holo en toda la plataforma: tema por defecto Holo Night con migracion unica, login de lamina (sin estrellas), logo H acotada en la SPA, landing y favicon, colores fijos de texto y superficies migrados a tokens y emojis eliminados de la SPA. Verificado con capturas de todas las vistas en Night y Day. 2026-10-02.
+- [x] **S-012** Sistema de marca decidido y aplicado: wordmark `holospace.` en minuscula con punto menta, firma `by hologrowth.dev`, y familia de iconos (cota para la plataforma, hex para 4see, codigo para logistica) en landing, login, pestanas y titulos de la SPA, favicon por modulo y app Scanner (cabecera y login). 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.
