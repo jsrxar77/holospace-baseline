@@ -61,6 +61,9 @@
   - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
 
+- [ ] **D-042 | Oracion de "por que lo necesitas" en el hero** | `modules/landing/public/index.html` | Esfuerzo S
+  - Pendiente definir con el equipo una oracion que explique por que una tienda online necesita 4see, despues del texto de "que es".
+
 ## P1: Producto vendible (mini-SaaS)
 
 - [ ] **D-020 | Cobro real** | Fase 18 del roadmap | Esfuerzo L
@@ -111,4 +114,7 @@
 - [x] **S-016** Login con Google: (1) el callback redirigia a `/`, que sirve la landing, asi que ninguna cuenta de Google llegaba a la app; ahora va a `/login`, con el token en el fragmento `#` para que no quede en logs. (2) Cierre de dos agujeros graves del modo simulado: `code=mock_code_<email>` emitia una sesion para cualquier usuario (incluido el SUPERADMIN) aun con claves reales, y sin claves el inicio entraba como un email por defecto o el de `?email=`. Ahora el modo simulado exige `OAUTH_MOCK=1` y `NODE_ENV` distinto de `production`. Cubierto en `tests/test-security-hardening.js`. 2026-10-02.
 - [x] **S-017** Login y modulos con el lenguaje de lamina de la landing: esquinas rectas (radios 0 en los tokens, tambien para la app movil), planos sin sombras, marco doble en el area de trabajo y en los modales, rotulos y tablas en Geist Mono, cajetin en el pie y cabecera plana. Resuelve D-041. 2026-10-02.
 - [x] **S-018** El nombre de marca `holospace.` reemplaza a "HoloSpace" en todo texto visible: landing (tabla, copyright, esquema SVG, JSON-LD), SPA (titulos, bienvenida, QR, pie, mensajes de acceso), insignia de organizacion sin mayusculas, tenant de plataforma renombrado a `holospace.` (seed y migracion idempotente), modulo Core, nombre de la app movil y titulos. Componente `.hs-name` y `BRAND_HTML`. 2026-10-02.
+- [x] **S-019** El menu muestra solo lo que la sesion puede usar: un modulo aparece si el plan de la organizacion lo incluye y el rol tiene permisos de ese modulo, y cada submenu segun su permiso de lectura (escritorio y movil). El modulo de entrada es el primero disponible (antes todos los usuarios entraban a Kanban); abrir por URL un modulo ajeno sigue mostrando el aviso de acceso restringido, y sin ningun modulo se explica el motivo. Logica pura en `public/access.js` con `tests/test-ui-access.js`. Caso real: un administrador de 4see veia Kanban y entraba a Kanban. 2026-10-02.
+- [x] **S-020** Landing: el hero explica que es holospace. con foco en 4see (e-commerce) y logistica como complemento, los productos pasan a la caja derecha, los iconos de producto se agrandan (88 px en titulos de hoja, 56 en el hero, 40 en proceso, 30 en tablas, 22 en pestanas) y el titular baja a 76 px para entrar en dos lineas. Se limita el marco de area de trabajo a la app para que no afecte a la landing. 2026-10-02.
+- [x] **S-021** Verificado que `hologrowth.com.ar` no existe en el codigo publicado, en los datos de inicio ni en las bases (local y produccion); se elimina la mencion de un comentario y `tests/test-brand.js` falla si reaparece, o si se escribe "HoloSpace" en texto visible. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

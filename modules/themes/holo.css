@@ -232,7 +232,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .header-top-line { border-bottom: 1
 body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab) { border: 1px solid transparent; }
 
 /* Marco de lamina alrededor del area de trabajo */
-body:is(.theme-holo_dark, .theme-holo_light) main {
+body:is(.theme-holo_dark, .theme-holo_light):is(.state-logged-in, .state-logged-out) main {
   margin: 16px;
   border: 1px solid var(--hw-border-strong);
   box-shadow: inset 0 0 0 6px var(--bg-main), inset 0 0 0 7px var(--card-border);
@@ -258,7 +258,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .app-status-bar {
 body:is(.theme-holo_dark, .theme-holo_light) :is(.status-bar-center) { border-left: 1px solid var(--card-border); border-right: 1px solid var(--card-border); padding: 0 24px; }
 
 @media (max-width: 720px) {
-  body:is(.theme-holo_dark, .theme-holo_light) main { margin: 10px; }
+  body:is(.theme-holo_dark, .theme-holo_light):is(.state-logged-in, .state-logged-out) main { margin: 10px; }
   body:is(.theme-holo_dark, .theme-holo_light) .theme-label { display: none; }
   body:is(.theme-holo_dark, .theme-holo_light) #headerThemeSelect { width: 88px !important; max-width: 88px; padding-left: 8px; padding-right: 4px; font-size: 12px; }
   body:is(.theme-holo_dark, .theme-holo_light) .top-line-right { min-width: 0; }

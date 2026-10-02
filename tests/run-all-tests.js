@@ -19,6 +19,8 @@ const SUITES = [
   { name: 'Core: RBAC Granular Permissions', file: 'tests/test-rbac-granular.js', module: 'CORE' },
   { name: 'Core: Theme Engine Hierarchy (HW-DS)', file: 'tests/test-theme-hierarchy.js', module: 'CORE' },
   { name: 'Core: Security Hardening (JWT-only identity, CORS, rate limit)', file: 'tests/test-security-hardening.js', module: 'CORE' },
+  { name: 'Core: UI Access by Plan and Permissions', file: 'tests/test-ui-access.js', module: 'CORE' },
+  { name: 'Core: Brand Rules (holospace., hologrowth.dev)', file: 'tests/test-brand.js', module: 'CORE' },
   { name: 'Core: Holo Theme Contrast & Tokens (WCAG)', file: 'tests/test-theme-contrast.js', module: 'CORE' },
   { name: 'Tenant: Governance & Isolation', file: 'tests/test-tenants-module.js', module: 'TENANT' },
   { name: 'Tenant: Entitlements & Licensing', file: 'tests/test-entitlement.js', module: 'TENANT' },

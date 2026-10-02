@@ -172,6 +172,7 @@
 - [x] **17.5.7** Endurecimiento de seguridad con suite `tests/test-security-hardening.js` (17 suites, 0 fallos).
 - [x] **17.5.8** Holo como estetica unica de la plataforma: tema por defecto, login de lamina, logo H acotada (3 propuestas en `public/brand/`) y SPA migrada a tokens (ver S-011 en DEBT).
 - [x] **17.5.9** Solo temas Holo (Night y Day), CSS legado podado, login y modulos sin estetica anterior, assets versionados por `mtime` para sortear la cache de Cloudflare.
+- [x] **17.5.10** Menu por plan y permisos (`public/access.js`), hero con explicacion centrada en 4see, iconos de producto mas grandes y regla de marca verificada por test.
 - [x] **17.5.6** Registro de deuda tecnica en [DEBT.md](./DEBT.md) (septimo documento canonico).
 
 ---

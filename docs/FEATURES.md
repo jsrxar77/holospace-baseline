@@ -106,3 +106,21 @@ ightarrow$ `Holo Night (Default)`.
 
 ### C. Cero Alerts del Sistema:
 Todos los modales y diálogos son componentes HTML/CSS customizados (`showCustomAlert`, `showCustomConfirm`).
+
+
+## Visibilidad del menu por plan y permisos
+
+El menu y los submenus (escritorio y movil) muestran solo lo que la sesion puede usar. La autorizacion real sigue en el servidor (RBAC y entitlements); esto evita mostrar opciones inutilizables.
+
+| Elemento | Se muestra si |
+| :--- | :--- |
+| Modulo Tenant y Core | Rol `SUPERADMIN` (nunca para roles de una organizacion) |
+| Modulo Kanban | El plan incluye `kanban` y el rol tiene `kanban:orders:read` |
+| Modulo 4see | El plan incluye `4see` y el rol tiene algun permiso `4see:*` |
+| Submenu SmartPrice | Permiso `4see:pricing:write`, `4see:queue:approve` o `4see:rules:manage` |
+| Submenu Catalogo | Permiso `4see:catalog:read` o `4see:catalog:audit` |
+| Submenu Margenes | Permiso `4see:margins:manage` |
+
+- **Modulo de entrada:** el pedido por URL si esta permitido; si no, el primero disponible (orden Kanban, 4see; el SUPERADMIN entra a Tenant). Si no hay ninguno, se muestra el aviso "Sin modulos habilitados".
+- **URL de un modulo ajeno:** muestra la pantalla de acceso restringido con el menu limpio.
+- Implementacion: `public/access.js` (logica pura) lee `entitlements` y `permissions` del JWT. Cobertura: `tests/test-ui-access.js`.

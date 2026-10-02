@@ -403,7 +403,7 @@ setInterval(() => { const now = Date.now(); for (const [k, r] of loginFails) if 
 
 // Servidor HTTP
 const server = http.createServer(async (req, res) => {
-    // 0. LANDING ROUTING (hologrowth.com.ar or /landing)
+    // 0. LANDING ROUTING (ruta raiz y /landing)
     applySecurityHeaders(req, res);
     if (handleLandingRoutes(req, res)) return;
 
@@ -430,6 +430,15 @@ const server = http.createServer(async (req, res) => {
       'Expires': '0'
     });
     res.end(content);
+    return;
+  }
+
+  if (reqPath === '/access.js') {
+    fs.readFile(path.join(__dirname, 'public', 'access.js'), (err, content) => {
+      if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('No encontrado'); return; }
+      res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'no-cache' });
+      res.end(content);
+    });
     return;
   }
 

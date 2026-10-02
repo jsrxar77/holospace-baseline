@@ -280,6 +280,8 @@ Ademas de los tokens base, los temas Holo declaran un objeto `tokens` opcional (
 
 **Migracion a solo Holo (2026-10-02):** al iniciar, el servidor ejecuta una vez `migrateDefaultThemeToHolo()` (marcador `migration_only_holo_themes` en `core_app_settings`): todo `active_theme` distinto de `holo_dark` o `holo_light` pasa a `holo_dark` y se limpian las preferencias de usuario con otro valor. `POST /api/theme` normaliza claves desconocidas a `holo_dark`.
 
+**Visibilidad del menu:** `public/access.js` calcula modulos y pestanas visibles a partir de los claims del JWT (`entitlements` y `permissions`, presentes tanto en el login local como en Google); la tabla de reglas esta en `docs/FEATURES.md`. El servidor sigue siendo la autoridad (403 canonico).
+
 **Cache de assets:** Cloudflare guarda CSS, JS e imagenes hasta 4 horas ignorando las cabeceras del origen. `lib/assets.js` agrega `?v=<mtime>` a las URLs estaticas del HTML (`/themes/holo.css`, `/css/holospace-theme.css`, `/app.js`, `/landing/landing.css`, `/brand/*`) al servirlo, de modo que cada cambio de archivo cambia la URL.
 
 **Marca:** wordmark `holospace.` (minuscula, punto menta) con la H acotada como componente `.hs-logo` (SVG inline). Iconos de producto como simbolos SVG (`#hs-pcore`, `#hs-p4see`, `#hs-plog`) y archivos `GET /brand/mark.svg`, `/brand/4see.svg` y `/brand/logistica.svg` (se adaptan al esquema claro u oscuro). El favicon cambia segun el modulo activo (`setModuleFavicon`). La app movil usa `modules/scanner/src/components/Brand.tsx`. Reglas completas en `docs/CONTENT.md` 0.1.

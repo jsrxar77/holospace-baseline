@@ -678,15 +678,16 @@ function applyRoleVisibility() {
     // ADMIN / OPERATOR: Access to licensed operational modules (Kanban Board, 4see, QR Connection)
     if (modTenant) modTenant.style.display = 'none';
     if (modCore) modCore.style.display = 'none';
-    if (modKanban) modKanban.style.display = 'inline-flex';
-    if (mod4see) mod4see.style.display = 'inline-flex';
-    
+    const access = getAccess() || { modules: {}, defaultModule: null };
+    if (modKanban) modKanban.style.display = access.modules.kanban ? 'inline-flex' : 'none';
+    if (mod4see) mod4see.style.display = access.modules['4see'] ? 'inline-flex' : 'none';
+
     if (themeContainer) themeContainer.style.display = 'none';
 
     if (mobModTenant) mobModTenant.style.display = 'none';
     if (mobModCore) mobModCore.style.display = 'none';
-    if (mobModKanban) mobModKanban.style.display = 'block';
-    if (mobMod4see) mobMod4see.style.display = 'block';
+    if (mobModKanban) mobModKanban.style.display = access.modules.kanban ? 'block' : 'none';
+    if (mobMod4see) mobMod4see.style.display = access.modules['4see'] ? 'block' : 'none';
 
     const orgName = currentUser.tenantSlug ? currentUser.tenantSlug.toUpperCase() : 'KANBAN';
     const displayUser = currentUser.username || (currentUser.email ? currentUser.email.split('@')[0] : 'usuario');
@@ -717,21 +718,30 @@ function applyRoleVisibility() {
       footerTenant.innerText = `Organización: ${currentUser.tenantName || orgName}`;
     }
 
+    // Modulo de entrada: el pedido por URL si esta permitido; si no, el primero disponible (nunca uno ajeno)
     const path = window.location.pathname.toLowerCase();
-    if (path.includes('tenant')) {
-      showForbiddenView('tenant');
-      if (window.history && window.history.replaceState) window.history.replaceState({ module: 'tenant' }, '', '/tenant');
-    } else if (path.includes('core')) {
-      showForbiddenView('core');
-      if (window.history && window.history.replaceState) window.history.replaceState({ module: 'core' }, '', '/core');
-    } else if (path.includes('4see')) {
-      switchModule('4see');
-    } else if (path.includes('orders')) {
+    const wanted = path.includes('tenant') ? 'tenant'
+      : path.includes('core') ? 'core'
+      : path.includes('4see') ? '4see'
+      : (path.includes('orders') || path.includes('kanban') || path.includes('scanban')) ? 'kanban'
+      : null;
+    const goForbidden = (mod) => {
+      showForbiddenView(mod);
+      if (window.history && window.history.replaceState) window.history.replaceState({ module: mod }, '', '/' + mod);
+    };
+    if (wanted === 'tenant' || wanted === 'core') {
+      goForbidden(wanted);
+    } else if (wanted && !access.modules[wanted]) {
+      goForbidden(wanted);
+    } else if (wanted === 'kanban' && path.includes('orders')) {
       switchModule('kanban');
       switchTab('orders');
+    } else if (wanted) {
+      switchModule(wanted);
+    } else if (access.defaultModule) {
+      switchModule(access.defaultModule);
     } else {
-      switchModule('kanban');
-      switchTab('kanban');
+      goForbidden('none');
     }
   }
 }
@@ -754,15 +764,19 @@ function showForbiddenView(moduleName) {
   const modTitles = {
     tenant: 'Módulo Tenant (Gobierno de Plataforma)',
     core: 'Módulo Core (Plataforma & Auditoría)',
-    kanban: 'Módulo Kanban (Tablero Logístico)'
+    kanban: 'Módulo Kanban (Tablero Logístico)',
+    '4see': 'Módulo 4see (Inteligencia de Precios)',
+    none: 'Sin módulos habilitados'
   };
 
   if (titleEl) titleEl.innerText = modTitles[moduleName] || `Módulo ${moduleName}`;
   if (descEl) {
-    if (currentUser && currentUser.role !== 'SUPERADMIN') {
+    if (moduleName === 'none') {
+      descEl.innerText = 'Tu rol no tiene módulos habilitados en el plan de tu organización. Pedile a un administrador que revise tus permisos.';
+    } else if (moduleName === 'tenant' || moduleName === 'core') {
       descEl.innerHTML = `Este módulo está reservado exclusivamente para el Super Administrador de ${BRAND_HTML}. Tu organización actual no tiene permisos de acceso.`;
     } else {
-      descEl.innerText = `No tienes los permisos asignados para interactuar con este módulo.`;
+      descEl.innerText = 'Este módulo no está incluido en el plan de tu organización o tu rol no tiene permisos para usarlo. Consultá con un administrador.';
     }
   }
 
@@ -782,6 +796,30 @@ function redirectAllowedModule() {
   } else {
     switchModule('kanban');
   }
+}
+
+// Acceso a modulos y pestanas segun plan (entitlements) y permisos del JWT; ver public/access.js
+function getAccess() {
+  if (!currentUser || typeof HSAccess === 'undefined') return null;
+  return HSAccess.computeAccess(currentUser, HSAccess.decodeClaims(getAuthToken()));
+}
+
+const TAB_ELEMENT_SUFFIX = {
+  tenants: 'Tenants', platform: 'Platform', users: 'Users', roles: 'Roles', kanban: 'Kanban', orders: 'Orders',
+  '4see-monitors': '4seeMonitors', '4see-smartprice': '4seeSmartPrice', '4see-catalog': '4seeCatalog', '4see-margins': '4seeMargins'
+};
+
+// Oculta del menu (escritorio y movil) las pestanas que la sesion no puede usar
+function applyTabAccess() {
+  const access = getAccess();
+  if (!access) return;
+  Object.keys(TAB_ELEMENT_SUFFIX).forEach((key) => {
+    if (access.tabs[key]) return;
+    ['tab', 'mobTab'].forEach((prefix) => {
+      const el = document.getElementById(prefix + TAB_ELEMENT_SUFFIX[key]);
+      if (el) el.style.display = 'none';
+    });
+  });
 }
 
 function setModuleFavicon(mod) {
@@ -831,6 +869,8 @@ function switchModule(moduleName, updateUrl = true) {
   document.querySelectorAll('.nav-tab.feature-' + normMod + ', .nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'inline-flex');
   document.querySelectorAll('.mobile-nav-tab.feature-' + normMod + ', .mobile-nav-tab.feature-' + moduleName).forEach(el => el.style.display = 'block');
 
+  applyTabAccess();
+
   // 4. Marcar módulo activo con mapeo exacto de IDs
   const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner', '4see': 'mod4see' };
   const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner', '4see': 'mobMod4see' };
@@ -854,12 +894,12 @@ function switchModule(moduleName, updateUrl = true) {
     switchTab('tenants');
   } else if (normMod === 'core') {
     switchTab('platform');
-  } else if (normMod === 'kanban') {
-    switchTab('kanban');
+  } else if (normMod === 'kanban' || normMod === '4see') {
+    const access = getAccess();
+    const entryTab = access && typeof HSAccess !== 'undefined' ? HSAccess.firstTab(access, normMod) : null;
+    switchTab(entryTab || (normMod === 'kanban' ? 'kanban' : '4see-monitors'));
   } else if (normMod === 'scanner') {
     switchTab('scanner');
-  } else if (normMod === '4see') {
-    switchTab('4see-monitors');
   }
 }
 
