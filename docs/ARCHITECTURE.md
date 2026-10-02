@@ -151,6 +151,7 @@ CREATE POLICY rls_orders_tenant_isolation ON kanban_orders
 - `JWT_SECRET` es obligatorio (32+ caracteres) en produccion; en desarrollo, si falta, se genera uno aleatorio por proceso. La firma se compara en tiempo constante.
 - CORS por lista de origenes (`CORS_ORIGINS`; en desarrollo se aceptan origenes locales y de red privada). Cabeceras `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` y HSTS tras HTTPS en produccion.
 - Login con limite de intentos fallidos por IP y email (`LOGIN_RATE_MAX`, ventana de 15 minutos, HTTP 429).
+- Google OAuth: el callback redirige a `/login` (la app), con el token en el fragmento `#token=...&user=...`; `auth_error` y `onboarding=google` viajan en la query. El modo simulado (`mock_code_*`, `?email=`) solo existe con `OAUTH_MOCK=1` y `NODE_ENV` distinto de `production`.
 - Cobertura: `tests/test-security-hardening.js`. Pendientes en `docs/DEBT.md` (D-008).
 
 ## 6. Estrategia de Respaldos y Recuperación ante Desastres (Disaster Recovery)

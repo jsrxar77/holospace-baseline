@@ -377,6 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
   populateSavedCredentials();
 
   const urlParams = new URLSearchParams(window.location.search);
+  // El token de Google llega en el fragmento (#token=...&user=...); se fusiona con la query y se limpia de la URL
+  if (window.location.hash && window.location.hash.length > 1) {
+    new URLSearchParams(window.location.hash.slice(1)).forEach((v, k) => urlParams.set(k, v));
+  }
   const redirectTarget = urlParams.get('redirect');
 
   // Si viene con ?logout=true desde mobile, limpiar todo en el dominio principal

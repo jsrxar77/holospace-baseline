@@ -11,6 +11,8 @@ const assert = require('assert');
 const crypto = require('crypto');
 const http = require('http');
 const { query, getOne, execute } = require('../lib/db');
+// Los codigos mock_code_* solo valen con OAUTH_MOCK=1 (nunca en produccion)
+process.env.OAUTH_MOCK = '1';
 const { getAuthorizationUrl, exchangeCodeForUser, resolveOAuthUser, completeOAuthOnboarding } = require('../lib/oauth');
 const { PLANS } = require('../lib/billing');
 

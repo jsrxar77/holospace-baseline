@@ -11,7 +11,7 @@ const { query, getOne, execute, transaction, DEFAULT_TENANT_ID } = require('./li
 const { hashPassword, verifyPassword, signJwt, verifyJwt, resolveTenantContext } = require('./lib/auth');
 const { checkTenantModuleAccess, getTenantEntitlements, setTenantModuleState, getTenantSubscriptionAndUsage, requireModule } = require('./lib/entitlement');
 const { PLANS, registerNewTenant, createCheckoutSession, handlePaymentWebhook } = require('./lib/billing');
-const { getAuthorizationUrl, exchangeCodeForUser, resolveOAuthUser, completeOAuthOnboarding } = require('./lib/oauth');
+const { isOAuthMockEnabled, getAuthorizationUrl, exchangeCodeForUser, resolveOAuthUser, completeOAuthOnboarding } = require('./lib/oauth');
 const {
   hasPermission,
   formatPermissionError,
@@ -1240,10 +1240,15 @@ const server = http.createServer(async (req, res) => {
         const planParam = urlObj.searchParams.get('plan') || '';
         
         try {
-          // Si no hay credenciales reales de Google configuradas en el entorno local, simular flujo exitoso directamente
+          // Sin claves reales de Google: solo se simula con OAUTH_MOCK=1 fuera de produccion; si no, el acceso no esta disponible
           const hasRealGoogleKeys = process.env.GOOGLE_CLIENT_ID && !process.env.GOOGLE_CLIENT_ID.startsWith('dummy_');
           if (!hasRealGoogleKeys) {
-            const mockEmail = urlObj.searchParams.get('email') || 'jsrxar@gmail.com';
+            if (!isOAuthMockEnabled()) {
+              res.writeHead(302, { 'Location': `/login?auth_error=${encodeURIComponent('El acceso con Google no está configurado.')}` });
+              res.end();
+              return;
+            }
+            const mockEmail = urlObj.searchParams.get('email') || 'test.oauth.user@gmail.com';
             const mockCode = `mock_code_${mockEmail}`;
             const state = Buffer.from(JSON.stringify({ plan: planParam, nonce: 'simulated_local' })).toString('base64url');
             res.writeHead(302, { 'Location': `/api/auth/google/callback?code=${encodeURIComponent(mockCode)}&state=${encodeURIComponent(state)}` });
@@ -1286,7 +1291,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: errMsg }));
           } else {
-            res.writeHead(302, { 'Location': `/?auth_error=${encodeURIComponent(errMsg)}` });
+            res.writeHead(302, { 'Location': `/login?auth_error=${encodeURIComponent(errMsg)}` });
             res.end();
           }
           return;
@@ -1304,13 +1309,14 @@ const server = http.createServer(async (req, res) => {
 
           // Redirección browser
           if (result.status === 'AUTHENTICATED') {
-            const redirectUrl = `/?token=${encodeURIComponent(result.token)}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
+            // El token viaja en el fragmento (#) para que no quede en logs de servidor ni en el historial del proxy
+            const redirectUrl = `/login#token=${encodeURIComponent(result.token)}&user=${encodeURIComponent(JSON.stringify(result.user))}`;
             res.writeHead(302, { 'Location': redirectUrl });
             res.end();
           } else {
             // NEEDS_ONBOARDING
             const targetPlan = stateObj.plan || 'kanban_simple';
-            const redirectUrl = `/?onboarding=google&email=${encodeURIComponent(result.profile.email)}&name=${encodeURIComponent(result.profile.name || '')}&sub=${encodeURIComponent(result.profile.sub)}&picture=${encodeURIComponent(result.profile.picture || '')}&plan=${encodeURIComponent(targetPlan)}`;
+            const redirectUrl = `/login?onboarding=google&email=${encodeURIComponent(result.profile.email)}&name=${encodeURIComponent(result.profile.name || '')}&sub=${encodeURIComponent(result.profile.sub)}&picture=${encodeURIComponent(result.profile.picture || '')}&plan=${encodeURIComponent(targetPlan)}`;
             res.writeHead(302, { 'Location': redirectUrl });
             res.end();
           }
@@ -1320,7 +1326,7 @@ const server = http.createServer(async (req, res) => {
             res.writeHead(400, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: err.message }));
           } else {
-            res.writeHead(302, { 'Location': `/?auth_error=${encodeURIComponent(err.message)}` });
+            res.writeHead(302, { 'Location': `/login?auth_error=${encodeURIComponent(err.message)}` });
             res.end();
           }
         }

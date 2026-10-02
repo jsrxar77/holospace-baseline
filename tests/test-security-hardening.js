@@ -57,6 +57,13 @@ function forgeJwt(secret, email) {
   const forged = await req('GET', '/api/users', { headers: { Authorization: `Bearer ${forgeJwt('holospace_super_secret_jwt_key_2026_x89f_aes', email)}` } });
   ok(forged.status === 403 || forged.status === 401, `token firmado con el secreto historico publico rechazado (HTTP ${forged.status})`);
 
+  console.log('OAuth: el modo simulado no emite sesiones sin OAUTH_MOCK');
+  const mockCb = await req('GET', '/api/auth/google/callback?code=' + encodeURIComponent('mock_code_' + email));
+  const loc = String(mockCb.headers.location || '');
+  ok(mockCb.status === 302 && loc.startsWith('/login?auth_error=') && !/token=/.test(loc), 'callback con mock_code_<email> no entrega token');
+  const mockStart = await req('GET', '/api/auth/google?email=' + encodeURIComponent(email));
+  ok(!String(mockStart.headers.location || '').includes('mock_code_'), 'inicio de Google ignora ?email= y no simula sin OAUTH_MOCK');
+
   console.log('D-003 seed sin texto plano');
   const seed = fs.readFileSync(path.join(__dirname, '..', 'data', 'init-schema.sql'), 'utf8');
   ok(!/'scrypt:[^']{1,64}'/.test(seed), "init-schema.sql no usa el formato scrypt:<texto plano>");
