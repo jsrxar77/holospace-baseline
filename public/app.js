@@ -778,7 +778,7 @@ function redirectAllowedModule() {
 
 function setModuleFavicon(mod) {
   const map = { '4see': '/brand/4see.svg', kanban: '/brand/logistica.svg', scanner: '/brand/logistica.svg' };
-  let link = document.querySelector('link[rel="icon"]');
+  let link = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
   if (!link) { link = document.createElement('link'); link.rel = 'icon'; document.head.appendChild(link); }
   link.type = 'image/svg+xml';
   link.href = map[mod] || '/brand/mark.svg';
