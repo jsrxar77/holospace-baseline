@@ -28,9 +28,9 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.emptyContainer}>
-          <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay orden seleccionada.</Text>
+          <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No elegiste ningún pedido.</Text>
           <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius, marginTop: 16 }]} onPress={goHome}>
-            <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: theme.background }]}>Volver al Inicio</Text>
+            <Text style={[styles.btnHomeText, { fontFamily: fontFamilyMain, color: theme.background }]}>Volver a mis pedidos</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -58,32 +58,32 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
           {/* Title */}
           <Text style={[styles.title, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
             {isPartial
-              ? `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} Despachado Parcialmente!`
-              : `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} Verificado al 100%!`}
+              ? `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} cerrado con faltantes!`
+              : `¡Pedido #${(activeOrder.id || '').substring(0, 8).toUpperCase()} completo!`}
           </Text>
 
           <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
             {isPartial
-              ? 'El pedido fue verificado con autorización de supervisor por faltantes físicos.'
-              : 'La auditoría de stock ha finalizado con éxito. Todas las unidades han sido confirmadas.'}
+              ? 'Se cerró con la autorización de un supervisor porque faltaban productos en el depósito.'
+              : 'Escaneaste todos los productos y todo coincide con el pedido.'}
           </Text>
 
           {/* Audit Summary Details Box */}
           <View style={[styles.detailsBox, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Operario Auditador:</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Preparado por:</Text>
               <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="tail">
                 {activeOrder.operatorEmail || 'operario@holospace.com.ar'}
               </Text>
             </View>
 
             <View style={styles.detailBlock}>
-              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Cliente / Razón Social:</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Cliente:</Text>
               <Text style={[styles.detailValueBlock, { color: theme.textMain, fontFamily: fontFamilyMain }]}>{activeOrder.clientName}</Text>
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Unidades Verificadas:</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Unidades escaneadas:</Text>
               <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
                 {activeOrder.totalItemsScanned} / {activeOrder.totalItemsRequired} U (
                 {Math.round((activeOrder.totalItemsScanned / activeOrder.totalItemsRequired) * 100)}%)
@@ -91,14 +91,14 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
             </View>
 
             <View style={styles.detailRow}>
-              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Estado Auditoría:</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Estado:</Text>
               <Text style={[styles.detailValue, { color: isPartial ? theme.amber : theme.emerald, fontFamily: fontFamilyMono }]}>
                 {isPartial ? 'DESPACHO PARCIAL OK' : 'APROBADO AL 100%'}
               </Text>
             </View>
 
             <View style={styles.detailBlock}>
-              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Comprobante Registrado:</Text>
+              <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Remito:</Text>
               <Text style={[styles.detailValuePath, { color: theme.textMuted, fontFamily: fontFamilyMono }]} numberOfLines={1} ellipsizeMode="middle">
                 {activeOrder.pdfFileName || `Pedido #${activeOrder.orderNumber}`}
               </Text>
@@ -106,7 +106,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
             {activeOrder.exceptionReason && (
               <View style={styles.detailBlock}>
-                <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Marca de Agua / Auditoría:</Text>
+                <Text style={[styles.detailLabel, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Motivo del cierre parcial:</Text>
                 <Text style={[styles.detailValue, { color: theme.emerald, fontFamily: fontFamilyMono }]}>{activeOrder.exceptionReason}</Text>
               </View>
             )}
@@ -114,7 +114,7 @@ export const DispatchScreen: React.FC<DispatchScreenProps> = ({ onNavigate, onBa
 
           {/* Action Button */}
           <TouchableOpacity style={[styles.btnHome, { backgroundColor: theme.emerald, borderRadius: btnRadius, borderWidth: borderWidthVal, borderColor: theme.emerald }]} onPress={handleCorroborateAndFinish} activeOpacity={0.8}>
-            <Text style={[styles.btnHomeText, { color: theme.background, fontFamily: fontFamilyMain }]}>VOLVER A LISTA DE PEDIDOS</Text>
+            <Text style={[styles.btnHomeText, { color: theme.background, fontFamily: fontFamilyMain }]}>VOLVER A MIS PEDIDOS</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

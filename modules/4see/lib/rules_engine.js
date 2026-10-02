@@ -135,7 +135,7 @@ function auditListing(listing) {
       code: 'MISSING_GTIN',
       severity: 'HIGH',
       field: 'barcode_gtin',
-      message: 'Falta código GTIN / EAN-13 válido (8-14 dígitos). Riesgo de rechazo en Google Shopping y marketplaces.'
+      message: 'Falta el código de barras (EAN-13). Sin él, Google Shopping y otros canales pueden rechazar el producto.'
     });
   }
 
@@ -145,7 +145,7 @@ function auditListing(listing) {
       code: 'MISSING_BRAND',
       severity: 'MEDIUM',
       field: 'brand',
-      message: 'Falta especificar la marca del producto para indexación y filtros por faceta.'
+      message: 'Falta la marca del producto. Sin marca cuesta más que te encuentren y filtrar por ella.'
     });
   }
 
@@ -155,7 +155,7 @@ function auditListing(listing) {
       code: 'SHORT_TITLE',
       severity: 'LOW',
       field: 'title',
-      message: 'Título demasiado breve (< 20 caracteres) para intención de búsqueda comercial.'
+      message: 'El título es muy corto (menos de 20 caracteres). Uno más descriptivo ayuda a vender.'
     });
   }
 
@@ -165,7 +165,7 @@ function auditListing(listing) {
       code: 'MISSING_SEO_TITLE',
       severity: 'LOW',
       field: 'seo_title',
-      message: 'No posee meta título SEO configurado.'
+      message: 'Falta el título que ve Google en los resultados de búsqueda.'
     });
   }
 
@@ -175,7 +175,7 @@ function auditListing(listing) {
       code: 'MISSING_SEO_DESC',
       severity: 'LOW',
       field: 'seo_description',
-      message: 'No posee meta descripción SEO (afecta CTR en motores de búsqueda).'
+      message: 'Falta la descripción que ve Google en los resultados de búsqueda: con ella te eligen más.'
     });
   }
 

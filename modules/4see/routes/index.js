@@ -136,13 +136,13 @@ router.post('/catalog/audit', async (req, res) => {
     // Diagnóstico técnico estricto
     const diagnostics = [];
     if (!gtin || gtin.length < 8) {
-      diagnostics.push({ code: 'MISSING_GTIN', severity: 'HIGH', message: 'Falta código GTIN / EAN-13 válido (riesgo de rechazo en Google Shopping).' });
+      diagnostics.push({ code: 'MISSING_GTIN', severity: 'HIGH', message: 'Falta el código de barras (EAN-13). Sin él, Google Shopping y otros canales pueden rechazar el producto.' });
     }
     if (!brand || brand.trim().length === 0) {
-      diagnostics.push({ code: 'MISSING_BRAND', severity: 'MEDIUM', message: 'Falta especificar marca del producto.' });
+      diagnostics.push({ code: 'MISSING_BRAND', severity: 'MEDIUM', message: 'Falta la marca del producto. Sin marca cuesta más que te encuentren y filtrar por ella.' });
     }
     if (title.length < 20) {
-      diagnostics.push({ code: 'SHORT_TITLE', severity: 'LOW', message: 'Título demasiado breve para intención de búsqueda comercial.' });
+      diagnostics.push({ code: 'SHORT_TITLE', severity: 'LOW', message: 'El título es muy corto (menos de 20 caracteres). Uno más descriptivo ayuda a vender.' });
     }
 
     // Sugerencia optimizada con intención de búsqueda

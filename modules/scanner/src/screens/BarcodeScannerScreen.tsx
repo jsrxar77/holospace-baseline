@@ -78,10 +78,10 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
     return (
       <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
         <Text style={[styles.permissionText, { color: theme.textMain, fontFamily: fontFamilyMain }]}>
-          Se requiere permiso de cámara para escanear los códigos de barras de depósito.
+          Para escanear los códigos de barras de los productos necesitamos usar la cámara del celular.
         </Text>
         <TouchableOpacity style={[styles.btnPermission, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={requestPermission}>
-          <Text style={[styles.btnPermissionText, { fontFamily: fontFamilyMain, color: theme.background }]}>Otorgar Permiso de Cámara</Text>
+          <Text style={[styles.btnPermissionText, { fontFamily: fontFamilyMain, color: theme.background }]}>Permitir el uso de la cámara</Text>
         </TouchableOpacity>
       </View>
     );
@@ -181,7 +181,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
             onPress={handleCloseScanner}
             activeOpacity={0.8}
           >
-            <Text style={[styles.btnHeaderBackText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>← RESUMEN</Text>
+            <Text style={[styles.btnHeaderBackText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>← VOLVER AL PEDIDO</Text>
           </TouchableOpacity>
 
           <View style={styles.topRightActions}>
@@ -190,7 +190,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
               onPress={() => setTorch(!torch)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.btnPillText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'FLASH ON' : 'FLASH'}</Text>
+              <Text style={[styles.btnPillText, { color: torch ? theme.amber : theme.textMain, fontFamily: fontFamilyMono }]}>{torch ? 'LINTERNA ENCENDIDA' : 'FLASH'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -198,7 +198,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
               onPress={() => setManualModalOpen(true)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.btnPillText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>MANUAL</Text>
+              <Text style={[styles.btnPillText, { color: theme.textMain, fontFamily: fontFamilyMono }]}>ESCRIBIR CÓDIGO</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -218,7 +218,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
               {pendingItem.description}
             </Text>
             <Text style={[styles.targetCode, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-              EAN Requerido: {pendingItem.code}
+              Código que se espera: {pendingItem.code}
             </Text>
           </View>
         )}
@@ -267,14 +267,14 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
 
             <View style={styles.comparisonRow}>
               <View style={styles.comparisonCol}>
-                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>ESPERADO</Text>
+                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>SE ESPERABA</Text>
                 <Text style={[styles.comparisonVal, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
                   {scanComparison.expectedCode}
                 </Text>
               </View>
               <View style={[styles.comparisonColDivider, { backgroundColor: theme.cardBorder }]} />
               <View style={styles.comparisonCol}>
-                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>ESCANEADO</Text>
+                <Text style={[styles.comparisonLabel, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>LEÍDO</Text>
                 <Text style={[styles.comparisonVal, { color: scanComparison.isMatch ? theme.emerald : theme.red, fontFamily: fontFamilyMono }]}>
                   {scanComparison.scannedCode}
                 </Text>
@@ -284,7 +284,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
             {!scanComparison.isMatch && (
               <>
                 <Text style={[styles.comparisonHelpText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-                  Verifica los digitos o toma una captura de pantalla para auditoria.
+                  Revisá los números del código o sacale una captura de pantalla para avisar al administrador.
                 </Text>
                 <View style={styles.comparisonActionsRow}>
                   <TouchableOpacity
@@ -297,7 +297,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.btnComparisonRetryText, { color: theme.background, fontFamily: fontFamilyMain }]}>
-                      REINTENTAR
+                      VOLVER A ESCANEAR
                     </Text>
                   </TouchableOpacity>
 
@@ -307,7 +307,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
                     activeOpacity={0.8}
                   >
                     <Text style={[styles.btnComparisonCloseText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
-                      SALIR
+                      CERRAR
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -343,7 +343,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
           onPress={handleCloseScanner}
           activeOpacity={0.8}
         >
-          <Text style={[styles.btnCloseText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>VOLVER AL RESUMEN</Text>
+          <Text style={[styles.btnCloseText, { color: theme.emerald, fontFamily: fontFamilyMain }]}>VOLVER AL PEDIDO</Text>
         </TouchableOpacity>
       </View>
 
@@ -351,9 +351,9 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
       <Modal visible={isManualModalOpen} transparent animationType="fade" onRequestClose={() => setManualModalOpen(false)}>
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.cardBg, borderColor: theme.emerald, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
-            <Text style={[styles.modalTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Ingreso Manual de EAN-13</Text>
+            <Text style={[styles.modalTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>Escribir el código de barras</Text>
             <Text style={[styles.modalSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-              Ingresa los dígitos del código de barras si la etiqueta está dañada:
+              Escribí los números del código si la etiqueta está dañada o no se lee:
             </Text>
 
             <TextInput
@@ -380,7 +380,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
                 onPress={handleManualSubmit}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.btnModalConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Procesar Código</Text>
+                <Text style={[styles.btnModalConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Confirmar código</Text>
               </TouchableOpacity>
             </View>
           </View>

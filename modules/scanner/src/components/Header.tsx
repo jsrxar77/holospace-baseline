@@ -169,13 +169,13 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* Organización */}
                 <Text style={[styles.dropdownOrg, { color: theme.emerald, fontFamily: fontFamilyMain as any }]}>
-                  ORGANIZACIÓN: {orgName.toUpperCase()}
+                  EMPRESA: {orgName.toUpperCase()}
                 </Text>
 
                 {/* Línea Divisoria */}
                 <View style={[styles.divider, { backgroundColor: theme.cardBorder }]} />
 
-                {/* Botón Rojo de Cerrar Sesión */}
+                {/* Botón Rojo de Cerrar sesión */}
                 <TouchableOpacity
                   style={[
                     styles.btnLogout,
@@ -190,7 +190,7 @@ export const Header: React.FC<HeaderProps> = ({
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.btnLogoutText, { color: theme.red, fontFamily: fontFamilyMain as any }]}>
-                    Cerrar Sesión
+                    Cerrar sesión
                   </Text>
                 </TouchableOpacity>
               </View>

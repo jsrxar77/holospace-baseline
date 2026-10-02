@@ -36,6 +36,43 @@ Arquitectura: **hologrowth.dev** (empresa) > **holospace.** (plataforma) > produ
 
 Los PNG se generan desde HTML con Playwright (fuente Geist) y se reducen con `sips`; el verde sale de `emerald` de cada tema en `themes.json`.
 
+## 0.2 Voz y textos de producto (vigente)
+
+Principio: el producto se explica solo. Quien entra conoce su negocio, no el mundo SaaS; en cada pantalla tiene que saber a que apunta sin manual. Aplica a landing, app web (todos los modulos) y Scanner. Skill: `.claude/skills/holospace-copy`. Prueba: `tests/test-copy.js`.
+
+**Contrato de pantalla.** Titulo (que es, en palabras del negocio) + bajada de una o dos frases (para que sirve y que decidis) + estado vacio con siguiente paso + botones con verbo y objeto + campos con etiqueta comun y pista si hace falta + mensajes que dicen que paso y que hacer.
+
+**Voz.** Espanol rioplatense con "vos", frases cortas, sin emojis, sin ingles ni jerga. holospace. avisa y sugiere; vos decidis; no cambia precios por su cuenta. Cifras y planes solo desde el codigo.
+
+**Glosario.** Un termino, una traduccion, igual en toda la plataforma:
+
+| No usar | Usar |
+|---|---|
+| Worker, scraping | Revisar precios ahora |
+| Repricing, dynamic pricing | Ajuste de precios, precio sugerido |
+| Piso inquebrantable, hard floor | Piso de margen |
+| Producto 1:N, mapping | Producto con varios rivales |
+| Diff view, write-back | Comparacion antes y despues, aplicar en tu tienda |
+| Mock | Simulacion, modo de prueba |
+| Trigger, offset | Cuando actua, valor del ajuste |
+| Zona roja | Margen bajo |
+| Tenant | Empresa (organizacion) |
+| Queue, cola | Precios para decidir |
+| GTIN / EAN | Codigo de barras (EAN) |
+
+**Catalogo de pantallas de 4see.**
+
+| Pestana | Titulo | Bajada |
+|---|---|---|
+| Competencia | Precios de tu competencia | Cargá los links de los productos de tus rivales. holospace. revisa su precio y su stock y te muestra donde te conviene actuar. |
+| Precios sugeridos | Precios sugeridos | holospace. compara tus precios con los de tus rivales y te propone un precio nuevo para cada producto, sin bajar nunca de tu piso de margen. Vos decidis si lo aplicas. |
+| Catalogo | Salud de tu catalogo | Revisa los productos de tu tienda y marca lo que falta: codigo de barras, marca y un mejor titulo. Despues los corregis desde aca. |
+| Margenes | Margenes de ganancia | Cargá el costo, las comisiones y los impuestos de cada producto y mira cuanto ganas de verdad. Te marca los que quedan con poco margen. |
+
+**Tablero de pedidos.** Columnas: Nuevos, Listos para preparar, En preparacion, Completados (los codigos de estado BACKLOG, READY, DOING y DONE no cambian). El Scanner usa "soltar" para devolver un pedido a la lista y "escanear" para verificar cada producto.
+
+**Otras pantallas.** Kanban: "Pedidos" (tablero de lo que hay que preparar) y "Explorador de pedidos"; Scanner: "Preparar pedido"; gestion: "Usuarios", "Roles y permisos", "Empresas". Cada una sigue el mismo contrato; el detalle vive en el HTML y en `public/app.js`, y `tests/test-copy.js` impide que vuelvan los terminos del glosario.
+
 ## 0. Landing comercial v3: lamina tecnica (vigente)
 
 La landing (`modules/landing/public/`) es una **lamina tecnica normalizada** con los temas Holo Night y Holo Day, para que pagina y producto compartan sistema visual. Direccion y razones en `DESIGN.md` y en `.impeccable/surfaces/` (contrato de direccion). Audiencia: duenos y gerentes de pymes; el relato lidera con e-commerce (4see) y presenta ambas lineas.

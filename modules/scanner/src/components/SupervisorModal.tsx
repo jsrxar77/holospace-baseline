@@ -26,11 +26,11 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
 
   const handleConfirm = () => {
     if (pin.trim() !== '9999') {
-      showThemedAlert('PIN Incorrecto', 'El PIN de supervisor ingresado no es válido.', [{ text: 'Entendido', style: 'default' }]);
+      showThemedAlert('PIN incorrecto', 'El PIN no es válido. Probá de nuevo.', [{ text: 'Entendido', style: 'default' }]);
       return;
     }
     if (!reason.trim()) {
-      showThemedAlert('Motivo Requerido', 'Por favor ingresa un motivo para el cierre parcial por excepción.', [{ text: 'Entendido', style: 'default' }]);
+      showThemedAlert('Falta el motivo', 'Contanos por qué se cierra el pedido con faltantes.', [{ text: 'Entendido', style: 'default' }]);
       return;
     }
     onConfirm(pin, reason);
@@ -42,13 +42,13 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={[styles.modalContent, { backgroundColor: theme.cardBg, borderColor: theme.amber, borderRadius: cardRadius, borderWidth: borderWidthVal }]}>
-          <Text style={[styles.title, { color: theme.amber, fontFamily: fontFamilyMain }]}>Autorización de Supervisor</Text>
+          <Text style={[styles.title, { color: theme.amber, fontFamily: fontFamilyMain }]}>Autorización de un supervisor</Text>
           <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>
-            Se detectaron unidades pendientes. Ingresa el PIN maestro para autorizar el despacho parcial:
+            Faltan productos por escanear. Un supervisor debe ingresar su PIN para cerrar el pedido con faltantes:
           </Text>
 
           <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>PIN de Supervisor (4 dígitos)</Text>
+            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>PIN del supervisor (4 números)</Text>
             <TextInput
               style={[styles.input, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
               placeholder="••••"
@@ -62,10 +62,10 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Motivo / Justificación</Text>
+            <Text style={[styles.label, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>Motivo</Text>
             <TextInput
               style={[styles.input, styles.textArea, { backgroundColor: theme.background, borderColor: theme.cardBorder, borderRadius: btnRadius, borderWidth: borderWidthVal, color: theme.textMain, fontFamily: fontFamilyMono }]}
-              placeholder="Ej: Quiebre de stock en bodega, falta de producto..."
+              placeholder="Ej: no hay más stock en el depósito"
               placeholderTextColor={theme.textMuted}
               multiline
               numberOfLines={3}
@@ -88,7 +88,7 @@ export const SupervisorModal: React.FC<SupervisorModalProps> = ({
               onPress={handleConfirm}
               activeOpacity={0.8}
             >
-              <Text style={[styles.btnConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Autorizar Cierre</Text>
+              <Text style={[styles.btnConfirmText, { color: theme.background, fontFamily: fontFamilyMain }]}>Autorizar y cerrar</Text>
             </TouchableOpacity>
           </View>
         </View>

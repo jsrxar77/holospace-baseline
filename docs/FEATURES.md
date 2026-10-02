@@ -130,3 +130,6 @@ SmartPrice y Monitor de Precios tienen un selector Tabla / Dashboard. SmartPrice
 
 ## Boton "Conectar Celular"
 Solo se ve en los modulos Kanban y Scanner (vinculacion de la app movil); en 4see, Tenant y Core no aparece.
+
+## Textos que se explican solos
+Todas las pantallas (4see, pedidos, usuarios, roles, empresas), el Scanner y la landing usan el mismo lenguaje: titulo que dice que es, una bajada que dice para que sirve, estados vacios con el siguiente paso y botones con verbo. Pestanas de 4see: Competencia, Precios sugeridos, Catalogo, Margenes. Columnas del tablero de pedidos: Nuevos, Listos para preparar, En preparacion, Completados (los codigos internos de estado no cambian). Detalle y glosario en `docs/CONTENT.md` 0.2.

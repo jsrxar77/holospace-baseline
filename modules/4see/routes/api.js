@@ -212,13 +212,13 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     const id = crypto.randomUUID();
     const diagnostics = [];
     if (!gtin || gtin.length < 8) {
-      diagnostics.push({ code: 'MISSING_GTIN', severity: 'HIGH', message: 'Falta codigo GTIN / EAN-13 valido (riesgo de suspension en Google Shopping).' });
+      diagnostics.push({ code: 'MISSING_GTIN', severity: 'HIGH', message: 'Falta el código de barras (EAN-13). Sin él, Google Shopping y otros canales pueden rechazar el producto.' });
     }
     if (!brand || brand.trim().length === 0) {
-      diagnostics.push({ code: 'MISSING_BRAND', severity: 'MEDIUM', message: 'Falta especificar marca del producto.' });
+      diagnostics.push({ code: 'MISSING_BRAND', severity: 'MEDIUM', message: 'Falta la marca del producto. Sin marca cuesta más que te encuentren y filtrar por ella.' });
     }
     if (title.length < 20) {
-      diagnostics.push({ code: 'SHORT_TITLE', severity: 'LOW', message: 'Titulo demasiado breve para intencion de busqueda comercial.' });
+      diagnostics.push({ code: 'SHORT_TITLE', severity: 'LOW', message: 'El título es muy corto (menos de 20 caracteres). Uno más descriptivo ayuda a vender.' });
     }
 
     const suggestedTitle = `${brand ? brand.toUpperCase() + ' ' : ''}${title.trim()} [Envio Inmediato - Stock Oficial]`;
@@ -407,7 +407,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     );
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, message: 'Tienda desconectada exitosamente.' }));
+    res.end(JSON.stringify({ success: true, message: 'Tienda desconectada.' }));
     return true;
   }
 
@@ -940,7 +940,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       }
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, message: 'Precio aprobado y aplicado exitosamente.', newPrice: item.suggested_price }));
+      res.end(JSON.stringify({ success: true, message: 'Precio aplicado.', newPrice: item.suggested_price }));
       return true;
     } catch (err) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -963,7 +963,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     );
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, message: 'Sugerencia rechazada.' }));
+    res.end(JSON.stringify({ success: true, message: 'Sugerencia descartada.' }));
     return true;
   }
 

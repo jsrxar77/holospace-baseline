@@ -65,8 +65,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
   const handleClaimOrder = async (orderId: string, orderNumber: string) => {
     if (myDoingOrders.length > 0) {
       showThemedAlert(
-        'Límite de Pedidos Activos',
-        `Ya tienes ${myDoingOrders.length} pedido(s) en proceso.\n\nDebes finalizar la auditoría o liberar tus pedidos antes de tomar uno nuevo de la lista general.`,
+        'Ya tenés pedidos en preparación',
+        `Tenés ${myDoingOrders.length} pedido(s) en preparación.\n\nTerminá de prepararlos o soltalos antes de tomar uno nuevo.`,
         [{ text: 'Entendido', style: 'default' }]
       );
       return;
@@ -78,11 +78,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
       if (claimed) {
         goToSummary();
       } else {
-        showThemedAlert('Error al Tomar Pedido', 'El pedido fue asignado a otro operario o no está disponible.', [{ text: 'Entendido', style: 'default' }]);
+        showThemedAlert('No pudiste tomar el pedido', 'Otro operario ya lo tomó o dejó de estar disponible.', [{ text: 'Entendido', style: 'default' }]);
       }
     } catch (e) {
       console.log('Error claiming order:', e);
-      showThemedAlert('Error al Tomar Pedido', 'No se pudo tomar el pedido.', [{ text: 'Entendido', style: 'default' }]);
+      showThemedAlert('No pudiste tomar el pedido', 'No pudimos asignártelo. Revisá tu conexión e intentá de nuevo.', [{ text: 'Entendido', style: 'default' }]);
     }
   };
 
@@ -93,8 +93,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
   const handleReleaseOrder = async (orderId: string, orderNumber: string) => {
     showThemedAlert(
-      'Liberar Pedido',
-      `¿Deseas devolver el Pedido #${orderNumber} a la columna LISTO?`,
+      'Soltar el pedido',
+      `¿Querés soltar el pedido #${orderNumber}? Vuelve a la lista para que otro operario lo tome.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -128,18 +128,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Header title="holospace. · scanner" badgeText={`OP: ${operatorId}`} />
+      <Header title="holospace. · preparar pedidos" badgeText={`Operario: ${operatorId}`} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.emerald} />}
       >
-        {/* SECCIÓN 1: MIS PEDIDOS EN PROCESO (DOING) */}
+        {/* SECCIÓN 1: MIS PEDIDOS EN PREPARACIÓN (DOING) */}
         {hasDoingOrders ? (
           <View style={{ gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontSize: 15, fontWeight: '900', color: theme.emerald, fontFamily: fontFamilyMain, letterSpacing: 0.5 }}>
-                MIS PEDIDOS EN PROCESO ({myDoingOrders.length})
+                MIS PEDIDOS EN PREPARACIÓN ({myDoingOrders.length})
               </Text>
             </View>
 
@@ -168,7 +168,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                     </Text>
                     {isFocused && (
                       <View style={{ backgroundColor: `${theme.emerald}25`, borderColor: theme.emerald, borderWidth: borderWidthVal, paddingHorizontal: 8, paddingVertical: 2, borderRadius: badgeRadius }}>
-                        <Text style={{ color: theme.emerald, fontSize: 11, fontWeight: '900', fontFamily: fontFamilyMono }}>EN FOCO</Text>
+                        <Text style={{ color: theme.emerald, fontSize: 11, fontWeight: '900', fontFamily: fontFamilyMono }}>EN PANTALLA</Text>
                       </View>
                     )}
                   </View>
@@ -197,7 +197,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
                       onPress={() => handleReleaseOrder(doingItem.id, doingItem.orderNumber)}
                       activeOpacity={0.8}
                     >
-                      <Text style={[styles.btnReleaseHomeText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR</Text>
+                      <Text style={[styles.btnReleaseHomeText, { color: theme.amber, fontFamily: fontFamilyMain }]}>SOLTAR</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -209,14 +209,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
         {/* SECCIÓN 2: PEDIDOS DISPONIBLES EN LISTO (READY) */}
         <View style={[styles.uploadCard, { backgroundColor: theme.cardBg, borderColor: theme.cardBorder, borderWidth: borderWidthVal, borderRadius: cardRadius }]}>
           <Text style={[styles.uploadTitle, { color: theme.emerald, fontFamily: fontFamilyMain }]}>
-            PEDIDOS LISTOS PARA TOMAR {readyOrders.length > 0 ? `(${readyOrders.length})` : ''}
+            PEDIDOS PARA TOMAR {readyOrders.length > 0 ? `(${readyOrders.length})` : ''}
           </Text>
 
           {readyOrders.length > 0 && (
             <Text style={[styles.uploadSubtitle, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
               {hasDoingOrders
-                ? `[BLOQUEADO] Tienes ${myDoingOrders.length} pedido(s) en proceso. Finalízalos o libéralos para tomar otro de la lista general.`
-                : 'Selecciona un pedido validado por el Administrador para asignártelo e iniciar el escaneo:'}
+                ? `Tenés ${myDoingOrders.length} pedido(s) en preparación. Terminalos o soltalos para tomar otro.`
+                : 'Elegí un pedido para prepararlo. Vas a escanear cada producto con la cámara:'}
             </Text>
           )}
 
@@ -232,7 +232,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
               activeOpacity={hasDoingOrders ? 1 : 0.8}
             >
               <Text style={[styles.btnUploadText, { fontFamily: fontFamilyMain, color: theme.background }, hasDoingOrders && { color: theme.textMuted }]}>
-                TOMAR PEDIDO #${(item.id || '').substring(0, 8).toUpperCase()} (Comp. #${item.orderNumber} - ${item.totalItems} U)
+                TOMAR PEDIDO #${(item.id || '').substring(0, 8).toUpperCase()} (remito #${item.orderNumber}, ${item.totalItems} unidades)
               </Text>
             </TouchableOpacity>
           ))}
@@ -240,7 +240,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigate, onNavigateTo
           {readyOrders.length === 0 && (
             <View style={styles.emptyBox}>
               <Text style={[styles.emptyText, { color: theme.textMuted, fontFamily: fontFamilyMain }]}>
-                No hay pedidos en estado LISTO en este momento.
+                No hay pedidos para preparar ahora. Cuando tu administrador cargue uno, aparece acá.
               </Text>
             </View>
           )}

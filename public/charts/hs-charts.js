@@ -174,17 +174,17 @@
       o.yAxis.scale = true;
       o.series = [
         {
-          name: 'Piso', type: 'scatter', symbol: 'rect', symbolSize: [30, 3],
+          name: 'Piso de margen', type: 'scatter', symbol: 'rect', symbolSize: [30, 3],
           data: opts.rows.map(function (r) { return r.floor; }),
           itemStyle: { color: p.applied }, z: 3
         },
         {
-          name: 'Anterior', type: 'scatter', symbol: 'rect', symbolSize: 9,
+          name: 'Precio actual', type: 'scatter', symbol: 'rect', symbolSize: 9,
           data: opts.rows.map(function (r) { return r.previous; }),
           itemStyle: { color: p.neutral }, z: 2
         },
         {
-          name: 'Sugerido', type: 'scatter', symbol: 'circle', symbolSize: 11,
+          name: 'Precio sugerido', type: 'scatter', symbol: 'circle', symbolSize: 11,
           data: opts.rows.map(function (r) { return r.suggested; }),
           itemStyle: { color: p.pending }, z: 2
         }
@@ -210,7 +210,7 @@
       });
       o.yAxis.scale = true;
       o.series = [
-        { name: 'Mi precio', type: 'scatter', symbol: 'rect', symbolSize: [30, 3], z: 3, data: opts.rows.map(function (r) { return r.mine; }), itemStyle: { color: p.applied } },
+        { name: 'Tu precio', type: 'scatter', symbol: 'rect', symbolSize: [30, 3], z: 3, data: opts.rows.map(function (r) { return r.mine; }), itemStyle: { color: p.applied } },
         { name: 'Rivales', type: 'scatter', symbol: 'circle', symbolSize: 10, z: 2, data: rivalPts, itemStyle: { color: p.ink } }
       ];
       return o;

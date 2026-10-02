@@ -34,7 +34,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
       activeOpacity={0.8}
     >
       <View style={styles.details}>
-        <Text style={[styles.skuText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>EAN: {item.code}</Text>
+        <Text style={[styles.skuText, { color: theme.textMuted, fontFamily: fontFamilyMono }]}>Código: {item.code}</Text>
         <Text style={[styles.descriptionText, { color: theme.textMain, fontFamily: fontFamilyMain }]} numberOfLines={2}>
           {item.description}
         </Text>
@@ -64,7 +64,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onPress }) => {
               }
             ]}
           >
-            {isCompleted ? 'LISTO' : (isPending ? 'PENDIENTE' : 'EN CURSO')}
+            {isCompleted ? 'LISTO' : (isPending ? 'FALTA' : 'EN CURSO')}
           </Text>
         </View>
       </View>

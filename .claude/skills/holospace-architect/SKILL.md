@@ -39,3 +39,6 @@ Verificar que todo nuevo cambio o propuesta cumpla con:
 - [ ] **Cero Emojis / Emoticones**: La interfaz, textos, logs, base de datos y documentación siguen un diseño sobrio sin ningún tipo de emoji.
 - [ ] **100% Dockerizado**: El stack en `docker-compose.yml` debe ser la referencia principal y única.
 - [ ] **Documentación y README sincronizados**: Sin instrucciones contradictorias.
+
+## Textos de producto
+Toda pantalla, modal, mensaje o error visible sigue la skill `holospace-copy` (contrato titulo + bajada, glosario, voz rioplatense) y `docs/CONTENT.md` 0.2. Antes de dar un cambio por terminado: `node tests/test-copy.js` (dentro de Docker: `docker compose exec app node tests/test-copy.js`).

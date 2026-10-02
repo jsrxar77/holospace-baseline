@@ -313,3 +313,5 @@ Antes de dar por finalizada la implementacion de un ABM, verificar:
 - [ ] El estado refleja `● Activo` o `○ Inactivo` mediante punto indicador en color solido.
 - [ ] Las mutaciones capturan errores RBAC 403.
 - [ ] Las suites de prueba automatizadas en `tests/` pasan con 0 fallos.
+
+- [ ] Textos segun `holospace-copy`: titulo de lo que es (no del nombre tecnico), bajada que explica para que sirve, vacio con boton, etiquetas y mensajes en lenguaje comun, sin ingles ni jerga.

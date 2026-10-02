@@ -118,3 +118,6 @@ Actualizar obligatoriamente los 7 archivos canonicos:
 4. `docs/README.md`: Agregar URL de acceso, rol permitido, credenciales y comandos de test.
 5. `docs/CONTENT.md`: Naming oficial y textos de interfaz.
 6. `docs/ROADMAP.md`: Marcar hito de creacion y estado de entrega.
+
+## Textos del modulo nuevo
+Cada vista nace con titulo, bajada de una o dos frases, estado vacio con siguiente paso y botones con verbo y objeto, segun la skill `holospace-copy`. Registrar la vista en `tests/test-copy.js` (objeto `views`) y los nombres de pestana en el glosario de `docs/CONTENT.md` 0.2.

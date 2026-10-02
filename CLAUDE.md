@@ -26,6 +26,9 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 ## Flujo por cambio (impacto 360)
 Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist.
 
+## Textos
+La app se explica sola para quien conoce su negocio pero no el mundo SaaS: cada pantalla con titulo + bajada, vacios con siguiente paso, voz rioplatense con "vos", sin ingles ni jerga. Glosario y catalogo en `docs/CONTENT.md` 0.2; skill `holospace-copy`; los hace cumplir `tests/test-copy.js`.
+
 ## Graficos
 Suite en `public/charts/hs-charts.js` sobre ECharts vendorizado (`public/vendor/`); reglas y paleta semantica en la skill `holospace-charts`. Menta = aplicado, violeta = pendiente, ambar = riesgo.
 
@@ -36,7 +39,7 @@ Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth
 Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Los dos temas Holo son los unicos (`docs/ARCHITECTURE.md` 7.2 y 7.3.1).
 
 ## Skills del proyecto (`.claude/skills/`)
-`holospace-architect`, `holospace-module-creator`, `holospace-multi-tenant-security`, `holospace-theme-system`, `holospace-testing-verification`, `holospace-docker-deploy`, `holospace-crud-template`, `holospace-charts`, `impeccable`.
+`holospace-architect`, `holospace-module-creator`, `holospace-multi-tenant-security`, `holospace-theme-system`, `holospace-testing-verification`, `holospace-docker-deploy`, `holospace-crud-template`, `holospace-charts`, `holospace-copy`, `impeccable`.
 
 ## MCP (`.mcp.json`)
 postgres (solo lectura, via `HOLOSPACE_DB_URL`), github, context7, playwright (solo bajo pedido). Servidores con OAuth se autorizan con `/mcp`.

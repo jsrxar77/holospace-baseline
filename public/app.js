@@ -25,7 +25,7 @@ function showPermissionDeniedModal(data = {}) {
   const modal = document.getElementById('permissionDeniedModal');
   if (!modal) {
     if (typeof showCustomAlert === 'function') {
-      showCustomAlert('Acceso Restringido (403)', data.message || data.error || 'Permisos insuficientes.');
+      showCustomAlert('No tenés permiso para esto', data.message || data.error || 'Tu rol no incluye esta acción. Pedile a un administrador que te la habilite.');
     }
     return;
   }
@@ -218,10 +218,10 @@ async function changeAppThemeSubmit(themeKey) {
         await loadPlatformPanel();
       }
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No se pudo cambiar el tema visual.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No se pudo cambiar el tema visual.');
     }
   } catch (e) {
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -245,10 +245,10 @@ async function changeTenantDefaultTheme(tenantId, themeKey) {
     if (data.success) {
       await loadTenantsManagementData();
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No se pudo cambiar el tema del Tenant.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No pudimos cambiar el tema de la empresa.');
     }
   } catch (e) {
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -259,7 +259,7 @@ async function loadAppConfig() {
     if (data.success && data.version) {
       const verEl = document.getElementById('footerAppVersion');
       if (verEl) {
-        verEl.innerHTML = `${BRAND_HTML} SaaS v${String(data.version).replace(/[^0-9A-Za-z.\-]/g, '')}`;
+        verEl.innerHTML = `${BRAND_HTML} versión ${String(data.version).replace(/[^0-9A-Za-z.\-]/g, '')}`;
       }
     }
   } catch (e) { }
@@ -448,13 +448,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = document.getElementById('obSubmitBtn');
 
       if (!currentOnboardingProfile) {
-        errorDiv.innerText = 'Error: no se encontraron datos de la cuenta de Google.';
+        errorDiv.innerText = 'No pudimos leer los datos de tu cuenta de Google. Volvé a intentar el ingreso.';
         errorDiv.style.display = 'block';
         return;
       }
 
       submitBtn.disabled = true;
-      submitBtn.innerText = 'Creando Organización...';
+      submitBtn.innerText = 'Creando tu cuenta...';
       errorDiv.style.display = 'none';
 
       try {
@@ -481,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorDiv.innerText = err.message;
         errorDiv.style.display = 'block';
         submitBtn.disabled = false;
-        submitBtn.innerText = 'Activar Organización y Entrar';
+        submitBtn.innerText = 'Crear mi cuenta y entrar';
       }
     });
   }
@@ -591,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loginError.style.display = 'block';
       }
     } catch (err) {
-      loginError.innerText = 'Error conectando al servidor';
+      loginError.innerText = 'No pudimos conectarnos al servidor. Intentá de nuevo.';
       loginError.style.display = 'block';
     }
   });
@@ -660,10 +660,10 @@ function applyRoleVisibility() {
       dropRoleBadge.style.border = '1px solid #A78BFA';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
-    if (dropOrg) dropOrg.innerHTML = `Organización: ${BRAND_HTML} Global Platform`;
+    if (dropOrg) dropOrg.innerHTML = `Empresa: ${BRAND_HTML} (administración)`;
 
     if (footerTenant) {
-      footerTenant.innerHTML = `Organización: ${BRAND_HTML} Global Platform (SUPERADMIN)`;
+      footerTenant.innerHTML = `Empresa: ${BRAND_HTML} (administración)`;
     }
 
     const path = window.location.pathname.toLowerCase();
@@ -712,10 +712,10 @@ function applyRoleVisibility() {
       dropRoleBadge.style.border = '1px solid var(--emerald)';
     }
     if (dropEmail) dropEmail.innerText = currentUser.email || '';
-    if (dropOrg) dropOrg.innerText = `Organización: ${currentUser.tenantName || orgName}`;
+    if (dropOrg) dropOrg.innerText = `Empresa: ${currentUser.tenantName || orgName}`;
 
     if (footerTenant) {
-      footerTenant.innerText = `Organización: ${currentUser.tenantName || orgName}`;
+      footerTenant.innerText = `Empresa: ${currentUser.tenantName || orgName}`;
     }
 
     // Modulo de entrada: el pedido por URL si esta permitido; si no, el primero disponible (nunca uno ajeno)
@@ -762,21 +762,21 @@ function showForbiddenView(moduleName) {
   const tenantEl = document.getElementById('forbiddenTenantDisplay');
 
   const modTitles = {
-    tenant: 'Módulo Tenant (Gobierno de Plataforma)',
-    core: 'Módulo Core (Plataforma & Auditoría)',
-    kanban: 'Módulo Kanban (Tablero Logístico)',
-    '4see': 'Módulo 4see (Inteligencia de Precios)',
+    tenant: 'Empresas clientes (administración de la plataforma)',
+    core: 'Plataforma (usuarios, roles y actividad)',
+    kanban: 'Logística (pedidos y escáner)',
+    '4see': '4see (precios de tu tienda online)',
     none: 'Sin módulos habilitados'
   };
 
-  if (titleEl) titleEl.innerText = modTitles[moduleName] || `Módulo ${moduleName}`;
+  if (titleEl) titleEl.innerText = modTitles[moduleName] || `Sección ${moduleName}`;
   if (descEl) {
     if (moduleName === 'none') {
-      descEl.innerText = 'Tu rol no tiene módulos habilitados en el plan de tu organización. Pedile a un administrador que revise tus permisos.';
+      descEl.innerText = 'Tu rol no tiene secciones habilitadas en el plan de tu empresa. Pedile a un administrador que revise tus permisos.';
     } else if (moduleName === 'tenant' || moduleName === 'core') {
-      descEl.innerHTML = `Este módulo está reservado exclusivamente para el Super Administrador de ${BRAND_HTML}. Tu organización actual no tiene permisos de acceso.`;
+      descEl.innerHTML = `Esta sección es solo para el administrador de ${BRAND_HTML}. Tu cuenta no tiene acceso.`;
     } else {
-      descEl.innerText = 'Este módulo no está incluido en el plan de tu organización o tu rol no tiene permisos para usarlo. Consultá con un administrador.';
+      descEl.innerText = 'Esta sección no está incluida en el plan de tu empresa o tu rol no puede usarla. Consultá con un administrador.';
     }
   }
 
@@ -1147,18 +1147,18 @@ async function loadKanbanData() {
     const backlogList = document.getElementById('backlogList');
     document.getElementById('backlogCount').innerText = (data.backlog || []).length;
     backlogList.innerHTML = (!data.backlog || data.backlog.length === 0)
-      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin comprobantes pendientes</div>'
+      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">No hay remitos nuevos. Cargá un PDF arriba para empezar.</div>'
       : data.backlog.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--card-border); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
           <button class="btn-delete-card" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px; border-color: rgba(255, 82, 82, 0.4); color: var(--red);" onclick="deleteBacklogOrder('${item.id}', event)">Eliminar</button>
           <div class="card-order-no" style="color: var(--text-muted);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
-          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
+          <div class="card-meta">Pedido: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
           <div class="card-meta">Archivo: ${item.fileName}</div>
           <button class="btn-primary" style="margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 800; cursor: pointer;" onclick="markOrderReady('${item.id}', event)">
-            Pasar a Listo
+            Revisado, pasar a Listos
           </button>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Haz clic o arrastra esta tarjeta a LISTO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Hacé clic o arrastrá la tarjeta a Listos para preparar cuando esté revisada</div>
         </div>
       `).join('');
 
@@ -1166,20 +1166,20 @@ async function loadKanbanData() {
     const readyList = document.getElementById('readyList');
     document.getElementById('readyCount').innerText = (data.ready || []).length;
     readyList.innerHTML = (!data.ready || data.ready.length === 0)
-      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos listos para escáner</div>'
+      ? '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Ningún pedido listo para preparar</div>'
       : data.ready.map(item => `
         <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--emerald); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
-          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">A Backlog</button>
+          <button class="btn-secondary" style="position: absolute; top: 12px; right: 12px; font-size: 11px; padding: 4px 8px;" onclick="markOrderBacklog('${item.id}', event)">Volver a Nuevos</button>
           <div class="card-order-no" style="color: var(--emerald);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
-          <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
+          <div class="card-meta">Pedido: <strong>#${item.orderNumber}</strong></div>
           <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
-          <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">Listo para tomar en celular</div>
+          <div class="card-meta" style="color: var(--emerald); font-weight: 800; font-size: 12px;">Listo para que un operario lo tome con el celular</div>
           ${currentUser && currentUser.role === 'ADMIN' ? `
             <button class="btn-primary" style="background: var(--emerald); color: #000; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 900; cursor: pointer;" onclick="openAssignOperatorModal('${item.id}', '${item.orderNumber}', event)">
               Asignar a Operario
             </button>
           ` : ''}
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastrar a BACKLOG o EN PROCESO</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastralo a Nuevos, o a En preparación para asignarlo</div>
         </div>
       `).join('');
 
@@ -1188,7 +1188,7 @@ async function loadKanbanData() {
     document.getElementById('doingCount').innerText = (data.doing || []).length;
     
     if (!data.doing || data.doing.length === 0) {
-      doingList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos en proceso</div>';
+      doingList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Ningún pedido en preparación</div>';
     } else {
       const doingGroups = {};
       data.doing.forEach(item => {
@@ -1205,7 +1205,7 @@ async function loadKanbanData() {
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" draggable="true" ondragstart="handleDragStart(event, '${item.id}')" style="border-color: var(--cobalt); cursor: grab;" onclick="openInvoiceModal('${item.id}')">
             <div class="card-order-no" style="color: var(--cobalt);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
-            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
+            <div class="card-meta">Pedido: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta" style="color: var(--text-main); font-weight: 700;">Cliente: ${item.clientName}</div>
             <div class="card-meta">Avance: ${item.scannedItems} / ${item.totalItems} U (${item.progressPercentage}%)</div>
             <div class="progress-bar-bg">
@@ -1213,10 +1213,10 @@ async function loadKanbanData() {
             </div>
             ${currentUser && currentUser.role === 'ADMIN' ? `
               <button class="btn-action" style="background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid #3B82F6; margin-top: 8px; font-size: 11px; width: 100%; border-radius: 6px; padding: 6px 8px; font-weight: 700; cursor: pointer;" onclick="resetOrderDoingToReady('${item.id}', '${item.orderNumber}', event)">
-                Reasignar / Liberar a Listo
+                Liberar y volver a asignar
               </button>
             ` : ''}
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastrar a LISTO para liberar</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Arrastralo a Listos para preparar para liberarlo</div>
           </div>
         `).join('');
 
@@ -1237,7 +1237,7 @@ async function loadKanbanData() {
     document.getElementById('doneCount').innerText = (data.done || []).length;
 
     if (!data.done || data.done.length === 0) {
-      doneList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Sin pedidos completados</div>';
+      doneList.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px;">Todavía no hay pedidos completados</div>';
     } else {
       const doneGroups = {};
       data.done.forEach(item => {
@@ -1254,7 +1254,7 @@ async function loadKanbanData() {
         const cardsHtml = userOrders.map(item => `
           <div class="kanban-card" style="border-color: var(--amber);" onclick="openInvoiceModal('${item.id}')">
             <div class="card-order-no" style="color: var(--amber);">Pedido #${(item.id || '').substring(0, 8).toUpperCase()}</div>
-            <div class="card-meta">Comprobante: <strong>#${item.orderNumber}</strong></div>
+            <div class="card-meta">Pedido: <strong>#${item.orderNumber}</strong></div>
             <div class="card-meta">Cliente: <strong>${item.clientName}</strong></div>
             <div class="card-meta" style="font-size: 11px; color: var(--emerald);">${item.auditStamp}</div>
           </div>
@@ -1294,10 +1294,10 @@ async function markOrderReady(orderId, event) {
     if (data.success) {
       loadKanbanData();
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No fue posible validar el pedido.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No pudimos pasar el pedido a Listos para preparar.');
     }
   } catch (err) {
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -1317,10 +1317,10 @@ async function markOrderBacklog(orderId, event) {
     if (data.success) {
       loadKanbanData();
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No fue posible mover el pedido a Backlog.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No pudimos devolver el pedido a Nuevos.');
     }
   } catch (err) {
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -1346,10 +1346,10 @@ async function resetOrderDoingToReady(orderId, orderNumber, event) {
     if (data.success) {
       loadKanbanData();
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No fue posible reasignar el pedido.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No pudimos reasignar el pedido.');
     }
   } catch (err) {
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -1391,11 +1391,11 @@ async function openAssignOperatorModal(orderId, orderNumber, event) {
           <option value="${u.email}">${u.name} (@${u.username || u.email.split('@')[0]})</option>
         `).join('');
       } else {
-        selectEl.innerHTML = '<option value="">No hay operarios activos registrados</option>';
+        selectEl.innerHTML = '<option value="">Todavía no hay operarios. Agregalos en Usuarios.</option>';
       }
     } catch (e) {
-      console.error('Error cargando operarios para asignación:', e);
-      selectEl.innerHTML = '<option value="">Error cargando operarios</option>';
+      console.error('No pudimos cargar los operarios para asignación:', e);
+      selectEl.innerHTML = '<option value="">No pudimos cargar los operarios</option>';
     }
   }
 
@@ -1413,7 +1413,7 @@ async function confirmAssignOperatorSubmit() {
   const selectedOperator = selectEl ? selectEl.value : '';
 
   if (!selectedOperator) {
-    await showCustomAlert('Selección Requerida', 'Por favor selecciona un operario para asignar el pedido.');
+    await showCustomAlert('Falta elegir', 'Elegí un operario para asignarle el pedido.');
     return;
   }
 
@@ -1439,11 +1439,11 @@ async function confirmAssignOperatorSubmit() {
     if (data.success) {
       loadKanbanData();
     } else {
-      await showCustomAlert('Acción Denegada', data.error || 'No fue posible asignar el pedido.');
+      await showCustomAlert('No se pudo hacer', data.error || 'No pudimos asignar el pedido.');
     }
   } catch (e) {
     closeAssignOperatorModal();
-    await showCustomAlert('Error de Conexión', 'No se pudo comunicar con el servidor.');
+    await showCustomAlert('Sin conexión', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -1520,7 +1520,7 @@ async function openInvoiceModal(orderId) {
     });
     const data = await res.json();
     if (!data.success || !data.order) {
-      await showCustomAlert('Error', 'No se pudo cargar el detalle del comprobante.');
+      await showCustomAlert('Error', 'No pudimos cargar el detalle del pedido.');
       return;
     }
 
@@ -1547,14 +1547,14 @@ async function openInvoiceModal(orderId) {
       </div>
     `).join('');
 
-    const statusLabelEs = order.status === 'READY' ? 'LISTO' : order.status === 'DOING' || order.status === 'SCANNING' ? 'EN PROCESO' : order.status === 'DONE' ? 'COMPLETADO' : 'BACKLOG';
+    const statusLabelEs = order.status === 'READY' ? 'LISTO PARA PREPARAR' : order.status === 'DOING' || order.status === 'SCANNING' ? 'EN PREPARACIÓN' : order.status === 'DONE' ? 'COMPLETADO' : 'NUEVO';
 
     const statusActionButton = order.status === 'BACKLOG'
-      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id}')">VALIDAR Y PASAR A LISTO</button>`
+      ? `<button class="btn-primary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="markOrderReadyAndCloseModal('${order.id}')">REVISADO: PASAR A LISTOS PARA PREPARAR</button>`
       : order.status === 'READY'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id}')">DEVOLVER A BACKLOG</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px;" onclick="markOrderBacklogAndCloseModal('${order.id}')">VOLVER A NUEVOS</button>`
       : (order.status === 'DOING' || order.status === 'SCANNING') && currentUser && currentUser.role === 'ADMIN'
-      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">REASIGNAR Y LIBERAR A LISTO</button>`
+      ? `<button class="btn-secondary" style="margin-top: 10px; font-size: 13px; padding: 8px 14px; border-color: var(--cobalt); color: #60A5FA; font-weight: 800;" onclick="resetOrderDoingToReadyAndCloseModal('${order.id}', '${order.orderNumber}')">LIBERAR Y VOLVER A ASIGNAR</button>`
       : '';
 
     const invoiceHtml = `
@@ -1567,7 +1567,7 @@ async function openInvoiceModal(orderId) {
           </summary>
           <div style="margin-top: 14px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-top: 1px solid var(--card-border); padding-top: 14px;">
             <div>
-              <div style="font-size: 12px; color: var(--text-muted);">EMISOR: <strong>${order.vendorName || 'WYPRA SA'}</strong> (CUIT: ${order.vendorCuit || '30-71828749-5'})</div>
+              <div style="font-size: 12px; color: var(--text-muted);">EMITIDO POR: <strong>${order.vendorName || 'WYPRA SA'}</strong> (CUIT: ${order.vendorCuit || '30-71828749-5'})</div>
               <div style="font-size: 18px; font-weight: 900; color: var(--emerald); margin-top: 4px;">COMPROBANTE #${order.orderNumber}</div>
               <div style="font-size: 14px; margin-top: 4px;">Cliente: <strong>${order.clientName}</strong> ${order.contactPerson ? `(${order.contactPerson})` : ''}</div>
             </div>
@@ -1593,10 +1593,10 @@ async function openInvoiceModal(orderId) {
             <table class="invoice-table">
               <thead>
                 <tr>
-                  <th>Código EAN</th>
-                  <th>Descripción del Producto</th>
-                  <th style="text-align: center;">Precio Unitario</th>
-                  <th style="text-align: center;">Progreso Escaneo</th>
+                  <th>Código de barras</th>
+                  <th>Producto</th>
+                  <th style="text-align: center;">Precio unitario</th>
+                  <th style="text-align: center;">Escaneado</th>
                   <th style="text-align: right;">Subtotal</th>
                 </tr>
               </thead>
@@ -1605,7 +1605,7 @@ async function openInvoiceModal(orderId) {
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="4" style="text-align: right; font-weight: 900; font-size: 15px;">TOTAL FACTURA:</td>
+                  <td colspan="4" style="text-align: right; font-weight: 900; font-size: 15px;">TOTAL DEL REMITO:</td>
                   <td style="text-align: right; font-weight: 900; font-size: 17px; color: var(--emerald);">$${totalCalculated.toLocaleString('es-AR')}</td>
                 </tr>
               </tfoot>
@@ -1648,12 +1648,12 @@ function showUploadDiagnosticsModal(result, fileName) {
     const titleElem = document.getElementById('dialogTitle');
     const msgElem = document.getElementById('dialogMessage');
 
-    titleElem.innerText = isSuccess ? 'Comprobante Ingerido con Éxito' : 'Diagnóstico de Ingesta de Comprobante';
+    titleElem.innerText = isSuccess ? 'Comprobante Ingerido con Éxito' : 'Revisión del remito cargado';
     titleElem.style.color = isSuccess ? 'var(--emerald)' : 'var(--red)';
 
-    const step1 = checklist.step1_integrity || { passed: isSuccess, title: 'Integridad del Archivo PDF', details: isSuccess ? 'Estructura binaria válida.' : 'Error al leer estructura PDF.' };
-    const step2 = checklist.step2_metadata || { passed: isSuccess, title: 'Lectura de Cabecera y Metadatos', details: isSuccess ? `N° Comprobante: #${result.orderNumber || ''} | Cliente: ${result.clientName || ''}` : 'No se detectó cabecera válida.' };
-    const step3 = checklist.step3_items || { passed: isSuccess, title: 'Detección de Productos y Cantidades', details: isSuccess ? `${result.totalItems || 0} unidades requeridas detectadas.` : 'No se encontraron artículos con cantidades.' };
+    const step1 = checklist.step1_integrity || { passed: isSuccess, title: 'El archivo PDF está completo', details: isSuccess ? 'El archivo se pudo abrir.' : 'No pudimos abrir el archivo PDF.' };
+    const step2 = checklist.step2_metadata || { passed: isSuccess, title: 'Datos del remito', details: isSuccess ? `N° de remito: #${result.orderNumber || ''} | Cliente: ${result.clientName || ''}` : 'No se detectó cabecera válida.' };
+    const step3 = checklist.step3_items || { passed: isSuccess, title: 'Productos y cantidades', details: isSuccess ? `${result.totalItems || 0} unidades encontradas.` : 'No se encontraron artículos con cantidades.' };
 
     const renderStep = (num, step) => {
       const icon = step.passed ? '✓' : '✗';
@@ -1683,16 +1683,16 @@ function showUploadDiagnosticsModal(result, fileName) {
       </div>
       ${!isSuccess ? `
         <div style="margin-top: 14px; padding: 10px 12px; background: rgba(255, 82, 82, 0.12); border-left: 3px solid var(--red); border-radius: 6px; text-align: left;">
-          <span style="font-size: 12px; color: var(--text-main); font-weight: 700;">Recomendación:</span>
+          <span style="font-size: 12px; color: var(--text-main); font-weight: 700;">Qué hacer:</span>
           <p style="font-size: 12px; color: var(--text-muted); margin: 4px 0 0 0; line-height: 16px;">
             Verifica que el archivo sea un comprobante PDF con capa de texto (no imagen escaneada plana) y que incluya códigos o descripciones de producto con su columna de cantidades.
           </p>
         </div>
       ` : `
         <div style="margin-top: 14px; padding: 10px 12px; background: rgba(0, 230, 118, 0.12); border-left: 3px solid var(--emerald); border-radius: 6px; text-align: left;">
-          <span style="font-size: 12px; color: var(--emerald); font-weight: 700;">Estado de Carga:</span>
+          <span style="font-size: 12px; color: var(--emerald); font-weight: 700;">Estado:</span>
           <p style="font-size: 12px; color: var(--text-main); margin: 4px 0 0 0; line-height: 16px;">
-            El pedido #${result.orderNumber || ''} se encuentra disponible en la columna <strong>BACKLOG</strong> de tu organización.
+            El pedido #${result.orderNumber || ''} ya está en la columna <strong>Nuevos</strong> de tu tablero.
           </p>
         </div>
       `}
@@ -1735,9 +1735,9 @@ async function handleFileUpload(event) {
       await showUploadDiagnosticsModal({
         success: false,
         checklist: {
-          step1_integrity: { passed: false, title: 'Integridad del Archivo PDF', details: 'Error de red o conexión al enviar el comprobante al servidor.' },
-          step2_metadata: { passed: false, title: 'Lectura de Cabecera y Metadatos', details: 'No se pudo comunicar con el backend.' },
-          step3_items: { passed: false, title: 'Detección de Productos y Cantidades', details: 'No se procesó la respuesta.' }
+          step1_integrity: { passed: false, title: 'El archivo PDF está completo', details: 'No pudimos enviar el archivo. Revisá tu conexión.' },
+          step2_metadata: { passed: false, title: 'Datos del remito', details: 'No pudimos comunicarnos con el servidor.' },
+          step3_items: { passed: false, title: 'Productos y cantidades', details: 'No pudimos leer la respuesta del servidor.' }
         }
       }, file.name);
     } finally {
@@ -1753,7 +1753,7 @@ async function deleteBacklogOrder(orderId, event) {
 
   const confirmed = await showCustomConfirm(
     'Eliminar Comprobante',
-    '¿Estás seguro de eliminar este comprobante del Backlog? Se quitará de la Base de Datos.'
+    '¿Querés eliminar este remito de Nuevos? Se borra de holospace. y no se puede recuperar.'
   );
 
   if (!confirmed) return;
@@ -1775,10 +1775,10 @@ async function deleteBacklogOrder(orderId, event) {
     if (data.success) {
       loadKanbanData();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo eliminar el pedido.');
+      await showCustomAlert('Error', data.error || 'No pudimos eliminar el pedido.');
     }
   } catch (err) {
-    await showCustomAlert('Error', 'Error de conexión al eliminar.');
+    await showCustomAlert('Error', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -1824,7 +1824,7 @@ function renderUsersTable(usersList = []) {
   if (!tbody) return;
 
   if (usersList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron usuarios que coincidan con la búsqueda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay usuarios que coincidan con tu búsqueda.</td></tr>`;
     return;
   }
 
@@ -1909,17 +1909,17 @@ async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId
   } else {
     // Fallback estándar con roles modulares
     let options = `
-      <option value="SCANNER_OPERATOR">Scanner Operario (Escáner Móvil)</option>
-      <option value="KANBAN_OPERATOR">Kanban Operador (Tablero Logístico)</option>
-      <option value="KANBAN_ADMIN">Kanban Administrador (Ingesta y Asignación)</option>
-      <option value="CORE_ADMIN">Core Administrador (Gobierno de Usuarios)</option>
+      <option value="SCANNER_OPERATOR">Operario (prepara pedidos con el celular)</option>
+      <option value="KANBAN_OPERATOR">Operador del tablero de pedidos</option>
+      <option value="KANBAN_ADMIN">Administrador de pedidos (carga remitos y asigna)</option>
+      <option value="CORE_ADMIN">Administrador de usuarios y roles</option>
       <option value="4SEE_USER">4see Analista (Consulta de Precios)</option>
-      <option value="4SEE_ADMIN">4see Administrador (Repricing y Márgenes)</option>
+      <option value="4SEE_ADMIN">Administrador de 4see (precios y márgenes)</option>
     `;
     if (isSuperAdmin) {
       options += `
-        <option value="TENANT_ADMIN">Tenant Administrador (Gobierno SaaS)</option>
-        <option value="SUPERADMIN">SUPERADMIN (Super Administrador Global)</option>
+        <option value="TENANT_ADMIN">Administrador de empresas</option>
+        <option value="SUPERADMIN">Superadministrador de la plataforma</option>
       `;
     }
     select.innerHTML = options;
@@ -1984,7 +1984,7 @@ async function populateUserModalTenants(selectedTenantId = '') {
 
 function openUserModal() {
   document.getElementById('userId').value = '';
-  document.getElementById('userModalTitle').innerText = 'Crear Nuevo Usuario';
+  document.getElementById('userModalTitle').innerText = 'Agregar un usuario';
   
   const nickInput = document.getElementById('userNickInput');
   if (nickInput) nickInput.value = '';
@@ -2077,19 +2077,19 @@ async function saveUserSubmit(e) {
   const targetTenantId = (tenantSelect && tenantSelect.value) ? tenantSelect.value : (currentUser.tenantId || currentUser.tenant_id);
 
   if (!username) {
-    await showCustomAlert('Campo Obligatorio', 'El Username (Nick) es obligatorio.');
+    await showCustomAlert('Falta un dato', 'Escribí el nombre de usuario.');
     return;
   }
   if (!name) {
-    await showCustomAlert('Campo Obligatorio', 'El Nombre Completo es obligatorio.');
+    await showCustomAlert('Falta un dato', 'Escribí el nombre y apellido.');
     return;
   }
   if (!email) {
-    await showCustomAlert('Campo Obligatorio', 'El Email es obligatorio.');
+    await showCustomAlert('Falta un dato', 'Escribí el email.');
     return;
   }
   if (!id && !password) {
-    await showCustomAlert('Campo Obligatorio', 'La Contraseña es obligatoria para nuevos usuarios.');
+    await showCustomAlert('Falta un dato', 'Elegí una contraseña para el nuevo usuario.');
     return;
   }
 
@@ -2112,13 +2112,13 @@ async function saveUserSubmit(e) {
 
     if (data.success) {
       closeUserModal();
-      await showCustomAlert('¡Guardado!', `Usuario @${username} (${name}) guardado correctamente.`);
+      await showCustomAlert('Usuario guardado', `Guardamos a ${name} (@${username}).`);
       fetchUsers();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo guardar el usuario.');
+      await showCustomAlert('Error', data.error || 'No pudimos guardar el usuario. Revisá los datos.');
     }
   } catch (err) {
-    await showCustomAlert('Error', 'Error de comunicación con el servidor.');
+    await showCustomAlert('Error', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -2141,10 +2141,10 @@ async function toggleUserStatus(id, currentActive) {
     if (data.success) {
       fetchUsers();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo cambiar el estado del usuario.');
+      await showCustomAlert('Error', data.error || 'No pudimos activar o desactivar al usuario.');
     }
   } catch (e) {
-    await showCustomAlert('Error', 'Error de comunicación con el servidor.');
+    await showCustomAlert('Error', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -2191,22 +2191,22 @@ function renderRolesTable(roles = []) {
   if (!tbody) return;
 
   if (roles.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron roles que coincidan con la búsqueda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay roles que coincidan con tu búsqueda.</td></tr>`;
     return;
   }
 
   tbody.innerHTML = roles.map(r => {
     const isSystem = !!r.is_system;
     const typeBadge = isSystem
-      ? `<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #7C3AED;">Sistema</span>`
-      : `<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald);">Personalizado</span>`;
+      ? `<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #7C3AED;">Incluido</span>`
+      : `<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald);">Propio</span>`;
 
     const permsCount = Array.isArray(r.permissions) ? r.permissions.length : 0;
     const hasWildcard = Array.isArray(r.permissions) && r.permissions.includes('*');
     
     let permsDisplay = '';
     if (hasWildcard) {
-      permsDisplay = `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Acceso Total (*)</code>`;
+      permsDisplay = `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Puede hacer todo</code>`;
     } else {
       const topPerms = (r.permissions || []).slice(0, 3).map(p => 
         `<span style="font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
@@ -2328,7 +2328,7 @@ async function saveRoleSubmit(e) {
   const description = document.getElementById('roleDescriptionInput').value.trim();
 
   if (!name) {
-    await showCustomAlert('Campo Requerido', 'El nombre del rol es obligatorio.');
+    await showCustomAlert('Falta un dato', 'Escribí un nombre para el rol.');
     return;
   }
 
@@ -2355,15 +2355,15 @@ async function saveRoleSubmit(e) {
 
     if (data.success) {
       closeRoleModal();
-      await showCustomAlert('Rol Guardado', `El rol '${name}' fue guardado correctamente con ${selectedPermissions.length} permisos.`);
+      await showCustomAlert('Rol guardado', `El rol '${name}' quedó guardado con ${selectedPermissions.length} permisos.`);
       await fetchRolesManagementData();
       cachedRoles = [];
       updateRoleSelectOptions();
     } else {
-      await showCustomAlert('Error al Guardar', data.error || 'No se pudo guardar el rol.');
+      await showCustomAlert('No se guardó', data.error || 'No pudimos guardar el rol. Revisá los datos.');
     }
   } catch (err) {
-    await showCustomAlert('Error', 'Error de conexión con el servidor al guardar rol.');
+    await showCustomAlert('Error', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -2383,15 +2383,15 @@ async function deleteRole(id, name) {
     const data = await res.json();
 
     if (data.success) {
-      await showCustomAlert('Rol Eliminado', `El rol '${name}' fue eliminado correctamente.`);
+      await showCustomAlert('Rol eliminado', `El rol '${name}' se eliminó.`);
       await fetchRolesManagementData();
       cachedRoles = [];
       updateRoleSelectOptions();
     } else {
-      await showCustomAlert('Error al Eliminar', data.error || 'No se pudo eliminar el rol.');
+      await showCustomAlert('No se eliminó', data.error || 'No pudimos eliminar el rol. Puede que haya usuarios que lo usan.');
     }
   } catch (err) {
-    await showCustomAlert('Error', 'Error de conexión con el servidor al eliminar rol.');
+    await showCustomAlert('Error', 'No pudimos comunicarnos con el servidor. Intentá de nuevo.');
   }
 }
 
@@ -2442,7 +2442,7 @@ async function renderOperatorPills() {
 
     container.innerHTML = allPill + pillsHtml;
   } catch (e) {
-    console.error('Error cargando operarios:', e);
+    console.error('No pudimos cargar los operarios:', e);
   }
 }
 
@@ -2509,7 +2509,7 @@ async function fetchExplorerOrders() {
       grid.innerHTML = `
         <tr>
           <td colspan="8" style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px;">
-            No se encontraron pedidos que coincidan con la búsqueda y filtros seleccionados.
+            No hay pedidos que coincidan con tu búsqueda y los filtros elegidos.
           </td>
         </tr>
       `;
@@ -2518,7 +2518,7 @@ async function fetchExplorerOrders() {
 
     grid.innerHTML = ordersList
       .map((o) => {
-        const statusEs = o.status === 'READY' ? 'LISTO' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PROCESO' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'BACKLOG';
+        const statusEs = o.status === 'READY' ? 'LISTO PARA PREPARAR' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PREPARACIÓN' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'NUEVO';
         const badgeStyle = o.status === 'READY'
           ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;'
           : o.status === 'DOING' || o.status === 'SCANNING'
@@ -2544,7 +2544,7 @@ async function fetchExplorerOrders() {
               </span>
             </td>
             <td style="text-align: center;">
-              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.id}')">Detalle</button>
+              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.id}')">Ver detalle</button>
             </td>
           </tr>
         `;
@@ -2731,7 +2731,7 @@ async function loadPlatformPanel() {
     }
   } catch (e) {
     document.getElementById('modulesGrid').innerHTML =
-      `<div style="color:var(--red)">Error cargando módulos: ${e.message}</div>`;
+      `<div style="color:var(--red)">No pudimos cargar los módulos: ${e.message}</div>`;
   }
 
   // Load platform audit log
@@ -2749,7 +2749,7 @@ async function loadPlatformPanel() {
 function renderModulesGrid(modules) {
   const grid = document.getElementById('modulesGrid');
   if (!modules || modules.length === 0) {
-    grid.innerHTML = '<div style="color:var(--text-muted); font-size:14px;">No hay módulos registrados.</div>';
+    grid.innerHTML = '<div style="color:var(--text-muted); font-size:14px;">No hay módulos disponibles.</div>';
     return;
   }
 
@@ -2824,11 +2824,11 @@ async function toggleModuleActive(moduleKey, active) {
       // Reload panel to reflect changes
       loadPlatformPanel();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo cambiar el estado del módulo.');
+      await showCustomAlert('Error', data.error || 'No pudimos activar o desactivar el módulo.');
       loadPlatformPanel(); // revert toggle visually
     }
   } catch (e) {
-    await showCustomAlert('Error', `Error de red: ${e.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${e.message})`);
     loadPlatformPanel();
   }
 }
@@ -2836,7 +2836,7 @@ async function toggleModuleActive(moduleKey, active) {
 function renderPlatformAuditLog(logs) {
   const container = document.getElementById('platformAuditLog');
   if (!logs || logs.length === 0) {
-    container.innerHTML = '<div style="color:var(--text-muted); font-size:14px; padding:8px 0;">Sin eventos de plataforma registrados aún.</div>';
+    container.innerHTML = '<div style="color:var(--text-muted); font-size:14px; padding:8px 0;">Todavía no hay actividad registrada.</div>';
     return;
   }
 
@@ -2850,7 +2850,7 @@ function renderPlatformAuditLog(logs) {
     'MODULE_ACTIVATED':   'Módulo activado',
     'MODULE_DEACTIVATED': 'Módulo desactivado',
     'THEME_CHANGED':      'Tema cambiado',
-    'TENANT_THEME_CHANGED':'Tema del Tenant cambiado'
+    'TENANT_THEME_CHANGED':'Tema de la empresa cambiado'
   };
 
   container.innerHTML = [...logs].slice(0, 50).map(log => {
@@ -2899,7 +2899,7 @@ async function loadTenantsManagementData() {
     const data = await res.json();
 
     if (!data.success) {
-      container.innerHTML = `<div style="color:var(--red); padding:20px;">${data.error || 'Error cargando organizaciones'}</div>`;
+      container.innerHTML = `<div style="color:var(--red); padding:20px;">${data.error || 'No pudimos cargar las empresas'}</div>`;
       return;
     }
 
@@ -2996,7 +2996,7 @@ async function loadTenantsManagementData() {
 
           <!-- Tema Base por Defecto del Tenant (Solo lectura en tarjeta) -->
           <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-            <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema Base del Tenant</span>
+            <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Tema de color de la empresa</span>
             <span style="font-size: 12px; font-weight: 700; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--card-border);">
               ${{
                 holo_dark: 'Holo Night',
@@ -3007,18 +3007,18 @@ async function loadTenantsManagementData() {
 
           <!-- Módulos Licenciados Toggles (Solo lectura en tarjeta) -->
           <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos Licenciados en Vivo</div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Módulos habilitados ahora</div>
             
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
               <!-- Kanban -->
               <div style="display: flex; align-items: center; justify-content: space-between; background: var(--hw-surface-2, var(--card-bg)); padding: 8px 12px; border-radius: 10px;">
-                <span style="font-size: 12px; font-weight: 700; color: ${isKanbanActive ? 'var(--emerald)' : 'var(--text-muted)'};">Kanban</span>
+                <span style="font-size: 12px; font-weight: 700; color: ${isKanbanActive ? 'var(--emerald)' : 'var(--text-muted)'};">Pedidos</span>
                 <input type="checkbox" ${isKanbanActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
 
               <!-- Scanner -->
               <div style="display: flex; align-items: center; justify-content: space-between; background: var(--hw-surface-2, var(--card-bg)); padding: 8px 12px; border-radius: 10px;">
-                <span style="font-size: 12px; font-weight: 700; color: ${isScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">Scanner</span>
+                <span style="font-size: 12px; font-weight: 700; color: ${isScannerActive ? 'var(--emerald)' : 'var(--text-muted)'};">Escáner</span>
                 <input type="checkbox" ${isScannerActive ? 'checked' : ''} disabled style="cursor: not-allowed; opacity: 0.8;">
               </div>
             </div>
@@ -3031,7 +3031,7 @@ async function loadTenantsManagementData() {
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;">
-              ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Sin usuarios asignados</div>' : users.map(u => `
+              ${users.length === 0 ? '<div style="color:var(--text-muted); font-size:12px; font-style:italic;">Todavía sin usuarios</div>' : users.map(u => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid var(--card-border);">
                   <div>
                     <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">(@${u.username})</span>` : ''}</div>
@@ -3053,10 +3053,10 @@ async function loadTenantsManagementData() {
   } catch (err) {
     const tableBody = document.getElementById('tenantsTableBody');
     if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--red); padding:20px; text-align:center;">Error conectando con la API de Tenants: ${err.message}</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--red); padding:20px; text-align:center;">No pudimos cargar las empresas: ${err.message}</td></tr>`;
     }
     if (container) {
-      container.innerHTML = `<div style="color:var(--red); padding:20px;">Error conectando con la API de Tenants: ${err.message}</div>`;
+      container.innerHTML = `<div style="color:var(--red); padding:20px;">No pudimos cargar las empresas: ${err.message}</div>`;
     }
   }
 }
@@ -3083,7 +3083,7 @@ function renderTenantsTable(tenantsList = []) {
   if (!tbody) return;
 
   if (tenantsList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No se encontraron organizaciones que coincidan con la búsqueda.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay empresas que coincidan con tu búsqueda.</td></tr>`;
     return;
   }
 
@@ -3191,10 +3191,10 @@ async function toggleTenantStatus(tenantId, tenantName, currentStatus) {
     });
     const data = await res.json();
     if (data.success) {
-      await showCustomAlert('Éxito', data.message || `Organización actualizada.`);
+      await showCustomAlert('Listo', data.message || 'Empresa actualizada.');
       loadTenantsManagementData();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo modificar el estado de la organización.');
+      await showCustomAlert('Error', data.error || 'No pudimos activar o desactivar la empresa.');
     }
   } catch (e) {
     await showCustomAlert('Error', `Error de conexión: ${e.message}`);
@@ -3215,11 +3215,11 @@ async function toggleTenantModuleState(tenantId, moduleCode, isEnabled) {
     if (data.success) {
       loadTenantsManagementData();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo cambiar el estado del módulo');
+      await showCustomAlert('Error', data.error || 'No pudimos activar o desactivar el módulo.');
       loadTenantsManagementData();
     }
   } catch (e) {
-    await showCustomAlert('Error', `Error de red: ${e.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${e.message})`);
     loadTenantsManagementData();
   }
 }
@@ -3264,17 +3264,17 @@ async function handleCreateTenantSubmit(e) {
 
     if (data.success) {
       closeCreateTenantModal();
-      await showCustomAlert('Éxito', `Organización '${name}' creada exitosamente.`);
+      await showCustomAlert('Empresa creada', `La empresa '${name}' ya está creada.`);
       loadTenantsManagementData();
     } else {
       if (errEl) {
-        errEl.innerText = data.error || 'Error al crear la organización.';
+        errEl.innerText = data.error || 'No pudimos crear la empresa. Revisá los datos.';
         errEl.style.display = 'block';
       }
     }
   } catch (err) {
     if (errEl) {
-      errEl.innerText = `Error de red: ${err.message}`;
+      errEl.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
       errEl.style.display = 'block';
     }
   }
@@ -3299,7 +3299,7 @@ function openEditTenantModal(tenantId) {
   const maxOrdersInput = document.getElementById('editTenantMaxOrdersInput');
   const themeSelect = document.getElementById('editTenantThemeSelect');
 
-  if (title) title.innerText = `Editar: ${tenant.name}`;
+  if (title) title.innerText = `Editar empresa: ${tenant.name}`;
   if (idInput) idInput.value = tenant.id;
   if (nameInput) nameInput.value = tenant.name || '';
   if (slugInput) slugInput.value = tenant.slug || '';
@@ -3407,13 +3407,13 @@ async function saveEditTenantSubmit(e) {
     const data = await res.json();
     if (data.success) {
       closeEditTenantModal();
-      await showCustomAlert('Éxito', `Organización '${name}' actualizada exitosamente.`);
+      await showCustomAlert('Empresa actualizada', `Guardamos los cambios de '${name}'.`);
       loadTenantsManagementData();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo actualizar la organización.');
+      await showCustomAlert('Error', data.error || 'No pudimos guardar los cambios. Revisá los datos.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 
@@ -3427,7 +3427,7 @@ let cached4seeMonitors = [];
 async function load4seeMonitors() {
   const container = document.getElementById('monitorsTableContainer');
   if (!container) return;
-  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando monitores de competencia...</div>';
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando tus rivales...</div>';
 
   try {
     const res = await fetch('/api/4see/monitors', {
@@ -3438,9 +3438,9 @@ async function load4seeMonitors() {
       cached4seeMonitors = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">No hay URLs de competidores monitoreadas</div>
-          <div style="font-size: 13px; margin-top: 6px;">Agrega la primera URL de la competencia para rastrear precios y stock automáticamente.</div>
-          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMonitorModal()">+ Agregar URL Competidora</button>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">Todavía no seguís ningún producto de la competencia</div>
+          <div style="font-size: 13px; margin-top: 6px;">Agregá el link de un producto de un rival y holospace. va a vigilar su precio y su stock para que sepas cuándo te conviene actuar.</div>
+          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMonitorModal()">+ Agregar un rival para seguir</button>
         </div>
       `;
       return;
@@ -3450,7 +3450,7 @@ async function load4seeMonitors() {
     render4seeMonitorsTable(cached4seeMonitors);
     renderMonitorsDashboard(cached4seeMonitors);
   } catch (err) {
-    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando monitores: ${err.message}</div>`;
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus rivales: ${err.message}</div>`;
   }
 }
 
@@ -3480,7 +3480,7 @@ function render4seeMonitorsTable(monitors = []) {
         <tbody>
           <tr>
             <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No se encontraron monitores que coincidan con la búsqueda.
+              No hay rivales que coincidan con tu búsqueda.
             </td>
           </tr>
         </tbody>
@@ -3494,11 +3494,11 @@ function render4seeMonitorsTable(monitors = []) {
       <thead>
         <tr>
           <th style="min-width: 180px;">Producto</th>
-          <th style="min-width: 160px;">Competidor / Tienda</th>
-          <th style="min-width: 110px;">Mi Precio</th>
-          <th style="min-width: 120px;">Precio Rival</th>
-          <th style="min-width: 130px;">Estado Stock</th>
-          <th style="min-width: 120px;">Última Revisión</th>
+          <th style="min-width: 160px;">Rival</th>
+          <th style="min-width: 110px;">Tu precio</th>
+          <th style="min-width: 120px;">Precio del rival</th>
+          <th style="min-width: 130px;">Stock del rival</th>
+          <th style="min-width: 120px;">Última revisión</th>
           <th style="min-width: 160px; text-align: right;">Acciones</th>
         </tr>
       </thead>
@@ -3508,8 +3508,8 @@ function render4seeMonitorsTable(monitors = []) {
   monitors.forEach(m => {
     const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
     const stockBadge = isOutOfStock
-      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ QUIEBRE (SIN STOCK)</span>'
-      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● EN STOCK</span>';
+      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Sin stock</span>'
+      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Con stock</span>';
 
     const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
     const diffLabel = priceDiff > 0 
@@ -3521,7 +3521,7 @@ function render4seeMonitorsTable(monitors = []) {
         <td><strong style="color: var(--text-main);">${m.product_name}</strong></td>
         <td>
           <a href="${m.competitor_url}" target="_blank" rel="noopener noreferrer" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
-            ${m.competitor_name || 'Ver Tienda'} ↗
+            ${m.competitor_name || 'Ver tienda'} ↗
           </a>
         </td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
@@ -3532,8 +3532,8 @@ function render4seeMonitorsTable(monitors = []) {
         <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="recheckMonitor('${m.id}')">Re-verificar</button>
-            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Eliminar</button>
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="recheckMonitor('${m.id}')">Revisar ahora</button>
+            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Quitar</button>
           </div>
         </td>
       </tr>
@@ -3583,11 +3583,11 @@ async function handleCreateMonitorSubmit(e) {
       closeCreateMonitorModal();
       load4seeMonitors();
     } else {
-      errorDiv.innerText = data.error || 'Error al guardar monitor';
+      errorDiv.innerText = data.error || 'No pudimos guardar el rival. Revisá el link e intentá de nuevo.';
       errorDiv.style.display = 'block';
     }
   } catch (err) {
-    errorDiv.innerText = `Error de red: ${err.message}`;
+    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
     errorDiv.style.display = 'block';
   }
 }
@@ -3602,7 +3602,7 @@ async function recheckMonitor(id) {
     if (data.success) {
       load4seeMonitors();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo re-verificar.');
+      await showCustomAlert('Error', data.error || 'No pudimos revisar este rival ahora. Intentá de nuevo en un rato.');
     }
   } catch (err) {
     await showCustomAlert('Error', `Error: ${err.message}`);
@@ -3610,7 +3610,7 @@ async function recheckMonitor(id) {
 }
 
 async function deleteMonitor(id) {
-  const confirmDelete = await showCustomConfirm('Eliminar Monitor', '¿Deseas dejar de monitorear esta URL?');
+  const confirmDelete = await showCustomConfirm('Dejar de seguir a este rival', '¿Querés dejar de seguir el precio de este producto?');
   if (!confirmDelete) return;
 
   try {
@@ -3622,7 +3622,7 @@ async function deleteMonitor(id) {
     if (data.success) {
       load4seeMonitors();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo eliminar.');
+      await showCustomAlert('Error', data.error || 'No pudimos quitarlo. Intentá de nuevo.');
     }
   } catch (err) {
     await showCustomAlert('Error', `Error: ${err.message}`);
@@ -3659,13 +3659,13 @@ async function load4seeCatalog() {
 
       container.innerHTML = `
         <div style="text-align: center; padding: 48px 20px; color: var(--text-muted);">
-          <div style="font-size: 16px; font-weight: 800; color: var(--text-main);">Diagnóstico de Salud de Catálogo (On-the-Fly)</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--text-main);">Conectá tu tienda para revisar tu catálogo</div>
           <div style="font-size: 13px; margin-top: 8px; max-width: 540px; margin-left: auto; margin-right: auto; line-height: 1.5;">
-            Conecta tu tienda de Tiendanube o WooCommerce para escanear en caliente productos sin código de barras GTIN/EAN, marcas faltantes y optimizar títulos para Google Shopping y buscadores.
+            Conectá tu tienda de Tiendanube o WooCommerce y holospace. revisa tus productos: marca los que no tienen código de barras ni marca y te propone mejores títulos para Google Shopping y los buscadores.
           </div>
           <div style="display: flex; gap: 12px; justify-content: center; margin-top: 20px;">
-            <button class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="openConnectStoreModal()"> Conectar y Escanear Tienda</button>
-            <button class="btn-secondary" onclick="runDemoCatalogScan()">Cargar Muestra Demo</button>
+            <button class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="openConnectStoreModal()">Conectar mi tienda</button>
+            <button class="btn-secondary" onclick="runDemoCatalogScan()">Probar con datos de ejemplo</button>
           </div>
         </div>
       `;
@@ -3757,19 +3757,19 @@ function render4seeCatalog(items = []) {
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
             <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; color: var(--text-main); background: rgba(255, 255, 255, 0.1); padding: 2px 8px; border-radius: 4px;">${platform}</span>
-            <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">SKU: ${item.sku || 'N/A'}</span>
+            <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; font-weight: 800; color: var(--emerald); background: rgba(0, 230, 118, 0.1); padding: 2px 8px; border-radius: 4px;">Código: ${item.sku || 'N/A'}</span>
             ${brand 
               ? `<span style="font-size: 12px; color: var(--text-main); background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">Marca: <strong>${brand}</strong></span>` 
-              : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Falta Marca</span>`}
+              : `<span style="font-size: 12px; color: #EAB308; font-weight: 800; background: rgba(234,179,8,0.1); padding: 2px 8px; border-radius: 4px;">Sin marca</span>`}
             ${!isMissingGtin 
               ? `<span style="font-size: 12px; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 8px; border-radius: 4px;">EAN: <strong>${gtin}</strong></span>` 
-              : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Falta EAN</span>`}
+              : `<span style="font-size: 12px; color: var(--red); font-weight: 800; background: rgba(239,68,68,0.1); padding: 2px 8px; border-radius: 4px;">Sin código de barras</span>`}
           </div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <button class="btn-secondary" style="padding: 5px 12px; font-size: 11px;" onclick="openEditProductModal('${itemId}')">✏️ Editar Atributos</button>
+            <button class="btn-secondary" style="padding: 5px 12px; font-size: 11px;" onclick="openEditProductModal('${itemId}')">Completar datos</button>
             ${isApproved 
-              ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px; background: rgba(0,230,118,0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--emerald);">● APROBADO (MOCK)</span>' 
-              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar y Aplicar (Mock)</button>`
+              ? '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px; background: rgba(0,230,118,0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--emerald);">● APROBADO (SIMULACIÓN)</span>' 
+              : `<button class="btn-primary" style="padding: 6px 14px; font-size: 12px;" onclick="approveCatalogOptimization('${itemId}')">Aprobar título (simulación)</button>`
             }
           </div>
         </div>
@@ -3781,7 +3781,7 @@ function render4seeCatalog(items = []) {
           <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; background: rgba(255,255,255,0.02); border: 1px dashed var(--card-border); border-radius: 10px; padding: 10px 14px;">
             ${isMissingBrand ? `
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 11px; font-weight: 800; color: #EAB308;">Cargar Marca:</span>
+                <span style="font-size: 11px; font-weight: 800; color: #EAB308;">Agregar marca:</span>
                 <input type="text" id="inline_brand_${itemId}" class="input-field" placeholder="Escribe la marca..." style="padding: 3px 8px; font-size: 12px; max-width: 160px;" value="">
                 <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="updateItemBrand('${itemId}', document.getElementById('inline_brand_${itemId}').value)">Asignar</button>
                 ${suggestedBrand ? `
@@ -3792,7 +3792,7 @@ function render4seeCatalog(items = []) {
 
             ${isMissingGtin ? `
               <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span style="font-size: 11px; font-weight: 800; color: var(--red);">Cargar EAN:</span>
+                <span style="font-size: 11px; font-weight: 800; color: var(--red);">Agregar código de barras:</span>
                 <input type="text" id="inline_gtin_${itemId}" class="input-field" placeholder="8-14 dígitos..." style="padding: 3px 8px; font-size: 12px; max-width: 160px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;" value="">
                 <button class="btn-secondary" style="padding: 3px 8px; font-size: 11px;" onclick="updateItemGtin('${itemId}', document.getElementById('inline_gtin_${itemId}').value)">Asignar</button>
                 ${suggestedGtin ? `
@@ -3806,13 +3806,13 @@ function render4seeCatalog(items = []) {
         <!-- Vista Diff de Título con Edición en Vivo -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 6px;">
           <div style="background: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
-            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título Actual en Tienda</div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 6px;">Título actual en tu tienda</div>
             <div style="font-size: 13px; color: var(--text-main); font-weight: 600; overflow-wrap: anywhere;">${originalTitle}</div>
           </div>
           <div style="background: var(--hw-surface-1, var(--card-bg)); border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 12px; padding: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-              <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título Optimizado (Editable Libre)</span>
-              <span style="font-size: 10px; color: var(--text-muted);">Puedes modificarlo antes de aprobar</span>
+              <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título mejorado (podés editarlo)</span>
+              <span style="font-size: 10px; color: var(--text-muted);">Cambialo como quieras antes de aprobar</span>
             </div>
             ${isApproved 
               ? `<div style="font-size: 13px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>`
@@ -3846,7 +3846,7 @@ async function loadSavedStores() {
     if (data.success && Array.isArray(data.stores)) {
       cachedSavedStores = data.stores;
       
-      let optionsHtml = `<option value="">-- Seleccionar Tienda (${cachedSavedStores.length}) --</option>`;
+      let optionsHtml = `<option value="">Elegí una de tus tiendas (${cachedSavedStores.length})</option>`;
       cachedSavedStores.forEach(s => {
         const isSelected = s.id === currentSelectedStoreId ? 'selected' : '';
         optionsHtml += `<option value="${s.id}" ${isSelected}>${s.name} (${s.platform})</option>`;
@@ -3874,11 +3874,11 @@ function updateQuickScanButtonText() {
   if (currentSelectedStoreId) {
     const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
     if (store) {
-      btn.innerText = ` Escanear ${store.name}`;
+      btn.innerText = `Revisar ${store.name} ahora`;
       return;
     }
   }
-  btn.innerText = ' Escanear Tienda en Vivo';
+  btn.innerText = 'Revisar mi tienda ahora';
 }
 
 function handleSelectSavedStore(val) {
@@ -3901,15 +3901,15 @@ async function handleQuickScanSelectedStore() {
 
   const store = cachedSavedStores.find(s => s.id === currentSelectedStoreId);
   const btn = document.getElementById('btnQuickAuditStore');
-  const originalText = btn ? btn.innerText : ' Escanear Tienda en Vivo';
+  const originalText = btn ? btn.innerText : 'Revisar mi tienda ahora';
   if (btn) {
-    btn.innerText = `Escaneando ${store ? store.name : 'tienda'}...`;
+    btn.innerText = `Revisando ${store ? store.name : 'tu tienda'}...`;
     btn.disabled = true;
   }
 
   const container = document.getElementById('catalogDiffContainer');
   if (container) {
-    container.innerHTML = `<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Conectando y auditando catálogo de ${store ? store.name : 'tienda'} on-the-fly...</div>`;
+    container.innerHTML = `<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Revisando el catálogo de ${store ? store.name : 'tu tienda'}...</div>`;
   }
 
   try {
@@ -3939,13 +3939,13 @@ async function handleQuickScanSelectedStore() {
       const bulkBar = document.getElementById('catalogBulkBar');
       if (bulkBar) bulkBar.style.display = 'flex';
 
-      await showCustomAlert('Escaneo Completado', `Se auditaron ${total} productos de ${data.store_name || (store ? store.name : 'la tienda')} exitosamente.`);
+      await showCustomAlert('Revisión lista', `Revisamos ${total} productos de ${data.store_name || (store ? store.name : 'tu tienda')}.`);
     } else {
-      await showCustomAlert('Error en Escaneo', data.error || 'No se pudo conectar a la tienda seleccionada.');
+      await showCustomAlert('No pudimos revisar la tienda', data.error || 'No pudimos conectarnos a la tienda elegida. Revisá las claves.');
       if (container) container.innerHTML = `<div style="color: var(--red); font-size: 14px; text-align: center; padding: 20px 0;">Error: ${data.error || 'Fallo de conexión'}</div>`;
     }
   } catch (err) {
-    await showCustomAlert('Error de Red', err.message);
+    await showCustomAlert('Sin conexión', err.message);
   } finally {
     if (btn) {
       btn.innerText = originalText;
@@ -3968,9 +3968,9 @@ function openConnectStoreModalForNew() {
   const idField = document.getElementById('connStoreId');
   if (idField) idField.value = '';
   const title = document.getElementById('connectStoreModalTitle');
-  if (title) title.innerText = 'Conectar Nueva Tienda E-Commerce';
+  if (title) title.innerText = 'Conectar tu tienda online';
   const btn = document.getElementById('btnRunStoreScan');
-  if (btn) btn.innerText = 'Conectar y Escanear Ahora';
+  if (btn) btn.innerText = 'Conectar y revisar ahora';
   const saveCheck = document.getElementById('connSaveStore');
   if (saveCheck) saveCheck.checked = true;
 
@@ -4032,9 +4032,9 @@ function renderManageStoresList() {
     <table class="data-table" style="width: 100%; font-size: 13px;">
       <thead>
         <tr>
-          <th>Nombre / URL</th>
+          <th>Nombre y dirección</th>
           <th>Plataforma</th>
-          <th>Último Escaneo</th>
+          <th>Última revisión</th>
           <th style="text-align: right;">Acciones</th>
         </tr>
       </thead>
@@ -4042,7 +4042,7 @@ function renderManageStoresList() {
   `;
 
   cachedSavedStores.forEach(s => {
-    const lastScan = s.last_scanned_at ? new Date(s.last_scanned_at).toLocaleString() : '<span style="color: var(--text-muted);">Sin escaneo</span>';
+    const lastScan = s.last_scanned_at ? new Date(s.last_scanned_at).toLocaleString() : '<span style="color: var(--text-muted);">Todavía no revisada</span>';
     const isSelected = s.id === currentSelectedStoreId;
 
     html += `
@@ -4059,7 +4059,7 @@ function renderManageStoresList() {
         </td>
         <td style="font-size: 12px; color: var(--text-main);">${lastScan}</td>
         <td style="text-align: right; white-space: nowrap;">
-          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();"> Escanear</button>
+          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">Revisar ahora</button>
           <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="editStoreConnection('${s.id}')">Editar</button>
           <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: rgba(239,68,68,0.4);" onclick="disconnectStore('${s.id}')">×</button>
         </td>
@@ -4111,10 +4111,10 @@ function editStoreConnection(storeId) {
   }
 
   const title = document.getElementById('connectStoreModalTitle');
-  if (title) title.innerText = `Editar Tienda: ${store.name}`;
+  if (title) title.innerText = `Editar tienda: ${store.name}`;
 
   const btn = document.getElementById('btnRunStoreScan');
-  if (btn) btn.innerText = 'Guardar Cambios y Escanear';
+  if (btn) btn.innerText = 'Guardar cambios y revisar';
 
   openConnectStoreModal();
 }
@@ -4142,12 +4142,12 @@ async function disconnectStore(storeId) {
       }
       await loadSavedStores();
       renderManageStoresList();
-      await showCustomAlert('Tienda Desconectada', `"${storeName}" fue desconectada correctamente.`);
+      await showCustomAlert('Tienda desconectada', `"${storeName}" fue desconectada.`);
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo desconectar la tienda.');
+      await showCustomAlert('Error', data.error || 'No pudimos desconectar la tienda. Intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error de Red', err.message);
+    await showCustomAlert('Sin conexión', err.message);
   }
 }
 window.disconnectStore = disconnectStore;
@@ -4168,7 +4168,7 @@ async function handleConnectStoreSubmit(e) {
     credentials.accessToken = document.getElementById('tnAccessToken').value.trim();
     storeUrl = `https://tiendanube.com/store/${credentials.userId}`;
     if (!credentials.userId) {
-      await showCustomAlert('Datos Incompletos', 'Ingresa el User ID de Tiendanube.');
+      await showCustomAlert('Falta un dato', 'Cargá el número de tu tienda en Tiendanube.');
       return;
     }
   } else {
@@ -4177,12 +4177,12 @@ async function handleConnectStoreSubmit(e) {
     credentials.consumerKey = document.getElementById('wcConsumerKey').value.trim();
     credentials.consumerSecret = document.getElementById('wcConsumerSecret').value.trim();
     if (!credentials.storeUrl) {
-      await showCustomAlert('Datos Incompletos', 'Ingresa la URL de tu tienda WooCommerce.');
+      await showCustomAlert('Falta un dato', 'Cargá la dirección de tu tienda WooCommerce.');
       return;
     }
   }
 
-  if (btn) btn.innerText = 'Guardando y escaneando...';
+  if (btn) btn.innerText = 'Guardando y revisando...';
 
   try {
     let activeStoreId = storeId || null;
@@ -4244,14 +4244,14 @@ async function handleConnectStoreSubmit(e) {
       const bulkBar = document.getElementById('catalogBulkBar');
       if (bulkBar) bulkBar.style.display = 'flex';
 
-      await showCustomAlert('Conexión y Escaneo Exitoso', `La tienda "${storeName || storeUrl}" fue guardada y se auditaron ${total} productos.`);
+      await showCustomAlert('Tienda conectada', `La tienda "${storeName || storeUrl}" quedó conectada y revisamos ${total} productos.`);
     } else {
-      await showCustomAlert('Error en Escaneo', dataAudit.error || 'No se pudo auditar la tienda.');
+      await showCustomAlert('No pudimos revisar la tienda', dataAudit.error || 'No pudimos revisar la tienda. Revisá las claves e intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error de Red', err.message);
+    await showCustomAlert('Sin conexión', err.message);
   } finally {
-    if (btn) btn.innerText = 'Conectar y Escanear Ahora';
+    if (btn) btn.innerText = 'Conectar y revisar ahora';
   }
 }
 window.handleConnectStoreSubmit = handleConnectStoreSubmit;
@@ -4261,7 +4261,7 @@ window.runDemoCatalogScan = runDemoCatalogScan;
 async function runDemoCatalogScan() {
   closeConnectStoreModal();
   const container = document.getElementById('catalogDiffContainer');
-  if (container) container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Procesando catálogo demo en memoria...</div>';
+  if (container) container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Preparando los datos de ejemplo...</div>';
 
   const demoItems = [
     {
@@ -4361,7 +4361,7 @@ async function handleAuditItemSubmit(e) {
   const gtin = document.getElementById('catGtin').value.trim();
   const btn = e.target.querySelector('button[type="submit"]');
 
-  if (btn) btn.innerText = 'Ejecutando auditoría técnica...';
+  if (btn) btn.innerText = 'Revisando el producto...';
 
   try {
     const res = await fetch('/api/4see/catalog', {
@@ -4377,12 +4377,12 @@ async function handleAuditItemSubmit(e) {
       closeAuditItemModal();
       load4seeCatalog();
     } else {
-      await showCustomAlert('Error', data.error || 'Error al auditar producto');
+      await showCustomAlert('Error', data.error || 'No pudimos revisar el producto. Intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   } finally {
-    if (btn) btn.innerText = 'Ejecutar Auditoría Técnica';
+    if (btn) btn.innerText = 'Revisar este producto';
   }
 }
 
@@ -4399,7 +4399,7 @@ function reAuditItemInMemory(item) {
       code: 'MISSING_GTIN',
       severity: 'HIGH',
       field: 'barcode_gtin',
-      message: 'Falta código GTIN / EAN-13 válido (8-14 dígitos). Riesgo de rechazo en Google Shopping.'
+      message: 'Falta el código de barras (EAN-13). Sin él, Google Shopping y otros canales pueden rechazar el producto.'
     });
   }
 
@@ -4409,7 +4409,7 @@ function reAuditItemInMemory(item) {
       code: 'MISSING_BRAND',
       severity: 'MEDIUM',
       field: 'brand',
-      message: 'Falta especificar la marca del producto para indexación y filtros.'
+      message: 'Falta la marca del producto. Sin marca cuesta más que te encuentren y filtrar por ella.'
     });
   }
 
@@ -4419,7 +4419,7 @@ function reAuditItemInMemory(item) {
       code: 'SHORT_TITLE',
       severity: 'LOW',
       field: 'title',
-      message: 'Título demasiado breve (< 20 caracteres) para intención de búsqueda.'
+      message: 'El título es muy corto (menos de 20 caracteres). Uno más descriptivo ayuda a vender.'
     });
   }
 
@@ -4466,7 +4466,7 @@ function updateItemBrand(id, newBrand) {
     }
 
     reAuditItemInMemory(item);
-    showCustomAlert('Marca Actualizada', `Marca "${clean}" asignada al producto ${item.sku || id}.`);
+    showCustomAlert('Marca guardada', `Marca "${clean}" guardada para el producto ${item.sku || id}.`);
   }
 }
 window.updateItemBrand = updateItemBrand;
@@ -4479,7 +4479,7 @@ function updateItemGtin(id, newGtin) {
     item.gtin = clean;
     if (item.audit) item.audit.current_gtin = clean;
     reAuditItemInMemory(item);
-    showCustomAlert('GTIN / EAN Actualizado', `Código ${clean} asignado al producto ${item.sku || id}.`);
+    showCustomAlert('Código de barras guardado', `Código ${clean} guardado para el producto ${item.sku || id}.`);
   }
 }
 window.updateItemGtin = updateItemGtin;
@@ -4495,7 +4495,7 @@ function openEditProductModal(itemId) {
   const auditInfo = item.audit || {};
 
   document.getElementById('editAttrItemId').value = itemId;
-  document.getElementById('editAttrSubtitle').innerText = `SKU: ${item.sku || 'N/A'} | Plataforma: ${item.platform || 'LOCAL'}`;
+  document.getElementById('editAttrSubtitle').innerText = `Código: ${item.sku || 'sin código'} | Tienda: ${item.platform || 'ejemplo'}`;
 
   // Título
   const origTitle = item.original_title || item.title || '';
@@ -4515,7 +4515,7 @@ function openEditProductModal(itemId) {
   // Marca
   const curBrand = item.brand || '';
   const suggBrand = auditInfo.suggested_brand || item.suggested_brand || '';
-  document.getElementById('editAttrCurrentBrandBadge').innerText = curBrand ? `Actual: ${curBrand}` : 'Sin marca asignada';
+  document.getElementById('editAttrCurrentBrandBadge').innerText = curBrand ? `Actual: ${curBrand}` : 'Sin marca';
   document.getElementById('editAttrBrandInput').value = curBrand || suggBrand;
 
   const brandSugBox = document.getElementById('editAttrBrandSuggestionBox');
@@ -4532,10 +4532,10 @@ function openEditProductModal(itemId) {
   const suggGtin = auditInfo.suggested_gtin || item.suggested_gtin || '';
   const gtinBadge = document.getElementById('editAttrGtinStatusBadge');
   if (/^[0-9]{8,14}$/.test(curGtin)) {
-    gtinBadge.innerText = '● Código Válido';
+    gtinBadge.innerText = '● Código de barras válido';
     gtinBadge.style.color = 'var(--emerald)';
   } else {
-    gtinBadge.innerText = '● Sin código / Inválido';
+    gtinBadge.innerText = '● Falta o no es válido';
     gtinBadge.style.color = 'var(--red)';
   }
   document.getElementById('editAttrGtinInput').value = curGtin || suggGtin;
@@ -4598,7 +4598,7 @@ function handleSaveProductAttributes(e) {
 
   reAuditItemInMemory(currentEditingProductItem);
   closeEditProductModal();
-  showCustomAlert('Atributos Guardados', `El producto ${currentEditingProductItem.sku || ''} fue actualizado y re-auditado en tiempo real.`);
+  showCustomAlert('Cambios guardados', `El producto ${currentEditingProductItem.sku || ''} se actualizó y lo volvimos a revisar.`);
 }
 window.handleSaveProductAttributes = handleSaveProductAttributes;
 
@@ -4622,7 +4622,7 @@ async function approveCatalogOptimization(id) {
     render4seeCatalog(cached4seeCatalog);
     await showCustomAlert(
       'Aprobado (Modo Simulación)',
-      `El título sugerido fue aprobado en memoria con éxito.\n\n Modo Mock Seguro: No se realizaron cambios en tu tienda real (${item.platform || 'E-Commerce'}).`
+      `Aprobaste el título sugerido (simulación).\n\n Modo de prueba: no cambiamos nada en tu tienda real (${item.platform || 'E-Commerce'}).`
     );
   }
 }
@@ -4631,7 +4631,7 @@ window.approveCatalogOptimization = approveCatalogOptimization;
 // Aprobación Masiva en Modo Mock
 async function bulkApproveCatalogMock() {
   if (cached4seeCatalog.length === 0) {
-    await showCustomAlert('Sin Catálogo', 'No hay productos auditados para aprobar.');
+    await showCustomAlert('Nada para aprobar', 'Primero revisá tu tienda para tener productos que aprobar.');
     return;
   }
 
@@ -4654,7 +4654,7 @@ async function bulkApproveCatalogMock() {
   render4seeCatalog(cached4seeCatalog);
   await showCustomAlert(
     'Aprobación Masiva Completada',
-    `Se aprobaron ${count} productos en simulación.\n\n Modo Mock Seguro: Tu tienda conectada se mantiene intacta.`
+    `Aprobaste ${count} productos en simulación.\n\n Modo de prueba: tu tienda sigue igual.`
   );
 }
 window.bulkApproveCatalogMock = bulkApproveCatalogMock;
@@ -4662,7 +4662,7 @@ window.bulkApproveCatalogMock = bulkApproveCatalogMock;
 // Exportar Reporte de Auditoría a CSV
 function exportCatalogAuditCsv() {
   if (cached4seeCatalog.length === 0) {
-    showCustomAlert('Sin Datos', 'No hay catálogo auditado para exportar.');
+    showCustomAlert('Nada para descargar', 'Primero revisá tu tienda para poder descargar el informe.');
     return;
   }
 
@@ -4714,8 +4714,8 @@ async function load4seeMargins() {
       cached4seeMargins = [];
       container.innerHTML = `
         <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">No hay reglas de margen configuradas</div>
-          <div style="font-size: 13px; margin-top: 6px;">Fija tus costos, comisiones e impuestos para proteger el margen neto frente a ventas a pérdida.</div>
+          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">Todavía no calculaste el margen de ningún producto</div>
+          <div style="font-size: 13px; margin-top: 6px;">Cargá el costo, la comisión y los impuestos de un producto y holospace. te dice cuánto ganás de verdad y si estás vendiendo con poco margen.</div>
           <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMarginModal()">+ Nueva Regla de Margen</button>
         </div>
       `;
@@ -4738,7 +4738,7 @@ function filter4seeMargins(query = '') {
   const filtered = cached4seeMargins.filter(r => {
     const name = (r.product_name || '').toLowerCase();
     const sku = (r.product_sku || '').toLowerCase();
-    const zone = r.is_red_zone ? 'zona roja' : 'saludable';
+    const zone = r.is_red_zone ? 'margen bajo' : 'saludable';
     return name.includes(q) || sku.includes(q) || zone.includes(q);
   });
   render4seeMarginsTable(filtered);
@@ -4767,13 +4767,13 @@ function render4seeMarginsTable(rules = []) {
     <table class="data-table">
       <thead>
         <tr>
-          <th style="min-width: 180px;">SKU / Producto</th>
-          <th style="min-width: 120px;">Costo Reposición</th>
-          <th style="min-width: 120px;">Precio Venta</th>
-          <th style="min-width: 120px;">Ganancia Neta</th>
-          <th style="min-width: 110px;">Margen Real</th>
-          <th style="min-width: 140px;">Alerta Rentabilidad</th>
-          <th style="min-width: 160px; text-align: right;">Repricing Oportunidad</th>
+          <th style="min-width: 180px;">Producto</th>
+          <th style="min-width: 120px;">Costo de reposición</th>
+          <th style="min-width: 120px;">Precio de venta</th>
+          <th style="min-width: 120px;">Ganancia neta</th>
+          <th style="min-width: 110px;">Margen real</th>
+          <th style="min-width: 140px;">Estado del margen</th>
+          <th style="min-width: 160px; text-align: right;">Oportunidad de precio</th>
         </tr>
       </thead>
       <tbody>
@@ -4782,21 +4782,21 @@ function render4seeMarginsTable(rules = []) {
   rules.forEach(r => {
     const isRed = Boolean(r.is_red_zone);
     const alertBadge = isRed
-      ? '<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">○ ZONA ROJA (&lt;' + r.min_margin_pct + '%)</span>'
-      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● SALUDABLE</span>';
+      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Margen bajo (&lt;' + r.min_margin_pct + '%)</span>'
+      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Saludable</span>';
 
     html += `
       <tr>
         <td>
           <div style="font-weight: 800; color: var(--text-main);">${r.product_name || r.product_sku}</div>
-          <div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">SKU: ${r.product_sku}</div>
+          <div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">Código: ${r.product_sku}</div>
         </td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
           $${parseFloat(r.net_profit).toLocaleString('es-AR')}
         </td>
-        <td style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${isRed ? 'var(--red)' : 'var(--text-main)'};">
+        <td style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${isRed ? 'var(--amber)' : 'var(--text-main)'};">
           ${r.real_margin_pct}%
         </td>
         <td>${alertBadge}</td>
@@ -4862,10 +4862,10 @@ async function handleCreateMarginSubmit(e) {
       closeCreateMarginModal();
       load4seeMargins();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo guardar la regla de margen.');
+      await showCustomAlert('Error', data.error || 'No pudimos guardar el cálculo. Revisá los datos e intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 
@@ -4878,7 +4878,7 @@ async function load4seeSmartPriceQueue() {
   const container = document.getElementById('smartpriceQueueContainer');
   if (!container) return;
 
-  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando sugerencias de SmartPrice...</div>';
+  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando precios sugeridos...</div>';
 
   try {
     const res = await fetch('/api/4see/queue', {
@@ -4940,9 +4940,9 @@ function renderSmartPriceDashboard(queue = []) {
   HSCharts.track('chartQueueStatus', () => HSCharts.build.donut({
     centerLabel: String(queue.length),
     items: [
-      { name: 'Pendiente', value: count('PENDING'), tone: 'pending' },
+      { name: 'Para decidir', value: count('PENDING'), tone: 'pending' },
       { name: 'Aplicado', value: count('APPLIED'), tone: 'applied' },
-      { name: 'Rechazado', value: count('REJECTED'), tone: 'neutral' }
+      { name: 'Descartado', value: count('REJECTED'), tone: 'neutral' }
     ].filter(i => i.value > 0)
   })).catch(() => {});
 
@@ -4981,8 +4981,8 @@ function renderMonitorsDashboard(monitors = []) {
   HSCharts.track('chartMonStock', () => HSCharts.build.donut({
     centerLabel: String(monitors.length),
     items: [
-      { name: 'En stock', value: monitors.length - out, tone: 'applied' },
-      { name: 'Quiebre', value: out, tone: 'risk' }
+      { name: 'Con stock', value: monitors.length - out, tone: 'applied' },
+      { name: 'Sin stock', value: out, tone: 'risk' }
     ].filter(i => i.value > 0)
   })).catch(() => {});
 
@@ -5023,7 +5023,7 @@ function render4seeQueueTable(items = []) {
         <tbody>
           <tr>
             <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No hay sugerencias de repricing en cola actualmente. Presiona <strong> Ejecutar Worker de Scraping</strong> para analizar precios de competidores.
+              No hay precios para decidir por ahora. Apretá <strong>Revisar precios ahora</strong> para compararte con tus rivales.
             </td>
           </tr>
         </tbody>
@@ -5036,11 +5036,11 @@ function render4seeQueueTable(items = []) {
     <table class="data-table">
       <thead>
         <tr>
-          <th style="min-width: 180px;">Producto / SKU</th>
-          <th style="min-width: 130px;">Piso Blindado (Floor)</th>
-          <th style="min-width: 110px;">Precio Anterior</th>
-          <th style="min-width: 120px;">Precio Sugerido</th>
-          <th style="min-width: 160px;">Regla Aplicada</th>
+          <th style="min-width: 180px;">Producto</th>
+          <th style="min-width: 130px;">Piso de margen</th>
+          <th style="min-width: 110px;">Precio actual</th>
+          <th style="min-width: 120px;">Precio sugerido</th>
+          <th style="min-width: 160px;">Regla usada</th>
           <th style="min-width: 110px;">Estado</th>
           <th style="min-width: 180px; text-align: right;">Acciones</th>
         </tr>
@@ -5055,24 +5055,24 @@ function render4seeQueueTable(items = []) {
 
     let statusBadge = '';
     if (q.status === 'PENDING') {
-      statusBadge = '<span class="status-indicator" style="color: var(--hw-chart1); font-weight: 800; font-size: 11px;">● PENDIENTE</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--hw-chart1); font-weight: 800; font-size: 11px;">● Para decidir</span>';
     } else if (q.status === 'APPLIED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;"> APLICADO</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">Aplicado</span>';
     } else if (q.status === 'REJECTED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">× RECHAZADO</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">× Descartado</span>';
     } else {
       statusBadge = `<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">${q.status}</span>`;
     }
 
     const floorShieldBadge = q.floor_applied
-      ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;"> PISO ACTIVADO</span>'
+      ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>'
       : '';
 
     html += `
       <tr>
         <td>
           <strong style="color: var(--text-main); display: block;">${q.product_title || 'Producto'}</strong>
-          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">SKU: ${q.sku || '-'}</span>
+          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Código: ${q.sku || '-'}</span>
         </td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">
           $${floorPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
@@ -5085,16 +5085,16 @@ function render4seeQueueTable(items = []) {
           $${suggPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
         </td>
         <td style="font-size: 12px; color: var(--text-main);">
-          ${q.rule_name || 'Protección de Margen'}
+          ${q.rule_name || 'Protección de margen'}
         </td>
         <td>${statusBadge}</td>
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
             ${q.status === 'PENDING' ? `
-              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aprobar 1-Clic</button>
+              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aplicar este precio</button>
               <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
             ` : `
-              <span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Procesado</span>
+              <span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Ya resuelto</span>
             `}
           </div>
         </td>
@@ -5120,13 +5120,13 @@ async function handleApproveQueueItem(queueId) {
     });
     const data = await res.json();
     if (data.success) {
-      await showCustomAlert('Éxito', `Precio aprobado y aplicado exitosamente: $${parseFloat(data.newPrice).toLocaleString('es-AR')}`);
+      await showCustomAlert('Precio aplicado', `Aplicamos el nuevo precio: $${parseFloat(data.newPrice).toLocaleString('es-AR')}`);
       load4seeSmartPriceQueue();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo aprobar el precio.');
+      await showCustomAlert('Error', data.error || 'No pudimos aplicar el precio. Intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 window.handleApproveQueueItem = handleApproveQueueItem;
@@ -5144,10 +5144,10 @@ async function handleRejectQueueItem(queueId) {
     if (data.success) {
       load4seeSmartPriceQueue();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo rechazar la sugerencia.');
+      await showCustomAlert('Error', data.error || 'No pudimos descartar la sugerencia. Intentá de nuevo.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 window.handleRejectQueueItem = handleRejectQueueItem;
@@ -5156,7 +5156,7 @@ async function handleTriggerWorkerCycle() {
   const btn = document.getElementById('btnRunWorkerCycle');
   if (btn) {
     btn.disabled = true;
-    btn.innerText = '⏳ Ejecutando Scraping...';
+    btn.innerText = 'Revisando precios...';
   }
 
   try {
@@ -5171,17 +5171,17 @@ async function handleTriggerWorkerCycle() {
 
     if (data.success) {
       const s = data.summary || {};
-      await showCustomAlert('Ciclo Completado', `Scraping finalizado.\nMappings procesados: ${s.totalMappingsProcessed || 0}\nSugerencias encoladas: ${s.priceUpdatesQueued || 0}\nAuto-dispatches: ${s.autoDispatchesExecuted || 0}`);
+      await showCustomAlert('Revisión lista', `Revisamos ${s.totalMappingsProcessed || 0} productos contra sus rivales.\nPrecios nuevos para decidir: ${s.priceUpdatesQueued || 0}\nPrecios aplicados sin aprobación: ${s.autoDispatchesExecuted || 0}`);
       load4seeSmartPriceQueue();
     } else {
-      await showCustomAlert('Aviso', data.reason === 'CYCLE_ALREADY_IN_PROGRESS' ? 'Ya hay un ciclo de scraping en progreso.' : (data.error || 'Error al ejecutar worker.'));
+      await showCustomAlert('Aviso', data.reason === 'CYCLE_ALREADY_IN_PROGRESS' ? 'Ya estamos revisando precios. Esperá unos minutos.' : (data.error || 'No pudimos revisar los precios ahora. Intentá de nuevo.'));
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red al ejecutar worker: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerText = ' Ejecutar Worker de Scraping';
+      btn.innerText = 'Revisar precios ahora';
     }
   }
 }
@@ -5248,13 +5248,13 @@ async function handleCreateProductSubmit(e) {
     const data = await res.json();
     if (data.success) {
       closeCreateProductModal();
-      await showCustomAlert('Éxito', `Producto ${sku} guardado con piso inquebrantable de $${parseFloat(data.product.min_price_floor).toLocaleString('es-AR')}`);
+      await showCustomAlert('Producto guardado', `El producto ${sku} quedó guardado con un piso de margen de $${parseFloat(data.product.min_price_floor).toLocaleString('es-AR')}`);
       load4seeSmartPriceQueue();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo guardar el producto.');
+      await showCustomAlert('Error', data.error || 'No pudimos guardar el producto. Revisá los datos.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 window.handleCreateProductSubmit = handleCreateProductSubmit;
@@ -5300,13 +5300,13 @@ async function handleCreateRuleSubmit(e) {
     const data = await res.json();
     if (data.success) {
       closeCreateRuleModal();
-      await showCustomAlert('Éxito', `Regla SmartPrice "${name}" activada.`);
+      await showCustomAlert('Regla activada', `La regla "${name}" ya está funcionando.`);
       load4seeSmartPriceQueue();
     } else {
-      await showCustomAlert('Error', data.error || 'No se pudo crear la regla.');
+      await showCustomAlert('Error', data.error || 'No pudimos crear la regla. Revisá los datos.');
     }
   } catch (err) {
-    await showCustomAlert('Error', `Error de red: ${err.message}`);
+    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
   }
 }
 window.handleCreateRuleSubmit = handleCreateRuleSubmit;

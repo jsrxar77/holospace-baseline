@@ -65,8 +65,8 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       const orderNum = unassignedOrderNotification;
       clearUnassignedNotification();
       showThemedAlert(
-        'Pedido Desasignado por Administrador',
-        `El Pedido #${orderNum} fue desasignado o liberado a la columna LISTO por el Administrador desde ScanBan Board.`,
+        'Te sacaron este pedido',
+        `Un administrador soltó el pedido #${orderNum} para que lo tome otro operario.`,
         [
           {
             text: 'Entendido',
@@ -80,9 +80,9 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
   if (!activeOrder) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
-        <Text style={[styles.emptyTitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No hay pedido activo seleccionado.</Text>
+        <Text style={[styles.emptyTitle, { color: theme.textMain, fontFamily: fontFamilyMain }]}>No elegiste ningún pedido.</Text>
         <TouchableOpacity style={[styles.btnBack, { backgroundColor: theme.emerald, borderRadius: btnRadius }]} onPress={handleGoBack}>
-          <Text style={[styles.btnBackText, { fontFamily: fontFamilyMain }]}>Volver al Inicio</Text>
+          <Text style={[styles.btnBackText, { fontFamily: fontFamilyMain }]}>Volver a mis pedidos</Text>
         </TouchableOpacity>
       </View>
     );
@@ -112,10 +112,10 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
       }
     } else {
       showThemedAlert(
-        'Bloqueo Estricto de Cierre',
-        `No se puede cerrar el pedido. Faltan ${activeOrder.totalItemsRequired - activeOrder.totalItemsScanned} unidades por verificar.\n\n¿Deseas continuar escaneando o solicitar autorización de supervisor?`,
+        'Todavía faltan productos',
+        `No podés cerrar el pedido: faltan ${activeOrder.totalItemsRequired - activeOrder.totalItemsScanned} unidades por escanear.\n\n¿Seguís escaneando o pedís autorización de supervisor?`,
         [
-          { text: 'Continuar Escaneando', style: 'default', onPress: handleGoScanner },
+          { text: 'Seguir escaneando', style: 'default', onPress: handleGoScanner },
           {
             text: 'Cierre Parcial (PIN)',
             style: 'destructive',
@@ -136,8 +136,8 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
 
   const handleReleaseOrder = async () => {
     showThemedAlert(
-      'Liberar Pedido',
-      `¿Deseas liberar el Pedido #${activeOrder.orderNumber}?\nEl pedido se devolverá a la columna LISTO para que lo tome otro operario.`,
+      'Soltar el pedido',
+      `¿Querés soltar el pedido #${activeOrder.orderNumber}?\nVuelve a la lista para que otro operario lo tome.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -179,7 +179,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress={handleReleaseOrder}
           activeOpacity={0.7}
         >
-          <Text style={[styles.releaseBtnText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR</Text>
+          <Text style={[styles.releaseBtnText, { color: theme.amber, fontFamily: fontFamilyMain }]}>SOLTAR</Text>
         </TouchableOpacity>
       </View>
 
@@ -225,7 +225,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'PENDING' ? '#11111B' : theme.textMuted, fontWeight: filter === 'PENDING' ? '900' : '700' }]}>
-            Pendientes ({activeOrder.items.filter((i) => i.quantityScanned < i.quantityRequired).length})
+            Faltan ({activeOrder.items.filter((i) => i.quantityScanned < i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
 
@@ -243,7 +243,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           activeOpacity={0.8}
         >
           <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'COMPLETED' ? '#11111B' : theme.textMuted, fontWeight: filter === 'COMPLETED' ? '900' : '700' }]}>
-            Verificados ({activeOrder.items.filter((i) => i.quantityScanned >= i.quantityRequired).length})
+            Escaneados ({activeOrder.items.filter((i) => i.quantityScanned >= i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
 
@@ -317,7 +317,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
             onPress={handleReleaseOrder}
             activeOpacity={0.8}
           >
-            <Text style={[styles.btnReleaseText, { color: theme.amber, fontFamily: fontFamilyMain }]}>LIBERAR PEDIDO A LISTO</Text>
+            <Text style={[styles.btnReleaseText, { color: theme.amber, fontFamily: fontFamilyMain }]}>SOLTAR EL PEDIDO</Text>
           </TouchableOpacity>
         )}
       </View>

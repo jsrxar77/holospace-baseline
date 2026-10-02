@@ -250,7 +250,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({
         lastScanToast: {
           type: 'ERROR',
-          message: '¡CÓDIGO NO PERTENECE AL PEDIDO!',
+          message: 'Este producto no está en el pedido',
           code: trimmedBarcode
         }
       });
@@ -276,7 +276,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       set({
         lastScanToast: {
           type: 'EXCESS',
-          message: '¡CANTIDAD YA COMPLETADA PARA ESTE ÍTEM!',
+          message: 'Ya escaneaste todas las unidades de este producto',
           code: `${matchedItem.description} (${matchedItem.quantityScanned}/${matchedItem.quantityRequired})`
         }
       });
@@ -331,7 +331,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       orders: state.orders.map((o) => (o.id === updatedOrder.id ? updatedOrder : o)),
       lastScanToast: {
         type: 'SUCCESS',
-        message: `¡CÓDIGO CORRECTO! +1 (${matchedItem.description})`,
+        message: `Producto correcto: +1 (${matchedItem.description})`,
         code: `${newTotalScanned}/${activeOrder.totalItemsRequired}`
       }
     }));

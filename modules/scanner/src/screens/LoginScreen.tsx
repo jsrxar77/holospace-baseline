@@ -35,7 +35,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      setErrorMessage('Por favor ingresa tu email y contraseña.');
+      setErrorMessage('Escribí tu email y tu contraseña.');
       return;
     }
 
@@ -51,7 +51,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       }
       onLoginSuccess();
     } else {
-      setErrorMessage('Credenciales incorrectas. Verifica tu email y contraseña.');
+      setErrorMessage('El email o la contraseña no son correctos. Revisalos e intentá de nuevo.');
     }
   };
 
@@ -73,7 +73,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           />
         </View>
         <Text style={[styles.by, { color: theme.textMuted, fontFamily: mono }]}>by hologrowth.dev</Text>
-        <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: mono }]}>HOJA DE ACCESO</Text>
+        <Text style={[styles.subtitle, { color: theme.textMuted, fontFamily: mono }]}>INGRESO A TU CUENTA</Text>
 
         {!!errorMessage && (
           <View style={[styles.errorContainer, { borderColor: theme.red }]}>
@@ -82,7 +82,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         )}
 
         <View style={styles.formGroup}>
-          <Text style={[styles.label, { color: theme.textMuted, fontFamily: mono }]}>EMAIL DE USUARIO</Text>
+          <Text style={[styles.label, { color: theme.textMuted, fontFamily: mono }]}>TU EMAIL</Text>
           <TextInput
             style={inputStyle}
             placeholder="usuario@holospace.com.ar"
@@ -130,7 +130,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           {loading ? (
             <ActivityIndicator color={theme.accentFg || '#000000'} />
           ) : (
-            <Text style={[styles.btnSubmitText, { color: theme.accentFg || '#04130E', fontFamily: sans }]}>Iniciar Sesión</Text>
+            <Text style={[styles.btnSubmitText, { color: theme.accentFg || '#04130E', fontFamily: sans }]}>Ingresar</Text>
           )}
         </TouchableOpacity>
 
@@ -143,7 +143,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
           }}
           activeOpacity={0.7}
         >
-          <Text style={[styles.backToHomeText, { color: theme.textMuted, fontFamily: mono }]}>Volver a Inicio →</Text>
+          <Text style={[styles.backToHomeText, { color: theme.textMuted, fontFamily: mono }]}>Volver al inicio →</Text>
         </TouchableOpacity>
       </View>
     </View>

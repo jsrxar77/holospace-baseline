@@ -28,7 +28,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({ scanned, total }) => {
     ]}>
       <View style={styles.statsRow}>
         <Text style={[styles.statsText, { color: theme.emerald, fontFamily: fontFamilyMono }]}>
-          {scanned} / {total} <Text style={[styles.subText, { color: theme.textMuted }]}>Unidades Escaneadas</Text>
+          {scanned} / {total} <Text style={[styles.subText, { color: theme.textMuted }]}>unidades escaneadas</Text>
         </Text>
         <Text style={[styles.pctText, { color: isComplete ? theme.emerald : theme.cobalt, fontFamily: fontFamilyMono }]}>
           {percentage}%

@@ -51,7 +51,7 @@
     "name": "holospace.",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android",
-    "description": "Sistema multi-empresa para logística de depósitos e inteligencia de precios de e-commerce.",
+    "description": "Sistema para depósitos y tiendas online: pedidos sin errores y precios sin pérdidas.",
     "offers": [
       { "@type": "Offer", "name": "Kanban Simple", "price": "39", "priceCurrency": "USD" },
       { "@type": "Offer", "name": "Kanban Business", "price": "119", "priceCurrency": "USD" },
@@ -193,11 +193,11 @@
           <thead><tr><th>Ref.</th><th>Módulo</th><th>Qué resuelve</th><th>Línea</th></tr></thead>
           <tbody>
             <tr><td>4S</td><td><svg class="pi" aria-hidden="true"><use href="#p-4see"/></svg>4see</td><td>Vigila los precios de tus competidores y te avisa cuando conviene actuar. Propone ajustes que nunca cruzan tu piso de margen y vos aprobás cada uno en un clic.</td><td>E-commerce</td></tr>
-            <tr><td>AC</td><td><svg class="pi" aria-hidden="true"><use href="#p-4see"/></svg>Auditoría de catálogo</td><td>Detecta productos sin GTIN, normaliza atributos y genera códigos EAN-13 internos para los que no tienen.</td><td>E-commerce</td></tr>
-            <tr><td>KB</td><td><svg class="pi" aria-hidden="true"><use href="#p-log"/></svg>Kanban de pedidos</td><td>Convierte remitos PDF en pedidos y los mueve de Backlog a Despachado, con el operario asignado y su avance a la vista.</td><td>Logística</td></tr>
+            <tr><td>AC</td><td><svg class="pi" aria-hidden="true"><use href="#p-4see"/></svg>Auditoría de catálogo</td><td>Detecta productos sin código de barras, ordena sus datos y genera códigos EAN-13 internos para los que no tienen.</td><td>E-commerce</td></tr>
+            <tr><td>KB</td><td><svg class="pi" aria-hidden="true"><use href="#p-log"/></svg>Tablero de pedidos</td><td>Convierte remitos PDF en pedidos y los mueve de Nuevos a Completados, con el operario asignado y su avance a la vista.</td><td>Logística</td></tr>
             <tr><td>SC</td><td><svg class="pi" aria-hidden="true"><use href="#p-log"/></svg>Scanner móvil</td><td>Escaneo EAN-13 con la cámara del celular, un pedido a la vez, con sonido y vibración. Guarda los datos en el dispositivo para trabajar sin Wi-Fi.</td><td>Logística</td></tr>
             <tr><td>CO</td><td><svg class="pi" aria-hidden="true"><use href="#p-core"/></svg>Core</td><td>Usuarios, roles con permisos granulares, auditoría de eventos y temas claro y oscuro para todo el equipo.</td><td>Plataforma</td></tr>
-            <tr><td>TN</td><td><svg class="pi" aria-hidden="true"><use href="#p-core"/></svg>Multi-empresa</td><td>Alta de organizaciones, planes, cuotas y módulos que se activan o desactivan en caliente.</td><td>Plataforma</td></tr>
+            <tr><td>TN</td><td><svg class="pi" aria-hidden="true"><use href="#p-core"/></svg>Varias empresas</td><td>Alta de organizaciones, planes, cuotas y módulos que se activan o desactivan en caliente.</td><td>Plataforma</td></tr>
           </tbody>
         </table>
       </div>
@@ -245,16 +245,16 @@
             <h3>Notas</h3>
             <ol>
               <li><div><b>Un producto, varios rivales.</b>Vinculá cada producto propio con las URLs de tiendas directas y marketplaces.</div></li>
-              <li><div><b>Rastreo en segundo plano.</b>Un worker asíncrono revisa precio y stock sin bloquear la aplicación y deja un historial inmutable.</div></li>
+              <li><div><b>Rastreo en segundo plano.</b>holospace. revisa precio y stock en segundo plano, sin frenar la aplicación, y guarda un historial que no se puede modificar.</div></li>
               <li><div><b>Quiebre ajeno, oportunidad.</b>Si el rival más barato se queda sin stock, el sistema sugiere subir hasta el máximo permitido.</div></li>
-              <li><div><b>El piso no se cruza.</b>Cualquier regla se recorta contra el piso antes de llegar a la cola de aprobación.</div></li>
+              <li><div><b>El piso no se cruza.</b>Cualquier regla se frena en el piso antes de llegar a tu lista de precios para decidir.</div></li>
             </ol>
           </div>
         </div>
 
         <div class="tbl-wrap">
           <table class="tbl">
-            <thead><tr><th>Cola de aprobación</th><th class="num">Precio actual</th><th class="num">Sugerido</th><th class="num">Variación</th><th>Motivo</th><th></th></tr></thead>
+            <thead><tr><th>Precios para decidir</th><th class="num">Precio actual</th><th class="num">Sugerido</th><th class="num">Variación</th><th>Motivo</th><th></th></tr></thead>
             <tbody>
               <tr><td>Producto de ejemplo 1</td><td class="num">$ 18.700</td><td class="num">$ 21.186</td><td class="num up">+13,3%</td><td><span class="tag act">Rival sin stock</span></td><td><span class="ok-btn">Aprobar</span></td></tr>
               <tr><td>Producto de ejemplo 2</td><td class="num">$ 24.900</td><td class="num">$ 24.900</td><td class="num">0,0%</td><td><span class="tag">Piso protegido</span></td><td><span class="ok-btn">Ver</span></td></tr>
@@ -351,12 +351,12 @@
             </svg>
             <ol>
               <li><div><b>Conectá tu tienda.</b> Importá el catálogo desde Tiendanube o WooCommerce y completá costos y márgenes.</div></li>
-              <li><div><b>Mapeá competidores.</b> Vinculá cada producto con varias URLs; el worker revisa precios y stock.</div></li>
+              <li><div><b>Mapeá competidores.</b> Vinculá cada producto con los links de varios rivales; holospace. revisa sus precios y su stock.</div></li>
               <li><div><b>Decidí vos.</b> Revisás cada ajuste sugerido con vista de diferencias y lo aprobás en un clic o lo descartás.
             </ol>
           </div>
           <div>
-            <h3><svg class="pi pi-m" aria-hidden="true"><use href="#p-log"/></svg>Logística con Kanban y Scanner</h3>
+            <h3><svg class="pi pi-m" aria-hidden="true"><use href="#p-log"/></svg>Logística: tablero de pedidos y escáner</h3>
             <svg viewBox="0 0 520 90" role="img" aria-label="Cargar, escanear, despachar">
               <rect class="box" x="4" y="20" width="136" height="50"/><text class="d-text" x="72" y="50" text-anchor="middle">Cargar</text>
               <rect class="box" x="192" y="20" width="136" height="50"/><text class="d-text" x="260" y="50" text-anchor="middle">Escanear</text>
@@ -378,7 +378,7 @@
     <section class="sheet" id="hoja-6" aria-labelledby="h-sec">
       <div class="sheet-body">
         <h2 id="h-sec">Cada empresa en su plano, separada por la base de datos.</h2>
-        <p class="lead">El aislamiento no depende de que la aplicación se acuerde de filtrar: lo impone PostgreSQL sobre cada fila.</p>
+        <p class="lead">Los datos de cada empresa están separados por la propia base de datos: aunque la aplicación se equivocara, una empresa no puede ver los datos de otra.</p>
         <div class="cut">
           <div class="drawing">
             <div class="drawing-cap"><span>Corte A-A · Filas por empresa</span><span>Esc. 1:1</span></div>
@@ -403,13 +403,13 @@
             <table class="tbl">
               <thead><tr><th>Control</th><th>Cómo funciona</th></tr></thead>
               <tbody>
-                <tr><td>Aislamiento</td><td>Aislamiento por fila en la base de datos (PostgreSQL Row-Level Security), además del filtro de la aplicación.</td></tr>
+                <tr><td>Aislamiento</td><td>Datos de cada empresa separados en la base de datos (seguridad por fila de PostgreSQL), además del filtro de la aplicación.</td></tr>
                 <tr><td>Permisos</td><td>Roles dinámicos con permisos por módulo, recurso y acción. Cada empresa define los suyos.</td></tr>
                 <tr><td>Acceso</td><td>Contraseñas protegidas con hash, sesiones firmadas y acceso con Google.</td></tr>
                 <tr><td>Auditoría</td><td>Registro de eventos de seguridad, cambios de configuración y accesos denegados.</td></tr>
                 <tr><td>Backups</td><td>Copias automáticas diarias, con retención de 30 días, 12 semanas y 12 meses.</td></tr>
                 <tr><td>Portabilidad</td><td>Exportación aislada de los datos de tu organización en JSON.</td></tr>
-                <tr><td>Infraestructura</td><td>Corre en contenedores Docker sobre PostgreSQL 16: apto para tu propio servidor.</td></tr>
+                <tr><td>Infraestructura</td><td>Funciona en tu propio servidor, con Docker y PostgreSQL 16.</td></tr>
               </tbody>
             </table>
           </div>
@@ -444,7 +444,7 @@
 
         <div class="tabs" role="tablist" aria-label="Línea de precios">
           <button role="tab" id="tabEc" aria-selected="true" aria-controls="plEc" type="button"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>E-commerce · 4see</button>
-          <button role="tab" id="tabLg" aria-selected="false" aria-controls="plLg" type="button"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Logística · Kanban</button>
+          <button role="tab" id="tabLg" aria-selected="false" aria-controls="plLg" type="button"><svg class="pi pi-s" aria-hidden="true"><use href="#p-log"/></svg>Logística · pedidos y escáner</button>
         </div>
 
         <div class="tbl-wrap" id="plEc" role="tabpanel" aria-labelledby="tabEc">
@@ -452,7 +452,7 @@
             <thead><tr>
               <th>Incluye</th>
               <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Simple</span><span class="pdesc">Vigilancia de precios y márgenes para vendedores individuales.</span><span class="pprice">$49<small>USD / mes</small></span></th>
-              <th class="rec"><span class="badge">Recomendado</span><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Business</span><span class="pdesc">Inteligencia de catálogo y repricing para tiendas en expansión.</span><span class="pprice">$149<small>USD / mes</small></span></th>
+              <th class="rec"><span class="badge">Recomendado</span><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Business</span><span class="pdesc">Vigilancia de precios y de catálogo para tiendas que crecen.</span><span class="pprice">$149<small>USD / mes</small></span></th>
               <th><span class="pname"><svg class="pi pi-s" aria-hidden="true"><use href="#p-4see"/></svg>4see Enterprise</span><span class="pdesc">Monitoreo corporativo sin límites.</span><span class="pprice">$349<small>USD / mes</small></span></th>
             </tr></thead>
             <tbody>
@@ -485,7 +485,7 @@
               <tr><td>Operarios de depósito</td><td>3</td><td class="rec">15</td><td>Ilimitados</td></tr>
               <tr><td>Pedidos por mes</td><td>500</td><td class="rec">3.000</td><td>Ilimitados</td></tr>
               <tr><td>Escáner móvil EAN-13</td><td>Incluido</td><td class="rec">Incluido</td><td>Incluido</td></tr>
-              <tr><td>Módulos</td><td>Core, Kanban y Scanner</td><td class="rec">Core, Kanban y Scanner</td><td>Core, Kanban y Scanner</td></tr>
+              <tr><td>Módulos</td><td>Plataforma, pedidos y escáner</td><td class="rec">Plataforma, pedidos y escáner</td><td>Plataforma, pedidos y escáner</td></tr>
             </tbody>
             <tfoot><tr>
               <td>Alta con tu cuenta de Google</td>
@@ -508,12 +508,12 @@
           <details><summary><span>N1</span>¿Los operarios pueden trabajar sin conexión a internet?</summary><p>Sí. El escáner guarda los datos en una base local del dispositivo, así que se puede trabajar en zonas del depósito sin Wi-Fi.</p></details>
           <details><summary><span>N2</span>¿Qué pasa si el remito no trae un precio o un dato?</summary><p>El sistema lee exactamente lo que dice el comprobante. Si un campo no existe, queda vacío o en cero: nunca se completa con valores inventados.</p></details>
           <details><summary><span>N3</span>¿Con qué tiendas se integra 4see?</summary><p>Hoy con Tiendanube y WooCommerce, tanto para importar el catálogo como para enviar los precios aprobados.</p></details>
-          <details><summary><span>N4</span>¿Puede una regla de repricing dejarme vender con pérdida?</summary><p>No. El piso se calcula con tu costo, tu margen mínimo y tus costos operativos, y ninguna sugerencia puede quedar por debajo. Además, nada se aplica sin tu aprobación.</p></details>
+          <details><summary><span>N4</span>¿Puede una regla de precios dejarme vender con pérdida?</summary><p>No. El piso se calcula con tu costo, tu margen mínimo y tus costos operativos, y ninguna sugerencia puede quedar por debajo. Además, nada se aplica sin tu aprobación.</p></details>
           <details><summary><span>N5</span>¿Mis datos se mezclan con los de otras empresas?</summary><p>No. Cada organización está aislada en la base de datos con Row-Level Security, además de los filtros de la aplicación.</p></details>
           <details><summary><span>N6</span>¿Puedo exportar mis datos?</summary><p>Sí. Podés exportar de forma aislada todos los datos de tu organización en formato JSON.</p></details>
           <details><summary><span>N7</span>¿Puedo contratar las dos líneas a la vez?</summary><p>Sí. Son suscripciones independientes y las cuotas de usuarios y límites mensuales se suman en tu organización.</p></details>
           <details><summary><span>N8</span>¿Hay modo claro y oscuro?</summary><p>Sí. La plataforma y esta página comparten dos temas, Holo Night y Holo Day. Cada usuario elige el suyo y se respeta la preferencia de su sistema.</p></details>
-          <details><summary><span>N9</span>¿Cómo me entero cuando un competidor cambia su precio?</summary><p>Vas a recibir un aviso por Telegram o por mail <span class="soon">próximamente</span> con el producto, el competidor, el ajuste sugerido y tu piso de margen, para que decidas. Mientras tanto, lo ves en el monitor y en la cola de aprobación de 4see.</p></details>
+          <details><summary><span>N9</span>¿Cómo me entero cuando un competidor cambia su precio?</summary><p>Vas a recibir un aviso por Telegram o por mail <span class="soon">próximamente</span> con el producto, el competidor, el ajuste sugerido y tu piso de margen, para que decidas. Mientras tanto, lo ves en Competencia y en Precios sugeridos de 4see.</p></details>
         </div>
       </div>
       <div class="final">
@@ -531,7 +531,7 @@
     <div class="foot">
       <div>
         <a href="/" class="brand" style="border:0;padding:0"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></svg><span class="brand-word">holospace<i>.</i></span></a>
-        <p>Sistema multi-empresa para logística de depósitos e inteligencia de precios de e-commerce.</p>
+        <p>Sistema para depósitos y tiendas online: pedidos sin errores y precios sin pérdidas.</p>
       </div>
       <div><h3>Producto</h3><ul><li><a href="#hoja-3">4see</a></li><li><a href="#hoja-4">Logística</a></li><li><a href="#hoja-8">Planes</a></li></ul></div>
       <div><h3>Plataforma</h3><ul><li><a href="#hoja-6">Seguridad</a></li><li><a href="#hoja-9">Preguntas</a></li><li><a href="/login">Ingresar</a></li></ul></div>
