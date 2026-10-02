@@ -457,11 +457,11 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Activos de marca (logo): solo archivos .svg y .png directos de public/brand
-  if (reqPath.startsWith('/brand/')) {
+  // Activos de marca (logo, iconos, Open Graph): solo archivos directos de public/brand; /favicon.ico se sirve desde ahi
+  if (reqPath.startsWith('/brand/') || reqPath === '/favicon.ico') {
     const file = path.join(__dirname, 'public', 'brand', path.basename(reqPath));
     const ext = path.extname(file).toLowerCase();
-    const types = { '.svg': 'image/svg+xml', '.png': 'image/png' };
+    const types = { '.svg': 'image/svg+xml', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.ico': 'image/x-icon' };
     if (types[ext] && fs.existsSync(file)) {
       res.writeHead(200, { 'Content-Type': types[ext], 'Cache-Control': 'public, max-age=3600' });
       res.end(fs.readFileSync(file));
