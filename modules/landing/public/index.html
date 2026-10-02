@@ -4,26 +4,26 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HoloSpace | Pedidos sin errores, precios sin pérdidas</title>
-  <meta name="description" content="Plataforma SaaS para depósitos y e-commerce: tablero Kanban con ingesta de remitos PDF, escáner móvil EAN-13 y repricing con piso de margen. Cada empresa aislada con PostgreSQL RLS.">
+  <meta name="description" content="Sistema para depósitos y tiendas online: vigilancia de precios con piso de margen inquebrantable, Kanban con remitos PDF y escáner móvil EAN-13. Cada empresa aislada con PostgreSQL RLS.">
   <meta name="theme-color" content="#0B0C10" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#F6F7FB" media="(prefers-color-scheme: light)">
   <meta property="og:type" content="website">
   <meta property="og:title" content="HoloSpace | Pedidos sin errores, precios sin pérdidas">
-  <meta property="og:description" content="Logística con escaneo EAN-13 e inteligencia de precios con piso de margen, en una sola plataforma multi-empresa.">
+  <meta property="og:description" content="Un solo sistema para el depósito y la tienda online. Piso de margen que ninguna regla cruza.">
   <meta property="og:locale" content="es_AR">
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
 
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l11.5 6.6v12.8L16 29 4.5 22.4V9.6L16 3z' fill='none' stroke='%2334D3A4' stroke-width='2.5'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/themes/holo.css">
   <link rel="stylesheet" href="/landing/landing.css">
 
   <script>
     // Tema inicial sin parpadeo: preferencia guardada o preferencia del sistema.
     (function () {
-      var d = document.documentElement;
-      d.className = '';
+      var d = document.documentElement; d.className = '';
       var t = null;
       try { t = localStorage.getItem('hs_landing_theme'); } catch (e) {}
       if (t !== 'holo_dark' && t !== 'holo_light') {
@@ -40,7 +40,7 @@
     "name": "HoloSpace",
     "applicationCategory": "BusinessApplication",
     "operatingSystem": "Web, iOS, Android",
-    "description": "Plataforma SaaS multi-empresa para logística de depósitos y inteligencia de precios de e-commerce.",
+    "description": "Sistema multi-empresa para logística de depósitos e inteligencia de precios de e-commerce.",
     "offers": [
       { "@type": "Offer", "name": "Kanban Simple", "price": "39", "priceCurrency": "USD" },
       { "@type": "Offer", "name": "Kanban Business", "price": "119", "priceCurrency": "USD" },
@@ -54,453 +54,582 @@
 </head>
 <body class="theme-holo_dark">
 
-  <!-- Iconos reutilizables -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="var(--emerald)"/><stop offset=".55" stop-color="var(--hw-info)"/><stop offset="1" stop-color="var(--cobalt)"/>
-      </linearGradient>
-      <symbol id="i-check" viewBox="0 0 20 20"><path d="M4 10.5l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="i-arrow" viewBox="0 0 20 20"><path d="M4 10h12m-5-5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
       <symbol id="i-google" viewBox="0 0 24 24"><path fill="currentColor" d="M21.35 11.1H12v2.98h5.35c-.23 1.5-1.7 4.4-5.35 4.4a5.9 5.9 0 010-11.8c1.87 0 3.12.8 3.83 1.48l2.6-2.5A9.6 9.6 0 0012 3.1a9.4 9.4 0 100 18.8c5.43 0 9.03-3.82 9.03-9.2 0-.62-.07-1.1-.15-1.6z"/></symbol>
-      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.2 8.2-8 9-4.8-.8-8-4.5-8-9V6l8-3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M11 12l9-9m-3 3l3 3m-6 0l2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-      <symbol id="i-log" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
-      <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
-      <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 4v11m0-11l-4 4m4-4l4 4M5 15v4h14v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
-      <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zm0 9l8-4.5M12 12L4 7.5M12 12v9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+      <symbol id="i-arrow" viewBox="0 0 20 20"><path d="M3 10h13m-5-5l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"/></symbol>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1l9 4-9 4z" style="fill:var(--text-muted)"/></marker>
+      <marker id="ah-act" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1l9 4-9 4z" style="fill:var(--emerald)"/></marker>
+      <pattern id="hatchA" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" class="hatch-a"/></pattern>
+      <pattern id="hatchB" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="8" class="hatch-b"/></pattern>
     </defs>
   </svg>
 
-  <a class="skip-link" href="#main">Saltar al contenido</a>
+  <a class="skip-link" href="#hoja-1">Saltar al contenido</a>
 
-  <header class="nav">
-    <div class="container nav-inner">
+  <!-- Franja de rótulo -->
+  <header class="strip">
+    <div class="strip-in">
       <a href="/" class="brand" aria-label="HoloSpace, inicio">
-        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5l11.5 6.7v13.6L16 29.5 4.5 22.8V9.2L16 2.5z" fill="none" stroke="url(#hg)" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 10v12M10 13l6 3.5 6-3.5" fill="none" stroke="url(#hg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <b>Holo</b><span class="brand-grad">Space</span>
+        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l11.5 6.6v12.8L16 29 4.5 22.4V9.6L16 3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 11v10M11 14l5 3 5-3" fill="none" style="stroke:var(--emerald)" stroke-width="2"/></svg>
+        <span><b>Holo</b><i>Space</i></span>
       </a>
-      <nav class="nav-links" aria-label="Principal">
-        <a href="#modulos">Producto</a>
-        <a href="#como">Cómo funciona</a>
-        <a href="#4see">4see</a>
-        <a href="#seguridad">Seguridad</a>
-        <a href="#planes">Precios</a>
-        <a href="#faq">Preguntas</a>
+      <nav class="index" aria-label="Índice de hojas">
+        <a href="#hoja-3"><span>3</span>4see</a>
+        <a href="#hoja-4"><span>4</span>Logística</a>
+        <a href="#hoja-5"><span>5</span>Proceso</a>
+        <a href="#hoja-6"><span>6</span>Seguridad</a>
+        <a href="#hoja-8"><span>8</span>Planes</a>
+        <a href="#hoja-9"><span>9</span>Notas</a>
       </nav>
-      <div class="nav-end">
-        <button class="icon-btn" id="themeToggle" type="button" aria-label="Cambiar entre tema claro y oscuro">
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <div class="strip-end">
+        <button class="mode" id="modeToggle" type="button" aria-label="Cambiar entre Holo Night y Holo Day">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10l2 2M5 19l2-2m10-10l2-2" stroke="currentColor" stroke-width="1.8"/></svg>
+          <b id="modeLabel">Night</b>
         </button>
-        <a class="btn btn-ghost btn-sm" href="/login">Ingresar</a>
-        <a class="btn btn-primary btn-sm" href="#planes">Empezar</a>
+        <a class="login" href="/login">Ingresar</a>
+        <a class="go" href="/api/auth/google">Empezar</a>
       </div>
     </div>
   </header>
 
-  <main id="main">
+  <main>
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="container hero-grid">
-        <div>
-          <span class="eyebrow"><i>Nuevo</i> Logística y e-commerce en un solo sistema</span>
-          <h1>Pedidos sin errores.<br><span class="grad">Precios sin pérdidas.</span></h1>
-          <p class="lead">HoloSpace une la preparación de pedidos con escaneo EAN-13 y la vigilancia de precios de tu competencia. Un sistema para tu depósito y tu tienda online, con los datos de cada empresa aislados por diseño.</p>
+    <!-- HOJA 1: HERO + SIMULADOR -->
+    <section class="sheet hero" id="hoja-1" aria-labelledby="h1">
+      <div class="zones" aria-hidden="true"><span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span></div>
+
+      <div class="hero-top">
+        <div class="hero-title">
+          <h1 id="h1"><span>Pedidos sin errores.</span> <em>Precios sin pérdidas.</em></h1>
           <div class="hero-cta">
-            <a class="btn btn-primary btn-lg" href="/api/auth/google">
-              <svg aria-hidden="true"><use href="#i-google"/></svg> Empezar con Google
-            </a>
-            <a class="textlink" href="#como">Ver cómo funciona <svg width="18" height="18" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            <a class="btn" href="/api/auth/google"><svg aria-hidden="true"><use href="#i-google"/></svg>Empezar con Google</a>
+            <a class="btn line" href="#hoja-8">Ver planes y precios</a>
           </div>
-          <ul class="hero-proof">
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg> Aislamiento por empresa con Row-Level Security</li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg> Escáner con modo sin conexión</li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg> Backups automáticos diarios</li>
-          </ul>
+        </div>
+        <div class="hero-block">
+          <div class="row"><span>Sistema</span><b>Depósito + tienda online</b></div>
+          <div class="row"><span>Líneas</span><b>Logística · 4see</b></div>
+          <div class="row"><span>Acceso</span><b>Cuenta de Google</b></div>
+          <div class="row"><span>Planes</span><b>Desde USD 39 por mes</b></div>
+          <p class="pitch">Une la preparación de pedidos con escaneo EAN-13 y la vigilancia de precios de tu competencia. Cada empresa queda aislada de las demás por la base de datos.</p>
+        </div>
+      </div>
+
+      <div class="plot">
+        <div class="plot-draw">
+          <div class="plot-cap"><span>Vista 1 · Precio contra piso</span><span>Simulación con datos de ejemplo</span></div>
+          <div class="svgwrap"><svg id="plotSvg" viewBox="0 0 660 400" role="img" aria-labelledby="plotT plotD">
+            <title id="plotT">Simulador del piso de margen</title>
+            <desc id="plotD">Eje vertical de precios con tres competidores, el costo, el piso de margen como cota y el precio sugerido.</desc>
+            <g id="ticks"></g>
+            <line class="axis-line" x1="64" y1="30" x2="64" y2="370"/>
+            <g id="comps"></g>
+            <line id="costLine" class="ln-soft" x1="64" x2="630" stroke-dasharray="3 5"/>
+            <text id="costTxt" class="t-label" x="72"></text>
+            <g id="gPiso" class="mover">
+              <line class="cota" x1="64" y1="0" x2="630" y2="0"/>
+              <text class="d-act" x="492" y="-8" text-anchor="end" id="pisoLbl">PISO</text>
+            </g>
+            <path id="dim" class="cota" d="" marker-start="url(#ah-act)" marker-end="url(#ah-act)"/>
+            <g id="gPrice" class="mover rise">
+              <circle class="price-mark" cx="506" cy="0" r="5"/>
+              <line class="ln-note" x1="64" y1="0" x2="501" y2="0" stroke-dasharray="2 4"/>
+              <text class="t-muted" x="520" y="-6">TU PRECIO</text>
+              <text class="t-main" x="520" y="14" id="priceTxt"></text>
+            </g>
+          </svg></div>
+          <div class="readout" aria-live="polite">
+            <div><span>Piso</span><b id="roPiso">-</b></div>
+            <div><span>Precio sugerido</span><b id="roPrice">-</b></div>
+            <div><span>Estado</span><b id="roState" class="ok" style="font-size:14px;line-height:1.5;display:block;padding-top:4px">-</b></div>
+          </div>
         </div>
 
-        <div class="stage" aria-hidden="true">
-          <div class="pricecard">
-            <div class="row"><span>Precio sugerido</span><span class="pill up">+8%</span></div>
-            <div class="val mono">$ 24.900</div>
-            <svg viewBox="0 0 200 56" preserveAspectRatio="none">
-              <path d="M0 40 L30 36 L60 42 L90 30 L120 33 L150 20 L200 14" fill="none" stroke="var(--cobalt)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="0" y1="46" x2="200" y2="46" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <form class="ctl" onsubmit="return false">
+          <p class="ctl-h">Cambiá los datos y mirá dónde frena el precio</p>
+          <label>
+            <span class="v">Costo del producto <b id="vCost"></b></span>
+            <input type="range" id="inCost" min="8000" max="22000" step="100" value="14000">
+          </label>
+          <label>
+            <span class="v">Margen mínimo <b id="vMargin"></b></span>
+            <input type="range" id="inMargin" min="5" max="60" step="1" value="25">
+          </label>
+          <label>
+            <span class="v">Costos operativos <b id="vOp"></b></span>
+            <input type="range" id="inOp" min="0" max="3000" step="50" value="1200">
+          </label>
+          <label class="check">
+            <input type="checkbox" id="inOut">
+            <span>El competidor A se quedó sin stock</span>
+          </label>
+          <p class="sim-note">Regla de ejemplo: igualar al competidor con stock más barato menos 1%, sin bajar del piso ni subir del tope de lista ($ 26.500). El piso es costo × (1 + margen) + costos operativos.</p>
+        </form>
+      </div>
+
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 1 · Piso de margen</b></div><div><span>Hoja</span><b>1 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+    </section>
+
+    <!-- HOJA 2: REFERENCIAS -->
+    <section class="sheet" id="hoja-2" aria-labelledby="h-ref">
+      <div class="sheet-body">
+        <h2 id="h-ref">Dos líneas, un solo sistema.</h2>
+        <p class="lead">Podés contratar solo la que necesitás o las dos. Los módulos comparten usuarios, permisos, auditoría y tema visual.</p>
+        <table class="legend-table">
+          <thead><tr><th>Ref.</th><th>Módulo</th><th>Qué resuelve</th><th>Línea</th></tr></thead>
+          <tbody>
+            <tr><td>4S</td><td>4see</td><td>Vigila los precios de tus competidores y propone ajustes que nunca cruzan tu piso de margen. Aprobación en un clic o aplicación automática hacia tu tienda.</td><td>E-commerce</td></tr>
+            <tr><td>AC</td><td>Auditoría de catálogo</td><td>Detecta productos sin GTIN, normaliza atributos y genera códigos EAN-13 internos para los que no tienen.</td><td>E-commerce</td></tr>
+            <tr><td>KB</td><td>Kanban de pedidos</td><td>Convierte remitos PDF en pedidos y los mueve de Backlog a Despachado, con el operario asignado y su avance a la vista.</td><td>Logística</td></tr>
+            <tr><td>SC</td><td>Scanner móvil</td><td>Escaneo EAN-13 con la cámara del celular, un pedido a la vez, con sonido y vibración. Guarda los datos en el dispositivo para trabajar sin Wi-Fi.</td><td>Logística</td></tr>
+            <tr><td>CO</td><td>Core</td><td>Usuarios, roles con permisos granulares, auditoría de eventos y temas claro y oscuro para todo el equipo.</td><td>Plataforma</td></tr>
+            <tr><td>TN</td><td>Multi-empresa</td><td>Alta de organizaciones, planes, cuotas y módulos que se activan o desactivan en caliente.</td><td>Plataforma</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 2 · Referencias</b></div><div><span>Hoja</span><b>2 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+    </section>
+
+    <!-- HOJA 3: 4SEE -->
+    <section class="sheet" id="hoja-3" aria-labelledby="h-4see">
+      <div class="sheet-body">
+        <h2 id="h-4see">El piso de margen es una cota, no una sugerencia.</h2>
+        <p class="lead">Cada producto tiene un piso calculado con tu costo, tu margen mínimo y tus costos operativos. La base de datos lo guarda como columna calculada: ninguna regla de repricing puede fijar un precio por debajo.</p>
+
+        <div class="eq"><div>Ecuación</div><div class="formula">piso = <b>costo</b> × (1 + <b>margen</b>) + <b>costos operativos</b></div></div>
+
+        <div class="two">
+          <div class="drawing">
+            <div class="drawing-cap"><span>Vista 2 · Mapeo 1 a N</span><span>Esc. 1:1</span></div>
+            <svg viewBox="0 0 700 380" role="img" aria-label="Un producto propio vinculado a cuatro competidores, uno de ellos sin stock">
+              <rect class="box" x="24" y="132" width="176" height="116"/>
+              <text class="d-mono" x="40" y="156">PRODUCTO PROPIO</text>
+              <text class="d-text" x="40" y="182">Producto de ejemplo</text>
+              <text class="d-sub" x="40" y="202">Costo, margen y costos op.</text>
+              <line class="ln-act" x1="24" y1="228" x2="200" y2="228"/>
+              <text class="d-act" x="40" y="243" style="transform:translateY(-4px)">PISO</text>
+
+              <g class="comp">
+                <path class="ln trace" pathLength="1" d="M200 190 H330 V52 H470"/>
+                <path class="ln trace" pathLength="1" d="M200 190 H330 V142 H470"/>
+                <path class="ln trace" pathLength="1" style="stroke-dasharray:4 4;stroke-dashoffset:0" d="M200 190 H330 V232 H470"/>
+                <path class="ln trace" pathLength="1" d="M200 190 H330 V322 H470"/>
+              </g>
+              <g>
+                <rect class="box" x="470" y="20" width="206" height="64"/><text class="d-mono" x="486" y="42">COMPETIDOR A</text><text class="d-text" x="486" y="66">Tienda directa</text><text class="d-sub" x="580" y="66">Disponible</text>
+                <rect class="box" x="470" y="110" width="206" height="64"/><text class="d-mono" x="486" y="132">COMPETIDOR B</text><text class="d-text" x="486" y="156">Marketplace</text><text class="d-sub" x="580" y="156">Disponible</text>
+                <rect class="box-dim" x="470" y="200" width="206" height="64"/><text class="d-mono" x="486" y="222">COMPETIDOR C</text><text class="d-text" x="486" y="246" style="fill:var(--hw-text-subtle)">Marketplace</text><text class="d-act" x="580" y="246">SIN STOCK</text>
+                <rect class="box" x="470" y="290" width="206" height="64"/><text class="d-mono" x="486" y="312">COMPETIDOR D</text><text class="d-text" x="486" y="336">Google Shopping</text><text class="d-sub" x="600" y="336">Disponible</text>
+              </g>
+              <g><circle class="bub" cx="112" cy="132" r="11"/><text class="bub-t" x="112" y="132">1</text></g>
+              <g><circle class="bub" cx="330" cy="100" r="11"/><text class="bub-t" x="330" y="100">2</text></g>
+              <g><circle class="bub" cx="573" cy="232" r="11" style="transform:translate(0,-34px)"/><text class="bub-t" x="573" y="198">3</text></g>
+              <g><circle class="bub" cx="200" cy="228" r="11"/><text class="bub-t" x="200" y="228">4</text></g>
             </svg>
-            <div class="legend"><span>Competidor</span><span style="color:var(--red)">Piso de margen</span></div>
           </div>
-
-          <div class="window">
-            <div class="window-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url mono">holospace.com.ar/kanban</div></div>
-            <div class="board">
-              <div class="col"><h4>Backlog <em>3</em></h4>
-                <div class="tk"><b>Remito 0001</b><small>12 ítems</small><span class="tag">PDF</span></div>
-                <div class="tk"><b>Remito 0002</b><small>7 ítems</small><span class="tag">PDF</span></div>
-              </div>
-              <div class="col"><h4>Listo <em>2</em></h4>
-                <div class="tk moving"><b>Remito 0003</b><small>14 ítems</small><span class="tag ok">Listo</span></div>
-                <div class="tk"><b>Remito 0004</b><small>5 ítems</small><span class="tag ok">Listo</span></div>
-              </div>
-              <div class="col"><h4>En proceso <em>1</em></h4>
-                <div class="tk"><b>Remito 0005</b><small>9 de 12 escaneados</small><div class="bar"><i style="width:75%"></i></div></div>
-              </div>
-              <div class="col"><h4>Despachado <em>4</em></h4>
-                <div class="tk"><b>Remito 0006</b><small>Estampa digital</small><span class="tag ok">Completo</span></div>
-              </div>
-            </div>
+          <div class="notes">
+            <h3>Notas</h3>
+            <ol>
+              <li><div><b>Un producto, varios rivales.</b>Vinculá cada producto propio con las URLs de tiendas directas y marketplaces.</div></li>
+              <li><div><b>Rastreo en segundo plano.</b>Un worker asíncrono revisa precio y stock sin bloquear la aplicación y deja un historial inmutable.</div></li>
+              <li><div><b>Quiebre ajeno, oportunidad.</b>Si el rival más barato se queda sin stock, el precio sube hasta el máximo permitido.</div></li>
+              <li><div><b>El piso no se cruza.</b>Cualquier regla se recorta contra el piso antes de llegar a la cola de aprobación.</div></li>
+            </ol>
           </div>
+        </div>
 
-          <div class="phone">
-            <div class="phone-screen">
-              <div class="phone-top"><span>Escáner</span><span class="phone-ok">12 / 14</span></div>
-              <div class="viewfinder">
-                <i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>
-                <div class="code"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-              </div>
-              <div class="phone-row"><b class="mono">7790001000123</b><span class="phone-ok">Correcto</span></div>
-              <div class="bar"><i style="width:86%"></i></div>
-            </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>Cola de aprobación</th><th class="num">Precio actual</th><th class="num">Sugerido</th><th class="num">Variación</th><th>Motivo</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>Producto de ejemplo 1</td><td class="num">$ 18.700</td><td class="num">$ 21.186</td><td class="num up">+13,3%</td><td><span class="tag act">Rival sin stock</span></td><td><span class="ok-btn">Aprobar</span></td></tr>
+              <tr><td>Producto de ejemplo 2</td><td class="num">$ 24.900</td><td class="num">$ 24.900</td><td class="num">0,0%</td><td><span class="tag">Piso protegido</span></td><td><span class="ok-btn">Ver</span></td></tr>
+              <tr><td>Producto de ejemplo 3</td><td class="num">$ 9.450</td><td class="num">$ 9.120</td><td class="num">-3,5%</td><td><span class="tag">Igualar al más barato</span></td><td><span class="ok-btn">Aprobar</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="sheet-note">Datos de ejemplo. Conectores disponibles hoy: Tiendanube y WooCommerce, para importar el catálogo y enviar los precios aprobados.</p>
+      </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 3 · 4see</b></div><div><span>Hoja</span><b>3 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+    </section>
+
+    <!-- HOJA 4: LOGISTICA -->
+    <section class="sheet" id="hoja-4" aria-labelledby="h-log">
+      <div class="sheet-body">
+        <h2 id="h-log">Del remito PDF al despacho, sin volver a tipear.</h2>
+        <p class="lead">El tablero se arma desde el comprobante y el operario trabaja un pedido por vez con el celular. Todo lo que no figura en el PDF queda vacío: nunca se completa con datos inventados.</p>
+
+        <div class="two">
+          <div class="drawing">
+            <div class="drawing-cap"><span>Vista 3 · Tablero en planta y escáner</span><span>Esc. 1:1</span></div>
+            <svg viewBox="0 0 760 276" role="img" aria-label="Tablero Kanban de cuatro columnas">
+              <g>
+                <rect class="box-dim" x="24" y="24" width="172" height="214"/><text class="d-mono" x="38" y="46">BACKLOG · 2</text>
+                <rect class="box-dim" x="206" y="24" width="172" height="214"/><text class="d-mono" x="220" y="46">LISTO · 2</text>
+                <rect class="box-dim" x="388" y="24" width="172" height="214"/><text class="d-mono" x="402" y="46">EN PROCESO · 1</text>
+                <rect class="box-dim" x="570" y="24" width="166" height="214"/><text class="d-mono" x="584" y="46">DESPACHADO · 3</text>
+              </g>
+              <g>
+                <rect class="box" x="38" y="62" width="144" height="56"/><text class="d-text" x="50" y="86">Remito 0001</text><text class="d-sub" x="50" y="106">PDF · 12 ítems</text>
+                <rect class="box" x="38" y="130" width="144" height="56"/><text class="d-text" x="50" y="154">Remito 0002</text><text class="d-sub" x="50" y="174">PDF · 7 ítems</text>
+                <rect class="box" x="220" y="62" width="144" height="56"/><text class="d-text" x="232" y="86">Remito 0003</text><text class="d-sub" x="232" y="106">Sin asignar</text>
+                <rect class="box" x="220" y="130" width="144" height="56"/><text class="d-text" x="232" y="154">Remito 0004</text><text class="d-sub" x="232" y="174">Sin asignar</text>
+                <rect class="box-act" x="402" y="62" width="144" height="76"/><text class="d-text" x="414" y="86">Remito 0005</text><text class="d-sub" x="414" y="106">Operario asignado</text>
+                <line class="ln" x1="414" y1="126" x2="534" y2="126"/><line class="ln-act trace" pathLength="1" x1="414" y1="126" x2="504" y2="126"/>
+                <text class="d-act" x="534" y="120" text-anchor="end">9 / 12</text>
+                <rect class="box" x="584" y="62" width="138" height="56"/><text class="d-text" x="596" y="86">Remito 0006</text><text class="d-sub" x="596" y="106">Estampa digital</text>
+                <rect class="box" x="584" y="130" width="138" height="56"/><text class="d-text" x="596" y="154">Remito 0007</text><text class="d-sub" x="596" y="174">Estampa digital</text>
+              </g>
+              <path class="ln-act trace" pathLength="1" d="M364 90 H402" marker-end="url(#ah-act)"/>
+              <g><circle class="bub" cx="182" cy="62" r="11"/><text class="bub-t" x="182" y="62">1</text></g>
+              <g><circle class="bub" cx="546" cy="62" r="11"/><text class="bub-t" x="546" y="62">2</text></g>
+              <g><circle class="bub" cx="722" cy="62" r="11"/><text class="bub-t" x="722" y="62">5</text></g>
+              <text class="d-mono" x="24" y="262">PEDIDOS DE EJEMPLO</text>
+            </svg>
+            <svg viewBox="0 0 760 260" role="img" aria-label="Escáner móvil conectado a base local y servidor" style="border-top:1px solid var(--card-border)">
+              <rect class="box" x="40" y="14" width="116" height="232" rx="14"/>
+              <rect class="box-dim" x="52" y="62" width="92" height="64"/>
+              <path class="ln-act trace" pathLength="1" d="M52 94 H144"/>
+              <g style="stroke:var(--text-main)" stroke-width="2"><line x1="66" y1="76" x2="66" y2="112"/><line x1="72" y1="76" x2="72" y2="112"/><line x1="80" y1="76" x2="80" y2="112"/><line x1="86" y1="76" x2="86" y2="112"/><line x1="96" y1="76" x2="96" y2="112"/><line x1="102" y1="76" x2="102" y2="112"/><line x1="112" y1="76" x2="112" y2="112"/><line x1="124" y1="76" x2="124" y2="112"/></g>
+              <text class="d-mono" x="52" y="150">12 / 14</text>
+              <line class="ln" x1="52" y1="162" x2="144" y2="162"/><line class="ln-act" x1="52" y1="162" x2="130" y2="162"/>
+              <text class="d-sub" x="52" y="186">7790001000123</text>
+              <text class="d-act" x="52" y="206">CORRECTO</text>
+              <g><circle class="bub" cx="156" cy="62" r="11"/><text class="bub-t" x="156" y="62">3</text></g>
+              <path class="ln" d="M156 130 H300" marker-end="url(#ah)"/>
+              <g>
+                <ellipse class="box" cx="360" cy="104" rx="56" ry="16"/><path class="box" d="M304 104v52c0 9 25 16 56 16s56-7 56-16v-52"/><ellipse class="box" cx="360" cy="104" rx="56" ry="16"/>
+                <text class="d-text" x="360" y="152" text-anchor="middle">Base local</text><text class="d-sub" x="360" y="170" text-anchor="middle">en el dispositivo</text>
+              </g>
+              <g><circle class="bub" cx="416" cy="86" r="11"/><text class="bub-t" x="416" y="86">4</text></g>
+              <path class="ln" style="stroke-dasharray:4 4" d="M416 130 H560" marker-end="url(#ah)"/>
+              <rect class="box" x="560" y="86" width="150" height="88"/><text class="d-mono" x="576" y="110">SERVIDOR</text><text class="d-text" x="576" y="136">HoloSpace</text><text class="d-sub" x="576" y="156">Pedidos por empresa</text>
+            </svg>
+          </div>
+          <div class="notes">
+            <h3>Notas</h3>
+            <ol>
+              <li><div><b>Remito PDF a pedido.</b>Subís el comprobante y se extraen cliente, ítems, códigos y cantidades tal cual figuran.</div></li>
+              <li><div><b>Un pedido a la vez.</b>Cada operario ve solo los pedidos que tiene asignados, con el avance en tiempo real.</div></li>
+              <li><div><b>Escaneo con la cámara.</b>Lectura EAN-13 con sonido y vibración: el error se oye antes de que se despache.</div></li>
+              <li><div><b>Sin Wi-Fi, sin problema.</b>Los datos se guardan en el dispositivo para trabajar en zonas sin cobertura.</div></li>
+              <li><div><b>Despacho con estampa.</b>Al completar el pedido queda estampado digitalmente y auditado.</div></li>
+            </ol>
           </div>
         </div>
       </div>
-      <p class="container stage-note">Vista ilustrativa del producto.</p>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 4 · Logística</b></div><div><span>Hoja</span><b>4 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
-    <!-- CAPACIDADES -->
-    <section class="strip" aria-label="Capacidades clave">
-      <div class="container strip-grid reveal">
-        <div class="strip-item"><b>Ingesta de remitos PDF</b><span>Sin reescribir datos a mano</span></div>
-        <div class="strip-item"><b>Escaneo EAN-13</b><span>Con la cámara del celular</span></div>
-        <div class="strip-item"><b>Repricing con piso de margen</b><span>Nunca por debajo de tu costo</span></div>
-        <div class="strip-item"><b>Multi-empresa real</b><span>Datos aislados en la base</span></div>
-      </div>
-    </section>
-
-    <!-- MODULOS -->
-    <section class="section" id="modulos">
-      <div class="container">
-        <div class="center reveal">
-          <span class="kicker">Producto</span>
-          <h2 class="h2">Todo lo que tu operación necesita, sin integrar cinco herramientas.</h2>
-          <p class="sub">Dos líneas que funcionan solas o juntas: logística para el depósito e inteligencia de precios para la tienda online.</p>
-        </div>
-
-        <div class="bento">
-          <article class="cell c-kanban reveal">
-            <span class="chip">Logística</span>
-            <h3>Kanban de pedidos</h3>
-            <p>Subí el remito en PDF y el tablero se arma solo. Cada pedido avanza de Backlog a Despachado con el operario asignado y su avance a la vista.</p>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Lectura fiel del PDF: si un dato no está, no se inventa</li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Explorador de pedidos con filtros por cliente y operario</li>
-            </ul>
-            <div class="cell-art" aria-hidden="true">
-              <div class="mini-board"><div><i></i><i></i></div><div><i class="on"></i><i></i></div><div><i class="on"></i></div><div><i></i></div></div>
-            </div>
-            <a class="cell-link" href="/kanban">Abrir Kanban <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          </article>
-
-          <article class="cell c-scanner reveal">
-            <span class="chip">Logística</span>
-            <h3>Escáner móvil</h3>
-            <p>App para operarios: escaneo EAN-13 con sonido y vibración, un pedido a la vez, y base local para trabajar sin Wi-Fi.</p>
-            <a class="cell-link" href="https://m.holospace.com.ar">Abrir Scanner <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          </article>
-
-          <article class="cell c-4see reveal">
-            <span class="chip">E-commerce</span>
-            <h3>4see: inteligencia de precios</h3>
-            <p>Vigilá a tus competidores y ajustá tus precios con reglas claras. El piso de margen es inquebrantable.</p>
-            <div class="cell-art floor-art" aria-hidden="true">
-              <svg viewBox="0 0 320 118" preserveAspectRatio="none">
-                <path d="M0 78 C40 70 60 90 100 74 S170 40 210 52 S280 30 320 24" fill="none" stroke="var(--cobalt)" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M0 78 C40 70 60 90 100 74 S170 40 210 52 S280 30 320 24 V118 H0Z" fill="var(--hw-violet-soft)"/>
-                <line x1="0" y1="96" x2="320" y2="96" stroke="var(--red)" stroke-width="1.6" stroke-dasharray="5 5"/>
-              </svg>
-            </div>
-            <a class="cell-link" href="/4see">Abrir 4see <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          </article>
-
-          <article class="cell c-core reveal">
-            <span class="chip">Plataforma</span>
-            <h3>Usuarios, roles y auditoría</h3>
-            <p>Permisos granulares por módulo y acción, roles propios por empresa y un registro de auditoría de lo que pasa en la plataforma.</p>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Acceso con Google o con credenciales propias</li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg>Temas claro y oscuro para todo el equipo</li>
-            </ul>
-            <a class="cell-link" href="/login">Ingresar <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
-          </article>
-
-          <article class="cell c-tenant reveal">
-            <div style="flex:1">
-              <span class="chip">Para quien revende o administra</span>
-              <h3>Gobierno multi-empresa</h3>
-              <p>Dá de alta organizaciones, asigná planes y cuotas, y activá o desactivá módulos en caliente. Pensado para operar HoloSpace como un negocio de suscripción.</p>
-            </div>
-            <a class="btn btn-ghost" href="#planes">Ver planes</a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- COMO FUNCIONA -->
-    <section class="section" id="como" style="padding-top:24px">
-      <div class="container center">
-        <div class="reveal">
-          <span class="kicker">Cómo funciona</span>
-          <h2 class="h2">De la primera carga a la primera entrega, en tres pasos.</h2>
-        </div>
-        <div class="flow-tabs" role="tablist" aria-label="Línea de producto">
-          <button role="tab" id="tabFlowLog" aria-selected="true" aria-controls="flowLog" type="button">Logística</button>
-          <button role="tab" id="tabFlow4" aria-selected="false" aria-controls="flow4" type="button">E-commerce</button>
-        </div>
-        <div class="steps" id="flowLog" role="tabpanel" aria-labelledby="tabFlowLog">
-          <div class="step"><h3>Cargá el remito</h3><p>Subí el PDF. HoloSpace extrae cliente, ítems, códigos y cantidades tal cual figuran en el comprobante.</p></div>
-          <div class="step"><h3>El operario escanea</h3><p>Toma un pedido, escanea cada código con el celular y ve el progreso en tiempo real. Los errores suenan y vibran.</p></div>
-          <div class="step"><h3>Despachá con estampa</h3><p>Al completar, el pedido queda estampado digitalmente y pasa a Despachado. Todo queda auditado.</p></div>
-        </div>
-        <div class="steps" id="flow4" role="tabpanel" aria-labelledby="tabFlow4" hidden>
-          <div class="step"><h3>Conectá tu tienda</h3><p>Importá el catálogo desde Tiendanube o WooCommerce y completá costos y márgenes.</p></div>
-          <div class="step"><h3>Mapeá competidores</h3><p>Vinculá cada producto con varias URLs de la competencia. Un worker en segundo plano revisa precios y stock.</p></div>
-          <div class="step"><h3>Aprobá el repricing</h3><p>Revisá cada sugerencia con vista de diferencias y aprobala en un clic, o dejá que se aplique automáticamente.</p></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4SEE SPOTLIGHT -->
-    <section class="section" id="4see">
-      <div class="container split">
-        <div class="reveal">
-          <span class="kicker">4see</span>
-          <h2 class="h2">Competí en precio sin regalar margen.</h2>
-          <p class="sub">Cada producto tiene un piso calculado con tu costo, tu margen mínimo y tus costos operativos. Ninguna regla puede cruzarlo.</p>
-          <div class="formula"><span class="k">piso</span> = <b>costo</b> &times; (1 + <b>margen</b>) + <b>costos operativos</b></div>
-          <ul class="checks">
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Captura de sobremargen.</b> Si el competidor más barato se queda sin stock, el precio sube hasta el máximo permitido.</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Mapeo 1 a N.</b> Un producto propio contra varios competidores y marketplaces.</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Control humano.</b> Aprobación en un clic o aplicación automática hacia tu tienda.</span></li>
-            <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Auditoría de catálogo.</b> Detecta productos sin GTIN y genera EAN-13 internos.</span></li>
-          </ul>
-        </div>
-        <div class="panel reveal" aria-hidden="true">
-          <div class="panel-head"><b>Producto de ejemplo</b><span>Vista ilustrativa</span></div>
-          <svg class="chart" viewBox="0 0 440 220" preserveAspectRatio="none">
-            <g stroke="var(--card-border)" stroke-width="1"><line x1="0" y1="40" x2="440" y2="40"/><line x1="0" y1="90" x2="440" y2="90"/><line x1="0" y1="140" x2="440" y2="140"/></g>
-            <path d="M0 120 L50 110 L100 124 L150 96 L200 102 L250 70 L300 84 L350 58 L440 48" fill="none" stroke="var(--cobalt)" stroke-width="2.5" stroke-linejoin="round"/>
-            <path d="M0 150 L70 146 L140 154 L210 138 L280 142 L350 130 L440 126" fill="none" stroke="var(--emerald)" stroke-width="2.5" stroke-linejoin="round"/>
-            <line x1="0" y1="176" x2="440" y2="176" stroke="var(--red)" stroke-width="1.8" stroke-dasharray="6 5"/>
-            <text x="6" y="192">piso de margen</text>
-            <text x="6" y="14">competidor</text>
-            <text x="120" y="14" style="fill:var(--emerald)">tu precio</text>
-          </svg>
-          <div class="rows">
-            <div class="rowx"><div>Competidor sin stock<small>Sobremargen disponible</small></div><span class="pill up">+8%</span><span class="mini-btn">Aprobar</span></div>
-            <div class="rowx"><div>Precio rival bajo el piso<small>Se mantiene el piso</small></div><span class="pill hold">Protegido</span><span class="mini-btn">Ver</span></div>
+    <!-- HOJA 5: PROCESO -->
+    <section class="sheet" id="hoja-5" aria-labelledby="h-proc">
+      <div class="sheet-body">
+        <h2 id="h-proc">Tres pasos por línea.</h2>
+        <p class="lead">Cada línea se pone en marcha por separado. Si contratás las dos, comparten la misma organización y el mismo equipo.</p>
+        <div class="proc">
+          <div>
+            <h3>E-commerce con 4see</h3>
+            <svg viewBox="0 0 520 90" role="img" aria-label="Conectar, mapear, aprobar">
+              <rect class="box" x="4" y="20" width="136" height="50"/><text class="d-text" x="72" y="50" text-anchor="middle">Conectar</text>
+              <rect class="box" x="192" y="20" width="136" height="50"/><text class="d-text" x="260" y="50" text-anchor="middle">Mapear</text>
+              <rect class="box-act" x="380" y="20" width="136" height="50"/><text class="d-text" x="448" y="50" text-anchor="middle">Aprobar</text>
+              <path class="ln trace" pathLength="1" d="M140 45 H192" marker-end="url(#ah)"/><path class="ln trace" pathLength="1" d="M328 45 H380" marker-end="url(#ah)"/>
+            </svg>
+            <ol>
+              <li><div><b>Conectá tu tienda.</b> Importá el catálogo desde Tiendanube o WooCommerce y completá costos y márgenes.</div></li>
+              <li><div><b>Mapeá competidores.</b> Vinculá cada producto con varias URLs; el worker revisa precios y stock.</div></li>
+              <li><div><b>Aprobá el repricing.</b> Revisá cada sugerencia con vista de diferencias y aprobala en un clic.</div></li>
+            </ol>
+          </div>
+          <div>
+            <h3>Logística con Kanban y Scanner</h3>
+            <svg viewBox="0 0 520 90" role="img" aria-label="Cargar, escanear, despachar">
+              <rect class="box" x="4" y="20" width="136" height="50"/><text class="d-text" x="72" y="50" text-anchor="middle">Cargar</text>
+              <rect class="box" x="192" y="20" width="136" height="50"/><text class="d-text" x="260" y="50" text-anchor="middle">Escanear</text>
+              <rect class="box-act" x="380" y="20" width="136" height="50"/><text class="d-text" x="448" y="50" text-anchor="middle">Despachar</text>
+              <path class="ln trace" pathLength="1" d="M140 45 H192" marker-end="url(#ah)"/><path class="ln trace" pathLength="1" d="M328 45 H380" marker-end="url(#ah)"/>
+            </svg>
+            <ol>
+              <li><div><b>Cargá el remito.</b> Subí el PDF y el pedido aparece en el tablero con sus ítems.</div></li>
+              <li><div><b>El operario escanea.</b> Toma un pedido, escanea cada código y sigue el progreso.</div></li>
+              <li><div><b>Despachá con estampa.</b> El pedido pasa a Despachado y queda registrado.</div></li>
+            </ol>
           </div>
         </div>
       </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 5 · Proceso</b></div><div><span>Hoja</span><b>5 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
-    <!-- SEGURIDAD -->
-    <section class="section" id="seguridad" style="padding-top:24px">
-      <div class="container">
-        <div class="center reveal">
-          <span class="kicker">Seguridad</span>
-          <h2 class="h2">Tus datos, separados de los de cualquier otra empresa.</h2>
-          <p class="sub">El aislamiento no depende de que la aplicación se acuerde de filtrar: lo impone la base de datos.</p>
-        </div>
-        <div class="sec-grid">
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-shield"/></svg><h3>Aislamiento con RLS</h3><p>PostgreSQL 16 con Row-Level Security: cada consulta solo ve las filas de su organización.</p></div>
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-key"/></svg><h3>Permisos granulares</h3><p>Roles dinámicos con permisos por módulo, recurso y acción. Cada empresa define los suyos.</p></div>
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-log"/></svg><h3>Auditoría</h3><p>Registro de eventos de seguridad y cambios de configuración, incluidos los accesos denegados.</p></div>
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-db"/></svg><h3>Backups diarios</h3><p>Copias automáticas con retención escalonada: diaria, semanal y mensual.</p></div>
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-export"/></svg><h3>Tus datos son tuyos</h3><p>Exportación aislada por organización en JSON. Sin dependencia de un proveedor.</p></div>
-          <div class="sec reveal"><svg aria-hidden="true"><use href="#i-box"/></svg><h3>Infraestructura propia</h3><p>Todo corre en contenedores Docker: Node.js, PostgreSQL, Redis y Nginx. Listo para tu servidor.</p></div>
+    <!-- HOJA 6: SEGURIDAD -->
+    <section class="sheet" id="hoja-6" aria-labelledby="h-sec">
+      <div class="sheet-body">
+        <h2 id="h-sec">Cada empresa en su plano, separada por la base de datos.</h2>
+        <p class="lead">El aislamiento no depende de que la aplicación se acuerde de filtrar: lo impone PostgreSQL sobre cada fila.</p>
+        <div class="cut">
+          <div class="drawing">
+            <div class="drawing-cap"><span>Corte A-A · Filas por empresa</span><span>Esc. 1:1</span></div>
+            <svg viewBox="0 0 560 380" role="img" aria-label="Tabla con filas de dos empresas; la consulta de la empresa A solo ve sus filas">
+              <rect class="box" x="30" y="20" width="500" height="52"/><text class="d-mono" x="46" y="42">APLICACIÓN</text><text class="d-text" x="46" y="62">Sesión de la empresa A · permisos por módulo y acción</text>
+              <path class="ln-act trace" pathLength="1" d="M470 72 V126" marker-end="url(#ah-act)"/>
+              <g><circle class="bub" cx="490" cy="100" r="11"/><text class="bub-t" x="490" y="100">1</text></g>
+              <line class="ln-act" x1="14" y1="130" x2="546" y2="130" stroke-dasharray="8 4"/>
+              <text class="d-act" x="30" y="122">RLS · tenant_id = empresa de la sesión</text>
+              <g>
+                <rect x="30" y="146" width="500" height="44" fill="url(#hatchA)" class="box" style="fill:var(--bg-main)"/><rect x="30" y="146" width="500" height="44" fill="url(#hatchA)" stroke="none"/><rect class="box-act" x="30" y="146" width="500" height="44" style="fill:none"/><text class="d-text" x="46" y="173" style="paint-order:stroke;stroke:var(--bg-main);stroke-width:6px">Empresa A · pedidos</text>
+                <rect x="30" y="198" width="500" height="44" fill="url(#hatchA)" class="box" style="fill:none"/><rect class="box-act" x="30" y="198" width="500" height="44" style="fill:none"/><text class="d-text" x="46" y="225" style="paint-order:stroke;stroke:var(--bg-main);stroke-width:6px">Empresa A · productos</text>
+                <rect class="box-dim" x="30" y="250" width="500" height="44"/><rect x="30" y="250" width="500" height="44" fill="url(#hatchB)" opacity=".45"/><text class="d-sub" x="46" y="277" style="paint-order:stroke;stroke:var(--bg-main);stroke-width:6px">Empresa B · pedidos (invisible para A)</text>
+                <rect class="box-dim" x="30" y="302" width="500" height="44" /><rect x="30" y="302" width="500" height="44" fill="url(#hatchB)" opacity=".45"/><text class="d-sub" x="46" y="329" style="paint-order:stroke;stroke:var(--bg-main);stroke-width:6px">Empresa B · productos (invisible para A)</text>
+              </g>
+              <g><circle class="bub" cx="548" cy="168" r="11"/><text class="bub-t" x="548" y="168">2</text></g>
+              <g><circle class="bub" cx="548" cy="274" r="11"/><text class="bub-t" x="548" y="274">3</text></g>
+              <text class="d-mono" x="30" y="368">POSTGRESQL 16 · ROW-LEVEL SECURITY</text>
+            </svg>
+          </div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Control</th><th>Cómo funciona</th></tr></thead>
+              <tbody>
+                <tr><td>Aislamiento</td><td>Row-Level Security con <span class="mono">tenant_id</span> en cada tabla de negocio, además del filtro de la aplicación.</td></tr>
+                <tr><td>Permisos</td><td>Roles dinámicos con permisos por módulo, recurso y acción. Cada empresa define los suyos.</td></tr>
+                <tr><td>Acceso</td><td>Contraseñas con scrypt, tokens JWT firmados y acceso con Google.</td></tr>
+                <tr><td>Auditoría</td><td>Registro de eventos de seguridad, cambios de configuración y accesos denegados.</td></tr>
+                <tr><td>Backups</td><td>Copias automáticas diarias, con retención de 30 días, 12 semanas y 12 meses.</td></tr>
+                <tr><td>Portabilidad</td><td>Exportación aislada de los datos de tu organización en JSON.</td></tr>
+                <tr><td>Infraestructura</td><td>Docker con Node.js, PostgreSQL 16, Redis 7 y Nginx. Apto para tu propio servidor.</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 6 · Seguridad</b></div><div><span>Hoja</span><b>6 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
-    <!-- PLANES -->
-    <section class="section" id="planes">
-      <div class="container center">
-        <div class="reveal">
-          <span class="kicker">Precios</span>
-          <h2 class="h2">Pagá solo por lo que usás. Combiná las dos líneas cuando lo necesites.</h2>
-          <p class="sub">Precios mensuales en dólares. Podés contratar una línea o ambas, y los límites se suman en tu organización.</p>
+    <!-- HOJA 7: PARA QUIEN -->
+    <section class="sheet" id="hoja-7" aria-labelledby="h-who">
+      <div class="sheet-body">
+        <h2 id="h-who">Para depósitos, distribuidoras y tiendas online.</h2>
+        <div class="tbl-wrap">
+          <table class="tbl cmp">
+            <thead><tr><th>Perfil</th><th>Cómo se opera hoy</th><th>Con HoloSpace</th></tr></thead>
+            <tbody>
+              <tr><td>Depósito o distribuidora</td><td>Remitos en papel o PDF, pedidos en planillas y controles a ojo.</td><td>El remito PDF se vuelve tablero, el picking se hace con escáner y el despacho queda estampado.</td></tr>
+              <tr><td>Tienda online (Tiendanube o WooCommerce)</td><td>Precios revisados a mano contra la competencia.</td><td>Competidores vigilados, ajustes con piso de margen y aprobación en un clic.</td></tr>
+              <tr><td>Operación mixta</td><td>Dos herramientas sin relación entre sí.</td><td>Las dos líneas en una sola organización, con usuarios y cuotas que se suman.</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="plan-tabs" role="tablist" aria-label="Línea de precios">
-          <button role="tab" id="tabPlanLog" aria-selected="true" aria-controls="plansLog" type="button">Logística</button>
-          <button role="tab" id="tabPlan4" aria-selected="false" aria-controls="plans4" type="button">E-commerce</button>
-        </div>
-
-        <div class="plans" id="plansLog" role="tabpanel" aria-labelledby="tabPlanLog">
-          <div class="plan">
-            <h3>Kanban Simple</h3><p class="desc">Para depósitos individuales o pequeñas operaciones.</p>
-            <div class="price"><strong>$39</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>1</b> administrador</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>3</b> operarios de depósito</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Hasta <b>500</b> pedidos por mes</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Kanban, Scanner y Core</span></li>
-            </ul>
-            <a class="btn btn-ghost btn-block" href="/api/auth/google?plan=kanban_simple">Elegir Simple</a>
-          </div>
-          <div class="plan featured">
-            <span class="ribbon">Recomendado</span>
-            <h3>Kanban Business</h3><p class="desc">Para centros de distribución con varios operarios y supervisores.</p>
-            <div class="price"><strong>$119</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>3</b> administradores</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>15</b> operarios de depósito</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Hasta <b>3.000</b> pedidos por mes</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Kanban, Scanner y Core</span></li>
-            </ul>
-            <a class="btn btn-primary btn-block" href="/api/auth/google?plan=kanban_business">Elegir Business</a>
-          </div>
-          <div class="plan">
-            <h3>Kanban Enterprise</h3><p class="desc">Capacidad ilimitada para grandes redes logísticas.</p>
-            <div class="price"><strong>$299</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Administradores <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Operarios <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Pedidos <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Kanban, Scanner y Core</span></li>
-            </ul>
-            <a class="btn btn-ghost btn-block" href="/api/auth/google?plan=kanban_enterprise">Elegir Enterprise</a>
-          </div>
-        </div>
-
-        <div class="plans" id="plans4" role="tabpanel" aria-labelledby="tabPlan4" hidden>
-          <div class="plan">
-            <h3>4see Simple</h3><p class="desc">Vigilancia de precios y márgenes para vendedores individuales.</p>
-            <div class="price"><strong>$49</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>1</b> administrador y <b>2</b> analistas</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>50</b> productos monitoreados</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>3</b> competidores por producto</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Aprobación en un clic</span></li>
-            </ul>
-            <a class="btn btn-ghost btn-block" href="/api/auth/google?plan=fourseee_simple">Elegir Simple</a>
-          </div>
-          <div class="plan featured">
-            <span class="ribbon">Recomendado</span>
-            <h3>4see Business</h3><p class="desc">Inteligencia de catálogo y repricing para tiendas en expansión.</p>
-            <div class="price"><strong>$149</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>2</b> administradores y <b>8</b> analistas</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>500</b> productos monitoreados</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>10</b> competidores por producto</span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Aprobación en un clic</span></li>
-            </ul>
-            <a class="btn btn-primary btn-block" href="/api/auth/google?plan=fourseee_business">Elegir Business</a>
-          </div>
-          <div class="plan">
-            <h3>4see Enterprise</h3><p class="desc">Monitoreo corporativo sin límites.</p>
-            <div class="price"><strong>$349</strong><span>USD / mes</span></div>
-            <ul>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Administradores y analistas <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Productos <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Competidores <b>ilimitados</b></span></li>
-              <li><svg aria-hidden="true"><use href="#i-check"/></svg><span>Aprobación en un clic</span></li>
-            </ul>
-            <a class="btn btn-ghost btn-block" href="/api/auth/google?plan=fourseee_enterprise">Elegir Enterprise</a>
-          </div>
-        </div>
-        <p class="bundle-note">Si tenés depósito y tienda online, contratá una suscripción de cada línea: las cuotas se acumulan en tu organización.</p>
       </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 7 · Perfiles</b></div><div><span>Hoja</span><b>7 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
 
-    <!-- FAQ -->
-    <section class="section" id="faq" style="padding-top:24px">
-      <div class="container center">
-        <div class="reveal"><span class="kicker">Preguntas frecuentes</span><h2 class="h2">Lo que suelen preguntar antes de empezar.</h2></div>
+    <!-- HOJA 8: PLANES -->
+    <section class="sheet" id="hoja-8" aria-labelledby="h-plan">
+      <div class="sheet-body">
+        <h2 id="h-plan">Planes por línea. Se pueden sumar.</h2>
+        <p class="lead">Precios mensuales en dólares. Podés contratar una línea o las dos: los límites de usuarios y volumen se acumulan en tu organización.</p>
+
+        <div class="tabs" role="tablist" aria-label="Línea de precios">
+          <button role="tab" id="tabEc" aria-selected="true" aria-controls="plEc" type="button">E-commerce · 4see</button>
+          <button role="tab" id="tabLg" aria-selected="false" aria-controls="plLg" type="button">Logística · Kanban</button>
+        </div>
+
+        <div class="tbl-wrap" id="plEc" role="tabpanel" aria-labelledby="tabEc">
+          <table class="tbl plans-t">
+            <thead><tr>
+              <th>Incluye</th>
+              <th><span class="pname">4see Simple</span><span class="pdesc">Vigilancia de precios y márgenes para vendedores individuales.</span><span class="pprice">$49<small>USD / mes</small></span></th>
+              <th class="rec"><span class="badge">Recomendado</span><span class="pname">4see Business</span><span class="pdesc">Inteligencia de catálogo y repricing para tiendas en expansión.</span><span class="pprice">$149<small>USD / mes</small></span></th>
+              <th><span class="pname">4see Enterprise</span><span class="pdesc">Monitoreo corporativo sin límites.</span><span class="pprice">$349<small>USD / mes</small></span></th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Administradores</td><td>1</td><td class="rec">2</td><td>Ilimitados</td></tr>
+              <tr><td>Analistas de catálogo</td><td>2</td><td class="rec">8</td><td>Ilimitados</td></tr>
+              <tr><td>Productos monitoreados</td><td>50</td><td class="rec">500</td><td>Ilimitados</td></tr>
+              <tr><td>Competidores por producto</td><td>3</td><td class="rec">10</td><td>Ilimitados</td></tr>
+              <tr><td>Aprobación en un clic</td><td>Incluida</td><td class="rec">Incluida</td><td>Incluida</td></tr>
+              <tr><td>Módulos</td><td>Core y 4see</td><td class="rec">Core y 4see</td><td>Core y 4see</td></tr>
+            </tbody>
+            <tfoot><tr>
+              <td>Alta con tu cuenta de Google</td>
+              <td><a class="btn line block sm" href="/api/auth/google?plan=fourseee_simple">Elegir Simple</a></td>
+              <td class="rec"><a class="btn block sm" href="/api/auth/google?plan=fourseee_business">Elegir Business</a></td>
+              <td><a class="btn line block sm" href="/api/auth/google?plan=fourseee_enterprise">Elegir Enterprise</a></td>
+            </tr></tfoot>
+          </table>
+        </div>
+
+        <div class="tbl-wrap" id="plLg" role="tabpanel" aria-labelledby="tabLg" hidden>
+          <table class="tbl plans-t">
+            <thead><tr>
+              <th>Incluye</th>
+              <th><span class="pname">Kanban Simple</span><span class="pdesc">Para depósitos individuales o pequeñas operaciones.</span><span class="pprice">$39<small>USD / mes</small></span></th>
+              <th class="rec"><span class="badge">Recomendado</span><span class="pname">Kanban Business</span><span class="pdesc">Para centros de distribución con varios operarios y supervisores.</span><span class="pprice">$119<small>USD / mes</small></span></th>
+              <th><span class="pname">Kanban Enterprise</span><span class="pdesc">Capacidad ilimitada para grandes redes logísticas.</span><span class="pprice">$299<small>USD / mes</small></span></th>
+            </tr></thead>
+            <tbody>
+              <tr><td>Administradores</td><td>1</td><td class="rec">3</td><td>Ilimitados</td></tr>
+              <tr><td>Operarios de depósito</td><td>3</td><td class="rec">15</td><td>Ilimitados</td></tr>
+              <tr><td>Pedidos por mes</td><td>500</td><td class="rec">3.000</td><td>Ilimitados</td></tr>
+              <tr><td>Escáner móvil EAN-13</td><td>Incluido</td><td class="rec">Incluido</td><td>Incluido</td></tr>
+              <tr><td>Módulos</td><td>Core, Kanban y Scanner</td><td class="rec">Core, Kanban y Scanner</td><td>Core, Kanban y Scanner</td></tr>
+            </tbody>
+            <tfoot><tr>
+              <td>Alta con tu cuenta de Google</td>
+              <td><a class="btn line block sm" href="/api/auth/google?plan=kanban_simple">Elegir Simple</a></td>
+              <td class="rec"><a class="btn block sm" href="/api/auth/google?plan=kanban_business">Elegir Business</a></td>
+              <td><a class="btn line block sm" href="/api/auth/google?plan=kanban_enterprise">Elegir Enterprise</a></td>
+            </tr></tfoot>
+          </table>
+        </div>
+        <p class="bundle">Si tenés depósito y tienda online, contratá una suscripción de cada línea. Son independientes y las cuotas se suman.</p>
+      </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 8 · Planes</b></div><div><span>Hoja</span><b>8 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
+    </section>
+
+    <!-- HOJA 9: NOTAS + CIERRE -->
+    <section class="sheet" id="hoja-9" aria-labelledby="h-faq">
+      <div class="sheet-body">
+        <h2 id="h-faq">Notas generales.</h2>
         <div class="faq">
-          <details><summary>¿Los operarios pueden trabajar sin conexión a internet?</summary><p>Sí. El escáner guarda los datos en una base local del dispositivo, así que se puede trabajar en zonas del depósito sin Wi-Fi.</p></details>
-          <details><summary>¿Qué pasa si el remito no trae un precio o un dato?</summary><p>El sistema lee exactamente lo que dice el comprobante. Si un campo no existe, queda vacío o en cero: nunca se completa con valores inventados.</p></details>
-          <details><summary>¿Con qué tiendas se integra 4see?</summary><p>Hoy con Tiendanube y WooCommerce, tanto para importar el catálogo como para enviar los precios aprobados.</p></details>
-          <details><summary>¿Puede una regla de repricing dejarme vender con pérdida?</summary><p>No. El piso de margen se calcula con tu costo, tu margen mínimo y tus costos operativos, y ninguna regla puede fijar un precio por debajo.</p></details>
-          <details><summary>¿Mis datos se mezclan con los de otras empresas?</summary><p>No. Cada organización está aislada en la base de datos con Row-Level Security, además de los filtros de la aplicación.</p></details>
-          <details><summary>¿Puedo exportar mis datos?</summary><p>Sí. Podés exportar de forma aislada todos los datos de tu organización en formato JSON.</p></details>
-          <details><summary>¿Puedo contratar las dos líneas a la vez?</summary><p>Sí. Son suscripciones independientes y las cuotas de usuarios y límites mensuales se suman en tu organización.</p></details>
+          <details><summary><span>N1</span>¿Los operarios pueden trabajar sin conexión a internet?</summary><p>Sí. El escáner guarda los datos en una base local del dispositivo, así que se puede trabajar en zonas del depósito sin Wi-Fi.</p></details>
+          <details><summary><span>N2</span>¿Qué pasa si el remito no trae un precio o un dato?</summary><p>El sistema lee exactamente lo que dice el comprobante. Si un campo no existe, queda vacío o en cero: nunca se completa con valores inventados.</p></details>
+          <details><summary><span>N3</span>¿Con qué tiendas se integra 4see?</summary><p>Hoy con Tiendanube y WooCommerce, tanto para importar el catálogo como para enviar los precios aprobados.</p></details>
+          <details><summary><span>N4</span>¿Puede una regla de repricing dejarme vender con pérdida?</summary><p>No. El piso se calcula con tu costo, tu margen mínimo y tus costos operativos, y ninguna regla puede fijar un precio por debajo.</p></details>
+          <details><summary><span>N5</span>¿Mis datos se mezclan con los de otras empresas?</summary><p>No. Cada organización está aislada en la base de datos con Row-Level Security, además de los filtros de la aplicación.</p></details>
+          <details><summary><span>N6</span>¿Puedo exportar mis datos?</summary><p>Sí. Podés exportar de forma aislada todos los datos de tu organización en formato JSON.</p></details>
+          <details><summary><span>N7</span>¿Puedo contratar las dos líneas a la vez?</summary><p>Sí. Son suscripciones independientes y las cuotas de usuarios y límites mensuales se suman en tu organización.</p></details>
+          <details><summary><span>N8</span>¿Hay modo claro y oscuro?</summary><p>Sí. La plataforma y esta página comparten dos temas, Holo Night y Holo Day. Cada usuario elige el suyo y se respeta la preferencia de su sistema.</p></details>
         </div>
       </div>
-    </section>
-
-    <!-- CTA FINAL -->
-    <section class="section" style="padding-top:24px">
-      <div class="container">
-        <div class="final reveal">
-          <h2 class="h2">Poné en orden tu depósito y tus precios esta semana.</h2>
-          <p class="sub" style="margin-inline:auto">Ingresá con tu cuenta de Google, elegí un plan y empezá a cargar pedidos.</p>
-          <div class="hero-cta" style="margin-top:32px">
-            <a class="btn btn-primary btn-lg" href="/api/auth/google"><svg aria-hidden="true"><use href="#i-google"/></svg> Empezar con Google</a>
-            <a class="btn btn-ghost btn-lg" href="/login">Ya tengo cuenta</a>
-          </div>
+      <div class="final">
+        <div class="t"><h2>Poné en orden tu depósito y tus precios.</h2></div>
+        <div class="a">
+          <a class="btn block" href="/api/auth/google"><svg aria-hidden="true"><use href="#i-google"/></svg>Empezar con Google</a>
+          <a class="btn line block" href="/login">Ya tengo cuenta</a>
         </div>
       </div>
+      <div class="cajetin"><div><span>HoloSpace</span><b>Hoja 9 · Notas y cierre</b></div><div><span>Hoja</span><b>9 / 9</b></div><div><span>Escala</span><b>1:1</b></div><div><span>Rev.</span><b>A</b></div></div>
     </section>
   </main>
 
   <footer>
-    <div class="container">
-      <div class="foot">
-        <div>
-          <a href="/" class="brand"><svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2.5l11.5 6.7v13.6L16 29.5 4.5 22.8V9.2L16 2.5z" fill="none" stroke="url(#hg)" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 10v12M10 13l6 3.5 6-3.5" fill="none" stroke="url(#hg)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Holo</b><span class="brand-grad">Space</span></a>
-          <p>Plataforma SaaS multi-empresa para logística de depósitos e inteligencia de precios.</p>
-        </div>
-        <div><h4>Producto</h4><ul><li><a href="#modulos">Módulos</a></li><li><a href="#como">Cómo funciona</a></li><li><a href="#4see">4see</a></li><li><a href="#planes">Precios</a></li></ul></div>
-        <div><h4>Plataforma</h4><ul><li><a href="#seguridad">Seguridad</a></li><li><a href="#faq">Preguntas</a></li><li><a href="/login">Ingresar</a></li></ul></div>
-        <div><h4>Acceso</h4><ul><li><a href="/kanban">Kanban</a></li><li><a href="/4see">4see</a></li><li><a href="https://m.holospace.com.ar">Scanner</a></li></ul></div>
+    <div class="foot">
+      <div>
+        <a href="/" class="brand" style="border:0;padding:0"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l11.5 6.6v12.8L16 29 4.5 22.4V9.6L16 3z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16 11v10M11 14l5 3 5-3" fill="none" style="stroke:var(--emerald)" stroke-width="2"/></svg><span><b>Holo</b><i>Space</i></span></a>
+        <p>Sistema multi-empresa para logística de depósitos e inteligencia de precios de e-commerce.</p>
       </div>
-      <div class="legal">
-        <span>&copy; 2026 HoloSpace. Todos los derechos reservados.</span>
-        <span>Diseñado y desarrollado por <a href="https://hologrowth.com.ar/" target="_blank" rel="noopener noreferrer">HoloGrowth</a></span>
-      </div>
+      <div><h3>Producto</h3><ul><li><a href="#hoja-3">4see</a></li><li><a href="#hoja-4">Logística</a></li><li><a href="#hoja-8">Planes</a></li></ul></div>
+      <div><h3>Plataforma</h3><ul><li><a href="#hoja-6">Seguridad</a></li><li><a href="#hoja-9">Preguntas</a></li><li><a href="/login">Ingresar</a></li></ul></div>
+      <div><h3>Acceso</h3><ul><li><a href="/kanban">Kanban</a></li><li><a href="/4see">4see</a></li><li><a href="https://m.holospace.com.ar">Scanner</a></li></ul></div>
+    </div>
+    <div class="legal">
+      <span>&copy; 2026 HoloSpace. Todos los derechos reservados.</span>
+      <span>Diseñado y desarrollado por <a href="https://hologrowth.com.ar/" target="_blank" rel="noopener noreferrer">HoloGrowth</a></span>
     </div>
   </footer>
 
   <script>
     (function () {
       var root = document.documentElement;
+      var fmt = function (n) { return '$ ' + Math.round(n).toLocaleString('es-AR'); };
+      var $ = function (id) { return document.getElementById(id); };
 
-      // Cambio de tema claro/oscuro con persistencia
-      document.getElementById('themeToggle').addEventListener('click', function () {
-        var next = root.getAttribute('data-theme') === 'holo_dark' ? 'holo_light' : 'holo_dark';
-        root.setAttribute('data-theme', next);
-        document.body.className = 'theme-' + next;
-        try { localStorage.setItem('hs_landing_theme', next); } catch (e) {}
+      // Tema claro/oscuro
+      function setMode(t, save) {
+        root.setAttribute('data-theme', t);
+        document.body.className = 'theme-' + t;
+        $('modeLabel').textContent = t === 'holo_dark' ? 'Night' : 'Day';
+        if (save) { try { localStorage.setItem('hs_landing_theme', t); } catch (e) {} }
+      }
+      setMode(root.getAttribute('data-theme'), false);
+      $('modeToggle').addEventListener('click', function () {
+        setMode(root.getAttribute('data-theme') === 'holo_dark' ? 'holo_light' : 'holo_dark', true);
       });
-      document.body.className = 'theme-' + root.getAttribute('data-theme');
 
-      // Pestañas accesibles (como funciona / precios)
-      function tabs(pairs) {
-        pairs.forEach(function (p) {
-          var tab = document.getElementById(p[0]);
-          tab.addEventListener('click', function () {
-            pairs.forEach(function (q) {
-              var on = q[0] === p[0];
-              document.getElementById(q[0]).setAttribute('aria-selected', on ? 'true' : 'false');
-              document.getElementById(q[1]).hidden = !on;
-            });
+      // Pestañas de planes
+      [['tabEc', 'plEc'], ['tabLg', 'plLg']].forEach(function (p, _, all) {
+        $(p[0]).addEventListener('click', function () {
+          all.forEach(function (q) {
+            var on = q[0] === p[0];
+            $(q[0]).setAttribute('aria-selected', on ? 'true' : 'false');
+            $(q[1]).hidden = !on;
           });
         });
-      }
-      tabs([['tabFlowLog', 'flowLog'], ['tabFlow4', 'flow4']]);
-      tabs([['tabPlanLog', 'plansLog'], ['tabPlan4', 'plans4']]);
+      });
 
-      // Revelado al hacer scroll
-      var items = document.querySelectorAll('.reveal');
-      if ('IntersectionObserver' in window) {
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
-        }, { threshold: 0.12 });
-        items.forEach(function (el) { io.observe(el); });
-      } else {
-        items.forEach(function (el) { el.classList.add('in'); });
+      // Simulador del piso de margen (datos de ejemplo)
+      var COMPS = [{ n: 'A', p: 17900, x: 112 }, { n: 'B', p: 21400, x: 224 }, { n: 'C', p: 23800, x: 336 }];
+      var MAXP = 26500, PMIN = 6000, PMAX = 40000, YTOP = 40, YBOT = 360;
+      var y = function (p) { return YBOT - (p - PMIN) / (PMAX - PMIN) * (YBOT - YTOP); };
+      var NS = 'http://www.w3.org/2000/svg';
+      function el(name, attrs, text) {
+        var e = document.createElementNS(NS, name);
+        for (var k in attrs) e.setAttribute(k, attrs[k]);
+        if (text != null) e.textContent = text;
+        return e;
       }
+      var ticks = $('ticks');
+      for (var p = 10000; p <= 40000; p += 5000) {
+        ticks.appendChild(el('line', { class: 'tick', x1: 64, x2: 630, y1: y(p), y2: y(p) }));
+        ticks.appendChild(el('text', { class: 't-label', x: 56, y: y(p) + 4, 'text-anchor': 'end' }, (p / 1000) + 'k'));
+      }
+      var compsG = $('comps'), compEls = [];
+      COMPS.forEach(function (c) {
+        var g = el('g', {});
+        g.appendChild(el('line', { class: 'ln-soft', x1: 64, x2: c.x - 48, y1: y(c.p), y2: y(c.p) }));
+        var r = el('rect', { class: 'comp-bar', x: c.x - 48, y: y(c.p) - 14, width: 96, height: 28 });
+        var t = el('text', { class: 't-main', x: c.x, y: y(c.p) + 4, 'text-anchor': 'middle' });
+        g.appendChild(r); g.appendChild(t); compsG.appendChild(g);
+        compEls.push({ r: r, t: t, c: c });
+      });
+      function paintComps(outA) {
+        compEls.forEach(function (o, i) {
+          var off = i === 0 && outA;
+          o.r.setAttribute('class', off ? 'comp-off' : 'comp-bar');
+          o.t.textContent = off ? o.c.n + ' sin stock' : o.c.n + ' ' + Math.round(o.c.p).toLocaleString('es-AR');
+          o.t.setAttribute('style', off ? 'fill:var(--hw-text-subtle)' : '');
+        });
+      }
+      var firstPaint = true;
+      function sim() {
+        var cost = +$('inCost').value, m = +$('inMargin').value, op = +$('inOp').value, outA = $('inOut').checked;
+        $('vCost').textContent = fmt(cost); $('vMargin').textContent = m + '%'; $('vOp').textContent = fmt(op);
+        var piso = cost * (1 + m / 100) + op;
+        var avail = COMPS.filter(function (c, i) { return !(i === 0 && outA); });
+        var cheapest = Math.min.apply(null, avail.map(function (c) { return c.p; }));
+        var target = Math.round(cheapest * 0.99), price, state;
+        if (target < piso) { price = piso; state = 'Protegido por el piso'; }
+        else if (target > MAXP) { price = MAXP; state = 'Tope de lista'; }
+        else { price = target; state = outA ? 'Sobremargen capturada' : 'Competitivo'; }
+        paintComps(outA);
+        $('costLine').setAttribute('y1', y(cost)); $('costLine').setAttribute('y2', y(cost));
+        $('costTxt').setAttribute('y', y(cost) - 6); $('costTxt').textContent = 'COSTO ' + fmt(cost);
+        var gp = $('gPiso'), gq = $('gPrice');
+        gp.style.transform = 'translateY(' + y(piso) + 'px)';
+        $('pisoLbl').textContent = 'PISO ' + fmt(piso);
+        $('dim').setAttribute('d', 'M646 ' + y(cost) + ' V' + y(piso));
+        if (firstPaint) { gq.style.transform = 'translateY(' + y(cost) + 'px)'; firstPaint = false;
+          requestAnimationFrame(function () { setTimeout(function () { gq.style.transform = 'translateY(' + y(price) + 'px)'; }, 350); });
+        } else { gq.style.transform = 'translateY(' + y(price) + 'px)'; }
+        $('priceTxt').textContent = fmt(price);
+        $('roPiso').textContent = fmt(piso); $('roPrice').textContent = fmt(price); $('roState').textContent = state;
+      }
+      ['inCost', 'inMargin', 'inOp', 'inOut'].forEach(function (id) { $(id).addEventListener('input', sim); });
+      sim();
+      // En pantallas angostas el dibujo se desplaza; se muestra primero el lado del precio y la cota
+      var wrap = document.querySelector('.svgwrap');
+      if (wrap && wrap.scrollWidth > wrap.clientWidth) wrap.scrollLeft = wrap.scrollWidth;
+
+      // Las lineas se trazan una sola vez al entrar en vista
+      var sheets = document.querySelectorAll('.sheet');
+      if ('IntersectionObserver' in window) {
+        var io = new IntersectionObserver(function (es) {
+          es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+        }, { threshold: 0.15 });
+        sheets.forEach(function (s) { io.observe(s); });
+      } else { sheets.forEach(function (s) { s.classList.add('in'); }); }
     })();
   </script>
 </body>

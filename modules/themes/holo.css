@@ -36,10 +36,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .nav-tab.active {
   border-color: var(--hw-accent-border);
 }
 body:is(.theme-holo_dark, .theme-holo_light) .logo-holo { color: var(--text-main); }
-body:is(.theme-holo_dark, .theme-holo_light) .logo-space {
-  background: var(--hw-gradient-brand);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
+body:is(.theme-holo_dark, .theme-holo_light) .logo-space { color: var(--emerald); }
 
 /* Superficies */
 body:is(.theme-holo_dark, .theme-holo_light) :is(.kanban-col, .modal-content, .upload-dropzone, .module-card, .kanban-card, .invoice-card, .user-group, .operator-group) {
