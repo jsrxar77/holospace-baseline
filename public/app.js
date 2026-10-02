@@ -830,6 +830,12 @@ function setModuleFavicon(mod) {
   link.href = map[mod] || '/brand/mark.svg';
 }
 
+// Controles que solo aplican a las aplicaciones operativas (Kanban y Scanner): p. ej. "Conectar Celular".
+function updateOpsOnlyControls(moduleName) {
+  const show = moduleName === 'kanban' || moduleName === 'scanner';
+  document.querySelectorAll('[data-ops-only]').forEach(el => { el.style.display = show ? '' : 'none'; });
+}
+
 function switchModule(moduleName, updateUrl = true) {
   const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
 
@@ -855,6 +861,7 @@ function switchModule(moduleName, updateUrl = true) {
   }
 
   setModuleFavicon(normMod);
+  updateOpsOnlyControls(normMod);
 
   // 1. Ocultar vista de acceso denegado si estaba visible
   const forbidView = document.getElementById('viewForbidden');
@@ -974,6 +981,7 @@ function switchTab(tabName) {
   if (tabName === 'scanner') parentModule = 'scanner';
   if (tabName.startsWith('4see')) parentModule = '4see';
   
+  if (parentModule) updateOpsOnlyControls(parentModule);
   if (parentModule) {
     const desktopModMap = { tenant: 'modTenant', tenants: 'modTenant', core: 'modCore', kanban: 'modKanban', scanban: 'modKanban', scanner: 'modScanner', '4see': 'mod4see' };
     const mobileModMap = { tenant: 'mobModTenant', tenants: 'mobModTenant', core: 'mobModCore', kanban: 'mobModKanban', scanban: 'mobModKanban', scanner: 'mobModScanner', '4see': 'mobMod4see' };
@@ -3440,6 +3448,7 @@ async function load4seeMonitors() {
 
     cached4seeMonitors = data.monitors;
     render4seeMonitorsTable(cached4seeMonitors);
+    renderMonitorsDashboard(cached4seeMonitors);
   } catch (err) {
     container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando monitores: ${err.message}</div>`;
   }
@@ -3499,7 +3508,7 @@ function render4seeMonitorsTable(monitors = []) {
   monitors.forEach(m => {
     const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
     const stockBadge = isOutOfStock
-      ? '<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">○ QUIEBRE (SIN STOCK)</span>'
+      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ QUIEBRE (SIN STOCK)</span>'
       : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● EN STOCK</span>';
 
     const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
@@ -4902,6 +4911,89 @@ function updateSmartPriceKpis(queue = []) {
   if (kPending) kPending.innerText = pending;
   if (kApplied) kApplied.innerText = applied;
   if (kShielded) kShielded.innerText = shielded;
+  renderSmartPriceDashboard(queue);
+}
+
+let smartPriceView = 'table';
+function setSmartPriceView(view) {
+  smartPriceView = view === 'dashboard' ? 'dashboard' : 'table';
+  const dash = document.getElementById('smartpriceDashboard');
+  const wrap = document.getElementById('smartpriceTableWrap');
+  if (dash) dash.classList.toggle('hidden', smartPriceView !== 'dashboard');
+  if (wrap) wrap.classList.toggle('hidden', smartPriceView === 'dashboard');
+  const bT = document.getElementById('spViewTable');
+  const bD = document.getElementById('spViewDash');
+  if (bT) bT.classList.toggle('active', smartPriceView === 'table');
+  if (bD) bD.classList.toggle('active', smartPriceView === 'dashboard');
+  if (smartPriceView === 'dashboard') renderSmartPriceDashboard(cached4seeQueue);
+}
+window.setSmartPriceView = setSmartPriceView;
+
+function renderSmartPriceDashboard(queue = []) {
+  if (smartPriceView !== 'dashboard' || typeof HSCharts === 'undefined') return;
+  const empty = document.getElementById('smartpriceDashEmpty');
+  const count = (s) => queue.filter(q => q.status === s).length;
+  const hasData = queue.length > 0;
+  if (empty) empty.classList.toggle('hidden', hasData);
+  if (!hasData) return;
+
+  HSCharts.track('chartQueueStatus', () => HSCharts.build.donut({
+    centerLabel: String(queue.length),
+    items: [
+      { name: 'Pendiente', value: count('PENDING'), tone: 'pending' },
+      { name: 'Aplicado', value: count('APPLIED'), tone: 'applied' },
+      { name: 'Rechazado', value: count('REJECTED'), tone: 'neutral' }
+    ].filter(i => i.value > 0)
+  })).catch(() => {});
+
+  const rows = queue.slice(0, 12).map(q => ({
+    name: (q.sku || q.product_title || 'Producto').toString().slice(0, 14),
+    floor: parseFloat(q.min_price_floor || 0),
+    previous: parseFloat(q.previous_price || 0),
+    suggested: parseFloat(q.suggested_price || 0)
+  }));
+  HSCharts.track('chartQueueFloor', () => HSCharts.build.floorBand({ rows })).catch(() => {});
+}
+
+// Monitor de Precios: alternar tabla / dashboard
+let monitorsView = 'table';
+function setMonitorsView(view) {
+  monitorsView = view === 'dashboard' ? 'dashboard' : 'table';
+  const dash = document.getElementById('monitorsDashboard');
+  const wrap = document.getElementById('monitorsTableWrap');
+  if (dash) dash.classList.toggle('hidden', monitorsView !== 'dashboard');
+  if (wrap) wrap.classList.toggle('hidden', monitorsView === 'dashboard');
+  const bT = document.getElementById('monViewTable');
+  const bD = document.getElementById('monViewDash');
+  if (bT) bT.classList.toggle('active', monitorsView === 'table');
+  if (bD) bD.classList.toggle('active', monitorsView === 'dashboard');
+  if (monitorsView === 'dashboard') renderMonitorsDashboard(cached4seeMonitors);
+}
+window.setMonitorsView = setMonitorsView;
+
+function renderMonitorsDashboard(monitors = []) {
+  if (monitorsView !== 'dashboard' || typeof HSCharts === 'undefined') return;
+  const empty = document.getElementById('monitorsDashEmpty');
+  if (empty) empty.classList.toggle('hidden', monitors.length > 0);
+  if (!monitors.length) return;
+
+  const out = monitors.filter(m => m.competitor_stock === 'OUT_OF_STOCK').length;
+  HSCharts.track('chartMonStock', () => HSCharts.build.donut({
+    centerLabel: String(monitors.length),
+    items: [
+      { name: 'En stock', value: monitors.length - out, tone: 'applied' },
+      { name: 'Quiebre', value: out, tone: 'risk' }
+    ].filter(i => i.value > 0)
+  })).catch(() => {});
+
+  const byProduct = new Map();
+  monitors.forEach(m => {
+    const key = m.product_name || 'Producto';
+    if (!byProduct.has(key)) byProduct.set(key, { name: key.slice(0, 16), mine: parseFloat(m.my_price || 0), rivals: [] });
+    byProduct.get(key).rivals.push(parseFloat(m.competitor_price || 0));
+  });
+  const rows = Array.from(byProduct.values()).slice(0, 12);
+  HSCharts.track('chartMonPrices', () => HSCharts.build.priceVsRivals({ rows })).catch(() => {});
 }
 
 function filter4seeQueue(queryText) {
@@ -4963,7 +5055,7 @@ function render4seeQueueTable(items = []) {
 
     let statusBadge = '';
     if (q.status === 'PENDING') {
-      statusBadge = '<span class="status-indicator" style="color: var(--cobalt); font-weight: 800; font-size: 11px;">● PENDIENTE</span>';
+      statusBadge = '<span class="status-indicator" style="color: var(--hw-chart1); font-weight: 800; font-size: 11px;">● PENDIENTE</span>';
     } else if (q.status === 'APPLIED') {
       statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;"> APLICADO</span>';
     } else if (q.status === 'REJECTED') {
@@ -4973,7 +5065,7 @@ function render4seeQueueTable(items = []) {
     }
 
     const floorShieldBadge = q.floor_applied
-      ? '<span style="display: block; font-size: 10px; color: var(--red); font-weight: 800; margin-top: 2px;"> PISO ACTIVADO</span>'
+      ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;"> PISO ACTIVADO</span>'
       : '';
 
     html += `

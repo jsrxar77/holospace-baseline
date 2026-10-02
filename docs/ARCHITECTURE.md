@@ -441,4 +441,11 @@ Para permitir máxima flexibilidad comercial sin acoplar módulos innecesarios a
    - Cuotas desglosadas por rol: $\sum \text{role\_quotas.max\_admins}$, $\sum \text{role\_quotas.max\_operators}$, $\sum \text{role\_quotas.max\_analysts}$.
 3. **Gobierno en API (`server.js`):** Los endpoints `/api/tenants` exponen de manera estructurada los planes contratados por vertical (`kanban_plan` y `fourseee_plan`) junto con el desglose completo de suscripciones en `subscriptions`, permitiendo a los administradores activar, cambiar o cancelar suscripciones por vertical de forma desacoplada.
 
+## 12. Suite de graficos (hs-charts)
 
+- **Libreria:** Apache ECharts 6, vendorizada en `public/vendor/echarts.min.js` y servida por el propio servidor (`/vendor/echarts.min.js`, sin CDN, sin build). Se carga bajo demanda la primera vez que una pantalla dibuja un grafico.
+- **Wrapper:** `public/charts/hs-charts.js` (`window.HSCharts`) con constructores `spark`, `donut`, `bars`, `floorBand` y `priceVsRivals`. Cada uno recibe datos planos y devuelve una opcion de ECharts; `HSCharts.track` dibuja y se reconstruye al cambiar entre Holo Night y Holo Day. Versionado contra el cache de Cloudflare en `lib/assets.js`.
+- **Paleta semantica** (leida de variables del tema, sin hex): menta = aplicado/accion, violeta = pendiente, ambar = riesgo, tinta = neutro. El rojo no se usa para riesgo.
+- **Estetica:** lamina tecnica (esquinas rectas, hairlines, mono en ejes, sin sombras ni degradados), movimiento reducido respetado, `aria` activo.
+- **Uso actual:** 4see > SmartPrice (KPIs en celdas, dona por estado, precio contra piso) y 4see > Monitor (stock de rivales, mi precio contra rivales), con selector Tabla / Dashboard. Guardian de Margenes reutilizara la misma suite.
+- **Skill:** `.claude/skills/holospace-charts/SKILL.md`. Pruebas: `tests/test-charts.js`.

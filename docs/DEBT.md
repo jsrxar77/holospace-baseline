@@ -61,6 +61,8 @@
   - El login del Scanner ya inicia vacio, pero el store sigue guardando email y contrasena para precargarlos (`getSavedCredentials`), contra la regla de no almacenar contrasenas. Tampoco elige Holo Day segun el sistema: usa Holo Night por defecto. Accion: guardar solo el token, y usar `Appearance` para elegir tema sin sesion.
 
 
+- [ ] **D-043 | Historico de precios para series de tiempo** | `modules/4see` | Esfuerzo M: hoy solo se guarda el ultimo precio por monitor; sin historico los dashboards muestran la foto actual y las sparklines de KPI quedan sin usar (`HSCharts.build.spark` ya esta listo).
+- [ ] **D-044 | Dashboard de Guardian de Margenes y Catalogo** | `public/app.js` | Esfuerzo M: reutilizar la suite hs-charts.
 - [ ] **D-042 | Oracion de "por que lo necesitas" en el hero** | `modules/landing/public/index.html` | Esfuerzo S
   - Pendiente definir con el equipo una oracion que explique por que una tienda online necesita 4see, despues del texto de "que es".
 
@@ -117,5 +119,6 @@
 - [x] **S-019** El menu muestra solo lo que la sesion puede usar: un modulo aparece si el plan de la organizacion lo incluye y el rol tiene permisos de ese modulo, y cada submenu segun su permiso de lectura (escritorio y movil). El modulo de entrada es el primero disponible (antes todos los usuarios entraban a Kanban); abrir por URL un modulo ajeno sigue mostrando el aviso de acceso restringido, y sin ningun modulo se explica el motivo. Logica pura en `public/access.js` con `tests/test-ui-access.js`. Caso real: un administrador de 4see veia Kanban y entraba a Kanban. 2026-10-02.
 - [x] **S-020** Landing: el hero explica que es holospace. con foco en 4see (e-commerce) y logistica como complemento, los productos pasan a la caja derecha, los iconos de producto se agrandan (88 px en titulos de hoja, 56 en el hero, 40 en proceso, 30 en tablas, 22 en pestanas) y el titular baja a 76 px para entrar en dos lineas. Se limita el marco de area de trabajo a la app para que no afecte a la landing. 2026-10-02.
 - [x] **S-021** Verificado que `hologrowth.com.ar` no existe en el codigo publicado, en los datos de inicio ni en las bases (local y produccion); se elimina la mencion de un comentario y `tests/test-brand.js` falla si reaparece, o si se escribe "HoloSpace" en texto visible. 2026-10-02.
+- [x] **S-023** Suite de graficos hs-charts (ECharts 6 vendorizado, sin CDN), codigo de color semantico (menta aplicado, violeta pendiente, ambar riesgo; sin rojo), KPIs de SmartPrice como celdas de tabla tecnica, vistas Tabla / Dashboard en SmartPrice y Monitor, y "Conectar Celular" solo en Kanban y Scanner. Skill `holospace-charts`. 2026-10-02.
 - [x] **S-022** Pulido de la landing tras critica Impeccable: jerarquia del hero, tabla de planes con scroll y columna fija en movil, perfiles apilados, indice de hojas visible en pantallas medianas, contraste de `textSubtle` en Holo Day, simulador con el plano dentro del primer pliegue. Sin cambios de contenido factual. 2026-10-02.
 - [x] **S-005** Landing v3 como lamina tecnica con Holo Night/Day, simulador de piso de margen y 9 hojas (ver `docs/CONTENT.md` y `DESIGN.md`). 2026-10-02.

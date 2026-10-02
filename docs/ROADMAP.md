@@ -184,4 +184,7 @@
 - [ ] **FASE 19:** Soporte de Dominios Personalizados (Custom Domains con SSL automatizado Let's Encrypt vía Nginx).
 - [ ] **FASE 20:** Panel de Analíticas Avanzadas (Módulo `analytics`) con gráficos de tiempo de preparación y métricas de operarios.
 
-
+### FASE 11: Graficos y dashboards (suite hs-charts)
+- [x] ECharts vendorizado, wrapper `hs-charts`, paleta semantica y vistas Tabla / Dashboard en SmartPrice y Monitor.
+- [ ] Dashboard de Guardian de Margenes sobre la misma suite.
+- [ ] Series de tiempo (precio propio y de rivales, margen) cuando exista historico de precios (D-043).

@@ -1017,7 +1017,7 @@
           </select>
         </div>
 
-        <button class="btn-secondary btn-header-ctrl btn-connect-cell" onclick="openQrModal()">Conectar Celular</button>
+        <button class="btn-secondary btn-header-ctrl btn-connect-cell" id="btnConnectCell" data-ops-only="1" onclick="openQrModal()">Conectar Celular</button>
 
         <!-- Dropdown de Usuario con Cerrar Sesión -->
         <div class="user-dropdown-container" style="position: relative; display: inline-block; z-index: 1000;">
@@ -1113,7 +1113,7 @@
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
-      <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="openQrModal(); closeMobileDrawer();">Conectar Celular</button>
+      <button class="btn-secondary" id="btnConnectCellMobile" data-ops-only="1" style="width: 100%; margin-bottom: 8px;" onclick="openQrModal(); closeMobileDrawer();">Conectar Celular</button>
       <button class="btn-secondary" style="width: 100%; color: var(--red);" onclick="logout()">Cerrar Sesión</button>
     </div>
   </aside>
@@ -1487,7 +1487,24 @@
         </div>
       </div>
 
-      <div class="table-responsive-container">
+      <div class="view-switch" role="tablist" aria-label="Vista">
+        <button type="button" role="tab" class="active" id="monViewTable" onclick="setMonitorsView('table')">Tabla</button>
+        <button type="button" role="tab" id="monViewDash" onclick="setMonitorsView('dashboard')">Dashboard</button>
+      </div>
+
+      <div id="monitorsDashboard" class="chart-grid hidden">
+        <section class="chart-panel">
+          <header><h3>Stock de rivales</h3><span class="chart-note">Monitores activos</span></header>
+          <div id="chartMonStock" class="chart-box chart-box-sm" role="img" aria-label="Rivales en stock y en quiebre"></div>
+        </section>
+        <section class="chart-panel chart-wide">
+          <header><h3>Mi precio contra rivales</h3><span class="chart-note">Por producto</span></header>
+          <div id="chartMonPrices" class="chart-box" role="img" aria-label="Mi precio y precios de rivales por producto"></div>
+        </section>
+        <div id="monitorsDashEmpty" class="chart-empty hidden">Todavia no hay monitores para graficar.</div>
+      </div>
+
+      <div class="table-responsive-container" id="monitorsTableWrap">
         <div id="monitorsTableContainer">
           <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando monitores de competencia...</div>
         </div>
@@ -1612,22 +1629,39 @@
       </div>
 
       <!-- Resumen KPI de SmartPrice -->
-      <div id="smartpriceKpis" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
-        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Sugerencias Pendientes</div>
-          <div id="kpiQueuePending" style="font-size: 24px; font-weight: 900; color: var(--cobalt); margin-top: 4px;">0</div>
+      <div id="smartpriceKpis" class="kpi-strip">
+        <div class="kpi-cell tone-pending">
+          <div class="kpi-label">Sugerencias pendientes</div>
+          <div id="kpiQueuePending" class="kpi-value">0</div>
         </div>
-        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Precios Aplicados</div>
-          <div id="kpiQueueApplied" style="font-size: 24px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
+        <div class="kpi-cell tone-applied">
+          <div class="kpi-label">Precios aplicados</div>
+          <div id="kpiQueueApplied" class="kpi-value">0</div>
         </div>
-        <div style="background: var(--hw-danger-soft, rgba(239,68,68,0.08)); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--red); text-transform: uppercase;">Pisos Inquebrantables Activos</div>
-          <div id="kpiFloorShielded" style="font-size: 24px; font-weight: 900; color: var(--red); margin-top: 4px;">0</div>
+        <div class="kpi-cell tone-risk">
+          <div class="kpi-label">Pisos inquebrantables activos</div>
+          <div id="kpiFloorShielded" class="kpi-value">0</div>
         </div>
       </div>
 
-      <div class="table-responsive-container">
+      <div class="view-switch" role="tablist" aria-label="Vista">
+        <button type="button" role="tab" class="active" id="spViewTable" onclick="setSmartPriceView('table')">Tabla</button>
+        <button type="button" role="tab" id="spViewDash" onclick="setSmartPriceView('dashboard')">Dashboard</button>
+      </div>
+
+      <div id="smartpriceDashboard" class="chart-grid hidden">
+        <section class="chart-panel">
+          <header><h3>Estado de sugerencias</h3><span class="chart-note">Cola actual</span></header>
+          <div id="chartQueueStatus" class="chart-box chart-box-sm" role="img" aria-label="Sugerencias por estado"></div>
+        </section>
+        <section class="chart-panel chart-wide">
+          <header><h3>Precio contra piso</h3><span class="chart-note">Piso de margen, precio anterior y sugerido</span></header>
+          <div id="chartQueueFloor" class="chart-box" role="img" aria-label="Precio anterior y sugerido contra piso por producto"></div>
+        </section>
+        <div id="smartpriceDashEmpty" class="chart-empty hidden">Todavia no hay sugerencias para graficar. Ejecuta el worker para generar la cola.</div>
+      </div>
+
+      <div class="table-responsive-container" id="smartpriceTableWrap">
         <div id="smartpriceQueueContainer">
           <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando sugerencias de SmartPrice...</div>
         </div>
@@ -2509,6 +2543,7 @@
   </footer>
 
   <script src="/access.js"></script>
+  <script src="/charts/hs-charts.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

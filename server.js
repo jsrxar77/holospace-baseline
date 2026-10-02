@@ -461,6 +461,20 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Suite de graficos: ECharts vendorizado (sin CDN) y el wrapper hs-charts
+  if (reqPath === '/vendor/echarts.min.js' || reqPath === '/charts/hs-charts.js') {
+    const file = path.join(__dirname, 'public', reqPath);
+    if (fs.existsSync(file)) {
+      const isVendor = reqPath.startsWith('/vendor/');
+      res.writeHead(200, {
+        'Content-Type': 'application/javascript; charset=utf-8',
+        'Cache-Control': isVendor ? 'public, max-age=86400' : 'no-cache'
+      });
+      res.end(fs.readFileSync(file));
+      return;
+    }
+  }
+
   // Activos de marca (logo, iconos, Open Graph): solo archivos directos de public/brand; /favicon.ico se sirve desde ahi
   if (reqPath.startsWith('/brand/') || reqPath === '/favicon.ico') {
     const file = path.join(__dirname, 'public', 'brand', path.basename(reqPath));

@@ -124,3 +124,9 @@ El menu y los submenus (escritorio y movil) muestran solo lo que la sesion puede
 - **Modulo de entrada:** el pedido por URL si esta permitido; si no, el primero disponible (orden Kanban, 4see; el SUPERADMIN entra a Tenant). Si no hay ninguno, se muestra el aviso "Sin modulos habilitados".
 - **URL de un modulo ajeno:** muestra la pantalla de acceso restringido con el menu limpio.
 - Implementacion: `public/access.js` (logica pura) lee `entitlements` y `permissions` del JWT. Cobertura: `tests/test-ui-access.js`.
+
+## Graficos y dashboards (4see)
+SmartPrice y Monitor de Precios tienen un selector Tabla / Dashboard. SmartPrice muestra tres KPIs con codigo de color (violeta pendiente, menta aplicado, ambar piso activo), la dona de estados y el grafico de precio anterior, sugerido y piso por producto. Monitor muestra el stock de rivales y mi precio contra rivales. Solo se grafican datos reales; sin historico no hay series de tiempo.
+
+## Boton "Conectar Celular"
+Solo se ve en los modulos Kanban y Scanner (vinculacion de la app movil); en 4see, Tenant y Core no aparece.
