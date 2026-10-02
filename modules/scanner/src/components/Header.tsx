@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, StatusBar, Modal, TouchableWithoutFeedback } from 'react-native';
-import Svg, { Rect, G } from 'react-native-svg';
+import { BrandLockup } from './Brand';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
 
@@ -10,24 +10,7 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-// Icono Nave Retro Multicolor Oficial
-const RetroShipIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
-  <Svg width={size} height={size} viewBox="0 0 28 28">
-    <G transform="rotate(45, 14, 14)">
-      <Rect x="12" y="3" width="4" height="4" fill="#8AADF4" />
-      <Rect x="10" y="7" width="8" height="6" fill="#CAD3F5" />
-      <Rect x="6" y="9" width="16" height="4" fill="#C6A0F6" />
-      <Rect x="4" y="13" width="20" height="4" fill="#8AADF4" />
-      <Rect x="4" y="17" width="4" height="4" fill="#ED8796" />
-      <Rect x="20" y="17" width="4" height="4" fill="#ED8796" />
-      <Rect x="2" y="19" width="2" height="4" fill="#F5BDE6" />
-      <Rect x="24" y="19" width="2" height="4" fill="#F5BDE6" />
-      <Rect x="12" y="17" width="4" height="6" fill="#A6DA95" />
-      <Rect x="13" y="23" width="2" height="4" fill="#FE8019" />
-      <Rect x="14" y="27" width="1" height="2" fill="#EED49F" />
-    </G>
-  </Svg>
-);
+
 
 export const Header: React.FC<HeaderProps> = ({
   badgeText,
@@ -85,25 +68,12 @@ export const Header: React.FC<HeaderProps> = ({
       ]}>
         <View style={styles.brandGroup}>
           <View style={styles.titleRow}>
-            <Text style={[
-              styles.titleHolo,
-              {
-                color: theme.textMain,
-                fontFamily: (Platform.OS === 'web' ? '"Press Start 2P", monospace' : 'Press Start 2P') as any,
-                fontSize: 18,
-                letterSpacing: 1
-              }
-            ]}>
-              Holo<Text style={[
-                styles.titleSpace,
-                {
-                  color: theme.emerald
-                }
-              ]}>Space</Text>
-            </Text>
-            <View style={styles.shipWrapper}>
-              <RetroShipIcon size={26} />
-            </View>
+            <BrandLockup
+              ink={theme.textMain}
+              accent={theme.emerald}
+              fontSize={20}
+              markSize={24}
+            />
             <View style={[
               styles.moduleBadge,
               {
