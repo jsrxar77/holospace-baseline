@@ -74,7 +74,7 @@ main { padding: 24px 0 8px; }
 /* ---------- Hoja 1: hero ---------- */
 .hero-top { display: grid; grid-template-columns: 1fr 360px; gap: 0; border-bottom: var(--line); }
 .hero-title { padding: 48px 56px 48px; display: flex; flex-direction: column; justify-content: space-between; gap: 40px; }
-.hero h1 { font-size: clamp(40px, 5.4vw, 76px); line-height: 1; letter-spacing: -0.045em; font-weight: 600; text-wrap: balance; }
+.hero h1 { font-size: clamp(40px, 5vw, 68px); line-height: 1; letter-spacing: -0.045em; font-weight: 600; text-wrap: balance; }
 .hero h1 span { display: block; }
 .hero h1 em { display: block; }
 .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -340,3 +340,75 @@ details p { padding: 0 32px 24px 64px; max-width: 80ch; color: var(--text-muted)
 .hero-block .hero-lines li { display: flex; align-items: center; gap: 16px; padding: 22px 20px; border-bottom: 1px solid var(--card-border); flex: 1; }
 .hero-block .hero-lines li:last-child { border-bottom: 0; }
 .hero-block .hero-lines .pi-m { width: 56px; height: 56px; margin: 0; vertical-align: baseline; }
+
+.hero-why { max-width: 60ch; font-size: 16px; color: var(--hw-text-subtle); border-left: 0; padding-top: 0; }
+.soon { display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 1px 8px; border: 1px solid var(--hw-border-strong); font-family: var(--hw-font-mono), monospace; font-size: 10.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); background: none; white-space: nowrap; }
+.notes .soon, .legend-table .soon, details p .soon { margin-left: 4px; }
+
+/* =================== Pulido tras critica (hero, tablas, movil, contraste) =================== */
+.hero-title { padding: 40px 56px; gap: 24px; }
+.hero-lead { font-size: 18px; }
+.hero-block .hero-why { padding: 18px 20px; font-size: 15px; line-height: 1.55; max-width: none; color: var(--text-muted); border-bottom: 1px solid var(--card-border); }
+.hero-block .hero-lines { flex-direction: row; flex: 0 0 auto; border-top: 0; margin-top: auto; }
+.hero-block .hero-lines li { flex: 1; padding: 18px 16px; gap: 12px; border-bottom: 0; border-right: 1px solid var(--card-border); border-top: 1px solid var(--hw-border-strong); }
+.hero-block .hero-lines li:last-child { border-right: 0; }
+.hero-block .hero-lines .pi-m { width: 44px; height: 44px; }
+.hero-block .hero-lines small { font-size: 11.5px; }
+.pi-md { width: 64px; height: 64px; margin: 0; vertical-align: baseline; }
+.tabs button[aria-selected="true"] { background: var(--hw-accent-soft); color: var(--text-main); box-shadow: inset 0 -2px 0 var(--emerald); }
+.tabs button[aria-selected="true"] .pi { color: inherit; }
+.sim-note { font-size: 14px; line-height: 1.5; }
+.sheet-note { font-size: 14px; max-width: 80ch; }
+.soon { font-size: 11px; border-color: var(--hw-text-subtle); color: var(--text-main); }
+.plans-t .badge { background: var(--emerald); color: var(--hw-accent-fg); border-color: var(--emerald); }
+.plans-t .pdesc, .legend-table td:nth-child(3) { text-wrap: pretty; }
+@media (forced-colors: active) { :focus-visible { outline: 2px solid CanvasText; } }
+
+/* Navegacion de hojas tambien en pantallas angostas */
+@media (max-width: 1100px) {
+  .strip-in { flex-wrap: wrap; }
+  .index { display: flex; order: 3; flex: 0 0 100%; border-top: 1px solid var(--card-border); min-height: 44px; overflow-x: auto; }
+  .index a { min-height: 44px; }
+  .hero-block .hero-lines li { border-top: 1px solid var(--hw-border-strong); }
+}
+
+@media (max-width: 720px) {
+  .lead-more { display: none; }
+  .hero-block .hero-lines { flex-direction: column; }
+  .hero-block .hero-lines li { border-right: 0; border-bottom: 1px solid var(--card-border); }
+  .hero-block .hero-lines li:last-child { border-bottom: 0; }
+
+  /* Planes: columnas legibles con desplazamiento y la primera fija; asoma la siguiente */
+  .tbl-wrap { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .plans-t { min-width: 0; }
+  .plans-t th:not(:first-child), .plans-t td:not(:first-child) { min-width: 78vw; scroll-snap-align: start; }
+  .plans-t th:first-child, .plans-t td:first-child { position: sticky; left: 0; z-index: 1; width: 96px; min-width: 96px; max-width: 96px; background: var(--bg-main); font-size: 13px; padding-left: 12px; padding-right: 8px; }
+  .tabs { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .tabs button { padding: 0 8px; font-size: 13px; }
+  .tabs .pi { display: none; }
+
+  /* Perfiles: una tarjeta por fila */
+  .cmp { min-width: 0; }
+  .cmp thead { display: none; }
+  .cmp tr { display: grid; border-top: 1px solid var(--card-border); padding: 14px 0; }
+  .tbl-wrap .cmp tr:first-child { border-top: 0; }
+  .cmp td { border: 0; padding: 4px 16px; }
+  .cmp td[data-l]::before { content: attr(data-l); display: block; font-family: var(--hw-font-mono), monospace; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--hw-text-subtle); margin-bottom: 2px; }
+
+  /* Dibujos: tamano legible con desplazamiento horizontal */
+  .drawing { overflow-x: auto; }
+  .drawing svg { min-width: 540px; }
+  .svgwrap svg { min-width: 440px; }
+
+  /* Areas tactiles */
+  .foot a, .legal a { display: inline-block; padding: 12px 0; }
+  .foot li + li { margin-top: 0; }
+  input[type="range"] { height: 44px; }
+  .check { padding: 10px 0; }
+  .check input { width: 24px; height: 24px; }
+}
+
+.hero-block .hero-lines { flex-direction: column; margin-top: 0; }
+.hero-block .hero-lines li { flex: 0 0 auto; padding: 14px 20px; border-right: 0; border-top: 1px solid var(--card-border); border-bottom: 0; }
+.hero-block .hero-lines li:first-child { border-top: 1px solid var(--hw-border-strong); }
+.hero-block .hero-lines small { font-size: 12px; }
