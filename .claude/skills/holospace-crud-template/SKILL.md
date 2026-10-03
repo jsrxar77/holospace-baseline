@@ -315,3 +315,4 @@ Antes de dar por finalizada la implementacion de un ABM, verificar:
 - [ ] Las suites de prueba automatizadas en `tests/` pasan con 0 fallos.
 
 - [ ] Textos segun `holospace-copy`: titulo de lo que es (no del nombre tecnico), bajada que explica para que sirve, vacio con boton, etiquetas y mensajes en lenguaje comun, sin ingles ni jerga.
+- [ ] La tabla del listado se arma con `HSTable.mount` (skill `holospace-tables`), no con un `<thead>` armado a mano: asi el reordenar, ocultar y filtrar columnas es igual en toda la app.

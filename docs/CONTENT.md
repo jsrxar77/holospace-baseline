@@ -69,6 +69,8 @@ Principio: el producto se explica solo. Quien entra conoce su negocio, no el mun
 | Catalogo | Salud de tu catalogo | Revisa los productos de tu tienda y marca lo que falta: codigo de barras, marca y un mejor titulo. Despues los corregis desde aca. |
 | Margenes | Margenes de ganancia | Cargá el costo, las comisiones y los impuestos de cada producto y mira cuanto ganas de verdad. Te marca los que quedan con poco margen. |
 
+Competencia es maestro-detalle: cada fila es un producto (con tu precio, cargado una sola vez) y se despliega para mostrar sus rivales. Textos nuevos: "Agregar un producto para vigilar" (alta), "Agregar otro rival", "Editar tu precio", "Editar rival" (modales); columnas Producto, Tu precio, Rivales, Ultima revision y, en el detalle, Rival, Precio del rival, Stock del rival, Ultima revision, Acciones. Boton de la tabla: "Columnas" (panel para mostrar, ocultar y reordenar).
+
 **Tablero de pedidos.** Columnas: Nuevos, Listos para preparar, En preparacion, Completados (los codigos de estado BACKLOG, READY, DOING y DONE no cambian). El Scanner usa "soltar" para devolver un pedido a la lista y "escanear" para verificar cada producto.
 
 **Otras pantallas.** Kanban: "Pedidos" (tablero de lo que hay que preparar) y "Explorador de pedidos"; Scanner: "Preparar pedido"; gestion: "Usuarios", "Roles y permisos", "Empresas". Cada una sigue el mismo contrato; el detalle vive en el HTML y en `public/app.js`, y `tests/test-copy.js` impide que vuelvan los terminos del glosario.

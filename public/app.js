@@ -3440,129 +3440,131 @@ async function saveEditTenantSubmit(e) {
 // ============================================================================
 
 // 1. MONITOR DE COMPETENCIA
-let cached4seeMonitors = [];
+let cached4seeMonitors = [];     // version plana (todos los rivales de todos los productos), para los graficos
+let cached4seeProducts = [];     // maestro: un producto vigilado con sus rivales adentro (monitors)
+let watchedProductsTable = null; // instancia de HSTable montada sobre #monitorsTableContainer
+
+function priceSourceLabelText(source) {
+  return { STORE: 'de tu tienda', LINK: 'de tu link', MANUAL: 'a mano' }[source] || '';
+}
 
 async function load4seeMonitors() {
   const container = document.getElementById('monitorsTableContainer');
   if (!container) return;
-  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando tus rivales...</div>';
+  if (!watchedProductsTable) container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando tus productos...</div>';
 
   try {
-    const res = await fetch('/api/4see/monitors', {
+    const res = await fetch('/api/4see/watched-products', {
       headers: { 'Authorization': `Bearer ${getAuthToken()}` }
     });
     const data = await res.json();
-    if (!data.success || !data.monitors || data.monitors.length === 0) {
-      cached4seeMonitors = [];
-      container.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">Todavía no seguís ningún producto de la competencia</div>
-          <div style="font-size: 13px; margin-top: 6px;">Agregá el link de un producto de un rival y holospace. va a vigilar su precio y su stock para que sepas cuándo te conviene actuar.</div>
-          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMonitorModal()">+ Agregar un rival para seguir</button>
-        </div>
-      `;
+    if (!data.success || !Array.isArray(data.products)) {
+      container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus productos: ${data.error || 'intentá de nuevo'}</div>`;
       return;
     }
 
-    cached4seeMonitors = data.monitors;
-    render4seeMonitorsTable(cached4seeMonitors);
+    cached4seeProducts = data.products;
+    cached4seeMonitors = cached4seeProducts.flatMap((p) => p.monitors.map((m) => ({ ...m, my_price: p.price })));
+    renderWatchedProductsTable();
     renderMonitorsDashboard(cached4seeMonitors);
   } catch (err) {
-    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus rivales: ${err.message}</div>`;
+    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus productos: ${err.message}</div>`;
   }
 }
+window.load4seeMonitors = load4seeMonitors;
 
-function filter4seeMonitors(query = '') {
-  const q = query.trim().toLowerCase();
-  if (!q) {
-    render4seeMonitorsTable(cached4seeMonitors);
-    return;
+function renderRivalDetailTable(product) {
+  if (!product.monitors.length) {
+    return `<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Este producto todavía no tiene rivales cargados.
+      <button class="btn-secondary" style="margin-left: 8px; padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openAddRivalModal('${product.id}')">+ Agregar rival</button></div>`;
   }
-  const filtered = cached4seeMonitors.filter(m => {
-    const prod = (m.product_name || '').toLowerCase();
-    const comp = (m.competitor_name || '').toLowerCase();
-    const url = (m.competitor_url || '').toLowerCase();
-    const stock = (m.competitor_stock || '').toLowerCase();
-    return prod.includes(q) || comp.includes(q) || url.includes(q) || stock.includes(q);
-  });
-  render4seeMonitorsTable(filtered);
-}
-
-function render4seeMonitorsTable(monitors = []) {
-  const container = document.getElementById('monitorsTableContainer');
-  if (!container) return;
-
-  if (monitors.length === 0) {
-    container.innerHTML = `
-      <table class="data-table">
-        <tbody>
-          <tr>
-            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No hay rivales que coincidan con tu búsqueda.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    return;
-  }
-
-  let html = `
+  const rows = product.monitors.map((m) => {
+    const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
+    const stockCell = m.competitor_stock === null
+      ? '<span style="color: var(--text-muted); font-size: 11px;">No se pudo leer</span>'
+      : (isOutOfStock
+        ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Sin stock</span>'
+        : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Con stock</span>');
+    const priceCell = m.competitor_price === null
+      ? `<span style="color: var(--amber); font-size: 12px;">No se pudo leer</span>`
+      : `$${parseFloat(m.competitor_price).toLocaleString('es-AR')}`;
+    return `
+      <tr>
+        <td>
+          <a href="${escHtml(m.competitor_url)}" target="_blank" rel="noopener noreferrer" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
+            ${escHtml(m.competitor_name || 'Ver tienda')} ↗
+          </a>
+        </td>
+        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">${priceCell}</td>
+        <td>${stockCell}</td>
+        <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+        <td style="text-align: right;">
+          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); recheckMonitor('${m.id}')">Revisar ahora</button>
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditRivalModal('${m.id}')">Editar</button>
+            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); deleteMonitor('${m.id}')">Quitar</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+  return `
     <table class="data-table">
       <thead>
         <tr>
-          <th style="min-width: 180px;">Producto</th>
-          <th style="min-width: 160px;">Rival</th>
-          <th style="min-width: 110px;">Tu precio</th>
-          <th style="min-width: 120px;">Precio del rival</th>
-          <th style="min-width: 130px;">Stock del rival</th>
-          <th style="min-width: 120px;">Última revisión</th>
-          <th style="min-width: 160px; text-align: right;">Acciones</th>
+          <th>Rival</th>
+          <th>Precio del rival</th>
+          <th>Stock del rival</th>
+          <th>Última revisión</th>
+          <th style="text-align: right;">Acciones</th>
         </tr>
       </thead>
-      <tbody>
-  `;
-
-  monitors.forEach(m => {
-    const isOutOfStock = m.competitor_stock === 'OUT_OF_STOCK';
-    const stockBadge = isOutOfStock
-      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Sin stock</span>'
-      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Con stock</span>';
-
-    const priceDiff = m.my_price && m.competitor_price ? (m.my_price - m.competitor_price) : 0;
-    const diffLabel = priceDiff > 0 
-      ? `<span style="color: var(--red); font-size: 11px;">(+$${priceDiff.toLocaleString('es-AR')})</span>`
-      : (priceDiff < 0 ? `<span style="color: var(--emerald); font-size: 11px;">(-$${Math.abs(priceDiff).toLocaleString('es-AR')})</span>` : '');
-
-    html += `
-      <tr>
-        <td><strong style="color: var(--text-main);">${m.product_name}</strong></td>
-        <td>
-          <a href="${m.competitor_url}" target="_blank" rel="noopener noreferrer" style="color: var(--cobalt); text-decoration: none; font-weight: 600;">
-            ${m.competitor_name || 'Ver tienda'} ↗
-          </a>
-        </td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(m.my_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">
-          $${parseFloat(m.competitor_price).toLocaleString('es-AR')} ${diffLabel}
-        </td>
-        <td>${stockBadge}</td>
-        <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</td>
-        <td style="text-align: right;">
-          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="recheckMonitor('${m.id}')">Revisar ahora</button>
-            <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="deleteMonitor('${m.id}')">Quitar</button>
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `
-      </tbody>
+      <tbody>${rows}</tbody>
     </table>
-  `;
-  container.innerHTML = html;
+    <div style="padding: 10px 4px 2px;">
+      <button class="btn-secondary" style="padding: 5px 10px; font-size: 12px;" onclick="event.stopPropagation(); openAddRivalModal('${product.id}')">+ Agregar rival</button>
+    </div>`;
+}
+
+function renderWatchedProductsTable() {
+  const container = document.getElementById('monitorsTableContainer');
+  if (!container) return;
+
+  const columns = [
+    { key: 'name', label: 'Producto', filter: 'text', render: (p) => `<strong style="color: var(--text-main);">${escHtml(p.name)}</strong>` },
+    {
+      key: 'price', label: 'Tu precio', filter: 'text',
+      filterValue: (p) => p.price == null ? '' : String(p.price),
+      render: (p) => p.price == null
+        ? '<span style="color: var(--amber); font-size: 12px;">Sin definir</span>'
+        : `$${parseFloat(p.price).toLocaleString('es-AR')} <span style="color: var(--text-muted); font-size: 11px;">(${priceSourceLabelText(p.price_source)})</span>`
+    },
+    { key: 'rivals', label: 'Rivales', filter: 'none', align: 'center', render: (p) => String(p.monitors.length) },
+    {
+      key: 'last_checked_at', label: 'Última revisión', filter: 'none',
+      render: (p) => {
+        const last = p.monitors.reduce((acc, m) => (m.last_checked_at && (!acc || m.last_checked_at > acc) ? m.last_checked_at : acc), null);
+        return last ? new Date(last).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+      }
+    }
+  ];
+
+  watchedProductsTable = HSTable.mount({
+    id: '4see_competencia',
+    container,
+    columns,
+    rowKey: (p) => p.id,
+    renderDetail: (p) => renderRivalDetailTable(p),
+    emptyMessage: cached4seeProducts.length
+      ? 'No hay productos que coincidan con tu búsqueda.'
+      : 'Todavía no seguís ningún producto de la competencia. Agregá el link de un rival y holospace. va a vigilar su precio y su stock.',
+    actionsLabel: 'Acciones',
+    renderActions: (p) => `
+      <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+        <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar tu precio</button>
+        <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); deleteWatchedProduct('${p.id}')">Eliminar</button>
+      </div>`
+  });
+  watchedProductsTable.update(cached4seeProducts);
 }
 
 // Tienda conectada para "tu precio" (compartido entre el modal de rival y el de producto): orden de prioridad
@@ -3768,7 +3770,7 @@ async function handleCreateMonitorSubmit(e) {
   const { storeId, externalId } = myPricePayload('mon');
 
   try {
-    const res = await fetch('/api/4see/monitors', {
+    const res = await fetch('/api/4see/watched-products', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
       body: JSON.stringify({
@@ -3782,7 +3784,7 @@ async function handleCreateMonitorSubmit(e) {
       closeCreateMonitorModal();
       load4seeMonitors();
     } else {
-      errorDiv.innerText = data.error || 'No pudimos guardar el rival. Revisá el link e intentá de nuevo.';
+      errorDiv.innerText = data.error || 'No pudimos guardar el producto. Revisá el link e intentá de nuevo.';
       errorDiv.style.display = 'block';
     }
   } catch (err) {
@@ -3835,6 +3837,262 @@ async function deleteMonitor(id) {
     await showCustomAlert('Error', `Error: ${err.message}`);
   }
 }
+
+async function deleteWatchedProduct(productId) {
+  const product = cached4seeProducts.find((p) => p.id === productId);
+  const confirmed = await showCustomConfirm(
+    'Eliminar producto',
+    `¿Querés dejar de vigilar "${product ? product.name : 'este producto'}"? Se eliminan tambien sus ${product ? product.monitors.length : ''} rivales.`
+  );
+  if (!confirmed) return;
+  try {
+    const res = await fetch(`/api/4see/watched-products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    const data = await res.json();
+    if (data.success) load4seeMonitors();
+    else await showCustomAlert('Error', data.error || 'No pudimos eliminar el producto. Intentá de nuevo.');
+  } catch (err) {
+    await showCustomAlert('Error', `Error: ${err.message}`);
+  }
+}
+window.deleteWatchedProduct = deleteWatchedProduct;
+
+// --- Agregar otro rival a un producto que ya existe ---
+let addRivalLastPreview = null;
+
+function openAddRivalModal(productId) {
+  const product = cached4seeProducts.find((p) => p.id === productId);
+  if (!product) return;
+  const modal = document.getElementById('addRivalModal');
+  document.getElementById('addRivalForm').reset();
+  document.getElementById('addRivalProductId').value = productId;
+  document.getElementById('addRivalProductLabel').innerText = `Para "${product.name}". Tu precio: ${product.price != null ? '$' + parseFloat(product.price).toLocaleString('es-AR') : 'sin definir'}.`;
+  resetAddRivalPreview();
+  modal.classList.remove('hidden');
+}
+window.openAddRivalModal = openAddRivalModal;
+
+function closeAddRivalModal() {
+  document.getElementById('addRivalModal').classList.add('hidden');
+}
+window.closeAddRivalModal = closeAddRivalModal;
+
+function resetAddRivalPreview() {
+  addRivalLastPreview = null;
+  document.getElementById('addRivalPreviewBox').classList.add('hidden');
+  document.getElementById('addRivalAllowUnreadableRow').classList.add('hidden');
+  document.getElementById('addRivalWarning').classList.add('hidden');
+  document.getElementById('addRivalError').style.display = 'none';
+  document.getElementById('addRivalBtnPreview').classList.remove('hidden');
+  document.getElementById('addRivalBtnConfirm').classList.add('hidden');
+}
+window.resetAddRivalPreview = resetAddRivalPreview;
+
+async function handlePreviewAddRival() {
+  const competitorUrl = document.getElementById('addRivalUrl').value.trim();
+  const errorDiv = document.getElementById('addRivalError');
+  errorDiv.style.display = 'none';
+  if (!competitorUrl) {
+    errorDiv.innerText = 'Pegá el link del producto del rival.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  const watchedProductId = document.getElementById('addRivalProductId').value;
+  const btn = document.getElementById('addRivalBtnPreview');
+  const original = btn.innerText;
+  btn.innerText = 'Leyendo...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/4see/monitors/preview', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ competitorUrl, watchedProductId })
+    });
+    const data = await res.json();
+    if (!data.success) {
+      errorDiv.innerText = data.error || 'No pudimos leer el precio. Intentá de nuevo.';
+      errorDiv.style.display = 'block';
+      return;
+    }
+    addRivalLastPreview = data;
+    document.getElementById('addRivalPreviewBox').classList.remove('hidden');
+    document.getElementById('addRivalBtnPreview').classList.add('hidden');
+    document.getElementById('addRivalBtnConfirm').classList.remove('hidden');
+    const rivalText = document.getElementById('addRivalPreviewText');
+    if (data.rival.ok) {
+      const stockTxt = data.rival.inStock === null ? '' : (data.rival.inStock ? ' · con stock' : ' · sin stock');
+      rivalText.innerText = `$${data.rival.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}${stockTxt}`;
+      rivalText.style.color = 'var(--text-main)';
+    } else {
+      rivalText.innerText = data.rival.message || 'No pudimos leer el precio del rival.';
+      rivalText.style.color = 'var(--amber)';
+    }
+    document.getElementById('addRivalAllowUnreadableRow').classList.toggle('hidden', data.rival.ok);
+    document.getElementById('addRivalAllowUnreadable').checked = false;
+    const warn = document.getElementById('addRivalWarning');
+    if (data.warning) { warn.innerText = data.warning; warn.classList.remove('hidden'); } else { warn.classList.add('hidden'); }
+  } catch (err) {
+    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
+    errorDiv.style.display = 'block';
+  } finally {
+    btn.innerText = original;
+    btn.disabled = false;
+  }
+}
+window.handlePreviewAddRival = handlePreviewAddRival;
+
+async function handleAddRivalSubmit(e) {
+  e.preventDefault();
+  const errorDiv = document.getElementById('addRivalError');
+  errorDiv.style.display = 'none';
+  if (!addRivalLastPreview) { await handlePreviewAddRival(); return; }
+  if (!addRivalLastPreview.rival.ok && !document.getElementById('addRivalAllowUnreadable').checked) {
+    errorDiv.innerText = 'No pudimos leer el precio del rival. Revisá el link, o marcá la casilla para guardarlo igual.';
+    errorDiv.style.display = 'block';
+    return;
+  }
+  const productId = document.getElementById('addRivalProductId').value;
+  const competitorUrl = document.getElementById('addRivalUrl').value.trim();
+  const competitorName = document.getElementById('addRivalName').value.trim();
+  try {
+    const res = await fetch(`/api/4see/watched-products/${productId}/monitors`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ competitorUrl, competitorName, allowUnreadable: document.getElementById('addRivalAllowUnreadable').checked })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeAddRivalModal();
+      load4seeMonitors();
+    } else {
+      errorDiv.innerText = data.error || 'No pudimos agregar el rival. Intentá de nuevo.';
+      errorDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
+    errorDiv.style.display = 'block';
+  }
+}
+window.handleAddRivalSubmit = handleAddRivalSubmit;
+
+// --- Editar tu precio de un producto (vale para todos sus rivales) ---
+function openEditMyPriceModal(productId) {
+  const product = cached4seeProducts.find((p) => p.id === productId);
+  if (!product) return;
+  document.getElementById('editMyPriceForm').reset();
+  document.getElementById('editPriceProductId').value = productId;
+  document.getElementById('editMyPriceProductLabel').innerText = `"${product.name}"`;
+  document.getElementById('editMyPriceError').style.display = 'none';
+  populateMyStoreSelect('editPrice');
+  if (product.store_id) document.getElementById('editPriceMyStoreSelect').value = product.store_id;
+  if (product.own_url) document.getElementById('editPriceMyUrl').value = product.own_url;
+  if (product.price != null && product.price_source === 'MANUAL') document.getElementById('editPriceMyPrice').value = product.price;
+  ensureConnectedStoresLoaded().then(() => {
+    populateMyStoreSelect('editPrice');
+    if (product.store_id) {
+      document.getElementById('editPriceMyStoreSelect').value = product.store_id;
+      handleMyStoreChange('editPrice').then(() => {
+        if (product.external_id) document.getElementById('editPriceMyStoreProduct').value = product.external_id;
+      });
+    }
+  });
+  document.getElementById('editMyPriceModal').classList.remove('hidden');
+}
+window.openEditMyPriceModal = openEditMyPriceModal;
+
+function closeEditMyPriceModal() {
+  document.getElementById('editMyPriceModal').classList.add('hidden');
+}
+window.closeEditMyPriceModal = closeEditMyPriceModal;
+
+async function handleEditMyPriceSubmit(e) {
+  e.preventDefault();
+  const errorDiv = document.getElementById('editMyPriceError');
+  errorDiv.style.display = 'none';
+  const productId = document.getElementById('editPriceProductId').value;
+  const { storeId, externalId } = myPricePayload('editPrice');
+  const ownUrl = document.getElementById('editPriceMyUrl').value.trim();
+  const myPrice = document.getElementById('editPriceMyPrice').value;
+  try {
+    const res = await fetch(`/api/4see/watched-products/${productId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ storeId, externalId, ownUrl, myPrice })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeEditMyPriceModal();
+      load4seeMonitors();
+    } else if (data.code === 'OWN_PRICE_UNKNOWN') {
+      errorDiv.innerText = data.error || 'Elegí tu producto en la tienda, pegá el link, o cargá el precio a mano.';
+      errorDiv.style.display = 'block';
+    } else {
+      errorDiv.innerText = data.error || 'No pudimos guardar tu precio. Intentá de nuevo.';
+      errorDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
+    errorDiv.style.display = 'block';
+  }
+}
+window.handleEditMyPriceSubmit = handleEditMyPriceSubmit;
+
+// --- Editar un rival ya cargado (link, nombre) ---
+function openEditRivalModal(monitorId) {
+  const monitor = cached4seeMonitors.find((m) => m.id === monitorId);
+  if (!monitor) return;
+  document.getElementById('editRivalForm').reset();
+  document.getElementById('editRivalId').value = monitorId;
+  document.getElementById('editRivalUrl').value = monitor.competitor_url || '';
+  document.getElementById('editRivalName').value = monitor.competitor_name || '';
+  resetEditRivalConfirm();
+  document.getElementById('editRivalModal').classList.remove('hidden');
+}
+window.openEditRivalModal = openEditRivalModal;
+
+function closeEditRivalModal() {
+  document.getElementById('editRivalModal').classList.add('hidden');
+}
+window.closeEditRivalModal = closeEditRivalModal;
+
+function resetEditRivalConfirm() {
+  document.getElementById('editRivalAllowUnreadableRow').classList.add('hidden');
+  document.getElementById('editRivalAllowUnreadable').checked = false;
+  document.getElementById('editRivalError').style.display = 'none';
+}
+window.resetEditRivalConfirm = resetEditRivalConfirm;
+
+async function handleEditRivalSubmit(e) {
+  e.preventDefault();
+  const errorDiv = document.getElementById('editRivalError');
+  errorDiv.style.display = 'none';
+  const monitorId = document.getElementById('editRivalId').value;
+  const competitorUrl = document.getElementById('editRivalUrl').value.trim();
+  const competitorName = document.getElementById('editRivalName').value.trim();
+  const allowUnreadable = document.getElementById('editRivalAllowUnreadable').checked;
+  try {
+    const res = await fetch(`/api/4see/monitors/${monitorId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ competitorUrl, competitorName, allowUnreadable })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeEditRivalModal();
+      load4seeMonitors();
+    } else if (data.code === 'RIVAL_UNREADABLE') {
+      errorDiv.innerText = data.error || 'No pudimos leer el precio del rival.';
+      errorDiv.style.display = 'block';
+      document.getElementById('editRivalAllowUnreadableRow').classList.remove('hidden');
+    } else {
+      errorDiv.innerText = data.error || 'No pudimos guardar los cambios. Intentá de nuevo.';
+      errorDiv.style.display = 'block';
+    }
+  } catch (err) {
+    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
+    errorDiv.style.display = 'block';
+  }
+}
+window.handleEditRivalSubmit = handleEditRivalSubmit;
 
 // 2. AUDITORÍA DE CATÁLOGO & DIFF VIEW
 let cached4seeCatalog = [];

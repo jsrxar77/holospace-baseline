@@ -1432,16 +1432,7 @@
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Cargá los links de los productos de tus rivales. holospace. revisa su precio y su stock y te muestra dónde te conviene actuar.</p>
         </div>
         <div class="actions-controls">
-          <div class="search-box-wrapper">
-            <input 
-              type="text" 
-              id="monitorSearchInput" 
-              class="input-search" 
-              placeholder="Buscar por producto, rival o link..." 
-              oninput="filter4seeMonitors(this.value)"
-            />
-          </div>
-          <button class="btn-primary" onclick="openCreateMonitorModal()">+ Agregar un rival para seguir</button>
+          <button class="btn-primary" onclick="openCreateMonitorModal()">+ Agregar un producto para vigilar</button>
         </div>
       </div>
 
@@ -2002,7 +1993,7 @@
   <div id="createMonitorModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 560px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un rival para seguir</h3>
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un producto para vigilar</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMonitorModal()">×</button>
       </div>
       <form id="createMonitorForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMonitorSubmit(event)">
@@ -2052,8 +2043,95 @@
 
         <div style="display: flex; gap: 10px; margin-top: 8px;">
           <button type="button" id="monBtnPreview" class="btn-secondary" style="flex: 1;" onclick="handlePreviewMonitor()">Leer precios</button>
-          <button type="submit" id="monBtnConfirm" class="btn-primary hidden" style="flex: 1;">Guardar y empezar a seguir</button>
+          <button type="submit" id="monBtnConfirm" class="btn-primary hidden" style="flex: 1;">Guardar y empezar a vigilar</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: agregar otro rival a un producto que ya existe -->
+  <div id="addRivalModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar otro rival</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAddRivalModal()">×</button>
+      </div>
+      <p id="addRivalProductLabel" style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;"></p>
+      <form id="addRivalForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleAddRivalSubmit(event)">
+        <input type="hidden" id="addRivalProductId" value="">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Link del producto del rival <span style="color: var(--red);">*</span></label>
+          <input type="url" id="addRivalUrl" class="input-field" placeholder="https://articulo.mercadolibre.com.ar/MLA-..." required oninput="resetAddRivalPreview()">
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del rival</label>
+          <input type="text" id="addRivalName" class="input-field" placeholder="Ej: Tienda de al lado">
+        </div>
+        <div id="addRivalError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <div id="addRivalPreviewBox" class="hidden" style="display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--hw-border-strong); padding: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Precio del rival</div>
+            <div id="addRivalPreviewText" style="font-size: 15px; font-weight: 800; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;"></div>
+          </div>
+          <div id="addRivalWarning" class="hidden" style="color: var(--amber); font-size: 12px;"></div>
+          <label id="addRivalAllowUnreadableRow" class="hidden" style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted);">
+            <input type="checkbox" id="addRivalAllowUnreadable"> Guardar igual: reviso el precio del rival más tarde
+          </label>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button type="button" id="addRivalBtnPreview" class="btn-secondary" style="flex: 1;" onclick="handlePreviewAddRival()">Leer precio</button>
+          <button type="submit" id="addRivalBtnConfirm" class="btn-primary hidden" style="flex: 1;">Agregar rival</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: editar tu precio de un producto (vale para todos sus rivales) -->
+  <div id="editMyPriceModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar tu precio</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditMyPriceModal()">×</button>
+      </div>
+      <p id="editMyPriceProductLabel" style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;"></p>
+      <form id="editMyPriceForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleEditMyPriceSubmit(event)">
+        <input type="hidden" id="editPriceProductId" value="">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <select id="editPriceMyStoreSelect" class="input-field" onchange="handleMyStoreChange('editPrice')">
+            <option value="">No uso una tienda conectada</option>
+          </select>
+          <select id="editPriceMyStoreProduct" class="input-field hidden"></select>
+          <input type="url" id="editPriceMyUrl" class="input-field" placeholder="O pegá el link de tu producto">
+          <input type="number" step="0.01" id="editPriceMyPrice" class="input-field" placeholder="O cargá tu precio ($)">
+        </div>
+        <div id="editMyPriceError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar tu precio</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: editar un rival ya cargado (link, nombre) -->
+  <div id="editRivalModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar rival</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditRivalModal()">×</button>
+      </div>
+      <form id="editRivalForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleEditRivalSubmit(event)">
+        <input type="hidden" id="editRivalId" value="">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Link del producto del rival <span style="color: var(--red);">*</span></label>
+          <input type="url" id="editRivalUrl" class="input-field" required oninput="resetEditRivalConfirm()">
+        </div>
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del rival</label>
+          <input type="text" id="editRivalName" class="input-field">
+        </div>
+        <div id="editRivalError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <label id="editRivalAllowUnreadableRow" class="hidden" style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted);">
+          <input type="checkbox" id="editRivalAllowUnreadable"> Guardar igual: reviso el precio del rival más tarde
+        </label>
+        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar cambios</button>
       </form>
     </div>
   </div>
@@ -2537,6 +2615,7 @@
 
   <script src="/access.js"></script>
   <script src="/charts/hs-charts.js"></script>
+  <script src="/tables/hs-table.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -144,3 +144,9 @@ El cambio entre Holo Night y Holo Day es el mismo boton (icono de luna/sol + la 
 
 ## "Revisar ahora" de un rival avisa lo que encontro
 Si no se pudo leer el precio del rival, lo dice y mantiene el dato anterior; si el precio leido es muy distinto del tuyo, lo avisa. Antes solo refrescaba la tabla sin decir nada.
+
+## Competencia: un producto con varios rivales (maestro-detalle)
+Cada producto vigilado es una fila; al desplegarla se ven sus rivales (link, precio, stock, ultima revision), con "+ Agregar rival" para sumar otro sin recargar nada. "Tu precio" se carga y se corrige una sola vez por producto (boton "Editar tu precio"), vale para todos sus rivales. Un rival ya cargado se puede editar (link, nombre) sin borrarlo y recargarlo. Columnas: Producto, Tu precio, Rivales, Ultima revision, mas Rival, Precio del rival, Stock del rival y Ultima revision dentro del detalle.
+
+## Tabla compartida: columnas, filtros y orden iguales en toda la app
+La tabla de Competencia se puede reordenar, ocultar columnas y filtrar por columna desde el boton "Columnas"; las preferencias quedan guardadas en el navegador. Es el mismo componente (`hs-table`) que se va a usar en Empresas, Usuarios, Roles, Pedidos, Precios sugeridos, Margenes y Tiendas conectadas (ver `docs/DEBT.md` D-051).

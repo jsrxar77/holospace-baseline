@@ -4,7 +4,8 @@
  * con soporte de políticas RLS para PostgreSQL 16.
  */
 
-const { execute } = require('../../../lib/db');
+const crypto = require('crypto');
+const { query, execute, getOne } = require('../../../lib/db');
 
 let areTablesReady = false;
 
@@ -215,37 +216,153 @@ async function ensureSmartPriceTables() {
 
     // 6. Lectura de precios sin datos inventados: el precio y el stock del rival pueden ser desconocidos (NULL),
     //    y cada monitor/producto recuerda de donde sale el precio propio (tienda conectada, link o valor a mano).
+    //    Las columnas "my_*" de monitors se eliminan en el paso 7 (maestro-detalle): este bloque solo corre
+    //    si todavia existen, para que un arranque posterior no intente alterar una columna que ya no esta.
+    const hasLegacyMonitorColumns = await columnExists('fourseee_competitor_monitors', 'my_price');
+    if (hasLegacyMonitorColumns) {
+      await execute(`
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP NOT NULL;
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP DEFAULT;
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP NOT NULL;
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP DEFAULT;
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP NOT NULL;
+        ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP DEFAULT;
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL;
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_external_id VARCHAR(120);
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_url TEXT;
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_source VARCHAR(16);
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_locked BOOLEAN NOT NULL DEFAULT false;
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_checked_at TIMESTAMP WITH TIME ZONE;
+        ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS competitor_read_error VARCHAR(40);
+
+        -- Valores que antes se completaban por defecto sin haberse leido: pasan a "desconocido"
+        UPDATE fourseee_competitor_monitors
+           SET competitor_price = NULL, competitor_stock = NULL, competitor_read_error = 'NOT_FOUND_IN_PAGE'
+         WHERE competitor_price = 0 OR extraction_method = 'HEURISTIC_FALLBACK';
+        UPDATE fourseee_competitor_monitors SET my_price = NULL WHERE my_price = 0;
+      `);
+    }
     await execute(`
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP NOT NULL;
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP DEFAULT;
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP NOT NULL;
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP DEFAULT;
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP NOT NULL;
-      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP DEFAULT;
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL;
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_external_id VARCHAR(120);
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_url TEXT;
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_source VARCHAR(16);
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_locked BOOLEAN NOT NULL DEFAULT false;
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_checked_at TIMESTAMP WITH TIME ZONE;
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS competitor_read_error VARCHAR(40);
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS store_external_id VARCHAR(120);
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS own_url TEXT;
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_source VARCHAR(16);
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_locked BOOLEAN NOT NULL DEFAULT false;
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_checked_at TIMESTAMP WITH TIME ZONE;
+    `);
 
-      -- Valores que antes se completaban por defecto sin haberse leido: pasan a "desconocido"
-      UPDATE fourseee_competitor_monitors
-         SET competitor_price = NULL, competitor_stock = NULL, competitor_read_error = 'NOT_FOUND_IN_PAGE'
-       WHERE competitor_price = 0 OR extraction_method = 'HEURISTIC_FALLBACK';
-      UPDATE fourseee_competitor_monitors SET my_price = NULL WHERE my_price = 0;
+    // 7. Maestro-detalle: un producto vigilado puede tener varios rivales. Antes "tu precio" se
+    //    guardaba repetido en cada fila de rival (si tenia 3 rivales, se cargaba y se corregia 3
+    //    veces por separado); ahora vive una sola vez en fourseee_watched_products y los rivales
+    //    de fourseee_competitor_monitors apuntan a el.
+    await execute(`
+      CREATE TABLE IF NOT EXISTS fourseee_watched_products (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+        name VARCHAR(255) NOT NULL,
+        store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL,
+        external_id VARCHAR(120),
+        own_url TEXT,
+        price NUMERIC(12, 2),
+        price_source VARCHAR(16),
+        price_locked BOOLEAN NOT NULL DEFAULT false,
+        price_checked_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_fourseee_watched_products_tenant ON fourseee_watched_products(tenant_id);
+      ALTER TABLE fourseee_watched_products ENABLE ROW LEVEL SECURITY;
+
+      DROP POLICY IF EXISTS rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products;
+      CREATE POLICY rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products
+        FOR ALL
+        USING (
+          current_setting('app.is_superadmin', true) = 'true'
+          OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        )
+        WITH CHECK (
+          current_setting('app.is_superadmin', true) = 'true'
+          OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
+        );
+
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS watched_product_id UUID REFERENCES fourseee_watched_products(id) ON DELETE CASCADE;
+      CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_watched_product ON fourseee_competitor_monitors(watched_product_id);
+    `);
+
+    await migrateMonitorsToWatchedProducts();
+
+    // Las columnas "my_*" quedaron redundantes: el dato ahora vive en fourseee_watched_products.
+    // Se eliminan recien aca (despues de migrar) para no perder datos si algo fallara antes.
+    await execute(`
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_store_id;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_external_id;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_url;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price_source;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price_locked;
+      ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price_checked_at;
     `);
 
     areTablesReady = true;
   } catch (err) {
     console.error('[4SEE DB] Error asegurando tablas de SmartPrice:', err.message);
     throw err;
+  }
+}
+
+async function columnExists(table, column) {
+  const row = await getOne(
+    `SELECT 1 FROM information_schema.columns WHERE table_name = ? AND column_name = ?`,
+    [table, column],
+    { isSuperAdmin: true }
+  );
+  return !!row;
+}
+
+/**
+ * Agrupa los rivales existentes por (tenant, nombre de producto) y crea un producto vigilado por
+ * grupo, tomando el precio propio de la fila mas antigua de cada uno. Es seguro correrla en cada
+ * arranque: si las columnas "my_*" ya se eliminaron (migracion ya hecha), no hace nada.
+ */
+async function migrateMonitorsToWatchedProducts() {
+  const hasLegacyColumns = await columnExists('fourseee_competitor_monitors', 'my_price');
+  if (!hasLegacyColumns) return;
+
+  const pendingGroups = await query(
+    `SELECT DISTINCT tenant_id, product_name FROM fourseee_competitor_monitors WHERE watched_product_id IS NULL`,
+    [],
+    { isSuperAdmin: true }
+  );
+
+  for (const group of pendingGroups) {
+    const rowsOfGroup = await query(
+      `SELECT * FROM fourseee_competitor_monitors
+       WHERE tenant_id = ? AND product_name = ? AND watched_product_id IS NULL
+       ORDER BY created_at ASC`,
+      [group.tenant_id, group.product_name],
+      { isSuperAdmin: true }
+    );
+    if (!rowsOfGroup.length) continue;
+
+    const first = rowsOfGroup[0];
+    const watchedId = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_watched_products
+       (id, tenant_id, name, store_id, external_id, own_url, price, price_source, price_locked, price_checked_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        watchedId, group.tenant_id, group.product_name,
+        first.my_store_id, first.my_external_id, first.my_url,
+        first.my_price, first.my_price_source, first.my_price_locked, first.my_price_checked_at
+      ],
+      { isSuperAdmin: true }
+    );
+    await execute(
+      `UPDATE fourseee_competitor_monitors SET watched_product_id = ?
+       WHERE tenant_id = ? AND product_name = ? AND watched_product_id IS NULL`,
+      [watchedId, group.tenant_id, group.product_name],
+      { isSuperAdmin: true }
+    );
   }
 }
 

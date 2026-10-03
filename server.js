@@ -461,8 +461,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Suite de graficos: ECharts vendorizado (sin CDN) y el wrapper hs-charts
-  if (reqPath === '/vendor/echarts.min.js' || reqPath === '/charts/hs-charts.js') {
+  // Suite de graficos: ECharts vendorizado (sin CDN) y el wrapper hs-charts; y la tabla compartida
+  if (reqPath === '/vendor/echarts.min.js' || reqPath === '/charts/hs-charts.js' || reqPath === '/tables/hs-table.js') {
     const file = path.join(__dirname, 'public', reqPath);
     if (fs.existsSync(file)) {
       const isVendor = reqPath.startsWith('/vendor/');

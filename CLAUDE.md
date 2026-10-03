@@ -39,7 +39,7 @@ Wordmark `holospace.` siempre en minuscula con punto menta; firma `by hologrowth
 Para cualquier trabajo de UI usar la skill `impeccable` (`/impeccable craft|audit|critique|polish`). La primera vez correr `/impeccable init` para generar `PRODUCT.md` y `DESIGN.md` (contexto de producto y diseno). Los dos temas Holo son los unicos (`docs/ARCHITECTURE.md` 7.2 y 7.3.1).
 
 ## Skills del proyecto (`.claude/skills/`)
-`holospace-architect`, `holospace-module-creator`, `holospace-multi-tenant-security`, `holospace-theme-system`, `holospace-testing-verification`, `holospace-docker-deploy`, `holospace-crud-template`, `holospace-charts`, `holospace-copy`, `impeccable`.
+`holospace-architect`, `holospace-module-creator`, `holospace-multi-tenant-security`, `holospace-theme-system`, `holospace-testing-verification`, `holospace-docker-deploy`, `holospace-crud-template`, `holospace-charts`, `holospace-copy`, `holospace-tables`, `impeccable`.
 
 ## MCP (`.mcp.json`)
 postgres (solo lectura, via `HOLOSPACE_DB_URL`), github, context7, playwright (solo bajo pedido). Servidores con OAuth se autorizan con `/mcp`.

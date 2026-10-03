@@ -66,6 +66,21 @@ async function readRival(url) {
   return { ...r, message: r.ok ? null : describeReadFailure(r.reason) };
 }
 
+function getStoreForTenant(storeId, tid) {
+  return getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [storeId, tid], { tenantId: tid });
+}
+
+/** Resuelve "tu precio" a partir de los datos que ya tiene guardados un producto vigilado. */
+function resolveMineForProduct(product) {
+  return resolveOwnPrice(
+    {
+      storeId: product.store_id, externalId: product.external_id, ownUrl: product.own_url,
+      manualPrice: product.price, manualLocked: product.price_locked
+    },
+    { getStore: (sid) => getStoreForTenant(sid, product.tenant_id) }
+  );
+}
+
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*
  */
@@ -89,21 +104,35 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     }
   }
 
-  // 1. MONITOR DE COMPETIDORES
-  if (pathPart === '/api/4see/monitors' && req.method === 'GET') {
+  // 1. PRODUCTOS VIGILADOS Y SUS RIVALES (maestro-detalle: "tu precio" vive una sola vez por producto)
+  if (pathPart === '/api/4see/watched-products' && req.method === 'GET') {
     if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
       sendPermissionError(res, '4see:catalog:read');
       return true;
     }
-    const monitors = await query(
-      isSuperAdmin 
-        ? 'SELECT * FROM fourseee_competitor_monitors ORDER BY created_at DESC'
-        : 'SELECT * FROM fourseee_competitor_monitors WHERE tenant_id = ? ORDER BY created_at DESC',
+    const products = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_watched_products ORDER BY created_at DESC'
+        : 'SELECT * FROM fourseee_watched_products WHERE tenant_id = ? ORDER BY created_at DESC',
       isSuperAdmin ? [] : [tenantId],
       { tenantId, isSuperAdmin }
     );
+    const monitors = await query(
+      isSuperAdmin
+        ? 'SELECT * FROM fourseee_competitor_monitors ORDER BY created_at ASC'
+        : 'SELECT * FROM fourseee_competitor_monitors WHERE tenant_id = ? ORDER BY created_at ASC',
+      isSuperAdmin ? [] : [tenantId],
+      { tenantId, isSuperAdmin }
+    );
+    const monitorsByProduct = new Map();
+    monitors.forEach((m) => {
+      if (!m.watched_product_id) return;
+      if (!monitorsByProduct.has(m.watched_product_id)) monitorsByProduct.set(m.watched_product_id, []);
+      monitorsByProduct.get(m.watched_product_id).push(m);
+    });
+    const result = products.map((p) => ({ ...p, monitors: monitorsByProduct.get(p.id) || [] }));
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, monitors }));
+    res.end(JSON.stringify({ success: true, products: result }));
     return true;
   }
 
@@ -114,11 +143,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:catalog:read');
       return true;
     }
-    const store = await getOne(
-      'SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true',
-      [storeProductsMatch[1], tenantId],
-      { tenantId }
-    );
+    const store = await getStoreForTenant(storeProductsMatch[1], tenantId);
     if (!store) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos esa tienda conectada.' }));
@@ -136,7 +161,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
-  // Tu precio: tienda conectada, luego link de tu producto y por ultimo el valor que cargaste
+  // Tu precio: tienda conectada, luego link de tu producto y por ultimo el valor que cargaste (sin guardar)
   if (pathPart === '/api/4see/own-price' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
@@ -145,38 +170,50 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     const { storeId, externalId, ownUrl, myPrice, myPriceLocked } = data || {};
     const mine = await resolveOwnPrice(
       { storeId, externalId, ownUrl: isHttpUrl(ownUrl) ? ownUrl.trim() : null, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
-      { getStore: (id) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [id, tenantId], { tenantId }) }
+      { getStore: (id) => getStoreForTenant(id, tenantId) }
     );
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, mine }));
     return true;
   }
 
-  // Vista previa del alta: lee el rival y resuelve tu precio sin guardar nada
+  // Vista previa de un rival: para un producto nuevo (storeId/ownUrl/myPrice sueltos) o para sumar
+  // un rival a un producto que ya existe (watchedProductId: se reutiliza el precio ya guardado, no
+  // el que mande el navegador, para que el precio del producto no lo pueda pisar cualquier pantalla)
   if (pathPart === '/api/4see/monitors/preview' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const { competitorUrl, myUrl, storeId, externalId, myPrice, myPriceLocked } = data || {};
+    const { competitorUrl, watchedProductId, myUrl, storeId, externalId, myPrice, myPriceLocked } = data || {};
     if (!isHttpUrl(competitorUrl)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
       return true;
     }
-    const [rival, mine] = await Promise.all([
-      readRival(competitorUrl.trim()),
-      resolveOwnPrice(
+    let minePromise;
+    if (watchedProductId) {
+      const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductId, tenantId], { tenantId });
+      if (!product) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+        return true;
+      }
+      minePromise = resolveMineForProduct(product);
+    } else {
+      minePromise = resolveOwnPrice(
         { storeId, externalId, ownUrl: isHttpUrl(myUrl) ? myUrl.trim() : null, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
-        { getStore: (id) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [id, tenantId], { tenantId }) }
-      )
-    ]);
+        { getStore: (id) => getStoreForTenant(id, tenantId) }
+      );
+    }
+    const [rival, mine] = await Promise.all([readRival(competitorUrl.trim()), minePromise]);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, rival, mine, warning: scaleWarning(rival.price, mine.price) }));
     return true;
   }
 
-  if (pathPart === '/api/4see/monitors' && req.method === 'POST') {
+  // Alta de un producto nuevo junto con su primer rival
+  if (pathPart === '/api/4see/watched-products' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
       return true;
@@ -188,14 +225,13 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
-    const id = crypto.randomUUID();
     const ownUrl = isHttpUrl(myUrl) ? myUrl.trim() : null;
     // Se vuelve a leer en el servidor: no se confia en lo que muestra el navegador
     const [rival, mine] = await Promise.all([
       readRival(competitorUrl.trim()),
       resolveOwnPrice(
         { storeId, externalId, ownUrl, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
-        { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, tenantId], { tenantId }) }
+        { getStore: (sid) => getStoreForTenant(sid, tenantId) }
       )
     ]);
 
@@ -205,36 +241,181 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
+    const productId = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_watched_products
+       (id, tenant_id, name, store_id, external_id, own_url, price, price_source, price_locked, price_checked_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        productId, tenantId, productName.trim(),
+        storeId && externalId ? storeId : null, storeId && externalId ? String(externalId) : null, ownUrl,
+        mine.ok ? mine.price : null, mine.ok ? mine.source : null, Boolean(myPriceLocked)
+      ],
+      { tenantId }
+    );
+
+    const monitorId = crypto.randomUUID();
     await execute(
       `INSERT INTO fourseee_competitor_monitors
-       (id, tenant_id, product_name, competitor_url, competitor_name, my_price, competitor_price, competitor_stock, last_checked_at, extraction_method,
-        my_store_id, my_external_id, my_url, my_price_source, my_price_locked, my_price_checked_at, competitor_read_error)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+       (id, tenant_id, watched_product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`,
       [
-        id,
-        tenantId,
-        productName.trim(),
-        competitorUrl.trim(),
+        monitorId, tenantId, productId, productName.trim(), competitorUrl.trim(),
         competitorName ? competitorName.trim() : (rival.store || 'Rival'),
-        mine.ok ? mine.price : null,
         rival.ok ? rival.price : null,
         rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
         rival.method || 'NONE',
-        storeId && externalId ? storeId : null,
-        storeId && externalId ? String(externalId) : null,
-        ownUrl,
-        mine.ok ? mine.source : null,
-        Boolean(myPriceLocked),
         rival.ok ? null : rival.reason
       ],
       { tenantId }
     );
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, id, rival, mine }));
+    res.end(JSON.stringify({ success: true, productId, monitorId, rival, mine }));
     return true;
   }
 
+  // Agregar un rival mas a un producto que ya existe
+  const addRivalMatch = pathPart.match(/^\/api\/4see\/watched-products\/([^/]+)\/monitors$/);
+  if (addRivalMatch && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [addRivalMatch[1], tenantId], { tenantId });
+    if (!product) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+      return true;
+    }
+    const { competitorUrl, competitorName, allowUnreadable } = data || {};
+    if (!isHttpUrl(competitorUrl)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
+      return true;
+    }
+    const rival = await readRival(competitorUrl.trim());
+    if (!rival.ok && !allowUnreadable) {
+      res.writeHead(422, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'RIVAL_UNREADABLE', error: rival.message, rival }));
+      return true;
+    }
+
+    const monitorId = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_competitor_monitors
+       (id, tenant_id, watched_product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`,
+      [
+        monitorId, tenantId, product.id, product.name, competitorUrl.trim(),
+        competitorName ? competitorName.trim() : (rival.store || 'Rival'),
+        rival.ok ? rival.price : null,
+        rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
+        rival.method || 'NONE',
+        rival.ok ? null : rival.reason
+      ],
+      { tenantId }
+    );
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, monitorId, rival }));
+    return true;
+  }
+
+  // Editar tu precio de un producto (una sola vez, vale para todos sus rivales) o borrarlo entero
+  const watchedProductMatch = pathPart.match(/^\/api\/4see\/watched-products\/([^/]+)$/);
+  if (watchedProductMatch && req.method === 'PATCH') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
+    if (!product) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+      return true;
+    }
+    const { storeId, externalId, ownUrl, myPrice, myPriceLocked } = data || {};
+    const ownUrlClean = isHttpUrl(ownUrl) ? ownUrl.trim() : null;
+    const mine = await resolveOwnPrice(
+      { storeId, externalId, ownUrl: ownUrlClean, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
+      { getStore: (sid) => getStoreForTenant(sid, tenantId) }
+    );
+    if (!mine.ok) {
+      res.writeHead(422, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'OWN_PRICE_UNKNOWN', error: mine.reason }));
+      return true;
+    }
+    await execute(
+      `UPDATE fourseee_watched_products
+       SET store_id = ?, external_id = ?, own_url = ?, price = ?, price_source = ?, price_locked = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND tenant_id = ?`,
+      [
+        storeId && externalId ? storeId : null, storeId && externalId ? String(externalId) : null, ownUrlClean,
+        mine.price, mine.source, Boolean(myPriceLocked), product.id, tenantId
+      ],
+      { tenantId }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, mine }));
+    return true;
+  }
+
+  if (watchedProductMatch && req.method === 'DELETE') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    await execute('DELETE FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+    return true;
+  }
+
+  // Editar un rival existente (link o nombre): antes solo se podia borrar y recargar de nuevo
+  const editMonitorMatch = pathPart.match(/^\/api\/4see\/monitors\/([^/]+)$/);
+  if (editMonitorMatch && req.method === 'PATCH') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const monitor = await getOne('SELECT * FROM fourseee_competitor_monitors WHERE id = ? AND tenant_id = ?', [editMonitorMatch[1], tenantId], { tenantId });
+    if (!monitor) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos este rival.' }));
+      return true;
+    }
+    const { competitorUrl, competitorName, allowUnreadable } = data || {};
+    if (!isHttpUrl(competitorUrl)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
+      return true;
+    }
+    const rival = await readRival(competitorUrl.trim());
+    if (!rival.ok && !allowUnreadable) {
+      res.writeHead(422, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'RIVAL_UNREADABLE', error: rival.message, rival }));
+      return true;
+    }
+    await execute(
+      `UPDATE fourseee_competitor_monitors
+       SET competitor_url = ?, competitor_name = ?, competitor_price = ?, competitor_stock = ?, extraction_method = ?, competitor_read_error = ?, last_checked_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND tenant_id = ?`,
+      [
+        competitorUrl.trim(), competitorName ? competitorName.trim() : (rival.store || monitor.competitor_name),
+        rival.ok ? rival.price : null,
+        rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
+        rival.method || 'NONE', rival.ok ? null : rival.reason,
+        monitor.id, tenantId
+      ],
+      { tenantId }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, rival }));
+    return true;
+  }
+
+  // Revisar ("check") un rival: vuelve a leerlo y de paso refresca el precio del producto dueño
   if (pathPart.startsWith('/api/4see/monitors/') && pathPart.endsWith('/check') && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
@@ -253,15 +434,13 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
+    const product = monitor.watched_product_id
+      ? await getOne('SELECT * FROM fourseee_watched_products WHERE id = ?', [monitor.watched_product_id], { tenantId: monitor.tenant_id, isSuperAdmin })
+      : null;
+
     const [rival, mine] = await Promise.all([
       readRival(monitor.competitor_url),
-      resolveOwnPrice(
-        {
-          storeId: monitor.my_store_id, externalId: monitor.my_external_id, ownUrl: monitor.my_url,
-          manualPrice: monitor.my_price, manualLocked: monitor.my_price_locked
-        },
-        { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, monitor.tenant_id], { tenantId: monitor.tenant_id }) }
-      )
+      product ? resolveMineForProduct(product) : Promise.resolve({ ok: false, price: null, reason: 'Este rival quedo sin un producto asociado.' })
     ]);
 
     // Si no se pudo leer, se conserva el ultimo dato conocido y se avisa; nunca se pisa con un 0 inventado
@@ -271,9 +450,6 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
            competitor_stock = CASE WHEN ? THEN ? ELSE competitor_stock END,
            competitor_read_error = ?,
            extraction_method = ?,
-           my_price = COALESCE(?, my_price),
-           my_price_source = COALESCE(?, my_price_source),
-           my_price_checked_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE my_price_checked_at END,
            last_checked_at = CURRENT_TIMESTAMP
        WHERE id = ? AND tenant_id = ?`,
       [
@@ -282,13 +458,18 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
         rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
         rival.ok ? null : rival.reason,
         rival.method || 'NONE',
-        mine.ok ? mine.price : null,
-        mine.ok ? mine.source : null,
-        mine.ok,
         monitor.id, monitor.tenant_id
       ],
       { tenantId: monitor.tenant_id }
     );
+
+    if (product && mine.ok) {
+      await execute(
+        'UPDATE fourseee_watched_products SET price = ?, price_source = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [mine.price, mine.source, product.id],
+        { tenantId: monitor.tenant_id }
+      );
+    }
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, monitorId: monitor.id, rival, mine, warning: scaleWarning(rival.price, mine.price) }));

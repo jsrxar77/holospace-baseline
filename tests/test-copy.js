@@ -93,7 +93,7 @@ for (const t of ['Competencia', 'Precios sugeridos', 'Catálogo', 'Márgenes']) 
 
 console.log('Estados vacios con siguiente paso');
 const app = read('public/app.js');
-ok(app.includes('Todavía no seguís ningún producto de la competencia') && app.includes('+ Agregar un rival para seguir'), 'Competencia: vacio con boton');
+ok(app.includes('Todavía no seguís ningún producto de la competencia') && html.includes('+ Agregar un producto para vigilar'), 'Competencia: vacio con boton');
 ok(app.includes('Apretá <strong>Revisar precios ahora</strong>'), 'Precios sugeridos: vacio con siguiente paso');
 ok(app.includes('Todavía no calculaste el margen de ningún producto'), 'Márgenes: vacio explicado');
 
