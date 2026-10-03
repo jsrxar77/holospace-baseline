@@ -162,3 +162,15 @@ Luego: `docker compose up -d --build mobile`
 | HoloSpace Core y Kanban | `http://localhost:3001` | `http://<IP_LAN>:3001` |
 | Scanner (web) | `http://localhost:8081` | `http://<IP_LAN>:8081` |
 | Expo Go (QR) | `http://localhost:8081` | `http://<IP_LAN>:8081` |
+
+---
+
+## Fragilidad conocida: nginx y el DNS interno de Docker (S-029)
+
+En el servidor de produccion, `bin/helper/deploy.sh` corre `docker compose up -d --build` en cada push (via cron cada 2 minutos), lo que recrea el contenedor `app`. Si `nginx/default.conf` usa `proxy_pass http://app:3001` directo, nginx resuelve ese nombre una sola vez al arrancar su propio proceso: si "app" se esta recreando justo en ese instante, nginx falla con `host not found in upstream "app"` y el proceso completo se cae, quedando en bucle de reinicio hasta acertar una ventana en la que "app" ya este resuelto. Mientras tanto el sitio puede responder con una version vieja, con un 502, o con el error de un contenedor que ya no existe.
+
+**Sintoma en logs:** `docker logs holospace_proxy` repitiendo `nginx: [emerg] host not found in upstream "app"` y `docker compose ps` mostrando `holospace_proxy` como `Restarting (1) ... seconds ago`.
+
+**Arreglo ya aplicado:** `nginx/default.conf` declara `resolver 127.0.0.11 valid=10s;` (el DNS interno de Docker) y usa una variable en el proxy_pass (`set $upstream_app app:3001; proxy_pass http://$upstream_app;`) en vez del hostname fijo. Asi nginx resuelve en cada pedido en lugar de una sola vez al arrancar: un instante sin "app" disponible da un 502 puntual para ese pedido nada mas, nunca tumba nginx.
+
+**Si se vuelve a ver este sintoma:** confirmar que `nginx/default.conf` sigue teniendo el `resolver` y la variable (un cambio futuro al archivo podria sacarlos sin querer), y que el deploy no este reemplazando ese archivo por una copia vieja.
