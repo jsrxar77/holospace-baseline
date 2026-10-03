@@ -23,6 +23,12 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 11. **Tests por feature**: toda feature/endpoint/modulo nuevo trae suite en `tests/` registrada en `SUITES` de `tests/run-all-tests.js`.
 12. **Navegador/Playwright**: no abrirlo sin pedido explicito; preferir terminal e inspeccion de codigo. Ante duda real, preguntar antes de cambios masivos.
 
+## Agilidad (obligatorio)
+- Un cambio chico se cierra en minutos: editar, `node --check`, correr solo la suite afectada, y recien despues la suite completa una sola vez.
+- Nunca dejar esperando al usuario por polling: no hacer `sleep` en loop ni monitores de largo plazo para un deploy. Verificar una vez, y si no esta listo, decirlo y seguir.
+- Verificar produccion sin cache: agregar `?nocache=<timestamp>` a la URL; el CDN puede servir una copia vieja de un archivo sin version.
+- Ante una demora de mas de unos minutos, informar el motivo en una linea en vez de seguir esperando en silencio.
+
 ## Flujo por cambio (impacto 360)
 Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist, incluida la regla de oro: antes de cerrar una tarea, buscar el componente visual equivalente en los otros lugares (landing/app/Scanner), listar todos los que llaman a lo que se cambio, y validar cualquier parser de datos externos contra al menos una muestra real.
 

@@ -165,6 +165,11 @@ Luego: `docker compose up -d --build mobile`
 
 ---
 
+## Verificar el deploy en produccion (rapido)
+1. Esperar como maximo un ciclo de deploy; no hacer polling continuo ni sleep en loop.
+2. Verificar con `curl -s "https://holospace.com.ar/<archivo>?nocache=$(date +%s)"` y buscar un identificador nuevo del cambio. Sin ese parametro el CDN puede devolver la copia en cache.
+3. Si aun no esta, reportarlo en una linea y seguir con lo demas; no bloquear la sesion.
+
 ## Fragilidad conocida: nginx y el DNS interno de Docker (S-029)
 
 En el servidor de produccion, `bin/helper/deploy.sh` corre `docker compose up -d --build` en cada push (via cron cada 2 minutos), lo que recrea el contenedor `app`. Si `nginx/default.conf` usa `proxy_pass http://app:3001` directo, nginx resuelve ese nombre una sola vez al arrancar su propio proceso: si "app" se esta recreando justo en ese instante, nginx falla con `host not found in upstream "app"` y el proceso completo se cae, quedando en bucle de reinicio hasta acertar una ventana en la que "app" ya este resuelto. Mientras tanto el sitio puede responder con una version vieja, con un 502, o con el error de un contenedor que ya no existe.
