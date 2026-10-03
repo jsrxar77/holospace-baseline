@@ -335,44 +335,6 @@ CREATE INDEX IF NOT EXISTS idx_core_audit_logs_tenant ON core_audit_logs(tenant_
 -- 5. MÓDULO 4SEE: MONITORES, AUDITORÍA Y MARGENES
 -- ============================================================================
 
--- Tabla de Monitores de Competidores
--- Producto vigilado: "tu precio" (de tu tienda, de tu link o cargado a mano) vive una sola vez
--- aca, aunque el producto tenga varios rivales (maestro-detalle en la pantalla de Competencia).
-CREATE TABLE IF NOT EXISTS fourseee_watched_products (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  store_id UUID,
-  external_id VARCHAR(120),
-  own_url TEXT,
-  price NUMERIC(12, 2),
-  price_source VARCHAR(16),
-  price_locked BOOLEAN NOT NULL DEFAULT false,
-  price_checked_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_fourseee_watched_products_tenant ON fourseee_watched_products(tenant_id);
-
--- Un rival por fila, siempre colgado de un producto vigilado (detalle del maestro-detalle)
-CREATE TABLE IF NOT EXISTS fourseee_competitor_monitors (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-  watched_product_id UUID REFERENCES fourseee_watched_products(id) ON DELETE CASCADE,
-  product_name VARCHAR(255) NOT NULL,
-  competitor_url TEXT NOT NULL,
-  competitor_name VARCHAR(128) NOT NULL DEFAULT 'Competidor',
-  competitor_price NUMERIC(12, 2),
-  competitor_stock VARCHAR(32),
-  extraction_method VARCHAR(64) DEFAULT 'STRUCTURED_DATA',
-  competitor_read_error VARCHAR(40),
-  last_checked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_tenant ON fourseee_competitor_monitors(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_watched_product ON fourseee_competitor_monitors(watched_product_id);
 
 -- Tabla de Auditoría de Catálogo / Feeds
 CREATE TABLE IF NOT EXISTS fourseee_catalog_items (
@@ -446,7 +408,7 @@ CREATE TABLE IF NOT EXISTS fourseee_products (
     ROUND(cost_price * (1.0 + (min_margin_percentage / 100.0)) + operating_costs, 2)
   ) STORED,
   max_price_ceiling NUMERIC(14, 2),
-  current_price NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+  current_price NUMERIC(14, 2),
   stock_quantity INTEGER NOT NULL DEFAULT 0,
   stock_status VARCHAR(20) NOT NULL DEFAULT 'IN_STOCK' CHECK (stock_status IN ('IN_STOCK', 'OUT_OF_STOCK', 'PAUSED')),
   store_external_id VARCHAR(120),
@@ -454,6 +416,8 @@ CREATE TABLE IF NOT EXISTS fourseee_products (
   price_source VARCHAR(16),
   price_locked BOOLEAN NOT NULL DEFAULT false,
   price_checked_at TIMESTAMP WITH TIME ZONE,
+  in_analysis BOOLEAN NOT NULL DEFAULT false,
+  costs_loaded BOOLEAN NOT NULL DEFAULT false,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -461,6 +425,25 @@ CREATE TABLE IF NOT EXISTS fourseee_products (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fourseee_products_tenant ON fourseee_products(tenant_id);
+
+-- Tabla de Monitores de Competidores: un rival por fila, colgado de un producto del catalogo
+CREATE TABLE IF NOT EXISTS fourseee_competitor_monitors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES fourseee_products(id) ON DELETE CASCADE,
+  product_name VARCHAR(255) NOT NULL,
+  competitor_url TEXT NOT NULL,
+  competitor_name VARCHAR(128) NOT NULL DEFAULT 'Competidor',
+  competitor_price NUMERIC(12, 2),
+  competitor_stock VARCHAR(32),
+  extraction_method VARCHAR(64) DEFAULT 'STRUCTURED_DATA',
+  competitor_read_error VARCHAR(40),
+  last_checked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_tenant ON fourseee_competitor_monitors(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_product ON fourseee_competitor_monitors(product_id);
 
 -- Directorio de Competidores
 CREATE TABLE IF NOT EXISTS fourseee_competitors (
@@ -499,7 +482,7 @@ CREATE INDEX IF NOT EXISTS idx_fourseee_mappings_tenant ON fourseee_product_comp
 CREATE TABLE IF NOT EXISTS fourseee_price_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-  mapping_id UUID NOT NULL REFERENCES fourseee_product_competitor_mappings(id) ON DELETE CASCADE,
+  monitor_id UUID REFERENCES fourseee_competitor_monitors(id) ON DELETE CASCADE,
   scraped_price NUMERIC(14, 2) NOT NULL,
   scraped_currency VARCHAR(10) NOT NULL DEFAULT 'ARS',
   scraped_stock_status VARCHAR(20) NOT NULL,
@@ -507,7 +490,7 @@ CREATE TABLE IF NOT EXISTS fourseee_price_logs (
   captured_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_fourseee_logs_mapping_time ON fourseee_price_logs(mapping_id, captured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_fourseee_logs_monitor_time ON fourseee_price_logs(monitor_id, captured_at DESC);
 CREATE INDEX IF NOT EXISTS idx_fourseee_logs_tenant ON fourseee_price_logs(tenant_id);
 
 -- Reglas de Dynamic Pricing (SmartPrice Rules)
@@ -559,7 +542,6 @@ ALTER TABLE core_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE core_platform_audit_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE fourseee_watched_products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_competitor_monitors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_catalog_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE fourseee_margin_rules ENABLE ROW LEVEL SECURITY;
@@ -587,17 +569,6 @@ CREATE POLICY rls_roles_tenant_isolation ON core_roles
   );
 
 -- Políticas RLS para módulo 4see
-DROP POLICY IF EXISTS rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products;
-CREATE POLICY rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products
-  FOR ALL
-  USING (
-    current_setting('app.is_superadmin', true) = 'true'
-    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-  )
-  WITH CHECK (
-    current_setting('app.is_superadmin', true) = 'true'
-    OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-  );
 
 DROP POLICY IF EXISTS rls_fourseee_monitors_tenant_isolation ON fourseee_competitor_monitors;
 CREATE POLICY rls_fourseee_monitors_tenant_isolation ON fourseee_competitor_monitors

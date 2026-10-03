@@ -765,7 +765,7 @@ function applyRoleVisibility() {
 }
 
 function showForbiddenView(moduleName) {
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeSmartPrice', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeProductos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -824,7 +824,7 @@ function getAccess() {
 
 const TAB_ELEMENT_SUFFIX = {
   tenants: 'Tenants', platform: 'Platform', users: 'Users', roles: 'Roles', kanban: 'Kanban', orders: 'Orders',
-  '4see-monitors': '4seeMonitors', '4see-smartprice': '4seeSmartPrice', '4see-catalog': '4seeCatalog', '4see-margins': '4seeMargins'
+  '4see-productos': '4seeProductos'
 };
 
 // Oculta del menu (escritorio y movil) las pestanas que la sesion no puede usar
@@ -922,7 +922,7 @@ function switchModule(moduleName, updateUrl = true) {
   } else if (normMod === 'kanban' || normMod === '4see') {
     const access = getAccess();
     const entryTab = access && typeof HSAccess !== 'undefined' ? HSAccess.firstTab(access, normMod) : null;
-    switchTab(entryTab || (normMod === 'kanban' ? 'kanban' : '4see-monitors'));
+    switchTab(entryTab || (normMod === 'kanban' ? 'kanban' : '4see-productos'));
   } else if (normMod === 'scanner') {
     switchTab('scanner');
   }
@@ -960,8 +960,8 @@ function switchTabMobile(tabName) {
 // NAVEGACIÓN POR PESTAÑAS (FUNCIONALIDADES INTERNAS)
 function switchTab(tabName) {
   // Limpiar clase activa de todos los feature tabs
-  ['tabTenants', 'tabKanban', 'tabUsers', 'tabRoles', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeMonitors', 'tab4seeSmartPrice', 'tab4seeCatalog', 'tab4seeMargins',
-   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabRoles', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeMonitors', 'mobTab4seeSmartPrice', 'mobTab4seeCatalog', 'mobTab4seeMargins'].forEach(id => {
+  ['tabTenants', 'tabKanban', 'tabUsers', 'tabRoles', 'tabOrders', 'tabPlatform', 'tabScanner', 'tab4seeProductos',
+   'mobTabTenants', 'mobTabKanban', 'mobTabUsers', 'mobTabRoles', 'mobTabOrders', 'mobTabPlatform', 'mobTabScanner', 'mobTab4seeProductos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.remove('active');
   });
@@ -969,18 +969,9 @@ function switchTab(tabName) {
   // Activar tab seleccionado
   let tabId = '';
   let mobTabId = '';
-  if (tabName === '4see-monitors') {
-    tabId = 'tab4seeMonitors';
-    mobTabId = 'mobTab4seeMonitors';
-  } else if (tabName === '4see-smartprice') {
-    tabId = 'tab4seeSmartPrice';
-    mobTabId = 'mobTab4seeSmartPrice';
-  } else if (tabName === '4see-catalog') {
-    tabId = 'tab4seeCatalog';
-    mobTabId = 'mobTab4seeCatalog';
-  } else if (tabName === '4see-margins') {
-    tabId = 'tab4seeMargins';
-    mobTabId = 'mobTab4seeMargins';
+  if (tabName === '4see-productos') {
+    tabId = 'tab4seeProductos';
+    mobTabId = 'mobTab4seeProductos';
   } else {
     tabId = 'tab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
     mobTabId = 'mobTab' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
@@ -1017,7 +1008,7 @@ function switchTab(tabName) {
     kanbanAutoRefreshInterval = null;
   }
 
-  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeMonitors', 'view4seeSmartPrice', 'view4seeCatalog', 'view4seeMargins'].forEach(id => {
+  ['viewTenants', 'viewKanban', 'viewUsers', 'viewRoles', 'viewOrders', 'viewPlatform', 'view4seeProductos'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.add('hidden');
   });
@@ -1030,22 +1021,13 @@ function switchTab(tabName) {
     const view = document.getElementById('viewTenants');
     if (view) view.classList.remove('hidden');
     loadTenantsManagementData();
-  } else if (tabName === '4see-monitors') {
-    const view = document.getElementById('view4seeMonitors');
-    if (view) view.classList.remove('hidden');
-    load4seeMonitors();
-  } else if (tabName === '4see-smartprice') {
-    const view = document.getElementById('view4seeSmartPrice');
-    if (view) view.classList.remove('hidden');
-    load4seeSmartPriceQueue();
-  } else if (tabName === '4see-catalog') {
-    const view = document.getElementById('view4seeCatalog');
+  } else if (tabName === '4see-productos') {
+    const view = document.getElementById('view4seeProductos');
     if (view) view.classList.remove('hidden');
     load4seeCatalog();
-  } else if (tabName === '4see-margins') {
-    const view = document.getElementById('view4seeMargins');
-    if (view) view.classList.remove('hidden');
+    load4seeMonitors();
     load4seeMargins();
+    load4seeSmartPriceQueue();
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
@@ -3459,6 +3441,137 @@ async function load4seeMonitors() {
 }
 window.load4seeMonitors = load4seeMonitors;
 
+function openAnalysisPicker() {
+  const modal = document.getElementById('analysisPickerModal');
+  if (modal) modal.classList.remove('hidden');
+  renderAnalysisPicker();
+}
+window.openAnalysisPicker = openAnalysisPicker;
+
+function closeAnalysisPicker() {
+  const modal = document.getElementById('analysisPickerModal');
+  if (modal) modal.classList.add('hidden');
+  load4seeMonitors();
+}
+window.closeAnalysisPicker = closeAnalysisPicker;
+
+async function renderAnalysisPicker() {
+  const list = document.getElementById('analysisPickerList');
+  const counter = document.getElementById('analysisCounter');
+  if (!list) return;
+  list.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; padding: 12px 0;">Cargando tu catálogo...</div>';
+  try {
+    const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    const data = await res.json();
+    if (!data.success) {
+      list.innerHTML = `<div style="color: var(--red); padding: 12px 0;">${escHtml(data.error || 'No pudimos cargar tu catálogo.')}</div>`;
+      return;
+    }
+    const a = data.analysis;
+    if (counter) counter.textContent = a ? `${a.used} de ${a.max} productos analizados (plan ${a.planName})` : '';
+    if (!data.products.length) {
+      list.innerHTML = '<div style="color: var(--text-muted); padding: 12px 0;">Todavía no tenés productos en tu catálogo. Cargalos primero en el paso 1.</div>';
+      return;
+    }
+    const full = Boolean(a && a.used >= a.max);
+    list.innerHTML = data.products.map((p) => {
+      const disabled = !p.in_analysis && full ? 'disabled' : '';
+      return `<label style="display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--card-border); cursor: pointer;">
+        <input type="checkbox" ${p.in_analysis ? 'checked' : ''} ${disabled} onchange="toggleProductAnalysis('${p.id}', this.checked)">
+        <span style="color: var(--text-main); font-weight: 700;">${escHtml(p.title)}</span>
+        <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">${escHtml(p.sku || '')}</span>
+      </label>`;
+    }).join('');
+  } catch (err) {
+    list.innerHTML = `<div style="color: var(--red); padding: 12px 0;">Error de conexión: ${escHtml(err.message)}</div>`;
+  }
+}
+
+async function toggleProductAnalysis(productId, inAnalysis) {
+  try {
+    const res = await fetch(`/api/4see/products/${productId}/analysis`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ inAnalysis })
+    });
+    const data = await res.json();
+    if (!data.success) await showCustomAlert('No se pudo', data.error || 'Intentá de nuevo.');
+  } catch (err) {
+    await showCustomAlert('Sin conexión', 'No pudimos guardar el cambio. Revisá la conexión e intentá de nuevo.');
+  }
+  renderAnalysisPicker();
+}
+window.toggleProductAnalysis = toggleProductAnalysis;
+
+let costsProductsCache = [];
+
+async function openCostsModal() {
+  const modal = document.getElementById('costsModal');
+  const select = document.getElementById('costsProductSelect');
+  if (!modal || !select) return;
+  document.getElementById('costsError').style.display = 'none';
+  const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+  const data = await res.json();
+  costsProductsCache = (data.products || []).filter((p) => p.in_analysis);
+  if (!costsProductsCache.length) {
+    await showCustomAlert('Primero elegí productos', 'Para cargar costos, antes elegí los productos a analizar en el paso 2.');
+    return;
+  }
+  select.innerHTML = costsProductsCache.map((p) => `<option value="${p.id}">${escHtml(p.title)}${p.costs_loaded ? ' (costos cargados)' : ''}</option>`).join('');
+  fillCostsForm(select.value);
+  modal.classList.remove('hidden');
+}
+window.openCostsModal = openCostsModal;
+
+function closeCostsModal() {
+  const modal = document.getElementById('costsModal');
+  if (modal) modal.classList.add('hidden');
+  load4seeMargins();
+  load4seeSmartPriceQueue();
+}
+window.closeCostsModal = closeCostsModal;
+
+function fillCostsForm(productId) {
+  const p = costsProductsCache.find((x) => x.id === productId);
+  if (!p) return;
+  document.getElementById('costsCostPrice').value = p.costs_loaded ? p.cost_price : '';
+  document.getElementById('costsOperating').value = p.costs_loaded ? p.operating_costs : '';
+  document.getElementById('costsMargin').value = p.costs_loaded ? p.min_margin_percentage : '';
+  document.getElementById('costsCeiling').value = p.max_price_ceiling || '';
+}
+window.fillCostsForm = fillCostsForm;
+
+async function handleCostsSubmit(e) {
+  e.preventDefault();
+  const errorBox = document.getElementById('costsError');
+  errorBox.style.display = 'none';
+  const productId = document.getElementById('costsProductSelect').value;
+  const body = {
+    costPrice: document.getElementById('costsCostPrice').value,
+    operatingCosts: document.getElementById('costsOperating').value,
+    minMarginPercentage: document.getElementById('costsMargin').value,
+    maxPriceCeiling: document.getElementById('costsCeiling').value
+  };
+  try {
+    const res = await fetch(`/api/4see/products/${productId}/costs`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.success) {
+      errorBox.textContent = data.error || 'No pudimos guardar los costos.';
+      errorBox.style.display = 'block';
+      return;
+    }
+    closeCostsModal();
+  } catch (err) {
+    errorBox.textContent = 'Sin conexión. Revisá la red e intentá de nuevo.';
+    errorBox.style.display = 'block';
+  }
+}
+window.handleCostsSubmit = handleCostsSubmit;
+
 function renderRivalDetailTable(product) {
   if (!product.monitors.length) {
     return `<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Este producto todavía no tiene rivales cargados.
@@ -3542,7 +3655,7 @@ function renderWatchedProductsTable() {
     renderDetail: (p) => renderRivalDetailTable(p),
     emptyMessage: cached4seeProducts.length
       ? 'No hay productos que coincidan con tu búsqueda.'
-      : 'Todavía no seguís ningún producto de la competencia. Agregá el link de un rival y holospace. va a vigilar su precio y su stock.',
+      : 'Todavía no elegiste productos para analizar. Apretá Elegir productos para analizar, marcá los de tu catálogo y después sumá sus rivales.',
     actionsLabel: 'Acciones',
     renderActions: (p) => `
       <div class="data-table-actions" style="display: inline-flex; gap: 6px;">

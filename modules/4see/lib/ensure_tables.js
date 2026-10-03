@@ -4,8 +4,7 @@
  * con soporte de políticas RLS para PostgreSQL 16.
  */
 
-const crypto = require('crypto');
-const { query, execute, getOne } = require('../../../lib/db');
+const { execute, getOne } = require('../../../lib/db');
 
 let areTablesReady = false;
 
@@ -250,49 +249,6 @@ async function ensureSmartPriceTables() {
       ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_checked_at TIMESTAMP WITH TIME ZONE;
     `);
 
-    // 7. Maestro-detalle: un producto vigilado puede tener varios rivales. Antes "tu precio" se
-    //    guardaba repetido en cada fila de rival (si tenia 3 rivales, se cargaba y se corregia 3
-    //    veces por separado); ahora vive una sola vez en fourseee_watched_products y los rivales
-    //    de fourseee_competitor_monitors apuntan a el.
-    await execute(`
-      CREATE TABLE IF NOT EXISTS fourseee_watched_products (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        tenant_id UUID NOT NULL REFERENCES tenant_tenants(id) ON DELETE CASCADE,
-        name VARCHAR(255) NOT NULL,
-        store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL,
-        external_id VARCHAR(120),
-        own_url TEXT,
-        price NUMERIC(12, 2),
-        price_source VARCHAR(16),
-        price_locked BOOLEAN NOT NULL DEFAULT false,
-        price_checked_at TIMESTAMP WITH TIME ZONE,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_fourseee_watched_products_tenant ON fourseee_watched_products(tenant_id);
-      ALTER TABLE fourseee_watched_products ENABLE ROW LEVEL SECURITY;
-
-      DROP POLICY IF EXISTS rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products;
-      CREATE POLICY rls_fourseee_watched_products_tenant_isolation ON fourseee_watched_products
-        FOR ALL
-        USING (
-          current_setting('app.is_superadmin', true) = 'true'
-          OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-        )
-        WITH CHECK (
-          current_setting('app.is_superadmin', true) = 'true'
-          OR tenant_id = NULLIF(current_setting('app.current_tenant_id', true), '')::uuid
-        );
-
-      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS watched_product_id UUID REFERENCES fourseee_watched_products(id) ON DELETE CASCADE;
-      CREATE INDEX IF NOT EXISTS idx_fourseee_monitors_watched_product ON fourseee_competitor_monitors(watched_product_id);
-    `);
-
-    await migrateMonitorsToWatchedProducts();
-
-    // Las columnas "my_*" quedaron redundantes: el dato ahora vive en fourseee_watched_products.
-    // Se eliminan recien aca (despues de migrar) para no perder datos si algo fallara antes.
     await execute(`
       ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price;
       ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_store_id;
@@ -303,11 +259,52 @@ async function ensureSmartPriceTables() {
       ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS my_price_checked_at;
     `);
 
+    // 8. Un solo producto: Competencia vive en fourseee_products. El producto en analisis y los
+    //    rivales cuelgan del catalogo; los productos de la tabla vieja pasan al catalogo con el
+    //    mismo id, sin adivinar datos (costos_loaded = false hasta que los cargues).
+    await execute(`
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS in_analysis BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS costs_loaded BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE fourseee_products ALTER COLUMN current_price DROP NOT NULL;
+      ALTER TABLE fourseee_products ALTER COLUMN current_price DROP DEFAULT;
+      ALTER TABLE fourseee_price_logs ADD COLUMN IF NOT EXISTS monitor_id UUID REFERENCES fourseee_competitor_monitors(id) ON DELETE CASCADE;
+      ALTER TABLE fourseee_price_logs ALTER COLUMN mapping_id DROP NOT NULL;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS product_id UUID REFERENCES fourseee_products(id) ON DELETE CASCADE;
+    `);
+    await migrateWatchedProductsIntoCatalog();
+
     areTablesReady = true;
   } catch (err) {
     console.error('[4SEE DB] Error asegurando tablas de SmartPrice:', err.message);
     throw err;
   }
+}
+
+async function migrateWatchedProductsIntoCatalog() {
+  const hasWatchedTable = await getOne(
+    `SELECT 1 FROM information_schema.tables WHERE table_name = 'fourseee_watched_products'`,
+    [],
+    { isSuperAdmin: true }
+  );
+  if (!hasWatchedTable) return;
+
+  await execute(`
+    INSERT INTO fourseee_products
+      (id, tenant_id, store_id, sku, title, current_price, own_url, store_external_id,
+       price_source, price_locked, price_checked_at, in_analysis, costs_loaded)
+    SELECT w.id, w.tenant_id, w.store_id, 'CMP-' || w.id::text, w.name, COALESCE(w.price, 0),
+           w.own_url, w.external_id, w.price_source, w.price_locked, w.price_checked_at, true, false
+    FROM fourseee_watched_products w
+    WHERE NOT EXISTS (SELECT 1 FROM fourseee_products p WHERE p.id = w.id)
+  `, [], { isSuperAdmin: true });
+
+  await execute(`
+    UPDATE fourseee_competitor_monitors SET product_id = watched_product_id
+    WHERE product_id IS NULL AND watched_product_id IS NOT NULL
+  `, [], { isSuperAdmin: true });
+
+  await execute(`ALTER TABLE fourseee_competitor_monitors DROP COLUMN IF EXISTS watched_product_id`, [], { isSuperAdmin: true });
+  await execute(`DROP TABLE IF EXISTS fourseee_watched_products CASCADE`, [], { isSuperAdmin: true });
 }
 
 async function columnExists(table, column) {
@@ -317,53 +314,6 @@ async function columnExists(table, column) {
     { isSuperAdmin: true }
   );
   return !!row;
-}
-
-/**
- * Agrupa los rivales existentes por (tenant, nombre de producto) y crea un producto vigilado por
- * grupo, tomando el precio propio de la fila mas antigua de cada uno. Es seguro correrla en cada
- * arranque: si las columnas "my_*" ya se eliminaron (migracion ya hecha), no hace nada.
- */
-async function migrateMonitorsToWatchedProducts() {
-  const hasLegacyColumns = await columnExists('fourseee_competitor_monitors', 'my_price');
-  if (!hasLegacyColumns) return;
-
-  const pendingGroups = await query(
-    `SELECT DISTINCT tenant_id, product_name FROM fourseee_competitor_monitors WHERE watched_product_id IS NULL`,
-    [],
-    { isSuperAdmin: true }
-  );
-
-  for (const group of pendingGroups) {
-    const rowsOfGroup = await query(
-      `SELECT * FROM fourseee_competitor_monitors
-       WHERE tenant_id = ? AND product_name = ? AND watched_product_id IS NULL
-       ORDER BY created_at ASC`,
-      [group.tenant_id, group.product_name],
-      { isSuperAdmin: true }
-    );
-    if (!rowsOfGroup.length) continue;
-
-    const first = rowsOfGroup[0];
-    const watchedId = crypto.randomUUID();
-    await execute(
-      `INSERT INTO fourseee_watched_products
-       (id, tenant_id, name, store_id, external_id, own_url, price, price_source, price_locked, price_checked_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        watchedId, group.tenant_id, group.product_name,
-        first.my_store_id, first.my_external_id, first.my_url,
-        first.my_price, first.my_price_source, first.my_price_locked, first.my_price_checked_at
-      ],
-      { isSuperAdmin: true }
-    );
-    await execute(
-      `UPDATE fourseee_competitor_monitors SET watched_product_id = ?
-       WHERE tenant_id = ? AND product_name = ? AND watched_product_id IS NULL`,
-      [watchedId, group.tenant_id, group.product_name],
-      { isSuperAdmin: true }
-    );
-  }
 }
 
 module.exports = {

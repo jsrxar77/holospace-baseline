@@ -145,6 +145,20 @@ El cambio entre Holo Night y Holo Day es el mismo boton (icono de luna/sol + la 
 ## "Revisar ahora" de un rival avisa lo que encontro
 Si no se pudo leer el precio del rival, lo dice y mantiene el dato anterior; si el precio leido es muy distinto del tuyo, lo avisa. Antes solo refrescaba la tabla sin decir nada.
 
+## Análisis de precios: un solo flujo en la pantalla Productos (4see)
+
+Todo lo de 4see se carga en una sola pantalla, en cinco pasos que se leen en orden:
+
+1. **Cargá tu catálogo:** conectás la tienda o cargás los productos a mano (un solo lugar).
+2. **Elegí los productos a analizar:** marcás cuáles entran al análisis. El tope lo define tu plan: Simple 5, Business 13, Enterprise 55 productos. Sacar un producto libera el lugar y no lo borra del catálogo.
+3. **Sumá los rivales de cada producto:** pegás el link del rival. El tope por producto es Simple 3, Business 8, Enterprise 21 rivales. Tu precio sale del producto; no se vuelve a cargar.
+4. **Completá costos y márgenes:** costo, costos operativos, margen mínimo y tope (opcional). El piso de margen se calcula solo. Sin costo no hay sugerencia, y la pantalla lo dice.
+5. **Recibí los precios sugeridos:** el worker vuelve a leer los rivales y calcula el precio con las reglas. Vos decidís si lo aplicás.
+
+Los límites viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPerProduct`) y se aplican en la API: al superarlos responde 403 con `PLAN_LIMIT_REACHED` y un mensaje con el plan y el número.
+
+Pendiente visible en la pantalla: la tabla de Márgenes todavía muestra las reglas viejas (D-052).
+
 ## Competencia: un producto con varios rivales (maestro-detalle)
 Cada producto vigilado es una fila; al desplegarla se ven sus rivales (link, precio, stock, ultima revision), con "+ Agregar rival" para sumar otro sin recargar nada. "Tu precio" se carga y se corrige una sola vez por producto (boton "Editar tu precio"), vale para todos sus rivales. Un rival ya cargado se puede editar (link, nombre) sin borrarlo y recargarlo. Columnas: Producto, Tu precio, Rivales, Ultima revision, mas Rival, Precio del rival, Stock del rival y Ultima revision dentro del detalle.
 

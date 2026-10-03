@@ -1019,10 +1019,7 @@
       <button class="nav-tab feature-tab feature-kanban" id="tabOrders" onclick="switchTab('orders')" style="display:none;">Todos los pedidos</button>
 
       <!-- Features 4see -->
-      <button class="nav-tab feature-tab feature-4see" id="tab4seeMonitors" onclick="switchTab('4see-monitors')" style="display:none;">Competencia</button>
-      <button class="nav-tab feature-tab feature-4see" id="tab4seeSmartPrice" onclick="switchTab('4see-smartprice')" style="display:none;">Precios sugeridos</button>
-      <button class="nav-tab feature-tab feature-4see" id="tab4seeCatalog" onclick="switchTab('4see-catalog')" style="display:none;">Catálogo</button>
-      <button class="nav-tab feature-tab feature-4see" id="tab4seeMargins" onclick="switchTab('4see-margins')" style="display:none;">Márgenes</button>
+      <button class="nav-tab feature-tab feature-4see" id="tab4seeProductos" onclick="switchTab('4see-productos')" style="display:none;">Productos</button>
     </nav>
   </header>
 
@@ -1058,10 +1055,7 @@
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabKanban" onclick="switchTabMobile('kanban')" style="display:none;">Pedidos</button>
         <button class="mobile-nav-tab feature-tab feature-kanban" id="mobTabOrders" onclick="switchTabMobile('orders')" style="display:none;">Todos los pedidos</button>
 
-        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeMonitors" onclick="switchTabMobile('4see-monitors')" style="display:none;">Competencia</button>
-        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeSmartPrice" onclick="switchTabMobile('4see-smartprice')" style="display:none;">Precios sugeridos</button>
-        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeCatalog" onclick="switchTabMobile('4see-catalog')" style="display:none;">Catálogo</button>
-        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeMargins" onclick="switchTabMobile('4see-margins')" style="display:none;">Márgenes</button>
+        <button class="mobile-nav-tab feature-tab feature-4see" id="mobTab4seeProductos" onclick="switchTabMobile('4see-productos')" style="display:none;">Productos</button>
       </nav>
     </div>
     <div class="mobile-drawer-footer" style="margin-top: auto; padding-top: 16px; border-top: 1px solid var(--card-border);">
@@ -1363,14 +1357,23 @@
 
     <!-- 7. VISTAS DEL MÓDULO 4SEE (MONITOR, CATALOG & MARGINS) -->
     <!-- 7.1 Monitor de Competidores -->
-    <div id="view4seeMonitors" class="view-panel hidden">
+    <div id="view4seeProductos" class="view-panel hidden">
+      <ol class="flow-strip" aria-label="Pasos del análisis">
+        <li><strong>1</strong> Cargá tu catálogo</li>
+        <li><strong>2</strong> Elegí los productos a analizar</li>
+        <li><strong>3</strong> Sumá los rivales de cada producto</li>
+        <li><strong>4</strong> Completá costos y márgenes</li>
+        <li><strong>5</strong> Recibí los precios sugeridos</li>
+      </ol>
+
+    <div id="view4seeMonitors" class="flow-step" data-step="2-3">
       <div class="actions-bar">
         <div>
           <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Precios de tu competencia</h2>
           <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Cargá los links de los productos de tus rivales. holospace. revisa su precio y su stock y te muestra dónde te conviene actuar.</p>
         </div>
         <div class="actions-controls">
-          <button class="btn-primary" onclick="openCreateMonitorModal()">+ Agregar un producto para vigilar</button>
+          <button class="btn-primary" onclick="openAnalysisPicker()">Elegir productos para analizar</button>
         </div>
       </div>
 
@@ -1399,7 +1402,7 @@
     </div>
 
     <!-- 7.2 Auditoría de Catálogo y Diff View -->
-    <div id="view4seeCatalog" class="view-panel hidden">
+    <div id="view4seeCatalog" class="flow-step" data-step="1">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
           <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Salud de tu catálogo</h2>
@@ -1465,7 +1468,7 @@
     </div>
 
     <!-- 7.3 Guardián de Márgenes y Repricing -->
-    <div id="view4seeMargins" class="view-panel hidden">
+    <div id="view4seeMargins" class="flow-step" data-step="4">
       <div class="actions-bar">
         <div>
           <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Márgenes de ganancia</h2>
@@ -1481,7 +1484,7 @@
               oninput="filter4seeMargins(this.value)"
             />
           </div>
-          <button class="btn-primary" onclick="openCreateMarginModal()">+ Calcular el margen de un producto</button>
+          <button class="btn-primary" onclick="openCostsModal()">Cargar costos de un producto</button>
         </div>
       </div>
 
@@ -1493,7 +1496,7 @@
     </div>
 
     <!-- 7.4 SmartPrice & Repricing 1:N -->
-    <div id="view4seeSmartPrice" class="view-panel hidden">
+    <div id="view4seeSmartPrice" class="flow-step" data-step="5">
       <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
         <div>
           <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Precios sugeridos</h2>
@@ -1554,8 +1557,60 @@
         </div>
       </div>
     </div>
+    </div>
 
   </main>
+
+  <!-- PASO 4 DEL FLUJO: costos y margen de un producto en analisis -->
+  <div id="costsModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Costos y margen</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCostsModal()">×</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 14px;">Con estos datos holospace. calcula tu margen real y el precio mínimo que no conviene perforar.</p>
+      <form id="costsForm" style="display: flex; flex-direction: column; gap: 12px;" onsubmit="handleCostsSubmit(event)">
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Producto</label>
+          <select id="costsProductSelect" class="input-field" required onchange="fillCostsForm(this.value)"></select>
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costo del producto</label>
+          <input type="number" step="0.01" min="0" id="costsCostPrice" class="input-field" required>
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costos operativos (envío, comisiones, empaque)</label>
+          <input type="number" step="0.01" min="0" id="costsOperating" class="input-field" placeholder="0">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Margen mínimo (%)</label>
+          <input type="number" step="0.01" min="0" id="costsMargin" class="input-field" placeholder="0">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Precio tope (opcional)</label>
+          <input type="number" step="0.01" min="0" id="costsCeiling" class="input-field" placeholder="Sin tope">
+        </div>
+        <div id="costsError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeCostsModal()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar costos</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PASO 2 DEL FLUJO: elegir productos del catalogo para analizar -->
+  <div id="analysisPickerModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 560px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Elegí los productos a analizar</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAnalysisPicker()">×</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px;">Marcá los productos de tu catálogo que querés seguir contra tus rivales. Son los que cuentan para tu plan.</p>
+      <div id="analysisCounter" style="font-size: 13px; font-weight: 800; color: var(--emerald); margin-bottom: 8px;"></div>
+      <div id="analysisPickerList" style="max-height: 50vh; overflow-y: auto;"></div>
+    </div>
+  </div>
 
   <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
   <div id="createTenantModal" class="modal-overlay hidden">

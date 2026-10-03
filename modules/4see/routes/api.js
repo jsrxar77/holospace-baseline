@@ -13,7 +13,7 @@ const { WooCommerceConnector } = require('../lib/connectors/woocommerce');
 const { ensureSmartPriceTables } = require('../lib/ensure_tables');
 const { evaluateSmartPrice, calculateHardFloor, clampPrice } = require('../lib/smartprice');
 const { runScraperWorkerCycle, dispatchPriceUpdate } = require('../workers/scraper_worker');
-const { checkTenantProductQuota } = require('../../../lib/billing');
+const { getFourseeeLimits, countWatchedProducts, countRivalsOfProduct } = require('../lib/plan_limits');
 
 let isStoreTableReady = false;
 async function ensureConnectedStoresTable() {
@@ -70,6 +70,10 @@ function getStoreForTenant(storeId, tid) {
   return getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [storeId, tid], { tenantId: tid });
 }
 
+// Columnas del producto del catalogo con los nombres que usa la pantalla de Competencia
+const WATCHED_COLUMNS = `id, tenant_id, store_id, title AS name, store_external_id AS external_id, own_url,
+  current_price AS price, price_source, price_locked, price_checked_at, created_at, updated_at`;
+
 /** Resuelve "tu precio" a partir de los datos que ya tiene guardados un producto vigilado. */
 function resolveMineForProduct(product) {
   return resolveOwnPrice(
@@ -112,8 +116,8 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     }
     const products = await query(
       isSuperAdmin
-        ? 'SELECT * FROM fourseee_watched_products ORDER BY created_at DESC'
-        : 'SELECT * FROM fourseee_watched_products WHERE tenant_id = ? ORDER BY created_at DESC',
+        ? `SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE in_analysis = true ORDER BY created_at DESC`
+        : `SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE in_analysis = true AND tenant_id = ? ORDER BY created_at DESC`,
       isSuperAdmin ? [] : [tenantId],
       { tenantId, isSuperAdmin }
     );
@@ -126,9 +130,9 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     );
     const monitorsByProduct = new Map();
     monitors.forEach((m) => {
-      if (!m.watched_product_id) return;
-      if (!monitorsByProduct.has(m.watched_product_id)) monitorsByProduct.set(m.watched_product_id, []);
-      monitorsByProduct.get(m.watched_product_id).push(m);
+      if (!m.product_id) return;
+      if (!monitorsByProduct.has(m.product_id)) monitorsByProduct.set(m.product_id, []);
+      monitorsByProduct.get(m.product_id).push(m);
     });
     const result = products.map((p) => ({ ...p, monitors: monitorsByProduct.get(p.id) || [] }));
     res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -191,9 +195,17 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
       return true;
     }
+    if (watchedProductId) {
+      const limits = await getFourseeeLimits(tenantId);
+      if (await countRivalsOfProduct(tenantId, watchedProductId) >= limits.maxCompetitorsPerProduct) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: `Tu plan ${limits.planName} permite hasta ${limits.maxCompetitorsPerProduct} rivales por producto.` }));
+        return true;
+      }
+    }
     let minePromise;
     if (watchedProductId) {
-      const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductId, tenantId], { tenantId });
+      const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [watchedProductId, tenantId], { tenantId });
       if (!product) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
@@ -224,6 +236,12 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       res.end(JSON.stringify({ success: false, error: 'Escribí el nombre de tu producto y pegá el link completo del producto del rival.' }));
       return true;
     }
+    const productLimits = await getFourseeeLimits(tenantId);
+    if (await countWatchedProducts(tenantId) >= productLimits.maxMonitoredProducts) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: `Tu plan ${productLimits.planName} permite analizar hasta ${productLimits.maxMonitoredProducts} productos.` }));
+      return true;
+    }
 
     const ownUrl = isHttpUrl(myUrl) ? myUrl.trim() : null;
     // Se vuelve a leer en el servidor: no se confia en lo que muestra el navegador
@@ -243,11 +261,11 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
     const productId = crypto.randomUUID();
     await execute(
-      `INSERT INTO fourseee_watched_products
-       (id, tenant_id, name, store_id, external_id, own_url, price, price_source, price_locked, price_checked_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      `INSERT INTO fourseee_products
+       (id, tenant_id, sku, title, store_id, store_external_id, own_url, current_price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, true, false)`,
       [
-        productId, tenantId, productName.trim(),
+        productId, tenantId, `CMP-${productId}`, productName.trim(),
         storeId && externalId ? storeId : null, storeId && externalId ? String(externalId) : null, ownUrl,
         mine.ok ? mine.price : null, mine.ok ? mine.source : null, Boolean(myPriceLocked)
       ],
@@ -257,7 +275,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     const monitorId = crypto.randomUUID();
     await execute(
       `INSERT INTO fourseee_competitor_monitors
-       (id, tenant_id, watched_product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
+       (id, tenant_id, product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`,
       [
         monitorId, tenantId, productId, productName.trim(), competitorUrl.trim(),
@@ -282,7 +300,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [addRivalMatch[1], tenantId], { tenantId });
+    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [addRivalMatch[1], tenantId], { tenantId });
     if (!product) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
@@ -292,6 +310,12 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     if (!isHttpUrl(competitorUrl)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
+      return true;
+    }
+    const rivalLimits = await getFourseeeLimits(tenantId);
+    if (await countRivalsOfProduct(tenantId, product.id) >= rivalLimits.maxCompetitorsPerProduct) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: `Tu plan ${rivalLimits.planName} permite hasta ${rivalLimits.maxCompetitorsPerProduct} rivales por producto.` }));
       return true;
     }
     const rival = await readRival(competitorUrl.trim());
@@ -304,7 +328,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     const monitorId = crypto.randomUUID();
     await execute(
       `INSERT INTO fourseee_competitor_monitors
-       (id, tenant_id, watched_product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
+       (id, tenant_id, product_id, product_name, competitor_url, competitor_name, competitor_price, competitor_stock, last_checked_at, extraction_method, competitor_read_error)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)`,
       [
         monitorId, tenantId, product.id, product.name, competitorUrl.trim(),
@@ -329,7 +353,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const product = await getOne('SELECT * FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
+    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [watchedProductMatch[1], tenantId], { tenantId });
     if (!product) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
@@ -347,8 +371,8 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
     await execute(
-      `UPDATE fourseee_watched_products
-       SET store_id = ?, external_id = ?, own_url = ?, price = ?, price_source = ?, price_locked = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+      `UPDATE fourseee_products
+       SET store_id = ?, store_external_id = ?, own_url = ?, current_price = ?, price_source = ?, price_locked = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
        WHERE id = ? AND tenant_id = ?`,
       [
         storeId && externalId ? storeId : null, storeId && externalId ? String(externalId) : null, ownUrlClean,
@@ -366,7 +390,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    await execute('DELETE FROM fourseee_watched_products WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
+    await execute('UPDATE fourseee_products SET in_analysis = false WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return true;
@@ -434,8 +458,8 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
-    const product = monitor.watched_product_id
-      ? await getOne('SELECT * FROM fourseee_watched_products WHERE id = ?', [monitor.watched_product_id], { tenantId: monitor.tenant_id, isSuperAdmin })
+    const product = monitor.product_id
+      ? await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ?`, [monitor.product_id], { tenantId: monitor.tenant_id, isSuperAdmin })
       : null;
 
     const [rival, mine] = await Promise.all([
@@ -465,7 +489,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
     if (product && mine.ok) {
       await execute(
-        'UPDATE fourseee_watched_products SET price = ?, price_source = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        'UPDATE fourseee_products SET current_price = ?, price_source = ?, price_checked_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [mine.price, mine.source, product.id],
         { tenantId: monitor.tenant_id }
       );
@@ -976,8 +1000,78 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       isSuperAdmin ? [] : [tenantId],
       { tenantId, isSuperAdmin }
     );
+    const planLimits = await getFourseeeLimits(tenantId);
+    const analysis = tenantId
+      ? { used: await countWatchedProducts(tenantId), max: planLimits.maxMonitoredProducts, planName: planLimits.planName }
+      : null;
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, products }));
+    res.end(JSON.stringify({ success: true, products, analysis }));
+    return true;
+  }
+
+  // Paso 4: costos y margen del producto (los guarda en el producto y lo marca como listo para sugerir)
+  const costsMatch = pathPart.match(/^\/api\/4see\/products\/([^/]+)\/costs$/);
+  if (costsMatch && req.method === 'PATCH') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const product = await getOne('SELECT id FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true', [costsMatch[1], tenantId], { tenantId });
+    if (!product) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Este producto no está en análisis.' }));
+      return true;
+    }
+    const cost = Number(data?.costPrice);
+    const operating = Number(data?.operatingCosts || 0);
+    const margin = Number(data?.minMarginPercentage || 0);
+    const ceiling = data?.maxPriceCeiling === '' || data?.maxPriceCeiling == null ? null : Number(data.maxPriceCeiling);
+    if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(operating) || operating < 0 || !Number.isFinite(margin) || margin < 0 || (ceiling !== null && !(ceiling > 0))) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Cargá el costo del producto (mayor a cero). Los demás campos son opcionales.' }));
+      return true;
+    }
+    await execute(
+      `UPDATE fourseee_products
+       SET cost_price = ?, operating_costs = ?, min_margin_percentage = ?, max_price_ceiling = ?, costs_loaded = true, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND tenant_id = ?`,
+      [cost, operating, margin, ceiling, product.id, tenantId],
+      { tenantId }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+    return true;
+  }
+
+  // Paso 2: sumar o sacar un producto del catalogo del analisis (con el tope del plan)
+  const analysisMatch = pathPart.match(/^\/api\/4see\/products\/([^/]+)\/analysis$/);
+  if (analysisMatch && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const product = await getOne('SELECT id, in_analysis FROM fourseee_products WHERE id = ? AND tenant_id = ?', [analysisMatch[1], tenantId], { tenantId });
+    if (!product) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+      return true;
+    }
+    const inAnalysis = Boolean(data && data.inAnalysis);
+    if (inAnalysis && !product.in_analysis) {
+      const limits = await getFourseeeLimits(tenantId);
+      if (await countWatchedProducts(tenantId) >= limits.maxMonitoredProducts) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: `Tu plan ${limits.planName} permite analizar hasta ${limits.maxMonitoredProducts} productos. Sacá uno para sumar otro.` }));
+        return true;
+      }
+    }
+    await execute(
+      'UPDATE fourseee_products SET in_analysis = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?',
+      [inAnalysis, product.id, tenantId],
+      { tenantId }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, inAnalysis }));
     return true;
   }
 
@@ -987,21 +1081,6 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
 
-    // Verificar cuota de productos del plan
-    if (!isSuperAdmin) {
-      const quota = await checkTenantProductQuota(tenantId);
-      if (!quota.allowed) {
-        res.writeHead(403, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          success: false,
-          error: `Has alcanzado el límite de ${quota.limit} productos monitoreados de tu plan (${quota.planCode}).`,
-          code: 'PLAN_PRODUCT_QUOTA_EXCEEDED',
-          currentCount: quota.current,
-          limit: quota.limit
-        }));
-        return true;
-      }
-    }
 
     const {
       sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, store_id,

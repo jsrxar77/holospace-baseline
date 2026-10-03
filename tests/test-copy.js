@@ -86,14 +86,15 @@ for (const [id, title] of Object.entries(views)) {
   ok(!!p, `${id}: bajada de una o dos frases`);
 }
 
-console.log('Nombres de pestanas de 4see');
-for (const t of ['Competencia', 'Precios sugeridos', 'Catálogo', 'Márgenes']) {
-  ok(html.includes(`>${t}</button>`), `pestana "${t}"`);
-}
+console.log('4see: una sola pestaña con el flujo en orden');
+ok(html.includes('>Productos</button>'), 'pestana unica "Productos"');
+ok(!/>(Competencia|Precios sugeridos|Catálogo|Márgenes)<\/button>/.test(html), 'no quedan pestañas sueltas de 4see');
+const flowSteps = ['Cargá tu catálogo', 'Elegí los productos a analizar', 'Sumá los rivales de cada producto', 'Completá costos y márgenes', 'Recibí los precios sugeridos'];
+flowSteps.forEach((s) => ok(html.includes(s), `paso del flujo: "${s}"`));
 
 console.log('Estados vacios con siguiente paso');
 const app = read('public/app.js');
-ok(app.includes('Todavía no seguís ningún producto de la competencia') && html.includes('+ Agregar un producto para vigilar'), 'Competencia: vacio con boton');
+ok(app.includes('Todavía no elegiste productos para analizar') && html.includes('Elegir productos para analizar'), 'Competencia: vacio con siguiente paso (elegir productos)');
 ok(app.includes('Apretá <strong>Revisar precios ahora</strong>'), 'Precios sugeridos: vacio con siguiente paso');
 ok(app.includes('Todavía no calculaste el margen de ningún producto'), 'Márgenes: vacio explicado');
 

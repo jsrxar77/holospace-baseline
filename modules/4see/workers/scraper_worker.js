@@ -40,42 +40,36 @@ async function runScraperWorkerCycle({ tenantId, isSuperAdmin = false, concurren
   };
 
   try {
-    // 1. Obtener mappings activos pendientes de escaneo
-    const mappingsSql = tenantId && !isSuperAdmin
-      ? `SELECT m.*, c.priority_weight, p.sku, p.cost_price, p.operating_costs, p.min_margin_percentage, p.min_price_floor, p.max_price_ceiling, p.current_price, p.store_id
-         FROM fourseee_product_competitor_mappings m
-         JOIN fourseee_competitors c ON m.competitor_id = c.id
-         JOIN fourseee_products p ON m.product_id = p.id
-         WHERE m.is_active = true AND m.tenant_id = ?
-         ORDER BY m.last_scraped_at ASC NULLS FIRST
-         LIMIT 50`
-      : `SELECT m.*, c.priority_weight, p.sku, p.cost_price, p.operating_costs, p.min_margin_percentage, p.min_price_floor, p.max_price_ceiling, p.current_price, p.store_id
-         FROM fourseee_product_competitor_mappings m
-         JOIN fourseee_competitors c ON m.competitor_id = c.id
-         JOIN fourseee_products p ON m.product_id = p.id
-         WHERE m.is_active = true
-         ORDER BY m.last_scraped_at ASC NULLS FIRST
-         LIMIT 50`;
-
-    const mappings = await query(mappingsSql, tenantId && !isSuperAdmin ? [tenantId] : [], { tenantId, isSuperAdmin });
+    // 1. Rivales de los productos en analisis con costos cargados (pasos 2 a 4 de Competencia)
+    const tenantFilter = tenantId && !isSuperAdmin ? 'AND m.tenant_id = ?' : '';
+    const monitors = await query(
+      `SELECT m.id, m.tenant_id, m.product_id, m.competitor_url
+       FROM fourseee_competitor_monitors m
+       JOIN fourseee_products p ON m.product_id = p.id
+       WHERE p.in_analysis = true AND p.costs_loaded = true ${tenantFilter}
+       ORDER BY m.last_checked_at ASC NULLS FIRST
+       LIMIT 50`,
+      tenantId && !isSuperAdmin ? [tenantId] : [],
+      { tenantId, isSuperAdmin }
+    );
 
     // 2. Procesar scraping por bloques concurrentes (semáforo)
     const chunks = [];
-    for (let i = 0; i < mappings.length; i += concurrencyLimit) {
-      chunks.push(mappings.slice(i, i + concurrencyLimit));
+    for (let i = 0; i < monitors.length; i += concurrencyLimit) {
+      chunks.push(monitors.slice(i, i + concurrencyLimit));
     }
 
     const modifiedProductIds = new Set();
 
     for (const chunk of chunks) {
-      await Promise.all(chunk.map(async (mapping) => {
+      await Promise.all(chunk.map(async (monitor) => {
         summary.totalMappingsProcessed++;
         try {
-          const extracted = await extractProductData(mapping.competitor_url);
+          const extracted = await extractProductData(monitor.competitor_url);
           if (!extracted.ok) {
             // No se pudo leer el precio del rival: no se inventa un 0, se deja el ultimo dato conocido
             summary.scrapedErrors++;
-            console.warn(`[4SEE WORKER] No se pudo leer ${mapping.competitor_url}: ${extracted.reason}`);
+            console.warn(`[4SEE WORKER] No se pudo leer ${monitor.competitor_url}: ${extracted.reason}`);
             return;
           }
           const scrapedPrice = extracted.price;
@@ -86,26 +80,25 @@ async function runScraperWorkerCycle({ tenantId, isSuperAdmin = false, concurren
           // Registrar en log inmutable
           const logId = crypto.randomUUID();
           await execute(
-            `INSERT INTO fourseee_price_logs (id, tenant_id, mapping_id, scraped_price, scraped_currency, scraped_stock_status, extraction_method)
+            `INSERT INTO fourseee_price_logs (id, tenant_id, monitor_id, scraped_price, scraped_currency, scraped_stock_status, extraction_method)
              VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [logId, mapping.tenant_id, mapping.id, scrapedPrice, extracted.currency || 'ARS', scrapedStock, method],
-            { tenantId: mapping.tenant_id }
+            [logId, monitor.tenant_id, monitor.id, scrapedPrice, extracted.currency || 'ARS', scrapedStock, method],
+            { tenantId: monitor.tenant_id }
           );
 
-          // Actualizar snapshot en el mapping
           await execute(
-            `UPDATE fourseee_product_competitor_mappings
-             SET last_scraped_price = ?, last_scraped_stock = ?, last_scraped_at = CURRENT_TIMESTAMP
+            `UPDATE fourseee_competitor_monitors
+             SET competitor_price = ?, competitor_stock = ?, competitor_read_error = NULL, extraction_method = ?, last_checked_at = CURRENT_TIMESTAMP
              WHERE id = ? AND tenant_id = ?`,
-            [scrapedPrice, scrapedStock, mapping.id, mapping.tenant_id],
-            { tenantId: mapping.tenant_id }
+            [scrapedPrice, scrapedStock === 'UNKNOWN' ? null : scrapedStock, method, monitor.id, monitor.tenant_id],
+            { tenantId: monitor.tenant_id }
           );
 
           summary.scrapedSuccess++;
-          modifiedProductIds.add({ productId: mapping.product_id, tenantId: mapping.tenant_id });
+          modifiedProductIds.add({ productId: monitor.product_id, tenantId: monitor.tenant_id });
         } catch (err) {
           summary.scrapedErrors++;
-          console.warn(`[4SEE WORKER] Error scraping mapping ${mapping.id}:`, err.message);
+          console.warn(`[4SEE WORKER] Error scraping monitor ${monitor.id}:`, err.message);
         }
       }));
     }
@@ -123,7 +116,8 @@ async function runScraperWorkerCycle({ tenantId, isSuperAdmin = false, concurren
 
       // Obtener todos los mapeos activos de este producto
       const prodMappings = await query(
-        `SELECT * FROM fourseee_product_competitor_mappings WHERE product_id = ? AND is_active = true AND tenant_id = ?`,
+        `SELECT id, true AS is_active, competitor_price AS last_scraped_price, competitor_stock AS last_scraped_stock
+         FROM fourseee_competitor_monitors WHERE product_id = ? AND tenant_id = ?`,
         [productId, tId],
         { tenantId: tId }
       );

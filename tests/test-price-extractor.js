@@ -123,11 +123,11 @@ const jsonLdHtml = `<script type="application/ld+json">{"@type":"Product","name"
 
   console.log('Integridad del esquema: columnas nuevas no inventan valores por defecto');
   const schema = require('fs').readFileSync(require('path').join(__dirname, '..', 'data', 'init-schema.sql'), 'utf8');
-  const watchedProductsBlock = (schema.match(/CREATE TABLE IF NOT EXISTS fourseee_watched_products \([\s\S]*?\);/) || [''])[0];
-  ok(/\n  price NUMERIC\(12, 2\),\n/.test(watchedProductsBlock), 'el precio del producto vigilado admite NULL (no 0 por defecto)');
+  const productsBlock = (schema.match(/CREATE TABLE IF NOT EXISTS fourseee_products \([\s\S]*?\);/) || [''])[0];
+  ok(/\n  current_price NUMERIC\(14, 2\),\n/.test(productsBlock), 'el precio actual del producto admite NULL (no 0 por defecto)');
   ok(/competitor_price NUMERIC\(12, 2\),/.test(schema), 'competitor_price admite NULL (no 0 por defecto)');
   ok(schema.includes('competitor_read_error'), 'se guarda por que no se pudo leer el rival');
-  ok(schema.includes('fourseee_watched_products') && schema.includes('watched_product_id'), 'maestro-detalle: un producto vigilado puede tener varios rivales');
+  ok(schema.includes('fourseee_competitor_monitors') && /product_id UUID REFERENCES fourseee_products\(id\)/.test(schema), 'un producto del catalogo puede tener varios rivales');
 
   if (failed) { console.error(`\n${failed} verificaciones fallaron`); process.exit(1); }
   console.log('\nLectura de precios OK');

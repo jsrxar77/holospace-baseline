@@ -23,6 +23,11 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 11. **Tests por feature**: toda feature/endpoint/modulo nuevo trae suite en `tests/` registrada en `SUITES` de `tests/run-all-tests.js`.
 12. **Navegador/Playwright**: no abrirlo sin pedido explicito; preferir terminal e inspeccion de codigo. Ante duda real, preguntar antes de cambios masivos.
 
+## Un solo modelo por entidad (obligatorio)
+- Cada dato se carga una sola vez y en un solo lugar. Un producto vive en el catalogo; las pantallas y los pasos lo referencian, no lo vuelven a crear.
+- Cada funcionalidad se conecta con las que leen los mismos datos antes de darla por terminada. Si el worker o un calculo no ven lo que la pantalla guarda, la funcionalidad no esta terminada.
+- Los menus reflejan el flujo del usuario (1, 2, 3...), no las tablas de la base. Lo que no suma al flujo se saca.
+
 ## Agilidad (obligatorio)
 - Un cambio chico se cierra en minutos: editar, `node --check`, correr solo la suite afectada, y recien despues la suite completa una sola vez.
 - Nunca dejar esperando al usuario por polling: no hacer `sleep` en loop ni monitores de largo plazo para un deploy. Verificar una vez, y si no esta listo, decirlo y seguir.

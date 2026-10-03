@@ -363,3 +363,14 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-row-expandable { cursor: 
 body:is(.theme-holo_dark, .theme-holo_light) .hs-table-row-expandable:hover { background: var(--hw-surface-2); }
 body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row > td { padding: 0 0 16px 28px; background: var(--hw-surface-1); }
 body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { border: 1px solid var(--card-border); }
+
+/* Pantalla unica de 4see: los pasos del analisis en orden, con la linea de pasos arriba */
+#view4seeProductos { display: flex; flex-direction: column; gap: 28px; }
+#view4seeProductos > .flow-strip { order: 0; }
+#view4seeProductos > .flow-step[data-step="1"] { order: 1; }
+#view4seeProductos > .flow-step[data-step="2-3"] { order: 2; }
+#view4seeProductos > .flow-step[data-step="4"] { order: 3; }
+#view4seeProductos > .flow-step[data-step="5"] { order: 4; }
+.flow-strip { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.flow-strip li { font-size: 13px; color: var(--text-muted); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 999px; padding: 6px 12px; }
+.flow-strip strong { color: var(--emerald); margin-right: 4px; }
