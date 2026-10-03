@@ -38,5 +38,17 @@ const recheck = (appJs.match(/async function recheckMonitor[\s\S]*?\n}\n/) || ['
 ok(/\{\s*rival,\s*warning\s*\}\s*=\s*data/.test(recheck), '"Revisar ahora" lee el resultado de la lectura (rival, warning), no solo recarga la tabla');
 ok(/rival\.ok/.test(recheck), 'si no se pudo leer el rival, se le avisa a quien hizo clic (no queda en silencio)');
 
+console.log('Todas las tablas de la app usan el mismo componente (hs-table), no un <thead> armado a mano (D-051)');
+const appJsFull = appJs;
+ok(!/tenantsTableBody|usersTableBody|rolesTableBody|ordersExplorerGrid/.test(appJsFull + app), 'no quedan referencias a los <tbody> viejos de Empresas, Usuarios, Roles o Pedidos');
+const HSTABLE_IDS = ['tenants', 'users', 'roles', 'explorer_orders', '4see_competencia', '4see_margins', '4see_smartprice_queue', 'saved_stores'];
+HSTABLE_IDS.forEach((id) => {
+  ok(appJsFull.includes(`id: '${id}'`), `la tabla "${id}" se monta con HSTable.mount (no con HTML armado a mano)`);
+});
+const HSTABLE_CONTAINER_IDS = ['tenantsTableContainer', 'usersTableContainer', 'rolesTableContainer', 'ordersExplorerContainer'];
+HSTABLE_CONTAINER_IDS.forEach((id) => {
+  ok(app.includes(`id="${id}"`) && !new RegExp(`<table[^>]*>[\\s\\S]{0,40}<thead>[\\s\\S]{0,400}id="${id}"`).test(app), `${id}: contenedor simple, sin <thead> fijo en el HTML`);
+});
+
 if (failed) { console.error(`\n${failed} verificaciones fallaron`); process.exit(1); }
 console.log('\nConsistencia de UI OK');

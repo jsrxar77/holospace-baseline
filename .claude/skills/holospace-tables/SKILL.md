@@ -25,7 +25,8 @@ const handle = HSTable.mount({
   ],
   rowKey: (row) => row.id,
   renderDetail: (row) => row.detalle ? '<table>...</table>' : null, // opcional: fila desplegable
-  emptyMessage: 'Texto del vacio, segun holospace-copy',
+  emptyMessage: 'Texto del vacio, segun holospace-copy',   // texto plano, se escapa solo
+  emptyHtml: 'Opcional, en vez de emptyMessage: HTML fijo (p.ej. con <strong> en el siguiente paso); solo texto del desarrollador, nunca datos de usuario/API',
   actionsLabel: 'Acciones',                 // opcional: columna final fija
   renderActions: (row) => '<button ...>Editar</button>'
 });
@@ -41,8 +42,18 @@ handle.update(filasNuevas); // cuando llegan datos nuevos del servidor
 6. **Textos del encabezado y del vacio siguen `holospace-copy`**: titulo de columna en lenguaje comun, mensaje de vacio con el siguiente paso.
 
 ## Donde se usa hoy
-- `4see > Competencia`: maestro (producto, tu precio, rivales, ultima revision) con detalle desplegable de rivales.
-- Pendiente (mismo componente, sin rediseñar su logica): Empresas, Usuarios, Roles, Pedidos, Precios sugeridos, Margenes, Tiendas conectadas.
+Las 8 tablas de la app, todas con el mismo componente (D-051 cerrado, `docs/DEBT.md` S-030):
+`4see > Competencia` (maestro-detalle: producto, tu precio, rivales, ultima revision, con detalle
+desplegable de rivales), `4see > Precios sugeridos`, `4see > Margenes`, Empresas, Usuarios, Roles,
+Explorador de Pedidos y Tiendas conectadas.
+
+## Error ya visto: no perder la referencia si algo externo vacia el contenedor
+Si otra funcion limpia `container.innerHTML` por fuera de la funcion que llama a `HSTable.mount`
+(por ejemplo, un estado vacio especial que arma su propio HTML), la referencia guardada en una
+variable (`let miTabla = null; if (!miTabla) miTabla = HSTable.mount(...)`) queda viva pero sin
+tabla real en el DOM. La proxima vez que lleguen filas, el guard `if (!miTabla)` no vuelve a montar
+porque la variable no es null, y la pantalla queda vacia aunque haya datos. Guard correcto:
+`if (!miTabla || !container.querySelector('.hs-table-wrap')) miTabla = HSTable.mount(...)`.
 
 ## Pruebas
 `hs-table.js` manipula el DOM directamente (no tiene logica separable sin el), asi que se verifica con Playwright en el navegador real (reordenar, ocultar, filtrar, desplegar, editar), no con un shim de DOM a mano en `tests/`. Lo que si se prueba en `tests/` para cada pantalla que lo usa es la capa de datos que la tabla consume (agrupamiento, API, RLS): ver `tests/test-4see-own-price-routes.js` para el caso de Competencia.

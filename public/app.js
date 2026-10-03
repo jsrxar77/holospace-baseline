@@ -1837,60 +1837,67 @@ function filterUsersTable(query = '') {
   renderUsersTable(filtered);
 }
 
-function renderUsersTable(usersList = []) {
-  const tbody = document.getElementById('usersTableBody');
-  if (!tbody) return;
+let usersTable = null;
 
-  if (usersList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay usuarios que coincidan con tu búsqueda.</td></tr>`;
-    return;
+function userOrgName(u) {
+  return u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'holospace.' : 'Organización');
+}
+
+const USERS_TABLE_COLUMNS = [
+  {
+    key: 'username', label: 'Usuario', filter: 'text',
+    filterValue: (u) => u.username || (u.email ? u.email.split('@')[0] : ''),
+    render: (u) => `<strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${escHtml(u.username || (u.email ? u.email.split('@')[0] : '-'))}</strong>`
+  },
+  { key: 'name', label: 'Nombre', filter: 'text', render: (u) => `<strong style="color: var(--text-main);">${escHtml(u.name)}</strong>` },
+  { key: 'email', label: 'Email', filter: 'text', render: (u) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 13px;">${escHtml(u.email)}</span>` },
+  {
+    key: 'org', label: 'Empresa', filter: 'text', filterValue: userOrgName,
+    render: (u) => `<span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-main); border: 1px solid var(--card-border);">${escHtml(userOrgName(u))}</span>`
+  },
+  {
+    key: 'role', label: 'Rol', filter: 'text', filterValue: (u) => u.role_name || u.role,
+    render: (u) => {
+      const isTargetSuperAdmin = u.role === 'SUPERADMIN';
+      return `<span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : (u.is_custom_role ? 'background:rgba(0,230,118,0.15); color:var(--emerald); border-color:var(--emerald);' : '')}">${escHtml(u.role_name || u.role)}</span>`;
+    }
+  },
+  {
+    key: 'status', label: 'Estado', filter: 'enum', align: 'center',
+    options: [{ value: 'Activo', label: 'Activo' }, { value: 'Desactivado', label: 'Desactivado' }],
+    filterValue: (u) => (u.active !== false ? 'Activo' : 'Desactivado'),
+    render: (u) => `<span class="status-indicator" style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--amber)'}; font-weight: 800;">${u.active !== false ? '● Activo' : '○ Desactivado'}</span>`
   }
+];
 
-  const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+function renderUsersTable(usersList = []) {
+  const container = document.getElementById('usersTableContainer');
+  if (!container) return;
 
-  tbody.innerHTML = usersList.map((u, idx) => {
-    const isTargetSuperAdmin = u.role === 'SUPERADMIN';
-    const canEdit = isSuperAdmin || !isTargetSuperAdmin;
-    const orgName = u.tenant_name || u.tenantSlug || (u.tenant_id === 'a0000000-0000-0000-0000-000000000001' ? 'holospace.' : 'Organización');
-    const displayNick = u.username || (u.email ? u.email.split('@')[0] : '-');
-
-    return `
-      <tr>
-        <td><strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${displayNick}</strong></td>
-        <td><strong style="color: var(--text-main);">${u.name}</strong></td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 13px;">${u.email}</td>
-        <td>
-          <span style="font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-main); border: 1px solid var(--card-border);">
-            ${orgName}
-          </span>
-        </td>
-        <td>
-          <span class="badge-role" style="${isTargetSuperAdmin ? 'background:rgba(124,58,237,0.2); color:#A78BFA; border-color:#7C3AED;' : (u.is_custom_role ? 'background:rgba(0,230,118,0.15); color:var(--emerald); border-color:var(--emerald);' : '')}">
-            ${u.role_name || u.role}
-          </span>
-        </td>
-        <td style="text-align: center;">
-          <span class="status-indicator" style="color: ${u.active !== false ? 'var(--emerald)' : 'var(--red)'}; font-weight: 800;">
-            ${u.active !== false ? '● Activo' : '○ Desactivado'}
-          </span>
-        </td>
-        <td style="text-align: right;">
-          ${canEdit ? `
-            <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
-              <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
-              <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">
-                ${u.active !== false ? 'Desactivar' : 'Activar'}
-              </button>
-            </div>
-          ` : `
-            <span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px;">
-              Protegido (SuperAdmin)
-            </span>
-          `}
-        </td>
-      </tr>
-    `;
-  }).join('');
+  if (!usersTable || !container.querySelector('.hs-table-wrap')) {
+    usersTable = HSTable.mount({
+      id: 'users',
+      container,
+      columns: USERS_TABLE_COLUMNS,
+      rowKey: (u) => u.id || u.email,
+      emptyMessage: 'No hay usuarios que coincidan con tu búsqueda.',
+      actionsLabel: 'Acciones',
+      renderActions: (u) => {
+        const isSuperAdmin = currentUser && currentUser.role === 'SUPERADMIN';
+        const isTargetSuperAdmin = u.role === 'SUPERADMIN';
+        const canEdit = isSuperAdmin || !isTargetSuperAdmin;
+        if (!canEdit) {
+          return `<span style="font-size: 12px; color: var(--text-muted); font-weight: 700; background: var(--hw-surface-2, var(--card-bg)); padding: 4px 10px; border-radius: 8px;">Protegido (SuperAdmin)</span>`;
+        }
+        return `
+          <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
+            <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="editUserById('${u.id || u.email}')">Editar</button>
+            <button class="${u.active !== false ? 'btn-danger' : 'btn-secondary'}" style="padding: 6px 12px; font-size: 12px;" onclick="toggleUserStatus('${u.id || u.email}', ${u.active !== false})">${u.active !== false ? 'Desactivar' : 'Activar'}</button>
+          </div>`;
+      }
+    });
+  }
+  usersTable.update(usersList);
 }
 
 async function updateRoleSelectOptions(selectedRole = 'OPERATOR', selectedRoleId = null) {
@@ -2204,56 +2211,54 @@ function filterRolesTable(query = '') {
   renderRolesTable(filtered);
 }
 
-function renderRolesTable(roles = []) {
-  const tbody = document.getElementById('rolesTableBody');
-  if (!tbody) return;
+let rolesTable = null;
 
-  if (roles.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay roles que coincidan con tu búsqueda.</td></tr>`;
-    return;
+function rolePermsDisplayHtml(r) {
+  const permsCount = Array.isArray(r.permissions) ? r.permissions.length : 0;
+  const hasWildcard = Array.isArray(r.permissions) && r.permissions.includes('*');
+  if (hasWildcard) {
+    return `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Puede hacer todo</code>`;
   }
+  const topPerms = (r.permissions || []).slice(0, 3).map((p) => `<span style="font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${escHtml(p)}</span>`).join(' ');
+  const extra = permsCount > 3 ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">+${permsCount - 3} más</span>` : '';
+  return `<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${topPerms}${extra}</div>`;
+}
 
-  tbody.innerHTML = roles.map(r => {
-    const isSystem = !!r.is_system;
-    const typeBadge = isSystem
+const ROLES_TABLE_COLUMNS = [
+  { key: 'name', label: 'Nombre del Rol', filter: 'text', render: (r) => `<strong style="color: var(--text-main);">${escHtml(r.name)}</strong>` },
+  { key: 'slug', label: 'Identificador', filter: 'text', render: (r) => `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-muted);">@${escHtml(r.slug)}</code>` },
+  { key: 'description', label: 'Descripción', filter: 'text', render: (r) => `<span style="color: var(--text-muted); font-size: 13px;">${escHtml(r.description || '-')}</span>` },
+  {
+    key: 'type', label: 'Tipo', filter: 'enum', options: [{ value: 'Incluido', label: 'Incluido' }, { value: 'Propio', label: 'Propio' }],
+    filterValue: (r) => (r.is_system ? 'Incluido' : 'Propio'),
+    render: (r) => (r.is_system
       ? `<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #7C3AED;">Incluido</span>`
-      : `<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald);">Propio</span>`;
+      : `<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald);">Propio</span>`)
+  },
+  { key: 'permissions', label: 'Permisos', filter: 'text', filterValue: (r) => (Array.isArray(r.permissions) ? r.permissions.join(' ') : ''), render: rolePermsDisplayHtml },
+  { key: 'user_count', label: 'Usuarios', filter: 'none', align: 'center', render: (r) => `<strong style="color: var(--text-main);">${r.user_count || 0}</strong>` }
+];
 
-    const permsCount = Array.isArray(r.permissions) ? r.permissions.length : 0;
-    const hasWildcard = Array.isArray(r.permissions) && r.permissions.includes('*');
-    
-    let permsDisplay = '';
-    if (hasWildcard) {
-      permsDisplay = `<code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--emerald); background: rgba(0,230,118,0.1); padding: 2px 6px; border-radius: 4px;">Puede hacer todo</code>`;
-    } else {
-      const topPerms = (r.permissions || []).slice(0, 3).map(p => 
-        `<span style="font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; background: var(--hw-surface-2, var(--card-bg)); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--card-border);">${p}</span>`
-      ).join(' ');
-      const extra = permsCount > 3 ? `<span style="font-size: 11px; color: var(--text-muted); margin-left: 4px;">+${permsCount - 3} más</span>` : '';
-      permsDisplay = `<div style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">${topPerms}${extra}</div>`;
-    }
+function renderRolesTable(roles = []) {
+  const container = document.getElementById('rolesTableContainer');
+  if (!container) return;
 
-    const canDelete = !isSystem;
-
-    return `
-      <tr>
-        <td><strong style="color: var(--text-main);">${r.name}</strong></td>
-        <td><code style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-muted);">@${r.slug}</code></td>
-        <td style="color: var(--text-muted); font-size: 13px;">${r.description || '-'}</td>
-        <td>${typeBadge}</td>
-        <td>${permsDisplay}</td>
-        <td style="text-align: center;"><strong style="color: var(--text-main);">${r.user_count || 0}</strong></td>
-        <td style="text-align: right;">
-          <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
-            <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openRoleModal('${r.id}')">Editar</button>
-            ${canDelete ? `
-              <button class="btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="deleteRole('${r.id}', '${r.name}')">Eliminar</button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  if (!rolesTable || !container.querySelector('.hs-table-wrap')) {
+    rolesTable = HSTable.mount({
+      id: 'roles',
+      container,
+      columns: ROLES_TABLE_COLUMNS,
+      rowKey: (r) => r.id,
+      emptyMessage: 'No hay roles que coincidan con tu búsqueda.',
+      actionsLabel: 'Acciones',
+      renderActions: (r) => `
+        <div class="data-table-actions" style="display: inline-flex; gap: 8px;">
+          <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px;" onclick="openRoleModal('${r.id}')">Editar</button>
+          ${!r.is_system ? `<button class="btn-danger" style="padding: 6px 12px; font-size: 12px;" onclick="deleteRole('${r.id}', '${escHtml(r.name)}')">Eliminar</button>` : ''}
+        </div>`
+    });
+  }
+  rolesTable.update(roles);
 }
 
 async function openRoleModal(roleIdToEdit = null) {
@@ -2481,6 +2486,33 @@ function toggleOperatorFilter(email) {
   fetchExplorerOrders();
 }
 
+let explorerOrdersTable = null;
+const EXPLORER_STATUS_ES = { READY: 'LISTO PARA PREPARAR', DOING: 'EN PREPARACIÓN', SCANNING: 'EN PREPARACIÓN', DONE: 'COMPLETADO', CLOSED: 'COMPLETADO' };
+const EXPLORER_ORDERS_COLUMNS = [
+  {
+    key: 'id', label: 'Pedido', filter: 'text', filterValue: (o) => `${o.id || ''} ${o.orderNumber || ''}`,
+    render: (o) => `<strong style="color: var(--emerald);">#${escHtml((o.id || '').substring(0, 8).toUpperCase())}</strong><div style="font-size: 11px; color: var(--text-muted);">Comp. #${escHtml(o.orderNumber)}</div>`
+  },
+  { key: 'clientName', label: 'Cliente', filter: 'text', render: (o) => `<strong>${escHtml(o.clientName)}</strong>` },
+  { key: 'operatorEmail', label: 'Operario', filter: 'text', render: (o) => escHtml(o.operatorEmail || 'Sin Asignar') },
+  { key: 'issueDate', label: 'Fecha', filter: 'none', render: (o) => `<span style="font-size: 13px; color: var(--text-muted);">${escHtml(o.issueDate || 'Hoy')}</span>` },
+  { key: 'totalItemsRequired', label: 'Productos', filter: 'none', align: 'center', render: (o) => `<strong>${o.totalItemsRequired} U</strong>` },
+  { key: 'totalAmount', label: 'Importe ($)', filter: 'none', align: 'right', render: (o) => `<span style="color: var(--emerald); font-weight: 900; font-size: 15px;">$${(o.totalAmount || 0).toLocaleString('es-AR')}</span>` },
+  {
+    key: 'status', label: 'Estado', filter: 'enum', align: 'center',
+    options: Object.keys(EXPLORER_STATUS_ES).filter((k) => !['SCANNING', 'CLOSED'].includes(k)).map((k) => ({ value: EXPLORER_STATUS_ES[k], label: EXPLORER_STATUS_ES[k] })).concat([{ value: 'NUEVO', label: 'NUEVO' }]),
+    filterValue: (o) => EXPLORER_STATUS_ES[o.status] || 'NUEVO',
+    render: (o) => {
+      const statusEs = EXPLORER_STATUS_ES[o.status] || 'NUEVO';
+      const badgeStyle = o.status === 'READY' ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;'
+        : (o.status === 'DOING' || o.status === 'SCANNING') ? 'background: rgba(59, 130, 246, 0.2); color: #60A5FA;'
+        : (o.status === 'DONE' || o.status === 'CLOSED') ? 'background: rgba(255, 215, 0, 0.2); color: #FFD700;'
+        : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;';
+      return `<span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; ${badgeStyle}">${statusEs}</span>`;
+    }
+  }
+];
+
 async function fetchExplorerOrders() {
   const query = document.getElementById('orderSearchQuery')?.value || '';
   const status = document.getElementById('orderStatusFilter')?.value || '';
@@ -2498,8 +2530,8 @@ async function fetchExplorerOrders() {
       }
     );
     const data = await res.json();
-    const grid = document.getElementById('ordersExplorerGrid');
-    if (!grid) return;
+    const container = document.getElementById('ordersExplorerContainer');
+    if (!container) return;
 
     let ordersList = data.orders || [];
 
@@ -2523,51 +2555,18 @@ async function fetchExplorerOrders() {
       ordersList.sort((a, b) => b.id - a.id);
     }
 
-    if (ordersList.length === 0) {
-      grid.innerHTML = `
-        <tr>
-          <td colspan="8" style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px;">
-            No hay pedidos que coincidan con tu búsqueda y los filtros elegidos.
-          </td>
-        </tr>
-      `;
-      return;
+    if (!explorerOrdersTable || !container.querySelector('.hs-table-wrap')) {
+      explorerOrdersTable = HSTable.mount({
+        id: 'explorer_orders',
+        container,
+        columns: EXPLORER_ORDERS_COLUMNS,
+        rowKey: (o) => o.id,
+        emptyMessage: 'No hay pedidos que coincidan con tu búsqueda y los filtros elegidos.',
+        actionsLabel: 'Ver',
+        renderActions: (o) => `<button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="openInvoiceModal('${o.id}')">Ver detalle</button>`
+      });
     }
-
-    grid.innerHTML = ordersList
-      .map((o) => {
-        const statusEs = o.status === 'READY' ? 'LISTO PARA PREPARAR' : o.status === 'DOING' || o.status === 'SCANNING' ? 'EN PREPARACIÓN' : o.status === 'DONE' || o.status === 'CLOSED' ? 'COMPLETADO' : 'NUEVO';
-        const badgeStyle = o.status === 'READY'
-          ? 'background: rgba(0, 230, 118, 0.2); color: #00E676;'
-          : o.status === 'DOING' || o.status === 'SCANNING'
-          ? 'background: rgba(59, 130, 246, 0.2); color: #60A5FA;'
-          : o.status === 'DONE' || o.status === 'CLOSED'
-          ? 'background: rgba(255, 215, 0, 0.2); color: #FFD700;'
-          : 'background: rgba(148, 163, 184, 0.2); color: #94A3B8;';
-
-        return `
-          <tr style="cursor: pointer;" onclick="openInvoiceModal('${o.id}')">
-            <td>
-              <strong style="color: var(--emerald);">#${(o.id || '').substring(0, 8).toUpperCase()}</strong>
-              <div style="font-size: 11px; color: var(--text-muted);">Comp. #${o.orderNumber}</div>
-            </td>
-            <td><strong>${o.clientName}</strong></td>
-            <td>${o.operatorEmail || 'Sin Asignar'}</td>
-            <td style="font-size: 13px; color: var(--text-muted);">${o.issueDate || 'Hoy'}</td>
-            <td style="text-align: center; font-weight: 800;">${o.totalItemsRequired} U</td>
-            <td style="text-align: right; color: var(--emerald); font-weight: 900; font-size: 15px;">$${(o.totalAmount || 0).toLocaleString('es-AR')}</td>
-            <td style="text-align: center;">
-              <span style="font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; ${badgeStyle}">
-                ${statusEs}
-              </span>
-            </td>
-            <td style="text-align: center;">
-              <button class="btn-secondary" style="padding: 4px 12px; font-size: 11px; font-weight: 700;" onclick="event.stopPropagation(); openInvoiceModal('${o.id}')">Ver detalle</button>
-            </td>
-          </tr>
-        `;
-      })
-      .join('');
+    explorerOrdersTable.update(ordersList);
   } catch (e) {
     console.error('Error al explorar pedidos:', e);
   }
@@ -3069,12 +3068,10 @@ async function loadTenantsManagementData() {
     renderTenantsTable(cachedTenantsList);
 
   } catch (err) {
-    const tableBody = document.getElementById('tenantsTableBody');
-    if (tableBody) {
-      tableBody.innerHTML = `<tr><td colspan="7" style="color:var(--red); padding:20px; text-align:center;">No pudimos cargar las empresas: ${err.message}</td></tr>`;
-    }
-    if (container) {
-      container.innerHTML = `<div style="color:var(--red); padding:20px;">No pudimos cargar las empresas: ${err.message}</div>`;
+    tenantsTable = null;
+    const tableContainer = document.getElementById('tenantsTableContainer');
+    if (tableContainer) {
+      tableContainer.innerHTML = `<div style="color:var(--amber); padding:20px; text-align:center;">No pudimos cargar las empresas: ${err.message}</div>`;
     }
   }
 }
@@ -3096,93 +3093,82 @@ function filterTenantsTable(query = '') {
   renderTenantsTable(filtered);
 }
 
-function renderTenantsTable(tenantsList = []) {
-  const tbody = document.getElementById('tenantsTableBody');
-  if (!tbody) return;
+let tenantsTable = null;
 
-  if (tenantsList.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">No hay empresas que coincidan con tu búsqueda.</td></tr>`;
-    return;
+function tenantPlanBadgesHtml(t) {
+  const badges = [];
+  const kanbanNames = { kanban_simple: 'Kanban Simple', kanban_business: 'Kanban Business', kanban_enterprise: 'Kanban Enterprise' };
+  const fourseeNames = { fourseee_simple: '4see Simple', fourseee_business: '4see Business', fourseee_enterprise: '4see Enterprise' };
+  if (t.kanban_plan && kanbanNames[t.kanban_plan]) {
+    badges.push(`<span class="badge-role" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; border-color: #3B82F6; margin: 2px;">${kanbanNames[t.kanban_plan]}</span>`);
   }
+  if (t.fourseee_plan && fourseeNames[t.fourseee_plan]) {
+    badges.push(`<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #A78BFA; margin: 2px;">${fourseeNames[t.fourseee_plan]}</span>`);
+  }
+  if (badges.length === 0) {
+    const rawPlan = t.plan_code || 'kanban_simple';
+    badges.push(`<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald); margin: 2px;">${rawPlan.toUpperCase()}</span>`);
+  }
+  return badges.join(' ');
+}
 
-  tbody.innerHTML = tenantsList.map(t => {
-    const isPlatform = t.slug === 'holospace';
-    const isSuspended = t.status === 'suspended';
-    const renderTablePlanBadges = () => {
-      const badges = [];
-      const kanbanNames = {
-        kanban_simple: 'Kanban Simple',
-        kanban_business: 'Kanban Business',
-        kanban_enterprise: 'Kanban Enterprise'
-      };
-      const fourseeNames = {
-        fourseee_simple: '4see Simple',
-        fourseee_business: '4see Business',
-        fourseee_enterprise: '4see Enterprise'
-      };
+function tenantModuleChipsHtml(t) {
+  const isPlatform = t.slug === 'holospace';
+  const modules = t.modules || [];
+  const hasModule = (code) => modules.some((m) => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
+  return ['core', 'tenant', 'kanban', 'scanner', '4see'].map((mCode) => {
+    const active = (mCode === 'core' || (mCode === 'tenant' && isPlatform)) ? true : hasModule(mCode);
+    return `<span style="font-size: 10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'rgba(255,255,255,0.04)'}; background: ${active ? 'rgba(255,255,255,0.06)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
+  }).join(' ');
+}
 
-      if (t.kanban_plan && kanbanNames[t.kanban_plan]) {
-        badges.push(`<span class="badge-role" style="background: rgba(59, 130, 246, 0.15); color: #3B82F6; border-color: #3B82F6; margin: 2px;">${kanbanNames[t.kanban_plan]}</span>`);
-      }
-      if (t.fourseee_plan && fourseeNames[t.fourseee_plan]) {
-        badges.push(`<span class="badge-role" style="background: rgba(167, 139, 250, 0.15); color: #A78BFA; border-color: #A78BFA; margin: 2px;">${fourseeNames[t.fourseee_plan]}</span>`);
-      }
-      if (badges.length === 0) {
-        const rawPlan = t.plan_code || 'kanban_simple';
-        badges.push(`<span class="badge-role" style="background: rgba(0, 230, 118, 0.15); color: var(--emerald); border-color: var(--emerald); margin: 2px;">${rawPlan.toUpperCase()}</span>`);
-      }
-      return badges.join(' ');
-    };
+const TENANTS_TABLE_COLUMNS = [
+  { key: 'slug', label: 'Identificador', filter: 'text', render: (t) => `<strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${escHtml(t.slug)}</strong>` },
+  {
+    key: 'name', label: 'Empresa', filter: 'text',
+    render: (t) => `<div style="font-weight: 800; color: var(--text-main);">${escHtml(t.name)}</div>${t.slug === 'holospace' ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}`
+  },
+  { key: 'plan', label: 'Plan', filter: 'none', render: (t) => `<div style="display: flex; gap: 4px; flex-wrap: wrap;">${tenantPlanBadgesHtml(t)}</div>` },
+  { key: 'modules', label: 'Módulos habilitados', filter: 'none', render: (t) => `<div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">${tenantModuleChipsHtml(t)}</div>` },
+  {
+    key: 'users', label: 'Usuarios', filter: 'none', align: 'center',
+    render: (t) => `<strong style="color: var(--text-main);">${(t.users || []).length}</strong><span style="color: var(--text-muted); font-size: 11px;"> / ${t.max_users || '—'}</span>`
+  },
+  {
+    key: 'status', label: 'Estado', filter: 'enum', align: 'center',
+    options: [{ value: 'Activo', label: 'Activo' }, { value: 'Suspendido', label: 'Suspendido' }],
+    filterValue: (t) => (t.status === 'suspended' ? 'Suspendido' : 'Activo'),
+    render: (t) => {
+      const isSuspended = t.status === 'suspended';
+      return `<span class="status-indicator" style="color: ${isSuspended ? 'var(--amber)' : 'var(--emerald)'}; font-weight: 800;">${isSuspended ? '○ Suspendido' : '● Activo'}</span>`;
+    }
+  }
+];
 
-    const modules = t.modules || [];
-    const hasModule = (code) => modules.some(m => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
+function renderTenantsTable(tenantsList = []) {
+  const container = document.getElementById('tenantsTableContainer');
+  if (!container) return;
 
-    const moduleChips = ['core', 'tenant', 'kanban', 'scanner', '4see'].map(mCode => {
-      const active = (mCode === 'core' || (mCode === 'tenant' && isPlatform)) ? true : hasModule(mCode);
-      return `<span style="font-size: 10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'rgba(255,255,255,0.04)'}; background: ${active ? 'rgba(255,255,255,0.06)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
-    }).join(' ');
-
-    const users = t.users || [];
-
-    return `
-      <tr style="opacity: ${isSuspended ? '0.75' : '1'};">
-        <td><strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${t.slug}</strong></td>
-        <td>
-          <div style="font-weight: 800; color: var(--text-main);">${t.name}</div>
-          ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: rgba(167, 139, 250, 0.2); color: #A78BFA; border: 1px solid #A78BFA; margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}
-        </td>
-        <td>
-          <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-            ${renderTablePlanBadges()}
-          </div>
-        </td>
-        <td>
-          <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
-            ${moduleChips}
-          </div>
-        </td>
-        <td style="text-align: center;">
-          <strong style="color: var(--text-main);">${users.length}</strong>
-          <span style="color: var(--text-muted); font-size: 11px;"> / ${t.max_users || '—'}</span>
-        </td>
-        <td style="text-align: center;">
-          <span class="status-indicator" style="color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; font-weight: 800;">
-            ${isSuspended ? '○ Suspendido' : '● Activo'}
-          </span>
-        </td>
-        <td style="text-align: right;">
+  if (!tenantsTable || !container.querySelector('.hs-table-wrap')) {
+    tenantsTable = HSTable.mount({
+      id: 'tenants',
+      container,
+      columns: TENANTS_TABLE_COLUMNS,
+      rowKey: (t) => t.id,
+      emptyMessage: 'No hay empresas que coincidan con tu búsqueda.',
+      actionsLabel: 'Acciones',
+      renderActions: (t) => {
+        const isPlatform = t.slug === 'holospace';
+        const isSuspended = t.status === 'suspended';
+        return `
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
             <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="openEditTenantModal('${t.id}')">Editar</button>
-            ${!isPlatform ? `
-              <button class="${isSuspended ? 'btn-primary' : 'btn-danger'}" style="padding: 5px 10px; font-size: 11px;" onclick="toggleTenantStatus('${t.id}', '${t.name}', '${t.status || 'active'}')">
-                ${isSuspended ? 'Reactivar' : 'Suspender'}
-              </button>
-            ` : ''}
-          </div>
-        </td>
-      </tr>
-    `;
-  }).join('');
+            ${!isPlatform ? `<button class="${isSuspended ? 'btn-primary' : 'btn-danger'}" style="padding: 5px 10px; font-size: 11px;" onclick="toggleTenantStatus('${t.id}', '${escHtml(t.name)}', '${t.status || 'active'}')">${isSuspended ? 'Reactivar' : 'Suspender'}</button>` : ''}
+          </div>`;
+      }
+    });
+  }
+  tenantsTable.update(tenantsList);
 }
 
 
@@ -4477,63 +4463,37 @@ function closeManageStoresModal() {
 }
 window.closeManageStoresModal = closeManageStoresModal;
 
+let savedStoresTable = null;
+const SAVED_STORES_COLUMNS = [
+  {
+    key: 'name', label: 'Nombre y dirección', filter: 'text', filterValue: (s) => `${s.name || ''} ${s.store_url || ''}`,
+    render: (s) => `<div style="font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">${escHtml(s.name)}${s.id === currentSelectedStoreId ? '<span style="font-size: 10px; color: var(--emerald); background: rgba(0,230,118,0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escHtml(s.store_url || 'N/A')}</div>`
+  },
+  { key: 'platform', label: 'Plataforma', filter: 'enum', options: [{ value: 'WOOCOMMERCE', label: 'WooCommerce' }, { value: 'TIENDANUBE', label: 'Tiendanube' }], render: (s) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${escHtml(s.platform)}</span>` },
+  { key: 'last_scanned_at', label: 'Última revisión', filter: 'none', render: (s) => (s.last_scanned_at ? `<span style="font-size: 12px; color: var(--text-main);">${new Date(s.last_scanned_at).toLocaleString()}</span>` : '<span style="color: var(--text-muted); font-size: 12px;">Todavía no revisada</span>') }
+];
+
 function renderManageStoresList() {
   const container = document.getElementById('savedStoresListContainer');
   if (!container) return;
 
-  if (cachedSavedStores.length === 0) {
-    container.innerHTML = `
-      <div style="text-align: center; padding: 30px 20px; color: var(--text-muted);">
-        No tienes tiendas conectadas guardadas actualmente.
-        <div style="margin-top: 12px;">
-          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="closeManageStoresModal(); openConnectStoreModalForNew();">+ Conectar Primera Tienda</button>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  let html = `
-    <table class="data-table" style="width: 100%; font-size: 13px;">
-      <thead>
-        <tr>
-          <th>Nombre y dirección</th>
-          <th>Plataforma</th>
-          <th>Última revisión</th>
-          <th style="text-align: right;">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  cachedSavedStores.forEach(s => {
-    const lastScan = s.last_scanned_at ? new Date(s.last_scanned_at).toLocaleString() : '<span style="color: var(--text-muted);">Todavía no revisada</span>';
-    const isSelected = s.id === currentSelectedStoreId;
-
-    html += `
-      <tr style="${isSelected ? 'background: rgba(0, 230, 118, 0.05);' : ''}">
-        <td>
-          <div style="font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
-            ${s.name}
-            ${isSelected ? '<span style="font-size: 10px; color: var(--emerald); background: rgba(0,230,118,0.15); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}
-          </div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${s.store_url || 'N/A'}</div>
-        </td>
-        <td>
-          <span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${s.platform}</span>
-        </td>
-        <td style="font-size: 12px; color: var(--text-main);">${lastScan}</td>
-        <td style="text-align: right; white-space: nowrap;">
-          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px; margin-right: 6px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">Revisar ahora</button>
-          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; margin-right: 6px;" onclick="editStoreConnection('${s.id}')">Editar</button>
+  if (!savedStoresTable || !container.querySelector('.hs-table-wrap')) {
+    savedStoresTable = HSTable.mount({
+      id: 'saved_stores',
+      container,
+      columns: SAVED_STORES_COLUMNS,
+      rowKey: (s) => s.id,
+      emptyMessage: 'Todavía no tenés tiendas conectadas guardadas.',
+      actionsLabel: 'Acciones',
+      renderActions: (s) => `
+        <div class="data-table-actions" style="display: inline-flex; gap: 6px; white-space: nowrap;">
+          <button class="btn-primary" style="padding: 4px 10px; font-size: 11px;" onclick="closeManageStoresModal(); currentSelectedStoreId = '${s.id}'; updateQuickScanButtonText(); handleQuickScanSelectedStore();">Revisar ahora</button>
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px;" onclick="editStoreConnection('${s.id}')">Editar</button>
           <button class="btn-secondary" style="padding: 4px 8px; font-size: 11px; color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, transparent);" onclick="disconnectStore('${s.id}')">×</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `</tbody></table>`;
-  container.innerHTML = html;
+        </div>`
+    });
+  }
+  savedStoresTable.update(cachedSavedStores);
 }
 
 function editStoreConnection(storeId) {
@@ -5209,74 +5169,40 @@ function filter4seeMargins(query = '') {
   render4seeMarginsTable(filtered);
 }
 
+let marginsTable = null;
+const MARGINS_TABLE_COLUMNS = [
+  {
+    key: 'product', label: 'Producto', filter: 'text', filterValue: (r) => `${r.product_name || ''} ${r.product_sku || ''}`,
+    render: (r) => `<div style="font-weight: 800; color: var(--text-main);">${escHtml(r.product_name || r.product_sku)}</div><div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">Código: ${escHtml(r.product_sku)}</div>`
+  },
+  { key: 'cost_price', label: 'Costo de reposición', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</span>` },
+  { key: 'selling_price', label: 'Precio de venta', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</span>` },
+  { key: 'net_profit', label: 'Ganancia neta', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--amber)'};">$${parseFloat(r.net_profit).toLocaleString('es-AR')}</span>` },
+  { key: 'real_margin_pct', label: 'Margen real', filter: 'none', render: (r) => `<span style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${r.is_red_zone ? 'var(--amber)' : 'var(--text-main)'};">${r.real_margin_pct}%</span>` },
+  {
+    key: 'status', label: 'Estado del margen', filter: 'enum', options: [{ value: 'Saludable', label: 'Saludable' }, { value: 'Margen bajo', label: 'Margen bajo' }],
+    filterValue: (r) => (r.is_red_zone ? 'Margen bajo' : 'Saludable'),
+    render: (r) => (r.is_red_zone
+      ? `<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Margen bajo (&lt;${r.min_margin_pct}%)</span>`
+      : `<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Saludable</span>`)
+  },
+  { key: 'suggested_repricing_price', label: 'Oportunidad de precio', filter: 'none', align: 'right', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--cobalt);">$${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)</span>` }
+];
+
 function render4seeMarginsTable(rules = []) {
   const container = document.getElementById('marginsTableContainer');
   if (!container) return;
 
-  if (rules.length === 0) {
-    container.innerHTML = `
-      <table class="data-table">
-        <tbody>
-          <tr>
-            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No se encontraron reglas de margen que coincidan con la búsqueda.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    return;
+  if (!marginsTable || !container.querySelector('.hs-table-wrap')) {
+    marginsTable = HSTable.mount({
+      id: '4see_margins',
+      container,
+      columns: MARGINS_TABLE_COLUMNS,
+      rowKey: (r) => r.id || r.product_sku,
+      emptyMessage: 'No se encontraron reglas de margen que coincidan con la búsqueda.'
+    });
   }
-
-  let html = `
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th style="min-width: 180px;">Producto</th>
-          <th style="min-width: 120px;">Costo de reposición</th>
-          <th style="min-width: 120px;">Precio de venta</th>
-          <th style="min-width: 120px;">Ganancia neta</th>
-          <th style="min-width: 110px;">Margen real</th>
-          <th style="min-width: 140px;">Estado del margen</th>
-          <th style="min-width: 160px; text-align: right;">Oportunidad de precio</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  rules.forEach(r => {
-    const isRed = Boolean(r.is_red_zone);
-    const alertBadge = isRed
-      ? '<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Margen bajo (&lt;' + r.min_margin_pct + '%)</span>'
-      : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Saludable</span>';
-
-    html += `
-      <tr>
-        <td>
-          <div style="font-weight: 800; color: var(--text-main);">${r.product_name || r.product_sku}</div>
-          <div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">Código: ${r.product_sku}</div>
-        </td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--red)'};">
-          $${parseFloat(r.net_profit).toLocaleString('es-AR')}
-        </td>
-        <td style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${isRed ? 'var(--amber)' : 'var(--text-main)'};">
-          ${r.real_margin_pct}%
-        </td>
-        <td>${alertBadge}</td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--cobalt); text-align: right;">
-          $${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `
-      </tbody>
-    </table>
-  `;
-  container.innerHTML = html;
+  marginsTable.update(rules);
 }
 
 
@@ -5478,100 +5404,53 @@ function filter4seeQueue(queryText) {
 }
 window.filter4seeQueue = filter4seeQueue;
 
+let smartpriceQueueTable = null;
+const QUEUE_STATUS_ES = { PENDING: 'Para decidir', APPLIED: 'Aplicado', REJECTED: 'Descartado' };
+const SMARTPRICE_QUEUE_COLUMNS = [
+  {
+    key: 'product', label: 'Producto', filter: 'text', filterValue: (q) => `${q.product_title || ''} ${q.sku || ''}`,
+    render: (q) => `<strong style="color: var(--text-main); display: block;">${escHtml(q.product_title || 'Producto')}</strong><span style="font-size: 11px; color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Código: ${escHtml(q.sku || '-')}</span>`
+  },
+  {
+    key: 'min_price_floor', label: 'Piso de margen', filter: 'none',
+    render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">$${parseFloat(q.min_price_floor || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>${q.floor_applied ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>' : ''}`
+  },
+  { key: 'previous_price', label: 'Precio actual', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">$${parseFloat(q.previous_price || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>` },
+  { key: 'suggested_price', label: 'Precio sugerido', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">$${parseFloat(q.suggested_price || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>` },
+  { key: 'rule_name', label: 'Regla usada', filter: 'text', render: (q) => `<span style="font-size: 12px; color: var(--text-main);">${escHtml(q.rule_name || 'Protección de margen')}</span>` },
+  {
+    key: 'status', label: 'Estado', filter: 'enum', options: Object.values(QUEUE_STATUS_ES).map((v) => ({ value: v, label: v })),
+    filterValue: (q) => QUEUE_STATUS_ES[q.status] || q.status,
+    render: (q) => {
+      if (q.status === 'PENDING') return '<span class="status-indicator" style="color: var(--hw-chart1); font-weight: 800; font-size: 11px;">● Para decidir</span>';
+      if (q.status === 'APPLIED') return '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">Aplicado</span>';
+      if (q.status === 'REJECTED') return '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">× Descartado</span>';
+      return `<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">${escHtml(q.status)}</span>`;
+    }
+  }
+];
+
 function render4seeQueueTable(items = []) {
   const container = document.getElementById('smartpriceQueueContainer');
   if (!container) return;
 
-  if (items.length === 0) {
-    container.innerHTML = `
-      <table class="data-table">
-        <tbody>
-          <tr>
-            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
-              No hay precios para decidir por ahora. Apretá <strong>Revisar precios ahora</strong> para compararte con tus rivales.
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    return;
+  if (!smartpriceQueueTable || !container.querySelector('.hs-table-wrap')) {
+    smartpriceQueueTable = HSTable.mount({
+      id: '4see_smartprice_queue',
+      container,
+      columns: SMARTPRICE_QUEUE_COLUMNS,
+      rowKey: (q) => q.id,
+      emptyHtml: 'No hay precios para decidir por ahora. Apretá <strong>Revisar precios ahora</strong> para compararte con tus rivales.',
+      actionsLabel: 'Acciones',
+      renderActions: (q) => (q.status === 'PENDING'
+        ? `<div class="data-table-actions" style="display: inline-flex; gap: 6px;">
+             <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aplicar este precio</button>
+             <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
+           </div>`
+        : `<span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Ya resuelto</span>`)
+    });
   }
-
-  let html = `
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th style="min-width: 180px;">Producto</th>
-          <th style="min-width: 130px;">Piso de margen</th>
-          <th style="min-width: 110px;">Precio actual</th>
-          <th style="min-width: 120px;">Precio sugerido</th>
-          <th style="min-width: 160px;">Regla usada</th>
-          <th style="min-width: 110px;">Estado</th>
-          <th style="min-width: 180px; text-align: right;">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-  `;
-
-  items.forEach(q => {
-    const prevPrice = parseFloat(q.previous_price || 0);
-    const suggPrice = parseFloat(q.suggested_price || 0);
-    const floorPrice = parseFloat(q.min_price_floor || 0);
-
-    let statusBadge = '';
-    if (q.status === 'PENDING') {
-      statusBadge = '<span class="status-indicator" style="color: var(--hw-chart1); font-weight: 800; font-size: 11px;">● Para decidir</span>';
-    } else if (q.status === 'APPLIED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">Aplicado</span>';
-    } else if (q.status === 'REJECTED') {
-      statusBadge = '<span class="status-indicator" style="color: var(--text-muted); font-weight: 800; font-size: 11px;">× Descartado</span>';
-    } else {
-      statusBadge = `<span class="status-indicator" style="color: var(--red); font-weight: 800; font-size: 11px;">${q.status}</span>`;
-    }
-
-    const floorShieldBadge = q.floor_applied
-      ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>'
-      : '';
-
-    html += `
-      <tr>
-        <td>
-          <strong style="color: var(--text-main); display: block;">${q.product_title || 'Producto'}</strong>
-          <span style="font-size: 11px; color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Código: ${q.sku || '-'}</span>
-        </td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">
-          $${floorPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-          ${floorShieldBadge}
-        </td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">
-          $${prevPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-        </td>
-        <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">
-          $${suggPrice.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
-        </td>
-        <td style="font-size: 12px; color: var(--text-main);">
-          ${q.rule_name || 'Protección de margen'}
-        </td>
-        <td>${statusBadge}</td>
-        <td style="text-align: right;">
-          <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-            ${q.status === 'PENDING' ? `
-              <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aplicar este precio</button>
-              <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
-            ` : `
-              <span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Ya resuelto</span>
-            `}
-          </div>
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `
-      </tbody>
-    </table>
-  `;
-  container.innerHTML = html;
+  smartpriceQueueTable.update(items);
 }
 
 async function handleApproveQueueItem(queueId) {

@@ -29,6 +29,7 @@
    *   rowKey(row) -> string
    *   renderDetail(row) -> string | null  (si no hay null, la fila no se puede desplegar)
    *   emptyMessage: string
+   *   emptyHtml: string (opcional; HTML ya armado, para enfasis (p.ej. <strong>) en el siguiente paso. Solo con texto fijo del desarrollador, nunca con datos de usuario/API)
    *   actionsLabel: string (encabezado de una columna final fija con acciones, opcional)
    *   renderActions(row) -> string
    */
@@ -168,7 +169,8 @@
       const tbody = table.querySelector('tbody');
       if (!filtered.length) {
         const span = cols.length + (opts.renderDetail ? 1 : 0) + (hasActions ? 1 : 0);
-        tbody.innerHTML = `<tr><td colspan="${span}" style="text-align:center; color: var(--text-muted); padding: 32px;">${esc(opts.emptyMessage || 'No hay datos.')}</td></tr>`;
+        const emptyContent = opts.emptyHtml || esc(opts.emptyMessage || 'No hay datos.');
+        tbody.innerHTML = `<tr><td colspan="${span}" style="text-align:center; color: var(--text-muted); padding: 32px;">${emptyContent}</td></tr>`;
       } else {
         tbody.innerHTML = filtered.map((row) => {
           const key = opts.rowKey(row);

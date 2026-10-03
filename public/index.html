@@ -1129,25 +1129,8 @@
         </div>
       </div>
 
-      <!-- Tabla Canónica de Organizaciones -->
-      <div class="table-responsive-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="min-width: 140px;">Identificador</th>
-              <th style="min-width: 200px;">Empresa</th>
-              <th style="min-width: 110px;">Plan</th>
-              <th style="min-width: 220px;">Módulos habilitados</th>
-              <th style="min-width: 90px; text-align: center;">Usuarios</th>
-              <th style="min-width: 110px; text-align: center;">Estado</th>
-              <th style="min-width: 200px; text-align: right;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tenantsTableBody">
-            <tr><td colspan="7" style="color: var(--text-muted); padding: 32px; text-align: center;">Cargando empresas...</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Tabla de empresas (hs-table: columnas, filtros, orden) -->
+      <div id="tenantsTableContainer"></div>
 
       <!-- Contenedor oculto para compatibilidad con scripts existentes -->
       <div id="tenantsListContainer" style="display: none;"></div>
@@ -1225,22 +1208,7 @@
         </div>
       </div>
 
-      <div class="table-responsive-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="min-width: 130px;">Usuario</th>
-              <th style="min-width: 180px;">Nombre</th>
-              <th style="min-width: 200px;">Email</th>
-              <th style="min-width: 140px;">Empresa</th>
-              <th style="min-width: 140px;">Rol</th>
-              <th style="min-width: 110px; text-align: center;">Estado</th>
-              <th style="min-width: 150px; text-align: right;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody"></tbody>
-        </table>
-      </div>
+      <div id="usersTableContainer"></div>
     </div>
 
     <!-- 2.1 ROLES & PERMISSIONS MANAGEMENT VIEW -->
@@ -1264,22 +1232,7 @@
         </div>
       </div>
 
-      <div class="table-responsive-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th style="min-width: 160px;">Nombre del Rol</th>
-              <th style="min-width: 140px;">Identificador</th>
-              <th style="min-width: 220px;">Descripción</th>
-              <th style="min-width: 120px;">Tipo</th>
-              <th style="min-width: 240px;">Permisos</th>
-              <th style="min-width: 90px; text-align: center;">Usuarios</th>
-              <th style="min-width: 140px; text-align: right;">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="rolesTableBody"></tbody>
-        </table>
-      </div>
+      <div id="rolesTableContainer"></div>
     </div>
 
     <!-- 3. ORDERS EXPLORER VIEW -->
@@ -1318,24 +1271,9 @@
         </div>
       </div>
 
-      <!-- VISTA EN FORMATO LISTA / TABLA PARA CIENTOS DE ELEMENTOS CON SCROLL -->
-      <div class="table-responsive-container" style="max-height: calc(100vh - 340px); overflow-y: auto; margin-top: 20px;">
-        <table class="data-table">
-          <thead>
-            <tr style="position: sticky; top: 0; background-color: var(--hw-surface-1, var(--card-bg)); z-index: 2;">
-              <th style="min-width: 140px;">Pedido</th>
-              <th style="min-width: 200px;">Cliente</th>
-              <th style="min-width: 160px;">Operario</th>
-              <th style="min-width: 130px;">Fecha</th>
-              <th style="min-width: 80px; text-align: center;">Productos</th>
-              <th style="min-width: 130px; text-align: right;">Importe ($)</th>
-              <th style="min-width: 110px; text-align: center;">Estado</th>
-              <th style="min-width: 120px; text-align: center;">Ver</th>
-            </tr>
-          </thead>
-          <tbody id="ordersExplorerGrid"></tbody>
-        </table>
-      </div>
+      <!-- La busqueda, el estado, el orden y los operarios de arriba ya consultan al servidor; -->
+      <!-- esta tabla ademas permite reordenar, ocultar y filtrar columnas sobre esos resultados. -->
+      <div id="ordersExplorerContainer" style="margin-top: 20px;"></div>
     </div>
     <!-- 4. PLATFORM ADMIN VIEW (SUPERADMIN ONLY) -->
     <div id="viewPlatform" class="view-panel hidden">
