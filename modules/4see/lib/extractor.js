@@ -38,6 +38,10 @@ function collectNodes(parsed, out = []) {
   if (parsed && typeof parsed === 'object') {
     out.push(parsed);
     if (Array.isArray(parsed['@graph'])) collectNodes(parsed['@graph'], out);
+    // Muchas tiendas (Tiendanube entre ellas) publican el producto como WebPage con el Product
+    // adentro de mainEntity, no como un nodo Product suelto: sin esto, nunca se encontraba.
+    if (parsed.mainEntity) collectNodes(parsed.mainEntity, out);
+    if (parsed.about) collectNodes(parsed.about, out);
   }
   return out;
 }
@@ -54,27 +58,72 @@ function offersOf(product) {
   return flat;
 }
 
-function fromJsonLd(html) {
+// URLs que identifican a que producto pertenece un nodo (su propio id, el de su pagina, o el de su oferta)
+function identifyingUrls(product) {
+  const urls = [];
+  if (typeof product['@id'] === 'string') urls.push(product['@id']);
+  if (typeof product.url === 'string') urls.push(product.url);
+  const moe = product.mainEntityOfPage;
+  if (typeof moe === 'string') urls.push(moe);
+  else if (moe && typeof moe === 'object') { if (moe['@id']) urls.push(moe['@id']); if (moe.url) urls.push(moe.url); }
+  offersOf(product).forEach((o) => { if (o && typeof o.url === 'string') urls.push(o.url); });
+  return urls;
+}
+
+// Mismo host y mismo path (sin importar query string ni barra final): asi comparamos la URL que
+// pedimos leer contra la URL que declara cada nodo, sin que una redireccion o un parametro rompa el match.
+function samePage(a, b) {
+  try {
+    const ua = new URL(a, b);
+    const ub = new URL(b);
+    return ua.hostname.replace(/^www\./i, '').toLowerCase() === ub.hostname.replace(/^www\./i, '').toLowerCase()
+      && ua.pathname.replace(/\/+$/, '').toLowerCase() === ub.pathname.replace(/\/+$/, '').toLowerCase();
+  } catch (e) {
+    return false;
+  }
+}
+
+function readingOf(product) {
+  const readings = offersOf(product).map((o) => ({
+    price: parsePrice(o.price !== undefined ? o.price : (o.lowPrice !== undefined ? o.lowPrice : (o.priceSpecification && o.priceSpecification.price))),
+    stock: availabilityToStock(o.availability),
+    currency: o.priceCurrency || (o.priceSpecification && o.priceSpecification.priceCurrency) || null
+  })).filter((r) => r.price);
+  if (!readings.length) return null;
+  const available = readings.filter((r) => r.stock === true);
+  const pool = available.length ? available : readings;
+  const best = pool.reduce((a, b) => (b.price < a.price ? b : a));
+  const stock = available.length ? true : (readings.every((r) => r.stock === false) ? false : best.stock);
+  return { price: best.price, inStock: stock, currency: best.currency, title: product.name || null, method: 'JSON_LD' };
+}
+
+/**
+ * Lee el precio desde JSON-LD. Muchas paginas (fichas de producto con una franja de "tambien te
+ * puede interesar") traen varios nodos Product en el mismo HTML: tomar "el primero que aparece"
+ * confunde el producto propio con uno ajeno (asi se leyo Moet Ice como otro espumante mas barato).
+ * Si hay un solo Product en la pagina se usa ese; si hay varios, solo se usa el que coincide con
+ * la URL pedida. Si hay varios y ninguno coincide, no se adivina: se informa como ambiguo.
+ */
+function fromJsonLd(html, pageUrl) {
   const blocks = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || [];
+  const candidates = [];
   for (const block of blocks) {
     const raw = block.replace(/<script[^>]*>|<\/script>/gi, '').trim();
     let parsed;
     try { parsed = JSON.parse(raw); } catch (e) { continue; }
-    const product = collectNodes(parsed).find((n) => typeIncludes(n, 'Product'));
-    if (!product) continue;
-    const readings = offersOf(product).map((o) => ({
-      price: parsePrice(o.price !== undefined ? o.price : (o.lowPrice !== undefined ? o.lowPrice : (o.priceSpecification && o.priceSpecification.price))),
-      stock: availabilityToStock(o.availability),
-      currency: o.priceCurrency || (o.priceSpecification && o.priceSpecification.priceCurrency) || null
-    })).filter((r) => r.price);
-    if (!readings.length) continue;
-    const available = readings.filter((r) => r.stock === true);
-    const pool = available.length ? available : readings;
-    const best = pool.reduce((a, b) => (b.price < a.price ? b : a));
-    const stock = available.length ? true : (readings.every((r) => r.stock === false) ? false : best.stock);
-    return { price: best.price, inStock: stock, currency: best.currency, title: product.name || null, method: 'JSON_LD' };
+    collectNodes(parsed)
+      .filter((n) => typeIncludes(n, 'Product'))
+      .forEach((product) => {
+        const reading = readingOf(product);
+        if (reading) candidates.push({ product, reading });
+      });
   }
-  return null;
+  if (!candidates.length) return { reading: null, ambiguous: false };
+  if (candidates.length === 1) return { reading: candidates[0].reading, ambiguous: false };
+
+  const matches = candidates.filter((c) => identifyingUrls(c.product).some((u) => samePage(u, pageUrl)));
+  if (matches.length === 1) return { reading: matches[0].reading, ambiguous: false };
+  return { reading: null, ambiguous: true };
 }
 
 function metaContent(html, names) {
@@ -152,10 +201,12 @@ async function extractProductData(targetUrl, deps = {}) {
   }
   if (!html) return fail(url, 'FETCH_FAILED');
 
-  const found = fromJsonLd(html) || fromMicrodata(html) || fromMetaTags(html);
+  const jsonLd = fromJsonLd(html, url);
+  const found = jsonLd.reading || fromMicrodata(html) || fromMetaTags(html);
   if (found) {
     return { ok: true, currency: found.currency || null, store: extractDomain(url), reason: null, ...found };
   }
+  if (jsonLd.ambiguous) return fail(url, 'AMBIGUOUS_PRODUCT_DATA');
   return fail(url, looksJsRendered(html) ? 'MAYBE_JS_RENDERED' : 'NOT_FOUND_IN_PAGE');
 }
 
@@ -166,6 +217,7 @@ function describeReadFailure(reason) {
     case 'FETCH_FAILED': return 'No pudimos abrir la página. Revisá el link o probá de nuevo en un rato.';
     case 'MAYBE_JS_RENDERED': return 'Esta página arma el precio al cargarse y todavía no podemos leerlo desde acá.';
     case 'NOT_FOUND_IN_PAGE': return 'No encontramos el precio en esta página. Revisá que sea el link de un producto.';
+    case 'AMBIGUOUS_PRODUCT_DATA': return 'Esta página muestra varios productos y no pudimos identificar cuál es el tuyo. Probá con el link directo del producto.';
     default: return 'No pudimos leer el precio.';
   }
 }

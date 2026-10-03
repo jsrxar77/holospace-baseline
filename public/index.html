@@ -124,46 +124,6 @@
       justify-content: flex-end;
     }
 
-    .theme-selector-group {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 1;
-      min-width: 0;
-    }
-
-    .theme-label {
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--text-muted);
-      line-height: 1;
-      white-space: nowrap;
-    }
-
-    .theme-select {
-      height: 34px !important;
-      padding: 0 10px !important;
-      font-size: 12px !important;
-      font-weight: 700 !important;
-      border-radius: 8px;
-      border: 1px solid var(--card-border);
-      background-color: var(--hw-surface-2, var(--card-bg));
-      color: var(--text-main);
-      outline: none;
-      cursor: pointer;
-      max-width: 170px;
-      flex-shrink: 1;
-      display: inline-flex;
-      align-items: center;
-      box-sizing: border-box;
-      width: auto;
-      transition: all 0.2s;
-    }
-
-    .theme-select:hover {
-      border-color: var(--emerald);
-    }
-
     .badge-header-ctrl {
       max-width: 280px;
       white-space: nowrap;
@@ -411,11 +371,8 @@
       .btn-hamburger {
         display: flex;
       }
-      .theme-label {
-        display: none !important;
-      }
-      .theme-select {
-        max-width: 140px;
+      .hs-theme-toggle b {
+        display: none;
       }
     }
 
@@ -426,11 +383,6 @@
       }
       .badge-header-ctrl {
         display: none !important;
-      }
-      .theme-select {
-        max-width: 120px;
-        font-size: 11px;
-        height: 30px !important;
       }
       .btn-logout-header {
         height: 30px !important;
@@ -1008,13 +960,13 @@
       </div>
 
       <div class="top-line-right">
-        <!-- Core Theme Engine Selector -->
-        <div id="headerThemeContainer" class="theme-selector-group">
-          <span class="theme-label">Tema:</span>
-          <select id="headerThemeSelect" class="theme-select" onchange="changeAppThemeSubmit(this.value)">
-            <option value="holo_dark">Holo Night</option>
-            <option value="holo_light">Holo Day</option>
-          </select>
+        <!-- Selector de tema: mismo componente que la landing (icono + palabra), no un <select> -->
+        <div id="headerThemeContainer">
+          <button type="button" id="headerThemeToggle" class="hs-theme-toggle" onclick="toggleAppTheme()" aria-label="Cambiar entre Holo Night y Holo Day">
+            <svg class="hs-tt-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            <svg class="hs-tt-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10l2 2M5 19l2-2m10-10l2-2" stroke="currentColor" stroke-width="1.8"/></svg>
+            <b id="headerThemeLabel">Night</b>
+          </button>
         </div>
 
         <button class="btn-secondary btn-header-ctrl btn-connect-cell" id="btnConnectCell" data-ops-only="1" onclick="openQrModal()">Conectar Celular</button>

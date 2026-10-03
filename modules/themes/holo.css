@@ -71,7 +71,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary {
 body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary:hover { background: var(--hw-surface-3); }
 
 /* Formularios */
-body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search, .theme-select, select, textarea) {
+body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search, select, textarea) {
   background: var(--hw-surface-2);
   color: var(--text-main);
   border: var(--hw-border-width) solid var(--card-border);
@@ -259,14 +259,30 @@ body:is(.theme-holo_dark, .theme-holo_light) :is(.status-bar-center) { border-le
 
 @media (max-width: 720px) {
   body:is(.theme-holo_dark, .theme-holo_light):is(.state-logged-in, .state-logged-out) main { margin: 10px; }
-  body:is(.theme-holo_dark, .theme-holo_light) .theme-label { display: none; }
-  body:is(.theme-holo_dark, .theme-holo_light) #headerThemeSelect { width: 88px !important; max-width: 88px; padding-left: 8px; padding-right: 4px; font-size: 12px; }
   body:is(.theme-holo_dark, .theme-holo_light) .top-line-right { min-width: 0; }
   body:is(.theme-holo_dark, .theme-holo_light) .status-bar-center { display: none; }
 }
 
 /* La insignia de organizacion muestra el nombre tal cual (el nombre de marca no se pasa a mayusculas) */
 body:is(.theme-holo_dark, .theme-holo_light) :is(.context-badge, #activeContextBadge, #mobileContextBadge) { text-transform: none !important; }
+
+/* Selector de tema: el mismo boton icono + palabra que usa la landing (.mode), no un <select>.
+   Un solo componente para login y para todos los modulos: si cambia el diseno, cambia en un solo lugar. */
+body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle {
+  display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px;
+  border: 1px solid var(--hw-border-strong); background: var(--hw-surface-1);
+  color: var(--text-main); font: 600 12px var(--hw-font-family), ui-sans-serif, sans-serif;
+  cursor: pointer; transition: border-color .15s; box-sizing: border-box; flex-shrink: 0;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle:hover { border-color: var(--emerald); }
+body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle svg { width: 15px; height: 15px; flex-shrink: 0; }
+body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle b { font-weight: 600; white-space: nowrap; }
+body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle .hs-tt-sun { display: none; }
+body.theme-holo_light .hs-theme-toggle .hs-tt-sun { display: block; }
+body.theme-holo_light .hs-theme-toggle .hs-tt-moon { display: none; }
+@media (max-width: 1023px) {
+  body:is(.theme-holo_dark, .theme-holo_light) .hs-theme-toggle { height: 30px; padding: 0 10px; }
+}
 
 /* ---- KPI y graficos (suite hs-charts) ----
    Semantica: menta = aplicado, violeta = pendiente, ambar = riesgo, tinta = neutro. El color vive en la regla superior y en el valor. */

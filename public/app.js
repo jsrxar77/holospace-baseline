@@ -150,7 +150,9 @@ async function loadActiveTheme() {
   try {
     // Sin sesion: Holo Night o Holo Day segun la landing o la preferencia del sistema
     if (!getAuthToken()) {
-      document.body.className = 'theme-' + holoLoggedOutThemeKey() + ' state-logged-out';
+      const key = holoLoggedOutThemeKey();
+      document.body.className = 'theme-' + key + ' state-logged-out';
+      updateThemeToggleLabel(key);
       return;
     }
     const token = getAuthToken() || (currentUser ? currentUser.email : '');
@@ -185,15 +187,31 @@ async function loadActiveTheme() {
       if (t.radiusBadge) root.style.setProperty('--hw-radius-badge', t.radiusBadge + 'px');
       if (t.borderWidth) root.style.setProperty('--hw-border-width', t.borderWidth + 'px');
 
-      const selectEl = document.getElementById('headerThemeSelect');
-      if (selectEl && activeKey && selectEl.value !== activeKey) {
-        selectEl.value = activeKey;
-      }
+      updateThemeToggleLabel(activeKey);
     }
   } catch (e) {
     console.error('Error cargando tema activo:', e);
   }
 }
+
+// El icono (sol/luna) ya cambia solo por CSS segun la clase de tema del body; solo la palabra necesita JS.
+function updateThemeToggleLabel(themeKey) {
+  const label = document.getElementById('headerThemeLabel');
+  if (label) label.textContent = themeKey === 'holo_light' ? 'Day' : 'Night';
+}
+
+// El selector de tema es un boton que alterna entre los dos temas (Holo Night / Holo Day), igual que en la landing.
+function toggleAppTheme() {
+  const next = document.body.classList.contains('theme-holo_light') ? 'holo_dark' : 'holo_light';
+  if (getAuthToken()) {
+    changeAppThemeSubmit(next);
+  } else {
+    try { localStorage.setItem('hs_landing_theme', next); } catch (e) {}
+    document.body.className = 'theme-' + next + ' state-logged-out';
+    updateThemeToggleLabel(next);
+  }
+}
+window.toggleAppTheme = toggleAppTheme;
 
 async function changeAppThemeSubmit(themeKey) {
   try {
@@ -3781,7 +3799,15 @@ async function recheckMonitor(id) {
     });
     const data = await res.json();
     if (data.success) {
-      load4seeMonitors();
+      await load4seeMonitors();
+      // La tabla ya muestra el precio nuevo; solo interrumpimos cuando hay algo para decidir:
+      // no se pudo leer (se conserva el dato anterior) o el precio quedo muy distinto del tuyo.
+      const { rival, warning } = data;
+      if (rival && !rival.ok) {
+        await showCustomAlert('No pudimos leer al rival', `${rival.message || 'No pudimos leer el precio de este rival.'} El precio que tenías guardado se mantiene sin cambios.`);
+      } else if (warning) {
+        await showCustomAlert('Precios muy distintos', `El rival quedó en $${rival.price.toLocaleString('es-AR')}. ${warning}`);
+      }
     } else {
       await showCustomAlert('Error', data.error || 'No pudimos revisar este rival ahora. Intentá de nuevo en un rato.');
     }

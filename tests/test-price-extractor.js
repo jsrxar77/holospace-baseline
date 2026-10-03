@@ -2,6 +2,8 @@
  * 4see: lectura de precios sin datos inventados (modules/4see/lib/price.js, extractor.js, own_price.js).
  * Sin red ni base de datos: fetchHtml/fetchJson y la tienda se inyectan como dependencias.
  */
+const fs = require('fs');
+const path = require('path');
 const { parsePrice, scaleWarning } = require('../modules/4see/lib/price');
 const { extractProductData, describeReadFailure } = require('../modules/4see/lib/extractor');
 const { resolveOwnPrice } = require('../modules/4see/lib/own_price');
@@ -45,6 +47,26 @@ const jsonLdHtml = `<script type="application/ld+json">{"@type":"Product","name"
   const metaHtml = `<meta property="og:price:amount" content="42.500,00"><meta property="og:price:currency" content="ARS">`;
   r = await extractProductData('https://tienda.example.com/p/z', { fetchHtml: async () => metaHtml });
   ok(r.ok && r.price === 42500 && r.method === 'META_TAGS', 'meta tags: og:price:amount');
+
+  console.log('Caso real: producto envuelto en WebPage/mainEntity junto a productos relacionados ajenos');
+  // Capturado de una tienda real (Tiendanube) que puso en la misma pagina el producto pedido, como
+  // WebPage > mainEntity > Product ($185.240), y mas abajo un Product suelto de otro articulo
+  // relacionado ($18.620). El bug real: se leia el ajeno porque no se buscaba dentro de mainEntity
+  // y se tomaba "el primer Product que aparece" sin confirmar que fuera el de la URL pedida.
+  const rivalFixtureHtml = fs.readFileSync(path.join(__dirname, 'fixtures', 'rival-mainentity-con-productos-relacionados.html'), 'utf8');
+  const theProductUrl = 'https://www.positanovinos.com.ar/productos/moet-chandon-ice-imperial-rose-x-750-1bs8b/?variant=1521739908&pf=mc';
+  r = await extractProductData(theProductUrl, { fetchHtml: async () => rivalFixtureHtml });
+  ok(r.ok && r.price === 185240, `WebPage con mainEntity: lee el producto pedido ($185.240), no uno relacionado (leyo ${r.price})`);
+  ok(r.inStock === true, 'toma el stock del producto correcto, no el del relacionado');
+
+  const relatedProductUrl = 'https://www.positanovinos.com.ar/productos/chandon-delice-rose-x-750-cc/';
+  r = await extractProductData(relatedProductUrl, { fetchHtml: async () => rivalFixtureHtml });
+  ok(r.ok && r.price === 18620, 'la misma pagina, pedida con la URL del producto relacionado, trae su propio precio');
+
+  const unknownProductUrl = 'https://www.positanovinos.com.ar/productos/otro-producto-no-listado/';
+  r = await extractProductData(unknownProductUrl, { fetchHtml: async () => rivalFixtureHtml });
+  ok(!r.ok && r.reason === 'AMBIGUOUS_PRODUCT_DATA', 'si ninguno de los productos de la pagina coincide con la URL pedida, no se adivina');
+  ok(describeReadFailure(r.reason).length > 10, 'motivo de ambiguedad explicado en lenguaje de negocio');
 
   console.log('Nunca precio 0 ni "con stock" supuesto cuando no se pudo leer');
   r = await extractProductData('https://tienda.example.com/p/sin-precio', { fetchHtml: async () => '<html><body>Sin datos</body></html>' });

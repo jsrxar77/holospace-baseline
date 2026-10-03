@@ -24,7 +24,7 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 12. **Navegador/Playwright**: no abrirlo sin pedido explicito; preferir terminal e inspeccion de codigo. Ante duda real, preguntar antes de cambios masivos.
 
 ## Flujo por cambio (impacto 360)
-Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist.
+Codigo/config -> tests -> docs -> roadmap/deuda. Skill `holospace-architect` tiene el checklist, incluida la regla de oro: antes de cerrar una tarea, buscar el componente visual equivalente en los otros lugares (landing/app/Scanner), listar todos los que llaman a lo que se cambio, y validar cualquier parser de datos externos contra al menos una muestra real.
 
 ## Textos
 La app se explica sola para quien conoce su negocio pero no el mundo SaaS: cada pantalla con titulo + bajada, vacios con siguiente paso, voz rioplatense con "vos", sin ingles ni jerga. Glosario y catalogo en `docs/CONTENT.md` 0.2; skill `holospace-copy`; los hace cumplir `tests/test-copy.js`.
