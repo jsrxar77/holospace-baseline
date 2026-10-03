@@ -213,6 +213,35 @@ async function ensureSmartPriceTables() {
         );
     `);
 
+    // 6. Lectura de precios sin datos inventados: el precio y el stock del rival pueden ser desconocidos (NULL),
+    //    y cada monitor/producto recuerda de donde sale el precio propio (tienda conectada, link o valor a mano).
+    await execute(`
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP NOT NULL;
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN my_price DROP DEFAULT;
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP NOT NULL;
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_price DROP DEFAULT;
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP NOT NULL;
+      ALTER TABLE fourseee_competitor_monitors ALTER COLUMN competitor_stock DROP DEFAULT;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_store_id UUID REFERENCES fourseee_connected_stores(id) ON DELETE SET NULL;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_external_id VARCHAR(120);
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_url TEXT;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_source VARCHAR(16);
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_locked BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS my_price_checked_at TIMESTAMP WITH TIME ZONE;
+      ALTER TABLE fourseee_competitor_monitors ADD COLUMN IF NOT EXISTS competitor_read_error VARCHAR(40);
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS store_external_id VARCHAR(120);
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS own_url TEXT;
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_source VARCHAR(16);
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_locked BOOLEAN NOT NULL DEFAULT false;
+      ALTER TABLE fourseee_products ADD COLUMN IF NOT EXISTS price_checked_at TIMESTAMP WITH TIME ZONE;
+
+      -- Valores que antes se completaban por defecto sin haberse leido: pasan a "desconocido"
+      UPDATE fourseee_competitor_monitors
+         SET competitor_price = NULL, competitor_stock = NULL, competitor_read_error = 'NOT_FOUND_IN_PAGE'
+       WHERE competitor_price = 0 OR extraction_method = 'HEURISTIC_FALLBACK';
+      UPDATE fourseee_competitor_monitors SET my_price = NULL WHERE my_price = 0;
+    `);
+
     areTablesReady = true;
   } catch (err) {
     console.error('[4SEE DB] Error asegurando tablas de SmartPrice:', err.message);

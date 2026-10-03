@@ -72,8 +72,15 @@ async function runScraperWorkerCycle({ tenantId, isSuperAdmin = false, concurren
         summary.totalMappingsProcessed++;
         try {
           const extracted = await extractProductData(mapping.competitor_url);
-          const scrapedPrice = parseFloat(extracted.price) || 0;
-          const scrapedStock = extracted.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK';
+          if (!extracted.ok) {
+            // No se pudo leer el precio del rival: no se inventa un 0, se deja el ultimo dato conocido
+            summary.scrapedErrors++;
+            console.warn(`[4SEE WORKER] No se pudo leer ${mapping.competitor_url}: ${extracted.reason}`);
+            return;
+          }
+          const scrapedPrice = extracted.price;
+          // El stock puede ser desconocido (precio leido, disponibilidad no informada): se guarda como UNKNOWN, nunca se supone "con stock"
+          const scrapedStock = extracted.inStock === null ? 'UNKNOWN' : (extracted.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK');
           const method = extracted.method || 'STRUCTURED_DATA';
 
           // Registrar en log inmutable

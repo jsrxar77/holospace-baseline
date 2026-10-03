@@ -169,6 +169,17 @@ class WooCommerceConnector {
   }
 
   /**
+   * Lee un producto puntual por su id (precio vigente en la tienda).
+   */
+  async fetchProduct(externalId) {
+    if (!this.isConfigured) {
+      throw new Error('WooCommerceConnector: Credenciales no configuradas (storeUrl, consumerKey o consumerSecret faltante).');
+    }
+    const raw = await requestJson(`${this.baseUrl}/products/${encodeURIComponent(externalId)}`, { headers: this.authHeader });
+    return raw ? this.mapProduct(raw) : null;
+  }
+
+  /**
    * Write-back: actualiza campos de título, descripción o metadatos SEO en WooCommerce.
    */
   async updateProduct(productId, updates = {}) {

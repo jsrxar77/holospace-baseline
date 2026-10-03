@@ -144,6 +144,17 @@ class TiendanubeConnector {
   }
 
   /**
+   * Lee un producto puntual por su id (precio vigente en la tienda).
+   */
+  async fetchProduct(externalId) {
+    if (!this.isConfigured) {
+      throw new Error('TiendanubeConnector: Credenciales no configuradas (accessToken o userId faltante).');
+    }
+    const raw = await requestJson(`${this.baseUrl}/products/${encodeURIComponent(externalId)}`, { headers: this.headers });
+    return raw ? this.mapProduct(raw) : null;
+  }
+
+  /**
    * Write-back: actualiza título, descripción o barcode en Tiendanube.
    */
   async updateProduct(productId, updates = {}) {

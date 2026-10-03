@@ -2048,7 +2048,7 @@
   <!-- MODALES DEL MÓDULO 4SEE -->
   <!-- Modal Nuevo Monitor -->
   <div id="createMonitorModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 480px;">
+    <div class="modal-content" style="max-width: 560px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un rival para seguir</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMonitorModal()">×</button>
@@ -2056,24 +2056,52 @@
       <form id="createMonitorForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMonitorSubmit(event)">
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Tu producto <span style="color: var(--red);">*</span></label>
-          <input type="text" id="monProductName" class="input-field" placeholder="Ej: Ginebra London Dry 750ml" required>
+          <input type="text" id="monProductName" class="input-field" placeholder="Ej: Ginebra London Dry 750ml" required oninput="resetMonitorPreview()">
         </div>
         <div>
           <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Link del producto del rival <span style="color: var(--red);">*</span></label>
-          <input type="url" id="monCompetitorUrl" class="input-field" placeholder="https://articulo.mercadolibre.com.ar/MLA-..." required>
+          <input type="url" id="monCompetitorUrl" class="input-field" placeholder="https://articulo.mercadolibre.com.ar/MLA-..." required oninput="resetMonitorPreview()">
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del rival</label>
-            <input type="text" id="monCompetitorName" class="input-field" placeholder="Ej: Tienda de al lado">
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Tu precio de venta ($)</label>
-            <input type="number" step="0.01" id="monMyPrice" class="input-field" placeholder="18500">
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del rival</label>
+          <input type="text" id="monCompetitorName" class="input-field" placeholder="Ej: Tienda de al lado">
+        </div>
+
+        <div style="border: 1px solid var(--card-border); padding: 12px; background: var(--hw-surface-2, var(--card-bg));">
+          <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">Tu precio</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Lo tomamos de tu tienda conectada; si no está ahí, del link de tu producto; si no, del valor que cargues.</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <select id="monMyStoreSelect" class="input-field" onchange="handleMyStoreChange('mon')">
+              <option value="">No uso una tienda conectada</option>
+            </select>
+            <select id="monMyStoreProduct" class="input-field hidden" onchange="resetMonitorPreview()"></select>
+            <input type="url" id="monMyUrl" class="input-field" placeholder="O pegá el link de tu producto" oninput="resetMonitorPreview()">
+            <input type="number" step="0.01" id="monMyPrice" class="input-field" placeholder="O cargá tu precio ($)" oninput="resetMonitorPreview()">
           </div>
         </div>
+
         <div id="createMonitorError" style="color: var(--red); font-size: 13px; display: none;"></div>
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar y empezar a seguir</button>
+
+        <div id="monPreviewBox" class="hidden" style="display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--hw-border-strong); padding: 12px;">
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Precio del rival (se lee, no se edita)</div>
+            <div id="monPreviewRivalText" style="font-size: 15px; font-weight: 800; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;"></div>
+          </div>
+          <div>
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Tu precio</div>
+            <div id="monPreviewMineSource" style="font-size: 11px; color: var(--text-muted); margin-bottom: 4px;"></div>
+            <input type="number" step="0.01" id="monPreviewMinePrice" class="input-field" oninput="markMonitorPriceEdited()">
+          </div>
+          <div id="monPreviewWarning" class="hidden" style="color: var(--amber); font-size: 12px;"></div>
+          <label id="monAllowUnreadableRow" class="hidden" style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted);">
+            <input type="checkbox" id="monAllowUnreadable"> Guardar igual: reviso el precio del rival más tarde
+          </label>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+          <button type="button" id="monBtnPreview" class="btn-secondary" style="flex: 1;" onclick="handlePreviewMonitor()">Leer precios</button>
+          <button type="submit" id="monBtnConfirm" class="btn-primary hidden" style="flex: 1;">Guardar y empezar a seguir</button>
+        </div>
       </form>
     </div>
   </div>
@@ -2362,15 +2390,22 @@
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">holospace. nunca va a sugerir un precio por debajo de este valor.</div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Precio de venta actual ($)</label>
-            <input type="number" step="0.01" id="prodCurrentPrice" class="input-field" placeholder="7500">
+        <div style="border: 1px solid var(--card-border); padding: 12px; background: var(--hw-surface-2, var(--card-bg));">
+          <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">Tu precio de venta actual</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Lo tomamos de tu tienda conectada; si no está ahí, del link de tu producto; si no, del valor que cargues.</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <select id="prodMyStoreSelect" class="input-field" onchange="handleMyStoreChange('prod')">
+              <option value="">No uso una tienda conectada</option>
+            </select>
+            <select id="prodMyStoreProduct" class="input-field hidden" onchange="handleProdStoreProductChange()"></select>
+            <input type="url" id="prodOwnUrl" class="input-field" placeholder="O pegá el link de tu producto">
+            <input type="number" step="0.01" id="prodCurrentPrice" class="input-field" placeholder="O cargá el precio ($)">
           </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Unidades en stock</label>
-            <input type="number" id="prodStockQty" class="input-field" value="10">
-          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Unidades en stock</label>
+          <input type="number" id="prodStockQty" class="input-field" value="10">
         </div>
 
         <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar producto</button>

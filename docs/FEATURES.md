@@ -133,3 +133,8 @@ Solo se ve en los modulos Kanban y Scanner (vinculacion de la app movil); en 4se
 
 ## Textos que se explican solos
 Todas las pantallas (4see, pedidos, usuarios, roles, empresas), el Scanner y la landing usan el mismo lenguaje: titulo que dice que es, una bajada que dice para que sirve, estados vacios con el siguiente paso y botones con verbo. Pestanas de 4see: Competencia, Precios sugeridos, Catalogo, Margenes. Columnas del tablero de pedidos: Nuevos, Listos para preparar, En preparacion, Completados (los codigos internos de estado no cambian). Detalle y glosario en `docs/CONTENT.md` 0.2.
+
+## Precios sin datos inventados (4see)
+Cuando no se puede leer el precio o el stock de un rival, queda en blanco con el motivo ("No pudimos abrir la página", "Esta página arma el precio al cargarse"), nunca en $0 ni marcado "con stock". `parsePrice()` entiende el formato argentino (`185.240,00`) y el anglosajon, asi que un precio como $185.240 no se lee mal como $18.240 o $18,02.
+
+**Tu precio**, en el alta de un rival y en "Agregar un producto" de SmartPrice, sale en este orden: de tu tienda conectada (si elegis cual es tu producto ahi, se toma su precio actualizado), si no del link de tu propio producto, y si no del valor que cargues a mano; siempre lo podes corregir. El alta de un rival es en dos pasos: primero "Leer precios" (muestra el precio del rival de solo lectura y el tuyo editable, con un aviso si son muy distintos entre si), despues "Guardar". Si el rival no se pudo leer, hay que marcar "Guardar igual" para continuar.

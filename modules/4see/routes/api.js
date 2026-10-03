@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const { query, execute, getOne } = require('../../../lib/db');
-const { extractProductData } = require('../lib/extractor');
+const { extractProductData, describeReadFailure } = require('../lib/extractor');
+const { resolveOwnPrice, searchStoreProducts } = require('../lib/own_price');
+const { scaleWarning } = require('../lib/price');
 const { calculateMarginMetrics } = require('../lib/margins');
 const { checkTenantModuleAccess } = require('../../../lib/entitlement');
 const { hasPermission, sendPermissionError } = require('../../../lib/rbac');
@@ -56,6 +58,14 @@ function maskStoreCredentials(creds = {}) {
   return masked;
 }
 
+const isHttpUrl = (u) => typeof u === 'string' && /^https?:\/\//i.test(u.trim());
+
+/** Lee el precio y el stock de un rival; el resultado nunca trae valores inventados. */
+async function readRival(url) {
+  const r = await extractProductData(url);
+  return { ...r, message: r.ok ? null : describeReadFailure(r.reason) };
+}
+
 /**
  * Handler principal para todas las peticiones bajo /api/4see/*
  */
@@ -97,41 +107,131 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
+  // Productos de una tienda conectada, para elegir cual es el tuyo
+  const storeProductsMatch = pathPart.match(/^\/api\/4see\/stores\/([^/]+)\/products$/);
+  if (storeProductsMatch && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const store = await getOne(
+      'SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true',
+      [storeProductsMatch[1], tenantId],
+      { tenantId }
+    );
+    if (!store) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos esa tienda conectada.' }));
+      return true;
+    }
+    const q = new URLSearchParams(url.includes('?') ? url.split('?')[1] : '').get('q') || '';
+    try {
+      const products = await searchStoreProducts(store, q);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, products }));
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No pudimos leer los productos de tu tienda. Revisá la conexión e intentá de nuevo.' }));
+    }
+    return true;
+  }
+
+  // Tu precio: tienda conectada, luego link de tu producto y por ultimo el valor que cargaste
+  if (pathPart === '/api/4see/own-price' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const { storeId, externalId, ownUrl, myPrice, myPriceLocked } = data || {};
+    const mine = await resolveOwnPrice(
+      { storeId, externalId, ownUrl: isHttpUrl(ownUrl) ? ownUrl.trim() : null, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
+      { getStore: (id) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [id, tenantId], { tenantId }) }
+    );
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, mine }));
+    return true;
+  }
+
+  // Vista previa del alta: lee el rival y resuelve tu precio sin guardar nada
+  if (pathPart === '/api/4see/monitors/preview' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const { competitorUrl, myUrl, storeId, externalId, myPrice, myPriceLocked } = data || {};
+    if (!isHttpUrl(competitorUrl)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
+      return true;
+    }
+    const [rival, mine] = await Promise.all([
+      readRival(competitorUrl.trim()),
+      resolveOwnPrice(
+        { storeId, externalId, ownUrl: isHttpUrl(myUrl) ? myUrl.trim() : null, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
+        { getStore: (id) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [id, tenantId], { tenantId }) }
+      )
+    ]);
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, rival, mine, warning: scaleWarning(rival.price, mine.price) }));
+    return true;
+  }
+
   if (pathPart === '/api/4see/monitors' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const { productName, competitorUrl, competitorName, myPrice } = data || {};
-    if (!productName || !competitorUrl) {
+    const { productName, competitorUrl, competitorName, myPrice, myUrl, storeId, externalId, myPriceLocked, allowUnreadable } = data || {};
+    if (!productName || !isHttpUrl(competitorUrl)) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Nombre de producto y URL son obligatorios.' }));
+      res.end(JSON.stringify({ success: false, error: 'Escribí el nombre de tu producto y pegá el link completo del producto del rival.' }));
       return true;
     }
 
     const id = crypto.randomUUID();
-    const extracted = await extractProductData(competitorUrl);
+    const ownUrl = isHttpUrl(myUrl) ? myUrl.trim() : null;
+    // Se vuelve a leer en el servidor: no se confia en lo que muestra el navegador
+    const [rival, mine] = await Promise.all([
+      readRival(competitorUrl.trim()),
+      resolveOwnPrice(
+        { storeId, externalId, ownUrl, manualPrice: myPrice, manualLocked: Boolean(myPriceLocked) },
+        { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, tenantId], { tenantId }) }
+      )
+    ]);
+
+    if (!rival.ok && !allowUnreadable) {
+      res.writeHead(422, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'RIVAL_UNREADABLE', error: rival.message, rival }));
+      return true;
+    }
 
     await execute(
-      `INSERT INTO fourseee_competitor_monitors 
-       (id, tenant_id, product_name, competitor_url, competitor_name, my_price, competitor_price, competitor_stock, last_checked_at, extraction_method)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
+      `INSERT INTO fourseee_competitor_monitors
+       (id, tenant_id, product_name, competitor_url, competitor_name, my_price, competitor_price, competitor_stock, last_checked_at, extraction_method,
+        my_store_id, my_external_id, my_url, my_price_source, my_price_locked, my_price_checked_at, competitor_read_error)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?)`,
       [
-        id, 
-        tenantId, 
-        productName.trim(), 
-        competitorUrl.trim(), 
-        competitorName ? competitorName.trim() : (extracted.store || 'Competidor'),
-        parseFloat(myPrice) || 0,
-        extracted.price || 0,
-        extracted.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK',
-        extracted.method || 'STRUCTURED_DATA'
+        id,
+        tenantId,
+        productName.trim(),
+        competitorUrl.trim(),
+        competitorName ? competitorName.trim() : (rival.store || 'Rival'),
+        mine.ok ? mine.price : null,
+        rival.ok ? rival.price : null,
+        rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
+        rival.method || 'NONE',
+        storeId && externalId ? storeId : null,
+        storeId && externalId ? String(externalId) : null,
+        ownUrl,
+        mine.ok ? mine.source : null,
+        Boolean(myPriceLocked),
+        rival.ok ? null : rival.reason
       ],
       { tenantId }
     );
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, id, extracted }));
+    res.end(JSON.stringify({ success: true, id, rival, mine }));
     return true;
   }
 
@@ -149,21 +249,49 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
 
     if (!monitor) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'Monitor no encontrado.' }));
+      res.end(JSON.stringify({ success: false, error: 'No encontramos este rival.' }));
       return true;
     }
 
-    const extracted = await extractProductData(monitor.competitor_url);
+    const [rival, mine] = await Promise.all([
+      readRival(monitor.competitor_url),
+      resolveOwnPrice(
+        {
+          storeId: monitor.my_store_id, externalId: monitor.my_external_id, ownUrl: monitor.my_url,
+          manualPrice: monitor.my_price, manualLocked: monitor.my_price_locked
+        },
+        { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, monitor.tenant_id], { tenantId: monitor.tenant_id }) }
+      )
+    ]);
+
+    // Si no se pudo leer, se conserva el ultimo dato conocido y se avisa; nunca se pisa con un 0 inventado
     await execute(
-      `UPDATE fourseee_competitor_monitors 
-       SET competitor_price = ?, competitor_stock = ?, last_checked_at = CURRENT_TIMESTAMP, extraction_method = ?
+      `UPDATE fourseee_competitor_monitors
+       SET competitor_price = COALESCE(?, competitor_price),
+           competitor_stock = CASE WHEN ? THEN ? ELSE competitor_stock END,
+           competitor_read_error = ?,
+           extraction_method = ?,
+           my_price = COALESCE(?, my_price),
+           my_price_source = COALESCE(?, my_price_source),
+           my_price_checked_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE my_price_checked_at END,
+           last_checked_at = CURRENT_TIMESTAMP
        WHERE id = ? AND tenant_id = ?`,
-      [extracted.price || 0, extracted.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK', extracted.method || 'STRUCTURED_DATA', monitor.id, monitor.tenant_id],
+      [
+        rival.ok ? rival.price : null,
+        rival.ok,
+        rival.ok && rival.inStock !== null ? (rival.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK') : null,
+        rival.ok ? null : rival.reason,
+        rival.method || 'NONE',
+        mine.ok ? mine.price : null,
+        mine.ok ? mine.source : null,
+        mine.ok,
+        monitor.id, monitor.tenant_id
+      ],
       { tenantId: monitor.tenant_id }
     );
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, monitorId: monitor.id, extracted }));
+    res.end(JSON.stringify({ success: true, monitorId: monitor.id, rival, mine, warning: scaleWarning(rival.price, mine.price) }));
     return true;
   }
 
@@ -694,7 +822,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       }
     }
 
-    const { sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, store_id } = data || {};
+    const {
+      sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, store_id,
+      store_external_id, own_url, price_locked
+    } = data || {};
     if (!sku || !title) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'SKU y Título son requeridos.' }));
@@ -706,15 +837,35 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     const opCosts = parseFloat(operating_costs) || 0;
     const marginPct = parseFloat(min_margin_percentage) || 0;
     const ceiling = max_price_ceiling ? parseFloat(max_price_ceiling) : null;
-    const curPrice = parseFloat(current_price) || 0;
-    const qty = parseInt(stock_quantity, 10) || 0;
-    const stockStatus = qty > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK';
+    const ownUrl = isHttpUrl(own_url) ? own_url.trim() : null;
+
+    // Tu precio: tienda conectada, luego tu link, y por ultimo lo que cargaste a mano
+    const mine = await resolveOwnPrice(
+      {
+        storeId: store_id || null, externalId: store_external_id || null, ownUrl,
+        manualPrice: current_price, manualLocked: Boolean(price_locked)
+      },
+      { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, tenantId], { tenantId }) }
+    );
+    if (!mine.ok) {
+      res.writeHead(422, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'OWN_PRICE_UNKNOWN', error: mine.reason }));
+      return true;
+    }
+
+    const curPrice = mine.price;
+    const qty = mine.stock !== undefined && mine.stock !== null ? parseInt(mine.stock, 10) : (parseInt(stock_quantity, 10) || 0);
+    const stockStatus = mine.inStock === false ? 'OUT_OF_STOCK' : (qty > 0 || mine.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK');
 
     await execute(
       `INSERT INTO fourseee_products
-       (id, tenant_id, store_id, sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, stock_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, tenantId, store_id || null, sku.trim(), title.trim(), cPrice, opCosts, marginPct, ceiling, curPrice, qty, stockStatus],
+       (id, tenant_id, store_id, sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, stock_status,
+        store_external_id, own_url, price_source, price_locked, price_checked_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+      [
+        id, tenantId, store_id || null, sku.trim(), title.trim(), cPrice, opCosts, marginPct, ceiling, curPrice, qty, stockStatus,
+        store_id && store_external_id ? String(store_external_id) : null, ownUrl, mine.source, Boolean(price_locked)
+      ],
       { tenantId }
     );
 
