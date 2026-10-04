@@ -1,7 +1,7 @@
 /**
  * Core/4see: el flujo de Productos no permite saltar pasos (public/flow.js). No requiere base de datos.
  */
-const { computeFlow } = require('../public/flow.js');
+const { computeFlow, rivalSummary, costBreakdown } = require('../public/flow.js');
 
 let failed = 0;
 const ok = (c, m) => { if (c) console.log(`  OK   ${m}`); else { failed++; console.error(`  FAIL ${m}`); } };
@@ -47,4 +47,23 @@ f = computeFlow([{ id: 'a', in_analysis: false, monitors: [{ id: 'm' }], costs_l
 ok(byN(f, 3).locked && byN(f, 4).locked, 'rival y costo de un producto fuera de análisis no desbloquean nada');
 
 console.log(failed ? `\n${failed} verificaciones fallaron` : '\nGates del flujo OK');
+console.log('Contexto de precios: rivales y costos');
+const rs = rivalSummary([
+  { competitor_name: 'A', competitor_price: '185240.00', competitor_stock: 'IN_STOCK' },
+  { competitor_name: 'B', competitor_price: '175000.00', competitor_stock: 'OUT_OF_STOCK' },
+  { competitor_name: 'C', competitor_price: null, competitor_stock: null },
+  { competitor_name: 'D', competitor_price: '180000.00', competitor_stock: null }
+]);
+ok(rs.pricedCount === 3, 'cuenta solo los rivales con precio');
+ok(rs.cheapestInStock && rs.cheapestInStock.name === 'D', 'el mas barato con stock ignora al que se quedo sin stock');
+ok(rs.cheapest && rs.cheapest.name === 'B', 'el mas barato a secas es B');
+ok(rivalSummary([]).cheapestInStock === null && rivalSummary(undefined).pricedCount === 0, 'sin rivales no inventa un precio');
+let cb = costBreakdown({ price: 1000, cost: 600, operating: 100, marginPct: 20, ceiling: null });
+ok(cb.ready && cb.totalCost === 700 && cb.floor === 820, 'piso = costo x (1 + margen) + operativos');
+ok(cb.marginMoney === 300 && cb.marginPercent === 30 && !cb.priceBelowFloor, 'margen de hoy sobre tu precio');
+cb = costBreakdown({ price: 800, cost: 600, operating: 100, marginPct: 20, ceiling: 700 });
+ok(cb.priceBelowFloor && cb.ceilingBelowFloor, 'avisa si tu precio queda bajo el piso y si el tope es menor que el piso');
+ok(costBreakdown({ price: 1000, cost: '', operating: 5 }).ready === false, 'sin costo no calcula nada');
+ok(costBreakdown({ price: null, cost: 100 }).marginPercent === null, 'sin precio no inventa el margen');
+
 process.exit(failed ? 1 : 0);

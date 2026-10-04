@@ -50,7 +50,53 @@
     return { summary: s, steps, suggestedStep: firstOpen ? firstOpen.n : STEPS.length };
   }
 
-  const api = { STEPS, computeFlow, summarize };
+  const round2 = (v) => Math.round(v * 100) / 100;
+  const num = (v) => (v === null || v === undefined || v === '' ? null : (Number.isFinite(Number(v)) ? Number(v) : null));
+
+  // Los rivales de un producto: cuales tienen precio y cual es el mas barato con stock
+  function rivalSummary(monitors) {
+    const list = (Array.isArray(monitors) ? monitors : []).map((m) => ({
+      name: m.competitor_name || m.name || 'Rival',
+      price: num(m.competitor_price),
+      inStock: m.competitor_stock === 'OUT_OF_STOCK' ? false : (m.competitor_stock === 'IN_STOCK' ? true : null)
+    }));
+    const priced = list.filter((r) => r.price !== null && r.price > 0);
+    const inStock = priced.filter((r) => r.inStock !== false);
+    const byPrice = (a, b) => a.price - b.price;
+    return {
+      rivals: list,
+      pricedCount: priced.length,
+      cheapestInStock: inStock.length ? inStock.slice().sort(byPrice)[0] : null,
+      cheapest: priced.length ? priced.slice().sort(byPrice)[0] : null
+    };
+  }
+
+  // Lo que resulta de los costos cargados, con la misma formula del piso que usa la base:
+  // piso = costo * (1 + margen minimo / 100) + costos operativos
+  function costBreakdown({ price, cost, operating, marginPct, ceiling }) {
+    const p = num(price);
+    const c = num(cost);
+    const op = num(operating) || 0;
+    const m = num(marginPct) || 0;
+    const top = num(ceiling);
+    if (c === null || c <= 0) return { ready: false, price: p };
+    const totalCost = round2(c + op);
+    const floor = round2(c * (1 + m / 100) + op);
+    const hasPrice = p !== null && p > 0;
+    return {
+      ready: true,
+      price: p,
+      totalCost,
+      floor,
+      marginMoney: hasPrice ? round2(p - totalCost) : null,
+      marginPercent: hasPrice ? round2(((p - totalCost) / p) * 100) : null,
+      priceBelowFloor: hasPrice ? p < floor : false,
+      ceilingBelowFloor: top !== null && top > 0 && top < floor,
+      ceiling: top
+    };
+  }
+
+  const api = { STEPS, computeFlow, summarize, rivalSummary, costBreakdown };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.HSFlow = api;
 })(typeof window !== 'undefined' ? window : globalThis);

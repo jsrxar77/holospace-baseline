@@ -1522,7 +1522,7 @@
 
   <!-- PASO 4 DEL FLUJO: costos y margen de un producto en analisis -->
   <div id="costsModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 480px;">
+    <div class="modal-content" style="max-width: 560px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar costos</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCostsModal()">×</button>
@@ -1533,22 +1533,24 @@
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Producto</label>
           <p id="costsProductName" style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0;"></p>
         </div>
+        <section id="costsContext" class="cost-context" aria-label="Tu precio y el de tus rivales"></section>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costo del producto</label>
-          <input type="text" inputmode="decimal" id="costsCostPrice" class="input-field js-money" required>
+          <input type="text" inputmode="decimal" id="costsCostPrice" class="input-field js-money" oninput="updateCostsLive()" required>
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costos operativos (envío, comisiones, empaque)</label>
-          <input type="text" inputmode="decimal" id="costsOperating" class="input-field js-money" placeholder="0">
+          <input type="text" inputmode="decimal" id="costsOperating" class="input-field js-money" oninput="updateCostsLive()" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Margen mínimo (%)</label>
-          <input type="text" inputmode="decimal" id="costsMargin" class="input-field js-money" placeholder="0">
+          <input type="text" inputmode="decimal" id="costsMargin" class="input-field js-money" oninput="updateCostsLive()" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Precio tope (opcional)</label>
-          <input type="text" inputmode="decimal" id="costsCeiling" class="input-field js-money" placeholder="Sin tope">
+          <input type="text" inputmode="decimal" id="costsCeiling" class="input-field js-money" oninput="updateCostsLive()" placeholder="Sin tope">
         </div>
+        <section id="costsLive" class="cost-live" aria-live="polite"></section>
         <div id="costsError" style="color: var(--red); font-size: 13px; display: none;"></div>
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
           <button type="button" class="btn-secondary" onclick="closeCostsModal()">Cancelar</button>
@@ -2246,6 +2248,7 @@
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateProductModal()">×</button>
       </div>
       <p class="flow-hint" id="intakeModalHint">Cada producto se carga una sola vez. Elegí cómo.</p>
+      <section id="intakeContext" class="cost-context" aria-label="Tu precio y el de tus rivales"></section>
       <div class="flow-views" role="tablist" aria-label="Cómo cargarlo">
         <button type="button" role="tab" id="intakeTabLink" class="active" aria-selected="true" onclick="setIntakeMode('link')">Pegar un link</button>
         <button type="button" role="tab" id="intakeTabStore" aria-selected="false" onclick="setIntakeMode('store')">Traer de mi tienda</button>

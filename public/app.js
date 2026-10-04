@@ -3603,17 +3603,22 @@ function renderCostsStep() {
     costsTable = null;
     return;
   }
-  const money = (v) => (v == null ? '<span style="color: var(--text-muted);">Sin cargar</span>' : HSFormat.moneyHtml(v));
+  const money = (v) => (v == null ? '<span style="color: var(--text-muted); white-space: nowrap;">Sin cargar</span>' : HSFormat.moneyHtml(v));
   if (!costsTable || !container.querySelector('.hs-table-wrap')) {
     costsTable = HSTable.mount({
       id: '4see_costos',
       container,
       columns: [
         { key: 'title', label: 'Producto', filter: 'text', render: (p) => `<strong style="color: var(--text-main);">${escHtml(p.title)}</strong>` },
+        { key: 'price', label: 'Tu precio', filter: 'none', align: 'right', render: (p) => (p.price != null ? HSFormat.moneyHtml(p.price) : '<span style="color: var(--text-muted);">Sin precio</span>') },
+        { key: 'rival_cheapest', label: 'Rival más barato', filter: 'none', align: 'right', render: (p) => { const c = HSFlow.rivalSummary(p.monitors).cheapestInStock; return c ? HSFormat.moneyHtml(c.price) : '<span style="color: var(--text-muted);">Sin dato</span>'; } },
         { key: 'cost_price', label: 'Costo', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.cost_price : null) },
-        { key: 'operating_costs', label: 'Costos operativos', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.operating_costs : null) },
-        { key: 'min_margin_percentage', label: 'Margen mínimo', filter: 'none', align: 'right', render: (p) => (p.costs_loaded ? `${Number(p.min_margin_percentage).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %` : '<span style="color: var(--text-muted);">Sin cargar</span>') },
-        { key: 'max_price_ceiling', label: 'Precio tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted); white-space: nowrap;">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
+        { key: 'margin_now', label: 'Margen hoy', filter: 'none', align: 'right', render: (p) => {
+          if (!p.costs_loaded) return '<span style="color: var(--text-muted);">Sin cargar</span>';
+          const b = HSFlow.costBreakdown({ price: p.price, cost: p.cost_price, operating: p.operating_costs, marginPct: p.min_margin_percentage, ceiling: p.max_price_ceiling });
+          if (b.marginPercent === null) return '<span style="color: var(--text-muted);">Sin precio</span>';
+          return `${b.marginPercent.toLocaleString('es-AR', { maximumFractionDigits: 1 })} %` + (b.priceBelowFloor ? ' <span class="hs-badge is-warn">Bajo el piso</span>' : '');
+        } },
         { key: 'min_price_floor', label: 'Piso de margen', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.min_price_floor : null) },
         { key: 'costs_loaded', label: 'Estado', filter: 'enum', options: [{ value: 'Cargado', label: 'Cargado' }, { value: 'Falta el costo', label: 'Falta el costo' }], filterValue: (p) => (p.costs_loaded ? 'Cargado' : 'Falta el costo'), render: (p) => (p.costs_loaded ? '<span class="hs-badge is-ok">Cargado</span>' : '<span class="hs-badge is-warn">Falta el costo</span>') }
       ],
@@ -3802,9 +3807,85 @@ function openCostsModal(productId) {
   document.getElementById('costsOperating').value = p.costs_loaded ? fmt(p.operating_costs) : '';
   document.getElementById('costsMargin').value = p.costs_loaded ? fmt(p.min_margin_percentage) : '';
   document.getElementById('costsCeiling').value = fmt(p.max_price_ceiling);
+  renderCostsContext(p);
+  updateCostsLive();
   document.getElementById('costsModal').classList.remove('hidden');
 }
 window.openCostsModal = openCostsModal;
+
+function costRow(label, value, cls) {
+  const row = document.createElement('div');
+  row.className = 'cost-row' + (cls ? ' ' + cls : '');
+  const a = document.createElement('span');
+  a.textContent = label;
+  const b = document.createElement('span');
+  b.textContent = value;
+  row.append(a, b);
+  return row;
+}
+function costNote(tag, text, cls) {
+  const el = document.createElement(tag);
+  el.className = cls;
+  el.textContent = text;
+  return el;
+}
+const PRICE_SOURCE_TEXT = { LINK: 'de tu link', STORE: 'de tu tienda', MANUAL: 'cargado a mano' };
+
+// Arriba del formulario: tu precio y el de cada rival, para decidir con la referencia a la vista
+function renderCostsContext(p, boxId = 'costsContext') {
+  const box = document.getElementById(boxId);
+  box.replaceChildren(costNote('p', 'Tu precio y el de tus rivales', 'cost-title'));
+  const source = PRICE_SOURCE_TEXT[p.price_source] ? ' (' + PRICE_SOURCE_TEXT[p.price_source] + ')' : '';
+  box.appendChild(costRow('Tu precio hoy' + source, p.price != null ? HSFormat.money(p.price) : 'Sin precio'));
+  const rs = HSFlow.rivalSummary(p.monitors);
+  if (!rs.rivals.length) {
+    box.appendChild(costNote('p', 'Todavía no sumaste rivales a este producto. Sumalos en el paso Análisis para ver contra quién competís.', 'cost-sub'));
+    return;
+  }
+  rs.rivals.forEach((r) => {
+    const stock = r.inStock === false ? ' · sin stock' : (r.inStock === true ? ' · con stock' : '');
+    const best = rs.cheapestInStock && r === rs.cheapestInStock;
+    box.appendChild(costRow(r.name + stock, r.price != null ? HSFormat.money(r.price) : 'Sin precio leído', best ? 'is-best' : ''));
+  });
+  if (rs.cheapestInStock && p.price > 0) {
+    const diff = ((Number(p.price) - rs.cheapestInStock.price) / rs.cheapestInStock.price) * 100;
+    const pct = Math.abs(diff).toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    const text = Math.abs(diff) < 0.05
+      ? 'Estás igual que el rival más barato con stock (' + rs.cheapestInStock.name + ').'
+      : 'Estás ' + pct + ' % ' + (diff > 0 ? 'por encima' : 'por debajo') + ' del rival más barato con stock (' + rs.cheapestInStock.name + ').';
+    box.appendChild(costNote('p', text, 'cost-sub'));
+  } else if (!rs.cheapestInStock) {
+    box.appendChild(costNote('p', 'Ningún rival tiene precio y stock leídos todavía.', 'cost-sub'));
+  }
+}
+
+// Mientras escribís: cuánto te cuesta, cuánto ganás con tu precio de hoy y cuál es el precio mínimo
+function updateCostsLive() {
+  const box = document.getElementById('costsLive');
+  const p = flowProducts.find((x) => x.id === costsEditingId);
+  if (!p) { box.replaceChildren(); return; }
+  const b = HSFlow.costBreakdown({
+    price: p.price,
+    cost: HSFields.readMoney(document.getElementById('costsCostPrice')),
+    operating: HSFields.readMoney(document.getElementById('costsOperating')),
+    marginPct: HSFields.readMoney(document.getElementById('costsMargin')),
+    ceiling: HSFields.readMoney(document.getElementById('costsCeiling'))
+  });
+  box.replaceChildren(costNote('p', 'Con lo que cargás', 'cost-title'));
+  if (!b.ready) {
+    box.appendChild(costNote('p', 'Cargá el costo del producto y te mostramos cuánto ganás y cuál es tu piso de margen.', 'cost-sub'));
+    return;
+  }
+  box.appendChild(costRow('Te cuesta venderlo', HSFormat.money(b.totalCost)));
+  if (b.marginMoney !== null) {
+    const pct = b.marginPercent.toLocaleString('es-AR', { maximumFractionDigits: 1 });
+    box.appendChild(costRow(b.marginMoney >= 0 ? 'Con tu precio de hoy ganás' : 'Con tu precio de hoy perdés', HSFormat.money(Math.abs(b.marginMoney)) + ' (' + pct + ' %)'));
+  }
+  box.appendChild(costRow('Tu piso de margen (el precio mínimo)', HSFormat.money(b.floor)));
+  if (b.priceBelowFloor) box.appendChild(costNote('p', 'Tu precio de hoy está por debajo de tu piso de margen: con él ganás menos de lo que querés. Podés guardar igual: nunca te vamos a sugerir un precio por debajo del piso.', 'cost-warn'));
+  if (b.ceilingBelowFloor) box.appendChild(costNote('p', 'Tu precio tope es menor que tu piso de margen: no vamos a poder proponerte un precio que cumpla las dos cosas. Revisá el tope.', 'cost-warn'));
+}
+window.updateCostsLive = updateCostsLive;
 
 function closeCostsModal() {
   document.getElementById('costsModal').classList.add('hidden');
@@ -5793,6 +5874,7 @@ function openEditCatalogItem(productId) {
   intake.edit = { id: p.id };
   const mode = p.own_url ? 'link' : (p.store_id && p.external_id ? 'store' : 'manual');
   setIntakeTexts();
+  renderCostsContext(p, 'intakeContext');
   modal.classList.remove('hidden');
   setIntakeMode(mode);
   intakeEl('intakeTitle').value = p.title || '';
@@ -5827,6 +5909,7 @@ function openCreateProductModal() {
   intakeEl('createProductForm').reset();
   intake.edit = null;
   setIntakeTexts();
+  intakeEl('intakeContext').replaceChildren();
   intake.url = '';
   modal.classList.remove('hidden');
   setIntakeMode('link');
