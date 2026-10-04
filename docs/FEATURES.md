@@ -187,14 +187,18 @@ Todas las listas son tablas. Cada fila se edita y se quita desde la misma pantal
 - **Análisis (paso 2):** los filtros de la tabla no se guardan: cada vez que entrás, la tabla arranca sin filtros. Si un filtro oculta todo, el vacío dice cuál es y ofrece "Quitar filtros". Quitar un producto del análisis saca también su sugerencia pendiente, y el paso 4 cuenta solo sugerencias de productos en análisis. **Analizar** saca o pone el producto en análisis. Quitarlo del análisis no borra nada del catálogo: los rivales y los costos quedan guardados.
 - **Costos (paso 3):** una fila por producto en análisis, con costo, costos operativos, margen mínimo, tope y piso. **Editar costos** abre el formulario de ese producto. Cambiar un costo recalcula al instante la sugerencia pendiente de ese producto; no queda un precio viejo. No se puede borrar un costo: si está mal, se corrige.
 
-### Alta de producto desde un link (en construccion, ROADMAP Fase 21 etapa 4)
+### Alta de producto (paso 1)
 
-- Se pega el link del producto. El sistema lo lee y completa **nombre, precio, stock y SKU** si la pagina los trae, y **muestra lo leido antes de guardar**.
-- **SKU:** primero el de la pagina. Si no hay, el campo queda vacio; al guardar, el sistema genera uno y avisa cual puso.
-- **Si el link no se puede leer** (sitio que bloquea, pagina sin datos), se avisa el motivo y la unica forma es **cargar a mano**. No se guarda nada a partir de un link que no se pudo leer.
-- **Carga a mano:** camino completo; nombre y precio obligatorios.
-- **Costos, margen y precio maximo no se piden en el alta**: se cargan en el paso Costos.
-- **Mercado Libre:** hoy no se puede leer; se informa y se ofrece cargar a mano.
+Se abre con **Agregar un producto** y se elige como cargarlo. Los tres caminos estan al mismo nivel y no se mezclan:
+
+- **Pegar un link:** se pega el link de tu producto y se aprieta **Leer link**. El sistema completa nombre, codigo (SKU) y precio, y **muestra lo leido antes de guardar**. El precio no se escribe: es el de la pagina. Si ese link ya esta cargado, avisa y no deja guardarlo de nuevo.
+- **Traer de mi tienda:** se elige una tienda conectada y el producto de esa tienda; nombre, codigo y precio salen de ahi.
+- **Cargar a mano:** nombre y precio obligatorios, codigo opcional.
+- **SKU:** primero el de la fuente. Si no hay, el campo queda vacio; al guardar se genera uno (`HS-XXXXXX`) y se avisa cual fue. Se puede cambiar despues con Editar.
+- **Si el link o la tienda no se pueden leer** (el sitio pide iniciar sesion o bloquea el acceso, la pagina no trae el producto), se explica el motivo y **la unica forma es cargar a mano** (boton en el aviso). No se guarda nada a partir de una lectura fallida.
+- **Mercado Libre** hoy se informa como bloqueado: pide iniciar sesion (ver DEBT D-066).
+- **Costos, margen y precio maximo no se piden en el alta**: se cargan en el paso Costos. El producto entra al catalogo sin analisis y sin costos.
+- El **stock** se muestra como "Con stock", "Sin stock" o "La fuente no informa el stock"; no se supone.
 
 ### Qué es automático y qué no
 

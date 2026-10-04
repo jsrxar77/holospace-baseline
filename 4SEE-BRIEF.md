@@ -18,11 +18,16 @@ El flujo tiene cuatro pasos y cada uno desbloquea el siguiente. La pantalla **Pr
 
 **Para qué:** tener los productos que vendés, una sola vez.
 
-**Qué pide o suma:**
-- Título del producto (obligatorio).
-- Código (SKU) (obligatorio, único dentro de tu cuenta).
-- Tu precio (obligatorio, salvo que venga de tu tienda conectada o de tu link de producto). Si no hay ninguna fuente, la carga se rechaza: no se inventa un precio.
-- Tienda y link propio (opcionales). Si los cargás, el precio se lee de ahí.
+**Cómo se carga (tres caminos, al mismo nivel):**
+- **Pegar un link** de tu producto: leemos el nombre, el precio y el código por vos y te lo mostramos antes de guardar.
+- **Traer de tu tienda conectada**: elegís el producto y salen de ahí los datos.
+- **Cargar a mano**: nombre y precio (el código es opcional).
+
+**Reglas:**
+- El código (SKU) sale de la fuente; si no lo hay, lo generamos al guardar y te avisamos cuál es.
+- Si un link no se puede leer (por ejemplo Mercado Libre, que pide iniciar sesión), te lo decimos y la única forma es cargarlo a mano. Nunca se guarda un producto a medias.
+- No se piden costos ni margen acá: van en el paso 3.
+- El mismo link no se carga dos veces.
 
 **Qué aporta:** es la base de todo. Sin productos no hay nada que comparar.
 

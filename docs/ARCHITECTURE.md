@@ -511,7 +511,7 @@ Un modulo de lectores propio, local y extensible, que lea de una URL de producto
 4. Actor de navegador (etapa 5, apagado por defecto).
 5. Si nada funciona: motivo claro. La pantalla ya sabe mostrarlo y ofrece cargar a mano.
 
-Motivos de fallo: se agrega **BLOQUEADO_POR_EL_SITIO** (muro de inicio de sesion, captcha, 403 o 429), distinto de NOT_FOUND_IN_PAGE.
+Motivos de fallo: **BLOCKED_BY_SITE** (muro de inicio de sesion, captcha, 403, 401 o 429), distinto de NOT_FOUND_IN_PAGE, y **URL_NOT_ALLOWED** (direccion interna o privada).
 
 ### 17.5 Cola de lecturas (ideas de Crawlee)
 Lecturas en segundo plano con cola, reintentos con espera, **maximo de pedidos simultaneos por dominio** y sesiones por dominio, para leer hasta 1.155 rivales por pasada (peor caso del plan Enterprise: 55 productos por 21 rivales) sin bloquear la pantalla ni al sitio rival. La pantalla muestra "leyendo" hasta que termina.
@@ -527,8 +527,19 @@ Lecturas en segundo plano con cola, reintentos con espera, **maximo de pedidos s
 **No verificado:** como se comporta cada sitio desde la IP del servidor de produccion (puede bloquear distinto que una red domestica); el peso real de Crawlee y de Chromium en la imagen `node:22-alpine`; si un navegador logra pasar el muro de Mercado Libre.
 
 ### 17.7 Decisiones tomadas
-1. **Mercado Libre por navegador** (actor de la etapa 5). Riesgo: puede toparse con el mismo muro. Si pasa, se vuelve a decidir (API oficial con aplicacion de desarrollador, credenciales en `.env`, o carga manual). Mientras tanto responde BLOQUEADO_POR_EL_SITIO y se ofrece cargar a mano.
+1. **Mercado Libre por navegador** (actor de la etapa 5). Riesgo: puede toparse con el mismo muro. Si pasa, se vuelve a decidir (API oficial con aplicacion de desarrollador, credenciales en `.env`, o carga manual). Mientras tanto responde BLOCKED_BY_SITE y se ofrece cargar a mano.
 2. **Crawlee como dependencia desde el principio** (instalada dentro de la imagen de Docker; nunca npm en el host).
 3. **Navegador en segunda etapa**, como actor mas, apagado por defecto y con tope de lecturas simultaneas, despues de medir el peso en Docker.
 4. **SKU:** primero se lee de la pagina; si no esta, el campo queda vacio; al guardar, si sigue vacio, el sistema genera uno y avisa cual puso.
 5. **Alta de producto:** se pega el link y se completan los datos leidos. Si el link no se puede leer, se avisa el motivo y la unica salida es **cargar a mano** (camino completo y valido, no un estado defectuoso). **Nunca se guarda un producto a medias.**
+
+### 17.8 Estado de la implementacion (2026-10-04)
+**Orden de trabajo ajustado:** el alta de producto (etapa 4) se adelanto a las etapas 1 a 3 porque era lo que bloqueaba el uso real. Usa el lector actual, que ya lee los links de WooCommerce y Tienda Nube. La infraestructura de actores y de Crawlee sigue pendiente (ROADMAP, Fase 21).
+
+**Hecho:**
+- El lector devuelve ademas **nombre limpio** (decodifica entidades como `&#8211;`), **SKU**, **codigo de barras** e **imagen** cuando la pagina los trae.
+- **Deteccion de bloqueo:** HTTP 401, 403 o 429, muro de inicio de sesion y desafios anti-robots se informan como BLOCKED_BY_SITE, no como "no encontrado".
+- **Proteccion contra direcciones internas** (`modules/4see/lib/url_guard.js`): el servidor solo abre http y https hacia direcciones publicas, y lo revisa en cada redireccion (localhost, redes privadas, metadatos de la nube y las formas raras de escribir IPv6). Sin esto, quien pega un link podia apuntar al servidor a la base de datos o a otros contenedores. El permiso de pruebas (`HS_ALLOW_PRIVATE_FETCH`) se ignora en produccion.
+- **Alta de producto con tres caminos que no se mezclan** (link, tienda conectada, a mano). `POST /api/4see/products/read` lee un link sin guardar nada y avisa si ya esta cargado; `POST /api/4see/products` guarda. Si el link o la tienda no se pueden leer, responde 422 `READ_FAILED` con `manualOnly` y no guarda nada (no cae en silencio a un precio escrito). SKU: el de la pagina; si falta se genera `HS-XXXXXX` y la respuesta lo marca como generado.
+
+**Evidencia:** los resultados contra paginas reales (WooCommerce, Tienda Nube, muro de Mercado Libre) quedaron como pruebas permanentes en `tests/fixtures/`, y el alta completa se recorrio en un navegador aislado con una sesion de prueba.

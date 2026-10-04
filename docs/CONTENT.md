@@ -206,4 +206,5 @@ Todo boton tiene color. Nunca un boton gris.
 - **Gris:** solo fondos, bordes y texto. Nunca un boton.
 - **Insignias** (no son botones): verde = hecho o activo, ambar = falta algo, sin color = dato o tipo. Nunca con relleno de boton.
 - **Vocabulario fijo:** Editar, Quitar, Analizar / Quitar del analisis, Revisar precio, Aplicar, Guardar. Un verbo por accion en todos los modulos.
+- **Alta de producto:** Agregar un producto, Pegar un link, Leer link, Traer de mi tienda, Cargar a mano, Conectar mi tienda, Guardar producto. Un boton deshabilitado se ve apagado (opacidad reducida), nunca igual que uno activo.
 - **Fechas:** dd/mm/aaaa hh:mm. **Montos:** $ 165.200,00.

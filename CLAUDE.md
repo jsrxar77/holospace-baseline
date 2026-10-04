@@ -31,6 +31,11 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 ## Vision holistica (regla de oro)
 Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toca; revisar cada uno de punta a punta como lo usa la persona (no solo la parte pedida); si un paso queda sin editar, borrar o verificar, el cambio no esta terminado.
 
+## Datos y fuentes (obligatorio)
+- Si el sistema puede obtener un dato solo (leyendo un link o la tienda), no se le pide a la persona: se muestra lo leido antes de guardar.
+- Una fuente que falla nunca cae en silencio a otra: se informa el motivo y se ofrece cargar a mano. Nunca se guarda a medias.
+- Todo pedido a una direccion que escribe un usuario pasa por la proteccion contra direcciones internas (modules/4see/lib/url_guard.js).
+
 ## Estado y filtros (obligatorio)
 Los filtros de estado de negocio no se guardan entre visitas. Un filtro que oculta todo muestra cual es y ofrece quitarlo. Toda accion que cambia la pertenencia de un dato (analisis, catalogo, costos) recalcula lo que depende de ese dato en el mismo paso, y la prueba lo verifica.
 
@@ -50,7 +55,8 @@ Antes de decir que algo está terminado o publicado:
 2. Un commit por cambio lógico, con mensaje en español y el trailer de Co-Authored-By.
 3. Push a `main` solo si el usuario lo pidió o es parte del plan aprobado. Después del push, se verifica en producción.
 4. "Listo en producción" solo si se verificó lo que ve el usuario (pantalla o respuesta real), no solo un archivo. Si no se pudo verificar, se dice explícitamente qué falta y quién lo puede hacer.
-5. Al cerrar, un resumen de 3 líneas: qué cambió, qué está en producción y qué queda pendiente.
+5. Un cambio de pantalla se verifica con un recorrido real en un navegador aislado, con sesión de prueba y capturas, además de las pruebas: así aparecieron un botón deshabilitado que parecía activo y una carrera de carga que dejaba el catálogo vacío.
+6. Al cerrar, un resumen de 3 líneas: qué cambió, qué está en producción y qué queda pendiente.
 
 ## Agilidad (obligatorio)
 - Un cambio chico se cierra en minutos: editar, `node --check`, correr solo la suite afectada, y recien despues la suite completa una sola vez.

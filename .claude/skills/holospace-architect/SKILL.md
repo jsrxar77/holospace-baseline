@@ -52,6 +52,13 @@ Origen: 2026-10-03, Competencia tenia su propia lista de productos, separada del
 3. 'Publicado' solo si se verifico lo que ve el usuario (pantalla o respuesta real). Si no, decir que falta y quien lo puede hacer.
 4. Cerrar con 3 lineas: que cambio, que esta en produccion, que queda pendiente.
 
+## Datos y fuentes (regla obligatoria)
+Origen: 2026-10-04, el alta de producto pedia a mano nombre, codigo y precio aunque se pegara un link que el sistema ya sabia leer, y caia en silencio a un precio escrito si el link fallaba. Antes de cerrar un alta o una carga:
+1. Lo que el sistema puede obtener solo no se pide; se muestra lo leido antes de guardar.
+2. Si la fuente falla se informa el motivo y se ofrece cargar a mano; nunca se guarda a medias ni se cae en silencio a otra fuente.
+3. Todo pedido saliente a una direccion escrita por un usuario pasa por url_guard.
+4. Se recorre en un navegador aislado con sesion de prueba, no solo con pruebas.
+
 ## Textos de producto
 Toda pantalla, modal, mensaje o error visible sigue la skill `holospace-copy` (contrato titulo + bajada, glosario, voz rioplatense) y `docs/CONTENT.md` 0.2. Antes de dar un cambio por terminado: `node tests/test-copy.js` (dentro de Docker: `docker compose exec app node tests/test-copy.js`).
 

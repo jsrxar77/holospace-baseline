@@ -200,11 +200,13 @@
 - [ ] Series de tiempo (precio propio y de rivales, margen) cuando exista historico de precios (D-043).
 
 ### FASE 21: Lectores de paginas (actores) para 4see
+Orden real: la etapa 4 se hizo primero con el lector actual; faltan las etapas 1, 3, 5 y 6 y el resto de la 2.
 Diseno y evidencia en docs/ARCHITECTURE.md seccion 17.
 - [x] **Etapa 0:** investigacion (WooCommerce, Tienda Nube, Shopify, Mercado Libre, Crawlee, modelo de actores de Apify) y decisiones (2026-10-04).
 - [ ] **Etapa 1:** contrato de actor + registro; el lector actual pasa a ser un actor (sin cambiar su comportamiento); Crawlee en la imagen de Docker; cola con maximo por dominio y reintentos.
-- [ ] **Etapa 2:** salida ampliada (SKU, codigo de barras, imagen, stock con cantidad) y motivo BLOQUEADO_POR_EL_SITIO.
+- [x] **Etapa 2 (parcial):** SKU, codigo de barras e imagen en la lectura, y motivo BLOCKED_BY_SITE (hechos junto con el alta).
+- [ ] **Etapa 2 (resto):** stock con cantidad.
 - [ ] **Etapa 3:** actores de WooCommerce (API), Shopify (`.js`) y Tienda Nube, cada uno con su pagina real de prueba en `tests/fixtures/`.
-- [ ] **Etapa 4:** alta de producto desde un link (completa lo leido, muestra antes de guardar, SKU generado y avisado; si no se puede leer, solo carga a mano).
+- [x] **Etapa 4 (adelantada, 2026-10-04):** alta de producto desde un link, una tienda o a mano; muestra lo leido antes de guardar, SKU generado y avisado, y si no se puede leer solo se carga a mano. Con proteccion contra direcciones internas.
 - [ ] **Etapa 5:** actor de navegador (Playwright via Crawlee), apagado por defecto; medir peso en Alpine; probar Mercado Libre y paginas con JavaScript (D-050).
 - [ ] **Etapa 6:** lectura programada de rivales por plan (D-057).
