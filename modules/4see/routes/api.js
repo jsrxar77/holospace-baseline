@@ -72,7 +72,7 @@ function getStoreForTenant(storeId, tid) {
 }
 
 // Columnas del producto del catalogo con los nombres que usa la pantalla de Competencia
-const WATCHED_COLUMNS = `id, tenant_id, store_id, title AS name, store_external_id AS external_id, own_url,
+const WATCHED_COLUMNS = `id, tenant_id, store_id, sku, title AS name, store_external_id AS external_id, own_url,
   current_price AS price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded,
   cost_price, operating_costs, min_margin_percentage, max_price_ceiling, min_price_floor, created_at, updated_at`;
 
@@ -1123,29 +1123,40 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     let sku = String(data?.sku || '').trim();
     if (!title) return reply(400, { success: false, code: 'TITLE_REQUIRED', error: 'El nombre del producto es obligatorio.' });
     if (sku.length > 100) return reply(400, { success: false, error: 'El código es demasiado largo.' });
-    const source = product.own_url ? 'LINK' : (product.store_id && product.store_external_id ? 'STORE' : 'MANUAL');
-    const newLink = isHttpUrl(data?.own_url) ? data.own_url.trim() : null;
+    // Mismas tres fuentes que el alta (link, tienda o a mano). Sin `mode` se mantiene la fuente actual.
+    const current = product.own_url ? 'link' : (product.store_id && product.store_external_id ? 'store' : 'manual');
+    const mode = ['link', 'store', 'manual'].includes(data?.mode) ? data.mode : current;
     let price = null;
     let priceSource = product.price_source;
-    let link = product.own_url;
-    if (source === 'MANUAL') {
-      price = parsePrice(data?.price);
+    let link = null;
+    let storeId = null;
+    let storeExternal = null;
+    if (mode === 'manual') {
+      price = parsePrice(data?.current_price ?? data?.price);
       if (!price) return reply(422, { success: false, code: 'OWN_PRICE_UNKNOWN', error: 'Cargá el precio de tu producto.' });
       priceSource = 'MANUAL';
-    } else if (source === 'LINK' && (data?.reread || (newLink && newLink !== product.own_url))) {
-      const target = newLink || product.own_url;
-      const reading = await readRival(target);
-      if (!reading.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: reading.reason, error: reading.message });
-      const same = await getOne('SELECT title FROM fourseee_products WHERE tenant_id = ? AND own_url = ? AND id <> ?', [tenantId, target, product.id], { tenantId });
-      if (same) return reply(409, { success: false, code: 'DUPLICATE_LINK', error: `Ya cargaste este link como "${same.title}".` });
-      price = reading.price;
-      priceSource = 'LINK';
+    } else if (mode === 'link') {
+      const target = isHttpUrl(data?.own_url) ? data.own_url.trim() : product.own_url;
+      if (!target) return reply(400, { success: false, code: 'LINK_REQUIRED', error: 'Pegá el link de tu producto.' });
       link = target;
-    } else if (source === 'STORE' && data?.reread) {
-      const mine = await resolveOwnPrice({ storeId: product.store_id, externalId: product.store_external_id }, { getStore: (sid) => getStoreForTenant(sid, tenantId) });
-      if (!mine.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: 'STORE_FAILED', error: mine.reason });
-      price = mine.price;
-      priceSource = mine.source;
+      if (current !== 'link' || target !== product.own_url || data?.reread) {
+        const reading = await readRival(target);
+        if (!reading.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: reading.reason, error: reading.message, manualOnly: true });
+        const same = await getOne('SELECT title FROM fourseee_products WHERE tenant_id = ? AND own_url = ? AND id <> ?', [tenantId, target, product.id], { tenantId });
+        if (same) return reply(409, { success: false, code: 'DUPLICATE_LINK', error: `Ya cargaste este link como "${same.title}".` });
+        price = reading.price;
+        priceSource = 'LINK';
+      }
+    } else {
+      storeId = data?.store_id || product.store_id;
+      storeExternal = String(data?.store_external_id || product.store_external_id || '');
+      if (!storeId || !storeExternal) return reply(400, { success: false, code: 'STORE_REQUIRED', error: 'Elegí tu producto en la tienda conectada.' });
+      if (current !== 'store' || storeId !== product.store_id || storeExternal !== String(product.store_external_id) || data?.reread) {
+        const mine = await resolveOwnPrice({ storeId, externalId: storeExternal }, { getStore: (sid) => getStoreForTenant(sid, tenantId) });
+        if (!mine.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: 'STORE_FAILED', error: mine.reason, manualOnly: true });
+        price = mine.price;
+        priceSource = mine.source;
+      }
     }
     const skuGenerated = !sku;
     let saved = false;
@@ -1154,11 +1165,11 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       try {
         await execute(
           `UPDATE fourseee_products
-           SET title = ?, sku = ?, own_url = ?, current_price = COALESCE(CAST(? AS NUMERIC), current_price), price_source = ?,
+           SET title = ?, sku = ?, own_url = ?, store_id = ?, store_external_id = ?, current_price = COALESCE(CAST(? AS NUMERIC), current_price), price_source = ?,
                price_checked_at = CASE WHEN CAST(? AS NUMERIC) IS NULL THEN price_checked_at ELSE CURRENT_TIMESTAMP END,
                updated_at = CURRENT_TIMESTAMP
            WHERE id = ? AND tenant_id = ?`,
-          [title, candidate, link, price, priceSource, price, product.id, tenantId],
+          [title, candidate, link, storeId, storeExternal, price, priceSource, price, product.id, tenantId],
           { tenantId }
         );
         sku = candidate;

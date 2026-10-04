@@ -1559,48 +1559,7 @@
   </div>
 
   <!-- PASO 2 DEL FLUJO: elegir productos del catalogo para analizar -->
-  <!-- CATALOGO: editar un producto -->
-  <div id="editCatalogModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 480px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar producto</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditCatalogItem()">×</button>
-      </div>
-      <form id="editCatalogForm" style="display: flex; flex-direction: column; gap: 12px;" onsubmit="saveEditCatalogItem(event)">
-        <input type="hidden" id="editCatalogId">
-        <div>
-          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Nombre</label>
-          <input type="text" id="editCatalogTitle" class="input-field" required maxlength="255">
-        </div>
-        <div>
-          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Código</label>
-          <input type="text" id="editCatalogSku" class="input-field" maxlength="100" placeholder="Si lo dejás vacío, lo generamos">
-        </div>
-        <div id="editCatalogLinkRow" class="hidden">
-          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Link de tu producto</label>
-          <input type="url" id="editCatalogLink" class="input-field" maxlength="2000">
-        </div>
-        <div id="editCatalogPriceRow">
-          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Tu precio</label>
-          <input type="text" id="editCatalogPrice" class="input-field js-money" placeholder="Ejemplo: 165.200,00">
-        </div>
-        <div id="editCatalogReadRow" class="hidden">
-          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Tu precio</label>
-          <p id="editCatalogReadText" style="font-size: 13px; color: var(--text-main); margin: 4px 0;"></p>
-          <label style="font-size: 12px; color: var(--text-muted); display: flex; gap: 8px; align-items: center;">
-            <input type="checkbox" id="editCatalogReread"> Volver a leer el precio al guardar
-          </label>
-        </div>
-        <div id="editCatalogError" style="color: var(--red); font-size: 13px; display: none;"></div>
-        <div style="display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" class="btn-secondary" onclick="closeEditCatalogItem()">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar cambios</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
+<!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
   <div id="createTenantModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
@@ -2283,10 +2242,10 @@
   <div id="createProductModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 560px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un producto</h3>
+        <h3 id="intakeModalTitle" style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un producto</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateProductModal()">×</button>
       </div>
-      <p class="flow-hint">Cada producto se carga una sola vez. Elegí cómo.</p>
+      <p class="flow-hint" id="intakeModalHint">Cada producto se carga una sola vez. Elegí cómo.</p>
       <div class="flow-views" role="tablist" aria-label="Cómo cargarlo">
         <button type="button" role="tab" id="intakeTabLink" class="active" aria-selected="true" onclick="setIntakeMode('link')">Pegar un link</button>
         <button type="button" role="tab" id="intakeTabStore" aria-selected="false" onclick="setIntakeMode('store')">Traer de mi tienda</button>
@@ -2297,7 +2256,7 @@
         <section id="intakePanelLink">
           <label class="form-label" for="intakeUrl">Link de tu producto</label>
           <div class="flow-actions" style="margin: 0 0 6px;">
-            <input type="url" id="intakeUrl" class="input-field" style="flex: 1; min-width: 200px;" placeholder="https://tutienda.com/producto/...">
+            <input type="url" id="intakeUrl" class="input-field" style="flex: 1; min-width: 200px;" placeholder="https://tutienda.com/producto/..." oninput="handleIntakeUrlInput()">
             <button type="button" class="btn-secondary" id="intakeReadBtn" onclick="readIntakeLink()">Leer link</button>
           </div>
           <p class="flow-hint" style="margin: 0;">Leemos el nombre, el precio y el código por vos.</p>

@@ -3626,74 +3626,6 @@ function renderCostsStep() {
   costsTable.update(analysed);
 }
 
-let catalogEditing = null;
-function openEditCatalogItem(productId) {
-  const p = flowProducts.find((x) => x.id === productId);
-  if (!p) return;
-  catalogEditing = p;
-  document.getElementById('editCatalogId').value = p.id;
-  document.getElementById('editCatalogTitle').value = p.title || '';
-  document.getElementById('editCatalogSku').value = p.sku || '';
-  const source = p.own_url ? 'LINK' : (p.store_id && p.external_id ? 'STORE' : 'MANUAL');
-  const money = p.price != null ? Number(p.price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
-  document.getElementById('editCatalogPrice').value = source === 'MANUAL' ? money : '';
-  document.getElementById('editCatalogPriceRow').classList.toggle('hidden', source !== 'MANUAL');
-  document.getElementById('editCatalogLinkRow').classList.toggle('hidden', source !== 'LINK');
-  document.getElementById('editCatalogLink').value = p.own_url || '';
-  document.getElementById('editCatalogReadRow').classList.toggle('hidden', source === 'MANUAL');
-  document.getElementById('editCatalogReread').checked = false;
-  document.getElementById('editCatalogReadText').textContent = `${money ? '$ ' + money : 'Sin precio'} (leído ${source === 'LINK' ? 'de tu link' : 'de tu tienda'})`;
-  document.getElementById('editCatalogError').style.display = 'none';
-  document.getElementById('editCatalogModal').classList.remove('hidden');
-}
-window.openEditCatalogItem = openEditCatalogItem;
-
-function closeEditCatalogItem() {
-  document.getElementById('editCatalogModal').classList.add('hidden');
-  catalogEditing = null;
-}
-window.closeEditCatalogItem = closeEditCatalogItem;
-
-async function saveEditCatalogItem(e) {
-  e.preventDefault();
-  const errorBox = document.getElementById('editCatalogError');
-  errorBox.style.display = 'none';
-  const manual = !document.getElementById('editCatalogPriceRow').classList.contains('hidden');
-  const priceRaw = document.getElementById('editCatalogPrice').value;
-  const price = manual ? HSFields.readMoney(document.getElementById('editCatalogPrice')) : null;
-  if (manual && (priceRaw.trim() === '' || Number.isNaN(price))) {
-    errorBox.textContent = 'El precio no es un monto válido. Ejemplo: 165.200,00';
-    errorBox.style.display = 'block';
-    return;
-  }
-  try {
-    const res = await fetch(`/api/4see/products/${document.getElementById('editCatalogId').value}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-      body: JSON.stringify({
-        title: document.getElementById('editCatalogTitle').value,
-        sku: document.getElementById('editCatalogSku').value,
-        price,
-        own_url: document.getElementById('editCatalogLink').value.trim() || undefined,
-        reread: document.getElementById('editCatalogReread').checked
-      })
-    });
-    const data = await res.json();
-    if (!data.success) {
-      errorBox.textContent = data.error || 'No pudimos guardar el producto.';
-      errorBox.style.display = 'block';
-      return;
-    }
-    closeEditCatalogItem();
-    if (data.sku && data.sku.generated) await showCustomAlert('Código generado', `Este producto no tenía código. Le asignamos ${data.sku.value}.`);
-    load4seeMonitors();
-  } catch (err) {
-    errorBox.textContent = 'Sin conexión. Revisá la red e intentá de nuevo.';
-    errorBox.style.display = 'block';
-  }
-}
-window.saveEditCatalogItem = saveEditCatalogItem;
-
 async function askDeleteCatalogItem(productId) {
   const p = flowProducts.find((x) => x.id === productId);
   if (!p) return;
@@ -5745,7 +5677,7 @@ window.handleTriggerWorkerCycle = handleTriggerWorkerCycle;
 
 // Modales de Producto y Reglas
 // --- Alta de producto: tres caminos (link, tienda conectada, a mano). Lo leido se muestra antes de guardar. ---
-const intake = { mode: 'link', reading: null, storeProduct: null, url: '' };
+const intake = { mode: 'link', reading: null, storeProduct: null, url: '', edit: null };
 const intakeEl = (id) => document.getElementById(id);
 
 function showIntakeNotice(message, { manual = false } = {}) {
@@ -5780,9 +5712,10 @@ function intakeStockText(inStock) {
 function showIntakeData({ title = '', sku = '', priceText = '', sourceText = '', stockText = '' } = {}) {
   const manual = intake.mode === 'manual';
   intakeEl('intakeData').hidden = false;
-  intakeEl('intakeTitle').value = title;
-  intakeEl('intakeSku').value = sku;
-  intakeEl('intakePrice').value = '';
+  // Al editar, el nombre y el código que ya tiene el producto no se pisan con los de la fuente
+  intakeEl('intakeTitle').value = intake.edit ? (intakeEl('intakeTitle').value || title) : title;
+  intakeEl('intakeSku').value = intake.edit ? (intakeEl('intakeSku').value || sku) : sku;
+  if (!intake.edit) intakeEl('intakePrice').value = '';
   intakeEl('intakePriceManual').hidden = !manual;
   intakeEl('intakePriceRead').hidden = manual;
   intakeEl('intakePriceReadText').textContent = priceText;
@@ -5833,10 +5766,67 @@ function setIntakeMode(mode) {
 }
 window.setIntakeMode = setIntakeMode;
 
+function setIntakeTexts() {
+  const editing = Boolean(intake.edit);
+  intakeEl('intakeModalTitle').textContent = editing ? 'Editar producto' : 'Agregar un producto';
+  intakeEl('intakeModalHint').textContent = editing ? 'Cambiá lo que necesites. Si cambiás de dónde sale el precio, lo leemos antes de guardar.' : 'Cada producto se carga una sola vez. Elegí cómo.';
+  intakeEl('intakeSaveBtn').textContent = editing ? 'Guardar cambios' : 'Guardar producto';
+}
+
+// Si cambia el link despues de leerlo, la lectura anterior ya no vale
+function handleIntakeUrlInput() {
+  if (intake.mode !== 'link' || !intake.reading) return;
+  if (intakeEl('intakeUrl').value.trim() !== intake.url) {
+    intake.reading = null;
+    clearIntakeNotice();
+    hideIntakeData();
+  }
+}
+window.handleIntakeUrlInput = handleIntakeUrlInput;
+
+// Editar usa el mismo formulario del alta, con las mismas tres fuentes
+function openEditCatalogItem(productId) {
+  const p = flowProducts.find((x) => x.id === productId);
+  const modal = intakeEl('createProductModal');
+  if (!p || !modal) return;
+  intakeEl('createProductForm').reset();
+  intake.edit = { id: p.id };
+  const mode = p.own_url ? 'link' : (p.store_id && p.external_id ? 'store' : 'manual');
+  setIntakeTexts();
+  modal.classList.remove('hidden');
+  setIntakeMode(mode);
+  intakeEl('intakeTitle').value = p.title || '';
+  intakeEl('intakeSku').value = p.sku || '';
+  const money = p.price != null ? HSFormat.money(p.price) : 'Sin precio';
+  const stockText = '';
+  if (mode === 'link') {
+    intakeEl('intakeUrl').value = p.own_url;
+    intake.url = p.own_url;
+    intake.reading = { current: true };
+    showIntakeData({ priceText: money, sourceText: 'Leído de tu link. Tocá "Leer link" para volver a leerlo.', stockText });
+  } else if (mode === 'manual') {
+    showIntakeData();
+    intakeEl('intakePrice').value = p.price != null ? Number(p.price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+    updateIntakeSaveState();
+  } else {
+    ensureConnectedStoresLoaded().then(async () => {
+      renderIntakeStorePanel();
+      intakeEl('prodMyStoreSelect').value = p.store_id;
+      await handleMyStoreChange('prod');
+      intakeEl('prodMyStoreProduct').value = p.external_id;
+      intake.storeProduct = { storeId: p.store_id, externalId: p.external_id, current: true };
+      showIntakeData({ priceText: money, sourceText: 'De tu tienda. Elegí otro producto de la lista para volver a leerlo.', stockText });
+    });
+  }
+}
+window.openEditCatalogItem = openEditCatalogItem;
+
 function openCreateProductModal() {
   const modal = intakeEl('createProductModal');
   if (!modal) return;
   intakeEl('createProductForm').reset();
+  intake.edit = null;
+  setIntakeTexts();
   intake.url = '';
   modal.classList.remove('hidden');
   setIntakeMode('link');
@@ -5847,6 +5837,7 @@ window.openCreateProductModal = openCreateProductModal;
 function closeCreateProductModal() {
   const modal = intakeEl('createProductModal');
   if (modal) modal.classList.add('hidden');
+  intake.edit = null;
 }
 window.closeCreateProductModal = closeCreateProductModal;
 
@@ -5872,7 +5863,7 @@ async function readIntakeLink() {
     if (!data.success) { showIntakeNotice(data.error || 'No pudimos leer el link.'); return; }
     const r = data.reading;
     if (!r.ok) { showIntakeNotice(r.message + ' La única forma de cargarlo es a mano.', { manual: true }); return; }
-    if (data.existing) { showIntakeNotice('Ya cargaste este link como "' + data.existing.title + '".'); return; }
+    if (data.existing && !(intake.edit && data.existing.id === intake.edit.id)) { showIntakeNotice('Ya cargaste este link como "' + data.existing.title + '".'); return; }
     intake.reading = r;
     intake.url = url;
     showIntakeData({
@@ -5926,12 +5917,16 @@ async function handleCreateProductSubmit(e) {
   e.preventDefault();
   if (intake.mode === 'link' && !intake.reading) { readIntakeLink(); return; }
   clearIntakeNotice();
+  const editing = intake.edit;
   const payload = { title: intakeEl('intakeTitle').value.trim(), sku: intakeEl('intakeSku').value.trim() };
+  if (editing) payload.mode = intake.mode;
   if (intake.mode === 'link') {
     payload.own_url = intake.url;
+    if (editing && intake.reading && !intake.reading.current) payload.reread = true;
   } else if (intake.mode === 'store') {
     payload.store_id = intake.storeProduct.storeId;
     payload.store_external_id = intake.storeProduct.externalId;
+    if (editing && !intake.storeProduct.current) payload.reread = true;
   } else {
     const price = HSFields.readMoney(intakeEl('intakePrice'));
     if (!(price > 0)) { showIntakeNotice('El precio no es un monto válido. Ejemplo: 165.200,00'); return; }
@@ -5940,8 +5935,8 @@ async function handleCreateProductSubmit(e) {
   const saveBtn = intakeEl('intakeSaveBtn');
   saveBtn.disabled = true;
   try {
-    const res = await fetch('/api/4see/products', {
-      method: 'POST',
+    const res = await fetch(editing ? '/api/4see/products/' + editing.id : '/api/4see/products', {
+      method: editing ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
       body: JSON.stringify(payload)
     });
@@ -5951,6 +5946,11 @@ async function handleCreateProductSubmit(e) {
       return;
     }
     closeCreateProductModal();
+    if (editing) {
+      if (data.sku.generated) await showCustomAlert('Código generado', 'Este producto no tenía código. Le asignamos ' + data.sku.value + '.');
+      load4seeMonitors();
+      return;
+    }
     const lines = ['"' + data.product.title + '" quedó en tu catálogo con un precio de ' + HSFormat.money(data.product.current_price) + '.'];
     if (data.sku.generated) lines.push('La fuente no informa un código, así que generamos el ' + data.sku.value + '. Podés cambiarlo con Editar.');
     lines.push('Para seguir su precio contra tus rivales, elegilo en el paso Análisis.');

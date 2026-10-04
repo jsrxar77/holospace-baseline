@@ -239,6 +239,21 @@ async function runTests() {
     fila = await getOne('SELECT title, current_price FROM fourseee_products WHERE id = ?', [linkId], { tenantId: tenantC });
     assert(res.getStatusCode() === 200 && fila.title === 'Nombre nuevo' && parseFloat(fila.current_price) === 5000, 'un producto con link no deja pisar el precio a mano');
 
+    res = await callC('/api/4see/products/' + sinLugar, 'PATCH', { title: 'Producto editado', sku: otroSku + 'x', mode: 'link', own_url: UNREACHABLE_URL });
+    fila = await getOne('SELECT own_url, price_source FROM fourseee_products WHERE id = ?', [sinLugar], { tenantId: tenantC });
+    assert(res.getStatusCode() === 422 && res.getBody().code === 'READ_FAILED' && fila.own_url === null && fila.price_source === 'MANUAL', 'pasar de manual a link con un link ilegible no guarda nada');
+    res = await callC('/api/4see/products/' + linkId, 'PATCH', { title: 'Nombre nuevo', sku: 'LNK-1', mode: 'manual', current_price: '7.000,00' });
+    fila = await getOne('SELECT own_url, price_source, current_price FROM fourseee_products WHERE id = ?', [linkId], { tenantId: tenantC });
+    assert(res.getStatusCode() === 200 && fila.own_url === null && fila.price_source === 'MANUAL' && parseFloat(fila.current_price) === 7000, 'pasar de link a manual deja el precio tipeado y quita el link');
+    res = await callC('/api/4see/products/' + linkId, 'PATCH', { title: 'Nombre nuevo', sku: 'LNK-1', mode: 'store' });
+    assert(res.getStatusCode() === 400 && res.getBody().code === 'STORE_REQUIRED', 'pasar a tienda sin elegir el producto de la tienda se frena');
+    res = await callC('/api/4see/products/' + linkId, 'PATCH', { title: 'Nombre nuevo', sku: 'LNK-1', mode: 'link' });
+    assert(res.getStatusCode() === 400 && res.getBody().code === 'LINK_REQUIRED', 'pasar a link sin pegar el link se frena');
+
+    res = await callC('/api/4see/watched-products', 'GET', {});
+    const enLista = (res.getBody().products || []).find((x) => x.id === linkId);
+    assert(enLista && typeof enLista.sku === 'string' && enLista.sku.length > 0, 'la lista de productos trae el codigo (Editar no lo muestra vacio ni lo pisa)');
+
     console.log('\n--- 6g. Quitar un rival recalcula la sugerencia ---');
     const conRival = await insertCatalogProduct(tenantC, 1);
     await execute("UPDATE fourseee_products SET in_analysis = true, costs_loaded = true, cost_price = 100, current_price = 1000 WHERE id = ?", [conRival], { tenantId: tenantC });
