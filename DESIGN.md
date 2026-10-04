@@ -56,11 +56,16 @@ components:
     rounded: "{rounded.none}"
     height: "56px"
     padding: "0 28px"
-  button-line:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-night}"
+  button-secondary:
+    backgroundColor: "color-mix(modulo 16%, tarjeta)"
+    textColor: "color del modulo"
     rounded: "{rounded.none}"
-    height: "56px"
+    height: "40px"
+  button-danger:
+    backgroundColor: "color-mix(ambar 16%, tarjeta)"
+    textColor: "ambar"
+    rounded: "{rounded.none}"
+    height: "40px"
 ---
 
 # Design System: holospace.
@@ -75,7 +80,10 @@ Rechaza: hero partido con malla de gradientes, tarjetas bento iguales, vidrio, b
 
 Los valores viven en `modules/themes/themes.json` (familia Holo) y se sirven como variables `--hw-*` en `/themes/holo.css`. Nada de hex fijo en la landing.
 
-- **Menta de senal** (`emerald-signal`): la unica linea o estado activo por vista, botones primarios y numeros de referencia. Nunca como relleno de pagina.
+- **Acento de modulo:** cada modulo tiene el suyo, tomado de `themes.json` (`modAccent4see`, `modAccentKanban`, `modAccentPlatform`). Es el color de sus botones, su linea activa y su estado "hecho". La landing usa el acento de cada seccion (plataforma, 4see, logistica).
+- **Menta de senal** (`emerald-signal`): acento de la landing y del modulo 4see. Nunca relleno de pagina.
+- **Ambar:** alerta y peligro en toda la app (quitar, borrar, falta algo). No se usa rojo para alertas.
+- **Gris:** solo fondos, bordes y texto. Nunca un boton.
 - **Violeta de anotacion** (`violet-annotation`): reservado para anotaciones secundarias y la hatch de la segunda empresa.
 - **Hoja** (`sheet-*`) y **superficie** (`surface-*`): la hoja es el fondo; las superficies solo marcan tablas y cajas del dibujo.
 - **Reglas** (`rule-strong`, `rule-hair`): toda la estructura son lineas de 1px; la fuerte delimita hojas, la fina subdivide.
@@ -103,7 +111,12 @@ Wordmark `holospace.` en minuscula (Geist 600, tracking -0.05em, punto en menta)
 
 ## Components
 
-- **Boton primario:** rectangulo menta de 56px con texto oscuro; hover sube el brillo, sin sombra. Boton `line`: contorno de 1px.
+- **Botones (todos los modulos y la landing), siempre con color:**
+  - **Principal:** relleno solido con el color del modulo, texto oscuro. Uno por pantalla.
+  - **Secundario:** relleno suave del color del modulo, texto y borde en ese color. Acciones de fila y demas acciones.
+  - **Quitar o borrar:** relleno suave ambar. Siempre con modal de consecuencias antes de ejecutar.
+- **Insignias** (no son botones): verde = hecho o activo, ambar = falta algo, sin color = dato o tipo. Nunca con relleno de boton.
+- **Vocabulario fijo:** Editar, Quitar, Analizar / Quitar del analisis, Revisar precio, Aplicar, Guardar.
 - **Tabla tecnica:** cabecera en rotulo mono, filas separadas por hairline, columna recomendada con relleno suave y regla menta superior.
 - **Callout:** circulo de 24px con numero mono, enlazado al listado "Notas" de la misma hoja.
 - **Simulador de piso:** SVG con eje de precios, tags de competidores, cota menta y marcador de precio; tres sliders reales y un interruptor de stock.
@@ -112,12 +125,14 @@ Wordmark `holospace.` en minuscula (Geist 600, tracking -0.05em, punto en menta)
 ## Do's and Don'ts
 
 **Hacer**
-- Usar una sola linea activa (menta) por vista.
+- Usar una sola linea activa por vista, en el color del modulo.
+- Un solo boton principal por pantalla; el resto son secundarios de color.
 - Rotular toda maqueta como ilustrativa y mantener datos de ejemplo en tablas y dibujos.
 - Sacar cada precio y limite de `lib/billing.js`.
 - Trazar las lineas una sola vez al entrar en vista; respetar `prefers-reduced-motion`.
 
 **No hacer**
 - Gradientes, glow, vidrio, tarjetas iguales de icono + titulo + texto, eyebrow sobre titulares.
+- Botones grises o sin color. Un boton siempre tiene el color del modulo o el ambar de alerta.
 - Logos, testimoniales o cifras de uso que no existan.
 - Mono como disfraz tecnico: solo para datos y medidas.

@@ -196,11 +196,14 @@ Las cuotas de usuarios y límites mensuales se consolidan acumulativamente en la
 
 
 
-## 0.3 Botones, insignias y vocabulario (regla de coherencia)
+## 0.3 Botones, insignias y vocabulario (regla de coherencia, todos los modulos)
 
-- **Boton lleno** (color del modulo): la accion principal de la pantalla. Uno solo por pantalla.
-- **Boton de contorno**: acciones de fila y secundarias (Editar, Analizar, Revisar precio, Aplicar).
-- **Boton de contorno en rojo**: quitar o borrar. Siempre con modal de consecuencias antes de ejecutar.
-- **Insignia** (no es boton): estados y datos. Verde = hecho o activo (Cargado, Si). Ambar = falta algo (Falta el costo). Sin color = tipo o dato neutro (Regla propia).
-- **Vocabulario fijo:** Editar (cambiar un dato), Quitar (sacar de una lista o del catalogo), Analizar / Quitar del analisis (sumar o sacar de analisis), Revisar precio (leer de nuevo un rival), Revisar precios ahora (accion general del paso 4).
+Todo boton tiene color. Nunca un boton gris.
+
+- **Principal:** relleno solido con el color del modulo (`.btn-primary`). Uno por pantalla: la accion para la que existe la pantalla.
+- **Secundario:** relleno suave con el color del modulo, texto y borde en ese color (`.btn-secondary`). Acciones de fila y demas acciones.
+- **Quitar o borrar:** relleno suave en ambar, la alerta de toda la app (`.btn-danger`). Siempre con modal de consecuencias antes de ejecutar.
+- **Gris:** solo fondos, bordes y texto. Nunca un boton.
+- **Insignias** (no son botones): verde = hecho o activo, ambar = falta algo, sin color = dato o tipo. Nunca con relleno de boton.
+- **Vocabulario fijo:** Editar, Quitar, Analizar / Quitar del analisis, Revisar precio, Aplicar, Guardar. Un verbo por accion en todos los modulos.
 - **Fechas:** dd/mm/aaaa hh:mm. **Montos:** $ 165.200,00.

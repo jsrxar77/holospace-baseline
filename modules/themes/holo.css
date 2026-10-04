@@ -63,13 +63,13 @@ body:is(.theme-holo_dark, .theme-holo_light) .btn-primary {
 body:is(.theme-holo_dark, .theme-holo_light) .btn-primary:hover { filter: brightness(1.08); box-shadow: var(--hw-glow); }
 body:is(.theme-holo_dark, .theme-holo_light) .btn-primary:active { transform: translateY(1px); }
 body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary {
-  background: var(--hw-surface-2);
-  color: var(--text-main);
-  border: var(--hw-border-width) solid var(--hw-border-strong);
+  background: color-mix(in srgb, var(--mod-accent, var(--emerald)) 16%, var(--card-bg));
+  color: var(--mod-accent, var(--emerald));
+  border: var(--hw-border-width) solid var(--mod-accent, var(--emerald));
   border-radius: var(--hw-radius-btn);
   transition: background-color .15s ease, border-color .15s ease;
 }
-body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary:hover { background: var(--hw-surface-3); }
+body:is(.theme-holo_dark, .theme-holo_light) .btn-secondary:hover { background: color-mix(in srgb, var(--mod-accent, var(--emerald)) 26%, var(--card-bg)); }
 
 /* Formularios */
 body:is(.theme-holo_dark, .theme-holo_light) :is(.input-field, .input-search, select, textarea) {
@@ -492,5 +492,10 @@ body:is(.theme-holo_dark, .theme-holo_light) {
 .hs-table-empty { text-align: center; color: var(--text-muted); padding: 32px; }
 
 /* Botones: lleno = accion principal de la pantalla (uno por pantalla); contorno = acciones de fila; rojo de contorno = quitar o borrar */
-body:is(.theme-holo_dark, .theme-holo_light) .btn-danger { background: transparent; color: var(--red); border: var(--hw-border-width) solid var(--red); box-shadow: none; }
-body:is(.theme-holo_dark, .theme-holo_light) .btn-danger:hover { background: var(--hw-danger-soft); }
+body:is(.theme-holo_dark, .theme-holo_light) .btn-danger {
+  background: color-mix(in srgb, var(--red) 16%, var(--card-bg));
+  color: var(--red);
+  border: var(--hw-border-width) solid var(--red);
+  box-shadow: none;
+}
+body:is(.theme-holo_dark, .theme-holo_light) .btn-danger:hover { background: color-mix(in srgb, var(--red) 26%, var(--card-bg)); }
