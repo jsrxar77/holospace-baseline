@@ -3608,7 +3608,7 @@ function renderCostsStep() {
       rowKey: (p) => p.id,
       emptyMessage: 'Primero elegí productos para analizar en el paso 2.',
       actionsLabel: 'Acciones',
-      renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="openCostsModal('${p.id}')">${p.costs_loaded ? 'Editar costos' : 'Cargar costos'}</button>`
+      renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="openCostsModal('${p.id}')">Editar</button>`
     });
   }
   costsTable.update(analysed);
@@ -3958,7 +3958,7 @@ function renderWatchedProductsTable() {
       : 'Todavía no cargaste productos. Empezá por el paso 1.',
     actionsLabel: 'Acciones',
     renderActions: (p) => (p.in_analysis
-      ? `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar tu precio</button>`
+      ? `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar</button>`
       : '')
   });
   watchedProductsTable.update(cached4seeProducts);
