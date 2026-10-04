@@ -3605,7 +3605,7 @@ function renderCostsStep() {
         { key: 'cost_price', label: 'Costo', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.cost_price : null) },
         { key: 'operating_costs', label: 'Costos operativos', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.operating_costs : null) },
         { key: 'min_margin_percentage', label: 'Margen mínimo', filter: 'none', align: 'right', render: (p) => (p.costs_loaded ? `${Number(p.min_margin_percentage).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %` : '<span style="color: var(--text-muted);">Sin cargar</span>') },
-        { key: 'max_price_ceiling', label: 'Precio tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted);">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
+        { key: 'max_price_ceiling', label: 'Precio tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted); white-space: nowrap;">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
         { key: 'min_price_floor', label: 'Piso de margen', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.min_price_floor : null) },
         { key: 'costs_loaded', label: 'Estado', filter: 'enum', options: [{ value: 'Cargado', label: 'Cargado' }, { value: 'Falta el costo', label: 'Falta el costo' }], filterValue: (p) => (p.costs_loaded ? 'Cargado' : 'Falta el costo'), render: (p) => (p.costs_loaded ? '<span class="hs-badge is-ok">Cargado</span>' : '<span class="hs-badge is-warn">Falta el costo</span>') }
       ],
@@ -5585,7 +5585,7 @@ function renderSmartPriceDashboard(queue = []) {
   })).catch(() => {});
 
   const rows = queue.slice(0, 12).map(q => ({
-    name: (q.sku || q.product_title || 'Producto').toString().slice(0, 14),
+    name: (q.product_title || 'Producto').toString().slice(0, 16),
     floor: parseFloat(q.min_price_floor || 0),
     previous: parseFloat(q.previous_price || 0),
     suggested: parseFloat(q.suggested_price || 0)
