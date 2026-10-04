@@ -373,7 +373,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-icon { width: 18px; height: 18px; flex: none; }
 .flow-views { display: flex; gap: 0; border-bottom: 1px solid var(--card-border); }
 .flow-views button { display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 0; border-bottom: 3px solid transparent; color: var(--text-muted); padding: 10px 16px; font-size: 14px; font-weight: 800; cursor: pointer; }
-.flow-views button.active { color: var(--text-main); border-bottom-color: var(--emerald); }
+.flow-views button.active { color: var(--text-main); background: var(--hw-violet-soft); border-bottom-color: var(--hw-chart1); }
 .flow-views button:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
 
 .flow-map { display: flex; align-items: center; gap: 6px; padding: 18px; background: var(--card-bg); border: 1px solid var(--card-border); overflow-x: auto; }
@@ -388,7 +388,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-node-label { font-size: 15px; font-weight: 800; }
 .flow-node-state { font-family: var(--hw-font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .flow-node.is-done .flow-node-state { color: var(--emerald); }
-.flow-node.is-current { background: var(--card-bg); box-shadow: 0 0 0 2px var(--flow-color); }
+.flow-node.is-current { background: var(--hw-violet-soft); box-shadow: 0 0 0 2px var(--hw-chart1); }
 .flow-node.is-current .flow-node-state { color: var(--text-main); }
 .flow-node.is-locked { opacity: 0.6; border-top-style: dashed; }
 .flow-arrow { width: 40px; height: 24px; flex: none; color: var(--text-muted); }
@@ -430,6 +430,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-badge { align-self: flex-start; font-family: var(--hw-font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--card-border); color: var(--text-muted); }
 .flow-badge.is-ok { color: var(--emerald); border-color: var(--emerald); }
 .flow-badge.is-todo { color: var(--text-muted); border-style: dashed; }
+.flow-badge.is-warn { color: var(--amber); border-color: var(--amber); }
 .flow-details { margin-top: 16px; border-top: 1px solid var(--card-border); padding-top: 12px; }
 .flow-details summary { cursor: pointer; font-size: 14px; font-weight: 800; color: var(--text-main); padding: 6px 0; }
 

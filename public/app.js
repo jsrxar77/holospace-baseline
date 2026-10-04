@@ -3482,7 +3482,7 @@ function renderCostsStep() {
       <p class="flow-card-sub">${escHtml(p.sku || '')}</p>
       ${p.costs_loaded
         ? `<span class="flow-card-figure">Piso ${ARS(p.min_price_floor)}</span><span class="flow-badge is-ok">Costos cargados</span>`
-        : '<span class="flow-badge is-todo">Falta cargar el costo</span>'}
+        : '<span class="flow-badge is-warn">Falta cargar el costo</span>'}
     </article>`).join('');
 }
 

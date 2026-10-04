@@ -181,6 +181,7 @@ Los valores viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPe
 
 ### Qué es automático y qué no
 
+- **Regla por defecto:** si no definiste reglas propias, el sistema se acerca 1% por debajo del rival más barato que tiene stock, sin bajar del piso ni superar el tope. Si ningún rival tiene stock conocido, no propone nada; si el precio está debajo del piso, lo sube al piso.
 - **Automático:** el cálculo del piso de margen (costo × (1 + margen %) + costos operativos) y los estados de cada paso.
 - **Manual:** la lectura de precios de los rivales. Se hace con **Revisar ahora** en cada rival, o con **Revisar precios ahora** en Sugerencias. **No hay una programación automática** todavía (D-057).
 

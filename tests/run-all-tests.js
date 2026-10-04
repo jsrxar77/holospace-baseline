@@ -38,6 +38,7 @@ const SUITES = [
   { name: '4see: Own-Price Resolution Routes & RLS', file: 'tests/test-4see-own-price-routes.js', module: '4SEE' },
   { name: '4see: Analysis Flow (catalogo, tope del plan, rivales)', file: 'tests/test-4see-analysis-flow.js', module: '4SEE' },
   { name: '4see: Flow Gates (pasos bloqueados y motivo)', file: 'tests/test-4see-flow-gates.js', module: '4SEE' },
+  { name: '4see: Default Pricing Rule (acercarse al mas barato)', file: 'tests/test-4see-default-rule.js', module: '4SEE' },
   { name: 'UI: Shared Components Consistency (landing vs app)', file: 'tests/test-ui-consistency.js', module: 'CORE' },
   { name: 'Core/Tenant: Google OAuth2 & Role Quotas', file: 'tests/test-oauth-and-role-quotas.js', module: 'CORE' }
 ];

@@ -62,8 +62,22 @@ function clampPrice(calculatedPrice, floorPrice, ceilingPrice = null) {
  * @param {Array<Object>} rules - Reglas activas ordenadas por prioridad DESC
  * @returns {Object|null} - Resultado de evaluación con suggested_price, floor_applied, rule_id, trigger_reason
  */
+// Regla por defecto: si no definiste ninguna, te acercás 1% por debajo del rival más barato con stock.
+// Nunca baja del piso ni supera el tope. No cambia nada si no hay rivales con stock conocido.
+const DEFAULT_RULE = {
+  id: null,
+  name: 'Acercarte al rival más barato, sin bajar de tu piso',
+  trigger_condition: 'LOWEST_MARKET',
+  action_type: 'PERCENT_OFFSET_BELOW',
+  offset_value: 1,
+  priority: 0,
+  is_active: true,
+  auto_dispatch: false
+};
+
 function evaluateSmartPrice(product, mappings = [], rules = []) {
   if (!product) return null;
+  const customRules = Array.isArray(rules) ? rules : [];
 
   const hardFloor = product.min_price_floor !== undefined && product.min_price_floor !== null
     ? parseFloat(product.min_price_floor)
@@ -77,25 +91,20 @@ function evaluateSmartPrice(product, mappings = [], rules = []) {
   const inStockMappings = validMappings.filter(m => (m.last_scraped_stock || '').toUpperCase() === 'IN_STOCK');
   const outOfStockMappings = validMappings.filter(m => (m.last_scraped_stock || '').toUpperCase() === 'OUT_OF_STOCK');
 
-  // Si no hay reglas definidas, aplicar regla por defecto: Proteger piso
-  if (!rules || rules.length === 0) {
-    if (currentPrice < hardFloor) {
-      return {
-        product_id: product.id,
-        rule_id: null,
-        previous_price: currentPrice,
-        calculated_price: hardFloor,
-        suggested_price: hardFloor,
-        floor_applied: true,
-        ceiling_applied: false,
-        trigger_reason: 'DEFAULT_FLOOR_PROTECTION'
-      };
-    }
-    return null;
-  }
+  const floorProtection = () => (currentPrice < hardFloor ? {
+    product_id: product.id,
+    rule_id: null,
+    previous_price: currentPrice,
+    calculated_price: hardFloor,
+    suggested_price: hardFloor,
+    floor_applied: true,
+    ceiling_applied: false,
+    trigger_reason: 'DEFAULT_FLOOR_PROTECTION'
+  } : null);
 
-  // Ordenar reglas por prioridad DESC
-  const sortedRules = [...rules].sort((a, b) => (b.priority || 0) - (a.priority || 0));
+  // Ordenar reglas por prioridad DESC; sin reglas propias, rige la regla por defecto
+  const sortedRules = (customRules.length ? [...customRules] : [DEFAULT_RULE])
+    .sort((a, b) => (b.priority || 0) - (a.priority || 0));
 
   for (const rule of sortedRules) {
     if (!rule.is_active) continue;
@@ -189,10 +198,11 @@ function evaluateSmartPrice(product, mappings = [], rules = []) {
     }
   }
 
-  return null;
+  return floorProtection();
 }
 
 module.exports = {
+  DEFAULT_RULE,
   calculateHardFloor,
   clampPrice,
   evaluateSmartPrice

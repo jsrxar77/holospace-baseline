@@ -74,7 +74,7 @@ El flujo tiene cuatro pasos y cada uno desbloquea el siguiente. La pantalla **Pr
 
 **Qué hacés:** aplicar o descartar cada propuesta. Nada se aplica sin tu decisión.
 
-**Reglas de precio (opcionales):** definen cuánto podés bajar frente a un rival. Sin reglas, solo se respeta el piso.
+**Regla por defecto:** si no definís reglas propias, te acercamos 1% por debajo del rival más barato con stock, sin bajar de tu piso ni superar tu tope. **Reglas de precio (opcionales):** si querés otra estrategia (por ejemplo, igualar a un rival puntual), la definís ahí y tiene prioridad sobre la regla por defecto.
 
 **Cómo se actualiza:** con **Revisar precios ahora**. Hoy no hay una lectura automática programada; es un pendiente conocido.
 
