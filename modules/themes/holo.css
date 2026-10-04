@@ -32,8 +32,9 @@ body:is(.theme-holo_dark, .theme-holo_light) .nav-tab {
 body:is(.theme-holo_dark, .theme-holo_light) .nav-tab:hover { color: var(--text-main); background: var(--hw-surface-2); }
 body:is(.theme-holo_dark, .theme-holo_light) .nav-tab.active {
   color: var(--text-main);
-  background: var(--hw-accent-soft);
-  border-color: var(--hw-accent-border);
+  background: var(--hw-surface-2);
+  border-color: var(--mod-accent);
+  border-bottom: 3px solid var(--mod-accent);
 }
 body:is(.theme-holo_dark, .theme-holo_light) .logo-holo { color: var(--text-main); }
 body:is(.theme-holo_dark, .theme-holo_light) .logo-space { color: var(--emerald); }
@@ -180,9 +181,10 @@ body:is(.theme-holo_dark, .theme-holo_light) #loginModal .brand-title { font-siz
 /* Pestañas activas: relleno suave y texto de tinta, sin violeta fijo legado */
 body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab).active,
 body:is(.theme-holo_dark, .theme-holo_light) :is(.module-tab, .feature-tab).active {
-  background: var(--hw-accent-soft) !important;
+  background: var(--hw-surface-2) !important;
   color: var(--text-main) !important;
-  border-color: var(--hw-accent-border) !important;
+  border-color: var(--mod-accent) !important;
+  border-bottom: 3px solid var(--mod-accent) !important;
   box-shadow: none !important;
 }
 body:is(.theme-holo_dark, .theme-holo_light) :is(.nav-tab, .mobile-nav-tab):hover { background: var(--hw-surface-2) !important; }
@@ -312,7 +314,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .view-switch button {
   font: 500 12px var(--hw-font-mono), ui-monospace, monospace; letter-spacing: .05em; text-transform: uppercase;
 }
 body:is(.theme-holo_dark, .theme-holo_light) .view-switch button + button { border-left: 1px solid var(--hw-border-strong); }
-body:is(.theme-holo_dark, .theme-holo_light) .view-switch button.active { background: var(--hw-accent-soft); color: var(--text-main); box-shadow: inset 0 -2px 0 var(--emerald); }
+body:is(.theme-holo_dark, .theme-holo_light) .view-switch button.active { background: var(--hw-surface-2); color: var(--text-main); box-shadow: inset 0 -3px 0 var(--mod-accent); }
 
 body:is(.theme-holo_dark, .theme-holo_light) .chart-grid {
   display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); gap: 16px; margin-bottom: 20px;
@@ -459,9 +461,9 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 body:is(.theme-holo_dark, .theme-holo_light) {
   --mod-accent: var(--emerald);
 }
-body:is(.theme-holo_dark, .theme-holo_light)[data-module="4see"] { --mod-accent: var(--hw-mod-accent-4see); }
-body:is(.theme-holo_dark, .theme-holo_light)[data-module="kanban"] { --mod-accent: var(--hw-mod-accent-kanban); }
-body:is(.theme-holo_dark, .theme-holo_light)[data-module="platform"] { --mod-accent: var(--hw-mod-accent-platform); }
+[data-module="4see"] { --mod-accent: var(--hw-mod-accent-4see); }
+[data-module="kanban"] { --mod-accent: var(--hw-mod-accent-kanban); }
+[data-module="platform"] { --mod-accent: var(--hw-mod-accent-platform); }
 
 /* Seleccion: negrita, subrayado grueso en tinta y fondo mas oscuro; no depende del tono */
 .flow-views button.active { color: var(--text-main); font-weight: 900; background: var(--hw-surface-3, var(--card-bg)); border-bottom: 4px solid var(--text-main); }

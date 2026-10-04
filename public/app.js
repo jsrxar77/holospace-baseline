@@ -3695,7 +3695,7 @@ async function handleCostsSubmit(e) {
 }
 window.handleCostsSubmit = handleCostsSubmit;
 
-document.querySelectorAll('.js-money').forEach((el) => HSFields.bindMoney(el));
+if (window.HSFields) document.querySelectorAll('.js-money').forEach((el) => HSFields.bindMoney(el));
 
 function renderRivalDetailTable(product) {
   if (!product.in_analysis) {
