@@ -46,6 +46,12 @@ Origen: 2026-10-03, Competencia tenia su propia lista de productos, separada del
 2. Se verifica de punta a punta: lo que guarda la pantalla lo lee el calculo o el worker. Ejemplo real: los costos se guardaban en una tabla de reglas que nadie leia, y la sugerencia nunca se calculaba.
 3. Los menus siguen el flujo del usuario, no la estructura de la base. Lo que no suma al flujo se saca del menu y del codigo.
 
+## Cierre de tarea (checklist antes de decir 'listo')
+1. git status limpio; cada cambio logico en su commit con trailer Co-Authored-By.
+2. Push solo si fue pedido o esta en el plan aprobado; despues, verificar en produccion.
+3. 'Publicado' solo si se verifico lo que ve el usuario (pantalla o respuesta real). Si no, decir que falta y quien lo puede hacer.
+4. Cerrar con 3 lineas: que cambio, que esta en produccion, que queda pendiente.
+
 ## Textos de producto
 Toda pantalla, modal, mensaje o error visible sigue la skill `holospace-copy` (contrato titulo + bajada, glosario, voz rioplatense) y `docs/CONTENT.md` 0.2. Antes de dar un cambio por terminado: `node tests/test-copy.js` (dentro de Docker: `docker compose exec app node tests/test-copy.js`).
 

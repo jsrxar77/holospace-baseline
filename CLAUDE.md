@@ -28,6 +28,14 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 - Cada funcionalidad se conecta con las que leen los mismos datos antes de darla por terminada. Si el worker o un calculo no ven lo que la pantalla guarda, la funcionalidad no esta terminada.
 - Los menus reflejan el flujo del usuario (1, 2, 3...), no las tablas de la base. Lo que no suma al flujo se saca.
 
+## Cierre de tarea (obligatorio)
+Antes de decir que algo está terminado o publicado:
+1. `git status` limpio: nada sin commitear. Si quedó algo, se commitea o se explica por qué no.
+2. Un commit por cambio lógico, con mensaje en español y el trailer de Co-Authored-By.
+3. Push a `main` solo si el usuario lo pidió o es parte del plan aprobado. Después del push, se verifica en producción.
+4. "Listo en producción" solo si se verificó lo que ve el usuario (pantalla o respuesta real), no solo un archivo. Si no se pudo verificar, se dice explícitamente qué falta y quién lo puede hacer.
+5. Al cerrar, un resumen de 3 líneas: qué cambió, qué está en producción y qué queda pendiente.
+
 ## Agilidad (obligatorio)
 - Un cambio chico se cierra en minutos: editar, `node --check`, correr solo la suite afectada, y recien despues la suite completa una sola vez.
 - Nunca dejar esperando al usuario por polling: no hacer `sleep` en loop ni monitores de largo plazo para un deploy. Verificar una vez, y si no esta listo, decirlo y seguir.
