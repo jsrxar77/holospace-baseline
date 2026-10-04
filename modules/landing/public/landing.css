@@ -69,6 +69,7 @@ main { padding: 24px 0 8px; }
 .btn.line { background: transparent; color: var(--text-main); border-color: var(--hw-border-strong); }
 .btn.line:hover { background: var(--hw-surface-2); filter: none; }
 .btn.block { width: 100%; }
+.hero-cta .btn:not(.line) { --mod-accent: var(--emerald); }
 .btn.sm { min-height: 44px; padding: 0 16px; font-size: 14px; }
 
 /* ---------- Hoja 1: hero ---------- */
