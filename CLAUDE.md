@@ -35,6 +35,8 @@ Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toc
 Los filtros de estado de negocio no se guardan entre visitas. Un filtro que oculta todo muestra cual es y ofrece quitarlo. Toda accion que cambia la pertenencia de un dato (analisis, catalogo, costos) recalcula lo que depende de ese dato en el mismo paso, y la prueba lo verifica.
 
 ## Coherencia de botones y textos (obligatorio, todos los modulos)
+- **Un producto tiene un solo nombre y un solo costo en toda la app:** el titulo del catalogo y el costo cargado, en tablas, graficos, tarjetas, modales y resumenes. Antes de cerrar un cambio, verificar que cada pantalla lee el mismo campo, sin mostrar 0 cuando el dato existe.
+- **Formularios alineados:** los campos de una misma fila tienen el mismo borde superior, aunque la etiqueta ocupe una o dos lineas (clase `.form-label`). Ver skill `holospace-crud-template`.
 Todo boton tiene color, nunca gris. Principal = relleno solido del color del modulo (uno por pantalla). Secundario = relleno suave del color del modulo (.btn-secondary). Quitar o borrar = relleno suave ambar (.btn-danger), con modal de consecuencias. Insignias sin relleno de boton. Un verbo por accion (Editar, Quitar, Analizar, Revisar precio, Aplicar, Guardar). Detalle en docs/CONTENT.md 0.3.
 
 ## Listas, edicion y borrado (obligatorio)

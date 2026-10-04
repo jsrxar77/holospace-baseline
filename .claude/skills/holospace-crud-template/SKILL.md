@@ -316,3 +316,7 @@ Antes de dar por finalizada la implementacion de un ABM, verificar:
 
 - [ ] Textos segun `holospace-copy`: titulo de lo que es (no del nombre tecnico), bajada que explica para que sirve, vacio con boton, etiquetas y mensajes en lenguaje comun, sin ingles ni jerga.
 - [ ] La tabla del listado se arma con `HSTable.mount` (skill `holospace-tables`), no con un `<thead>` armado a mano: asi el reordenar, ocultar y filtrar columnas es igual en toda la app.
+
+## Alineacion de formularios (obligatorio)
+
+Campos en una misma fila: el input de cada columna queda a la misma altura. Las etiquetas usan la clase `.form-label` (altura minima de dos lineas, alineadas abajo), para que una etiqueta que ocupa dos lineas no empuje su input mas abajo que el vecino. Nunca poner etiquetas con `style` inline de margen o altura propios en un formulario. Antes de cerrar, abrir el modal en la vista de ancho de escritorio y verificar que los inputs de una fila tengan el mismo borde superior.
