@@ -110,9 +110,11 @@
 
 ---
 
-- [ ] **D-059 | Colores y textos legados en la app web** | Quedan literales en el HTML de `public/index.html` (fondos blancos de QR y boton Google, a proposito) y `public/app.js` con alpha negro en sombras. Falta un chequeo visual en navegador Night y Day en cada modulo. Esfuerzo M
-- [ ] **D-060 | Paleta de respaldo duplicada en Scanner** | `modules/scanner/src/store/useThemeStore.ts` repite los valores de Holo Night como respaldo sin conexion; deberia leerse desde `modules/themes/themes.json`. Esfuerzo S
-- [ ] **D-061 | Imagenes vacias en la app** | `public/index.html` tiene `<img src="">` para avatar y QR (muestran icono roto hasta cargar). Esfuerzo S
+- [ ] **D-059 | Colores y textos legados en la app web** (revisado en navegador: landing Night y Day; falta la app autenticada por modulo) | Quedan literales en el HTML de `public/index.html` (fondos blancos de QR y boton Google, a proposito) y `public/app.js` con alpha negro en sombras. Falta un chequeo visual en navegador Night y Day en cada modulo. Esfuerzo M
+- [x] **D-060 | Paleta de respaldo duplicada en Scanner** (saldada: el tema sale de `modules/scanner/src/theme/defaultTheme.json`, generado desde themes.json por `modules/scanner/scripts/sync-default-theme.js` y verificado en `tests/test-scanner-theme-fallback.js`) | `modules/scanner/src/store/useThemeStore.ts` repite los valores de Holo Night como respaldo sin conexion; deberia leerse desde `modules/themes/themes.json`. Esfuerzo S
+- [x] **D-061 | Imagenes vacias en la app** (saldada: el QR se muestra solo cuando carga) | `public/index.html` tiene `<img src="">` para avatar y QR (muestran icono roto hasta cargar). Esfuerzo S
+
+- [ ] **D-062 | QR con servicio externo** | `public/app.js` genera el QR con api.qrserver.com y envia la URL del tenant a un tercero. Pasar a generacion local. Esfuerzo M
 
 ## Saldada
 
