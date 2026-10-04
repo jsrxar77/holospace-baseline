@@ -20,7 +20,7 @@
       analysisCount: inAnalysis.length,
       withRivals: inAnalysis.filter((p) => (p.monitors || []).length > 0).length,
       withCosts: inAnalysis.filter((p) => p.costs_loaded).length,
-      suggestionsPending: (Array.isArray(queue) ? queue : []).filter((q) => q.status === 'PENDING').length
+      suggestionsPending: (Array.isArray(queue) ? queue : []).filter((q) => q.status === 'PENDING' && inAnalysis.some((p) => p.id === q.product_id)).length
     };
   }
 

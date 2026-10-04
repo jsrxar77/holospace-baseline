@@ -88,13 +88,13 @@
     const order = (saved.order || opts.columns.map((c) => c.key)).filter((k) => opts.columns.some((c) => c.key === k));
     opts.columns.forEach((c) => { if (!order.includes(c.key)) order.push(c.key); });
     const hidden = new Set(saved.hidden || []);
-    const filters = Object.assign({}, saved.filters || {});
+    const filters = {};
     let sort = saved.sort || null;
     const expanded = new Set();
     let rows = opts.rows || [];
 
     function persist() {
-      safeSet(storeKey, { order, hidden: Array.from(hidden), filters, sort });
+      safeSet(storeKey, { order, hidden: Array.from(hidden), sort });
     }
 
     function colByKey(k) { return opts.columns.find((c) => c.key === k); }
@@ -167,8 +167,14 @@
       const filtered = applyView(rows, opts.columns, filters, sort);
       if (!filtered.length) {
         const span = cols.length + (hasDetail() ? 1 : 0) + (hasActions() ? 1 : 0);
-        const emptyContent = opts.emptyHtml || esc(rows.length ? 'Ningún resultado con estos filtros.' : (opts.emptyMessage || 'No hay datos.'));
+        const activeFilters = Object.keys(filters).filter((k) => filters[k]).map((k) => (colByKey(k) ? colByKey(k).label : k));
+        let emptyContent;
+        if (opts.emptyHtml && !rows.length) emptyContent = opts.emptyHtml;
+        else if (!rows.length) emptyContent = esc(opts.emptyMessage || 'No hay datos.');
+        else emptyContent = `Ningún resultado con ${activeFilters.length === 1 ? 'el filtro' : 'los filtros'} <strong>${esc(activeFilters.join(', '))}</strong>. <button type="button" class="btn-secondary hs-table-clear" data-action="clear-filters">Quitar filtros</button>`;
         tbody.innerHTML = `<tr><td colspan="${span}" class="hs-table-empty">${emptyContent}</td></tr>`;
+        const clear = tbody.querySelector('[data-action="clear-filters"]');
+        if (clear) clear.addEventListener('click', () => { Object.keys(filters).forEach((k) => delete filters[k]); renderHead(); });
       } else {
         tbody.innerHTML = filtered.map((row) => {
           const key = opts.rowKey(row);

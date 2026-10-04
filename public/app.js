@@ -3753,6 +3753,7 @@ function paintFlow() {
     node.classList.toggle('is-done', st.done);
     node.classList.toggle('is-locked', st.locked);
     node.querySelector('.flow-node-state').textContent = flowNodeStateText(st, st.n === activeFlowStep);
+    node.title = st.locked ? st.reason : '';
   });
   if (!flowStepTouched) activeFlowStep = currentFlow.suggestedStep;
   renderCatalogStep();

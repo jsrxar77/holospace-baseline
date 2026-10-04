@@ -169,6 +169,10 @@ async function runTests() {
     await handle4seeApi({ url: `/api/4see/products/${costedRecalc}/costs`, method: 'PATCH' }, res, { ...ctx, data: { costPrice: 100, operatingCosts: 0, minMarginPercentage: 20 } });
     pendingRows = await query("SELECT suggested_price FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [costedRecalc], { tenantId });
     assert(pendingRows.length === 1 && Math.abs(parseFloat(pendingRows[0].suggested_price) - 148.5) < 0.01, 'al bajar el costo se recalcula: 1% por debajo de 150 (148,50), sin quedar la sugerencia vieja');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${costedRecalc}/analysis`, method: 'POST' }, res, { ...ctx, data: { inAnalysis: false } });
+    pendingRows = await query("SELECT id FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [costedRecalc], { tenantId });
+    assert(res.getStatusCode() === 200 && pendingRows.length === 0, 'quitar del analisis saca la sugerencia pendiente de ese producto');
 
     console.log('\n--- 7. Aislamiento: otra organizacion no puede tocar este catalogo ---');
     res = createMockRes();
@@ -177,7 +181,7 @@ async function runTests() {
     });
     assert(res.getStatusCode() === 404, 'otra organizacion recibe 404, no puede marcar un producto ajeno');
     const untouched = await getOne('SELECT in_analysis FROM fourseee_products WHERE id = ?', [productIds[2]], { tenantId });
-    assert(untouched.in_analysis === true, 'el producto ajeno no cambio (sigue en analisis, como lo dejo su dueño)');
+    assert(untouched.in_analysis === false, 'el producto ajeno no cambio (queda fuera de analisis, como lo dejo su dueño en la prueba de costos)');
   } catch (err) {
     console.error('Error inesperado:', err);
     failed++;

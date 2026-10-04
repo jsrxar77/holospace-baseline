@@ -32,9 +32,15 @@ ok(byN(f, 2).done && !byN(f, 3).done, 'Análisis hecho con rival, costos pendien
 ok(byN(f, 4).locked && byN(f, 4).blockedBy === 3, 'Sugerencias bloqueadas: falta costo');
 
 console.log('Rival y costos: sugerencias disponibles');
-f = computeFlow([{ id: 'a', in_analysis: true, monitors: [{ id: 'm' }], costs_loaded: true }], [{ status: 'PENDING' }]);
+f = computeFlow([{ id: 'a', in_analysis: true, monitors: [{ id: 'm' }], costs_loaded: true }], [{ status: 'PENDING', product_id: 'a' }]);
 ok(!byN(f, 4).locked && byN(f, 4).done, 'Sugerencias disponibles y con propuestas para decidir');
 ok(f.summary.suggestionsPending === 1, 'cuenta las sugerencias pendientes');
+
+console.log('Sugerencias de un producto que ya no esta en analisis no cuentan en el paso 4');
+f = computeFlow([{ id: 'a', in_analysis: false, monitors: [], costs_loaded: false }], [{ status: 'PENDING', product_id: 'a' }]);
+ok(byN(f, 4).done === false, 'una sugerencia pendiente de un producto fuera de analisis no marca el paso 4 como hecho');
+f = computeFlow([{ id: 'a', in_analysis: true, monitors: [{ id: 'm' }], costs_loaded: true }], [{ status: 'PENDING', product_id: 'a' }]);
+ok(byN(f, 4).done === true, 'una sugerencia de un producto en analisis si cuenta');
 
 console.log('Un producto fuera de analisis no cuenta para los pasos siguientes');
 f = computeFlow([{ id: 'a', in_analysis: false, monitors: [{ id: 'm' }], costs_loaded: true }], []);

@@ -31,6 +31,9 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 ## Vision holistica (regla de oro)
 Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toca; revisar cada uno de punta a punta como lo usa la persona (no solo la parte pedida); si un paso queda sin editar, borrar o verificar, el cambio no esta terminado.
 
+## Estado y filtros (obligatorio)
+Los filtros de estado de negocio no se guardan entre visitas. Un filtro que oculta todo muestra cual es y ofrece quitarlo. Toda accion que cambia la pertenencia de un dato (analisis, catalogo, costos) recalcula lo que depende de ese dato en el mismo paso, y la prueba lo verifica.
+
 ## Coherencia de botones y textos (obligatorio, todos los modulos)
 Todo boton tiene color, nunca gris. Principal = relleno solido del color del modulo (uno por pantalla). Secundario = relleno suave del color del modulo (.btn-secondary). Quitar o borrar = relleno suave ambar (.btn-danger), con modal de consecuencias. Insignias sin relleno de boton. Un verbo por accion (Editar, Quitar, Analizar, Revisar precio, Aplicar, Guardar). Detalle en docs/CONTENT.md 0.3.
 

@@ -184,7 +184,7 @@ Los valores viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPe
 Todas las listas son tablas. Cada fila se edita y se quita desde la misma pantalla.
 
 - **Catálogo (paso 1):** Editar cambia nombre, código y precio. **Quitar** borra el producto del catálogo: se van también sus rivales, sus sugerencias pendientes y sus costos. Antes de borrar, un modal muestra esas cantidades y pide confirmación.
-- **Análisis (paso 2):** **Analizar** saca o pone el producto en análisis. Quitarlo del análisis no borra nada del catálogo: los rivales y los costos quedan guardados.
+- **Análisis (paso 2):** los filtros de la tabla no se guardan: cada vez que entrás, la tabla arranca sin filtros. Si un filtro oculta todo, el vacío dice cuál es y ofrece "Quitar filtros". Quitar un producto del análisis saca también su sugerencia pendiente, y el paso 4 cuenta solo sugerencias de productos en análisis. **Analizar** saca o pone el producto en análisis. Quitarlo del análisis no borra nada del catálogo: los rivales y los costos quedan guardados.
 - **Costos (paso 3):** una fila por producto en análisis, con costo, costos operativos, margen mínimo, tope y piso. **Editar costos** abre el formulario de ese producto. Cambiar un costo recalcula al instante la sugerencia pendiente de ese producto; no queda un precio viejo. No se puede borrar un costo: si está mal, se corrige.
 
 ### Qué es automático y qué no
