@@ -1,7 +1,16 @@
 /**
- * Formato de montos, fechas y nombres (public/hs-format.js). Logica pura, sin base de datos.
+ * Formato de montos, fechas y nombres (inline en public/app.js). Logica pura, sin base de datos.
  */
-const F = require('../public/hs-format.js');
+const vm = require('vm');
+const fs = require('fs');
+const src = fs.readFileSync(require('path').join(__dirname, '..', 'public', 'app.js'), 'utf8');
+const ctx = {};
+ctx.window = ctx;
+ctx.globalThis = ctx;
+vm.createContext(ctx);
+const blockEnd = src.indexOf("})(typeof window !== 'undefined' ? window : globalThis);", src.indexOf('root.HSFields')) + "})(typeof window !== 'undefined' ? window : globalThis);".length;
+vm.runInContext(src.slice(0, blockEnd), ctx);
+const F = ctx.HSFormat;
 
 let failed = 0;
 const ok = (c, m) => { if (c) console.log(`  OK   ${m}`); else { failed++; console.error(`  FAIL ${m}`); } };
