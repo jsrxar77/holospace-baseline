@@ -214,7 +214,8 @@
         var d = it.data || {};
         if (d.rival) return esc(d.product) + '<br/>' + esc(d.rival) + ': ' + money(d.value[1]);
         var row = opts.rows[it.dataIndex];
-        return (row ? esc(row.name) + '<br/>' : '') + 'Tu precio: ' + money(it.value);
+        var mine = Array.isArray(it.value) ? it.value[1] : it.value;
+        return (row ? esc(row.name) + '<br/>' : '') + 'Tu precio: ' + money(mine);
       };
       o.series = [
         { name: 'Tu precio', type: 'scatter', symbol: 'rect', symbolSize: [30, 3], z: 3, data: opts.rows.map(function (r) { return r.mine; }), itemStyle: { color: p.applied } },
