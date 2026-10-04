@@ -209,7 +209,9 @@
         (r.rivals || []).forEach(function (rv) { rivalPts.push({ value: [i, rv.price], rival: rv.name, product: r.name }); });
       });
       o.yAxis.scale = true;
+      o.tooltip = Object.assign({}, o.tooltip, { trigger: 'item' });
       o.tooltip.formatter = function (it) {
+        if (Array.isArray(it)) it = it[0];
         var esc = function (t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
         var d = it.data || {};
         if (d.rival) return esc(d.product) + '<br/>' + esc(d.rival) + ': ' + money(d.value[1]);
