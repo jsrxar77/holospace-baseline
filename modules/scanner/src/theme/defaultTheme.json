@@ -1,0 +1,19 @@
+{
+  "background": "#0B0C10",
+  "cardBg": "#12141A",
+  "cardBorder": "#252936",
+  "emerald": "#34D3A4",
+  "cobalt": "#8B7CFF",
+  "amber": "#F5B84B",
+  "red": "#F5B84B",
+  "textMain": "#EDEFF5",
+  "textMuted": "#9BA3B5",
+  "fontFamily": "Geist",
+  "fontMono": "Geist Mono",
+  "borderRadius": 0,
+  "radiusCard": 0,
+  "radiusBtn": 0,
+  "radiusBadge": 0,
+  "borderWidth": 1,
+  "accentFg": "#04130E"
+}

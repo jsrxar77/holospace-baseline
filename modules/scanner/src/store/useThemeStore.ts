@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { SERVER_URL } from '../config';
+import defaultTheme from '../theme/defaultTheme.json';
 
 export interface ThemeTokens {
   background: string;
@@ -21,25 +22,7 @@ export interface ThemeTokens {
   accentFg?: string;
 }
 
-export const DEFAULT_THEME: ThemeTokens = {
-  background: '#0B0C10',
-  cardBg: '#12141A',
-  cardBorder: '#252936',
-  emerald: '#34D3A4',
-  cobalt: '#8B7CFF',
-  amber: '#F5B84B',
-  red: '#F5B84B',
-  textMain: '#EDEFF5',
-  textMuted: '#9BA3B5',
-  fontFamily: 'Geist',
-  fontMono: 'Geist Mono',
-  borderRadius: 14,
-  radiusCard: 14,
-  radiusBtn: 10,
-  radiusBadge: 8,
-  borderWidth: 1,
-  accentFg: '#04130E'
-};
+export const DEFAULT_THEME: ThemeTokens = defaultTheme as ThemeTokens;
 
 interface ThemeState {
   theme: ThemeTokens;

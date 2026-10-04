@@ -24,6 +24,7 @@ const SUITES = [
   { name: 'UI: Product Copy (glossary, screen contract)', file: 'tests/test-copy.js', module: 'CORE' },
   { name: 'Core: Brand Rules (holospace., hologrowth.dev)', file: 'tests/test-brand.js', module: 'CORE' },
   { name: 'Core: Holo Theme Contrast & Tokens (WCAG)', file: 'tests/test-theme-contrast.js', module: 'CORE' },
+  { name: 'Scanner: Tema de respaldo desde themes.json', file: 'tests/test-scanner-theme-fallback.js', module: 'SCANNER' },
   { name: 'Tenant: Governance & Isolation', file: 'tests/test-tenants-module.js', module: 'TENANT' },
   { name: 'Tenant: Entitlements & Licensing', file: 'tests/test-entitlement.js', module: 'TENANT' },
   { name: 'Tenant: Billing Plans & Onboarding', file: 'tests/test-billing-onboarding.js', module: 'TENANT' },
