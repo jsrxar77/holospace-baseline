@@ -14,14 +14,14 @@ console.log('Administrador de 4see con plan de 4see (el caso de una cuenta nueva
 let a = computeAccess({ role: '4SEE_ADMIN' }, { entitlements: ['core', '4see'], permissions: FOUR_ADMIN });
 ok(a.modules['4see'] === true && a.modules.kanban === false, 've 4see y no ve Kanban');
 ok(a.modules.tenant === false && a.modules.core === false, 'no ve Tenant ni Core');
-ok(a.defaultModule === '4see' && a.defaultTab === '4see-monitors', 'entra a 4see > Monitor, no a Kanban');
-ok(['4see-monitors', '4see-smartprice', '4see-catalog', '4see-margins'].every((t) => a.tabs[t]), 've las 4 pestanas de 4see');
+ok(a.defaultModule === '4see' && a.defaultTab === '4see-productos', 'entra a 4see > Productos, no a Kanban');
+ok(a.tabs['4see-productos'], 've la pestana unica de 4see (Productos)');
 ok(a.tabs.kanban === false && a.tabs.orders === false, 'no ve pestanas de Kanban');
 
 console.log('Usuario de 4see con permisos de solo lectura de catalogo');
 a = computeAccess({ role: '4SEE_USER' }, { entitlements: ['core', '4see'], permissions: FOUR_USER });
-ok(a.tabs['4see-monitors'] && a.tabs['4see-catalog'], 've Monitor y Catalogo');
-ok(a.tabs['4see-smartprice'] === false && a.tabs['4see-margins'] === false, 'no ve SmartPrice ni Margenes');
+ok(a.tabs['4see-productos'], 've Productos (los pasos se ven dentro de la pantalla)');
+ok(a.tabs['4see-productos'] === true, 'el usuario de solo lectura entra igual a Productos');
 
 console.log('Administrador de logistica');
 a = computeAccess({ role: 'KANBAN_ADMIN' }, { entitlements: ['core', 'kanban', 'scanner'], permissions: KANBAN_ADMIN });
@@ -55,7 +55,7 @@ const tok = 'x.' + Buffer.from(JSON.stringify(claims)).toString('base64url') + '
 const d = decodeClaims(tok);
 ok(d && d.entitlements[1] === '4see' && d.permissions[0] === '4see:catalog:read', 'decodeClaims devuelve entitlements y permisos');
 ok(decodeClaims('basura') === null, 'decodeClaims tolera un token invalido');
-ok(firstTab(computeAccess({ role: '4SEE_USER' }, d), '4see') === '4see-monitors', 'firstTab devuelve la primera pestana permitida');
+ok(firstTab(computeAccess({ role: '4SEE_USER' }, d), '4see') === '4see-productos', 'firstTab devuelve la primera pestana permitida');
 
 console.log(failed ? `\n${failed} verificaciones fallaron` : '\nVisibilidad por permisos OK');
 process.exit(failed ? 1 : 0);

@@ -15,16 +15,13 @@
     roles: { module: 'core', any: ['*'] },
     kanban: { module: 'kanban', any: ['kanban:orders:read'] },
     orders: { module: 'kanban', any: ['kanban:orders:read'] },
-    '4see-monitors': { module: '4see', prefix: '4see:' },
-    '4see-smartprice': { module: '4see', any: ['4see:pricing:write', '4see:queue:approve', '4see:rules:manage'] },
-    '4see-catalog': { module: '4see', any: ['4see:catalog:read', '4see:catalog:audit'] },
-    '4see-margins': { module: '4see', any: ['4see:margins:manage'] }
+    '4see-productos': { module: '4see', prefix: '4see:' }
   };
   var MODULE_TABS = {
     tenant: ['tenants'],
     core: ['platform', 'users', 'roles'],
     kanban: ['kanban', 'orders'],
-    '4see': ['4see-monitors', '4see-smartprice', '4see-catalog', '4see-margins']
+    '4see': ['4see-productos']
   };
   // Orden de entrada para quien no es SUPERADMIN: el primero que tenga disponible
   var ENTRY_ORDER = ['kanban', '4see'];
