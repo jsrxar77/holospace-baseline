@@ -1358,13 +1358,13 @@
     <!-- 7. VISTAS DEL MÓDULO 4SEE (MONITOR, CATALOG & MARGINS) -->
     <!-- 7.1 Monitor de Competidores -->
     <div id="view4seeProductos" class="view-panel hidden">
-      <ol class="flow-strip" aria-label="Pasos del análisis">
-        <li><strong>1</strong> Cargá tu catálogo</li>
-        <li><strong>2</strong> Elegí los productos a analizar</li>
-        <li><strong>3</strong> Sumá los rivales de cada producto</li>
-        <li><strong>4</strong> Completá costos y márgenes</li>
-        <li><strong>5</strong> Recibí los precios sugeridos</li>
-      </ol>
+      <nav class="flow-stepper" aria-label="Pasos del análisis">
+        <button type="button" class="flow-chip" data-step="1" onclick="setFlowStep(1)"><span class="flow-num">1</span><span>Cargá tu catálogo</span></button>
+        <button type="button" class="flow-chip" data-step="2" onclick="setFlowStep(2)"><span class="flow-num">2</span><span>Elegí los productos a analizar</span></button>
+        <button type="button" class="flow-chip" data-step="3" onclick="setFlowStep(3)"><span class="flow-num">3</span><span>Sumá los rivales</span></button>
+        <button type="button" class="flow-chip" data-step="4" onclick="setFlowStep(4)"><span class="flow-num">4</span><span>Completá costos y márgenes</span></button>
+        <button type="button" class="flow-chip" data-step="5" onclick="setFlowStep(5)"><span class="flow-num">5</span><span>Recibí los precios sugeridos</span></button>
+      </nav>
 
     <div id="view4seeMonitors" class="flow-step" data-step="2-3">
       <div class="actions-bar">

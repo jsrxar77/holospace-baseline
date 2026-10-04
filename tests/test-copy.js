@@ -89,7 +89,7 @@ for (const [id, title] of Object.entries(views)) {
 console.log('4see: una sola pestaña con el flujo en orden');
 ok(html.includes('>Productos</button>'), 'pestana unica "Productos"');
 ok(!/>(Competencia|Precios sugeridos|Catálogo|Márgenes)<\/button>/.test(html), 'no quedan pestañas sueltas de 4see');
-const flowSteps = ['Cargá tu catálogo', 'Elegí los productos a analizar', 'Sumá los rivales de cada producto', 'Completá costos y márgenes', 'Recibí los precios sugeridos'];
+const flowSteps = ['Cargá tu catálogo', 'Elegí los productos a analizar', 'Sumá los rivales', 'Completá costos y márgenes', 'Recibí los precios sugeridos'];
 flowSteps.forEach((s) => ok(html.includes(s), `paso del flujo: "${s}"`));
 
 console.log('Estados vacios con siguiente paso');

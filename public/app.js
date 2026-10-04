@@ -1024,10 +1024,8 @@ function switchTab(tabName) {
   } else if (tabName === '4see-productos') {
     const view = document.getElementById('view4seeProductos');
     if (view) view.classList.remove('hidden');
-    load4seeCatalog();
-    load4seeMonitors();
-    load4seeMargins();
-    load4seeSmartPriceQueue();
+    applyFlowStep();
+    Promise.allSettled([load4seeCatalog(), load4seeMonitors(), load4seeMargins(), load4seeSmartPriceQueue()]).then(refreshFlowStepper);
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
@@ -3441,6 +3439,56 @@ async function load4seeMonitors() {
 }
 window.load4seeMonitors = load4seeMonitors;
 
+let activeFlowStep = 1;
+let flowStepTouched = false;
+
+function applyFlowStep() {
+  document.querySelectorAll('#view4seeProductos > .flow-step').forEach((el) => {
+    const steps = (el.dataset.step || '').split('-').map(Number);
+    el.classList.toggle('is-active', steps.includes(activeFlowStep));
+  });
+  document.querySelectorAll('.flow-chip').forEach((b) => {
+    const isActive = Number(b.dataset.step) === activeFlowStep;
+    b.classList.toggle('is-active', isActive);
+    b.setAttribute('aria-current', isActive ? 'step' : 'false');
+  });
+}
+
+function setFlowStep(n) {
+  flowStepTouched = true;
+  activeFlowStep = n;
+  applyFlowStep();
+}
+window.setFlowStep = setFlowStep;
+
+async function refreshFlowStepper() {
+  let products = [];
+  try {
+    const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    const data = await res.json();
+    products = data.products || [];
+  } catch (err) {
+    products = [];
+  }
+  const inAnalysis = products.filter((p) => p.in_analysis);
+  const done = {
+    1: products.length > 0,
+    2: inAnalysis.length > 0,
+    3: (cached4seeProducts || []).some((p) => (p.monitors || []).length > 0),
+    4: inAnalysis.some((p) => p.costs_loaded),
+    5: (cached4seeQueue || []).length > 0
+  };
+  document.querySelectorAll('.flow-chip').forEach((b) => {
+    b.classList.toggle('is-done', Boolean(done[b.dataset.step]));
+  });
+  if (!flowStepTouched) {
+    const firstOpen = [1, 2, 3, 4, 5].find((n) => !done[n]);
+    activeFlowStep = firstOpen || 5;
+  }
+  applyFlowStep();
+}
+window.refreshFlowStepper = refreshFlowStepper;
+
 function openAnalysisPicker() {
   const modal = document.getElementById('analysisPickerModal');
   if (modal) modal.classList.remove('hidden');
@@ -3451,7 +3499,7 @@ window.openAnalysisPicker = openAnalysisPicker;
 function closeAnalysisPicker() {
   const modal = document.getElementById('analysisPickerModal');
   if (modal) modal.classList.add('hidden');
-  load4seeMonitors();
+  load4seeMonitors().then(refreshFlowStepper);
 }
 window.closeAnalysisPicker = closeAnalysisPicker;
 
@@ -3526,8 +3574,7 @@ window.openCostsModal = openCostsModal;
 function closeCostsModal() {
   const modal = document.getElementById('costsModal');
   if (modal) modal.classList.add('hidden');
-  load4seeMargins();
-  load4seeSmartPriceQueue();
+  Promise.allSettled([load4seeMargins(), load4seeSmartPriceQueue(), load4seeMonitors()]).then(refreshFlowStepper);
 }
 window.closeCostsModal = closeCostsModal;
 
