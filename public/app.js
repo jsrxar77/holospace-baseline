@@ -2703,9 +2703,13 @@ function updateQrDisplay(host) {
   const ipInput = document.getElementById('qrCustomIpInput');
 
   if (qrImg) {
-    qrImg.onload = () => { qrImg.style.display = "block"; };
-    qrImg.onerror = () => { qrImg.style.display = "none"; };
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}`;
+    if (typeof qrcode === "function") {
+      const qr = qrcode(0, "M");
+      qr.addData(targetUrl);
+      qr.make();
+      qrImg.src = qr.createDataURL(8, 2);
+      qrImg.style.display = "block";
+    }
   }
   if (qrText) {
     qrText.textContent = targetUrl;
