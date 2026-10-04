@@ -28,6 +28,9 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 - Cada funcionalidad se conecta con las que leen los mismos datos antes de darla por terminada. Si el worker o un calculo no ven lo que la pantalla guarda, la funcionalidad no esta terminada.
 - Los menus reflejan el flujo del usuario (1, 2, 3...), no las tablas de la base. Lo que no suma al flujo se saca.
 
+## Vision holistica (regla de oro)
+Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toca; revisar cada uno de punta a punta como lo usa la persona (no solo la parte pedida); si un paso queda sin editar, borrar o verificar, el cambio no esta terminado.
+
 ## Listas, edicion y borrado (obligatorio)
 - Toda lista de datos se muestra en tabla (hs-table). Las tarjetas son una vista opcional, nunca la por defecto.
 - Todo item que se carga se puede editar y quitar desde la misma pantalla. Un flujo que no permite editar un item no esta terminado.
