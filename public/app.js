@@ -856,6 +856,7 @@ function updateOpsOnlyControls(moduleName) {
 
 function switchModule(moduleName, updateUrl = true) {
   const normMod = (moduleName === 'tenants' ? 'tenant' : (moduleName === 'scanban' ? 'kanban' : moduleName));
+  document.body.dataset.module = (normMod === 'tenant' || normMod === 'core') ? 'platform' : normMod;
 
   // Control estricto de acceso y segregación de responsabilidades (RBAC):
   // 1. Tenant y Core son exclusivos para SUPERADMIN
@@ -1026,7 +1027,7 @@ function switchTab(tabName) {
     if (view) view.classList.remove('hidden');
     if (!flowIntroSeen()) openFlowIntro();
     applyFlowStep();
-    Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue()]).then(paintFlow);
+    Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue(), renderRulesList()]).then(paintFlow);
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
@@ -1528,9 +1529,9 @@ async function openInvoiceModal(orderId) {
       <tr>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${item.code}</td>
         <td>${item.description}</td>
-        <td style="text-align: center;">$${(item.unitPrice || 0).toLocaleString('es-AR')}</td>
+        <td style="text-align: center;">${HSFormat.moneyHtml((item.unitPrice || 0))}</td>
         <td style="text-align: center; font-weight: 900;">${item.quantityScanned} / ${item.quantityRequired} U</td>
-        <td style="text-align: right; font-weight: 900; color: var(--emerald);">$${((item.unitPrice || 0) * item.quantityRequired).toLocaleString('es-AR')}</td>
+        <td style="text-align: right; font-weight: 900; color: var(--emerald);">${HSFormat.moneyHtml(((item.unitPrice || 0) * item.quantityRequired))}</td>
       </tr>
     `).join('');
 
@@ -1586,7 +1587,7 @@ async function openInvoiceModal(orderId) {
         <details open style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 18px;">
           <summary style="font-weight: 800; font-size: 14px; cursor: pointer; color: var(--emerald); display: flex; justify-content: space-between; align-items: center;">
             <span>Artículos del Comprobante (${order.items.length} Ítems)</span>
-            <span style="font-weight: 900; font-size: 14px; color: var(--emerald);">Total: $${totalCalculated.toLocaleString('es-AR')}</span>
+            <span style="font-weight: 900; font-size: 14px; color: var(--emerald);">Total: ${HSFormat.moneyHtml(totalCalculated)}</span>
           </summary>
           <div style="margin-top: 14px; border-top: 1px solid var(--card-border); padding-top: 14px; overflow-x: auto;">
             <table class="invoice-table">
@@ -1605,7 +1606,7 @@ async function openInvoiceModal(orderId) {
               <tfoot>
                 <tr>
                   <td colspan="4" style="text-align: right; font-weight: 900; font-size: 15px;">TOTAL DEL REMITO:</td>
-                  <td style="text-align: right; font-weight: 900; font-size: 17px; color: var(--emerald);">$${totalCalculated.toLocaleString('es-AR')}</td>
+                  <td style="text-align: right; font-weight: 900; font-size: 17px; color: var(--emerald);">${HSFormat.moneyHtml(totalCalculated)}</td>
                 </tr>
               </tfoot>
             </table>
@@ -2478,7 +2479,7 @@ const EXPLORER_ORDERS_COLUMNS = [
   { key: 'operatorEmail', label: 'Operario', filter: 'text', render: (o) => escHtml(o.operatorEmail || 'Sin Asignar') },
   { key: 'issueDate', label: 'Fecha', filter: 'none', render: (o) => `<span style="font-size: 13px; color: var(--text-muted);">${escHtml(o.issueDate || 'Hoy')}</span>` },
   { key: 'totalItemsRequired', label: 'Productos', filter: 'none', align: 'center', render: (o) => `<strong>${o.totalItemsRequired} U</strong>` },
-  { key: 'totalAmount', label: 'Importe ($)', filter: 'none', align: 'right', render: (o) => `<span style="color: var(--emerald); font-weight: 900; font-size: 15px;">$${(o.totalAmount || 0).toLocaleString('es-AR')}</span>` },
+  { key: 'totalAmount', label: 'Importe ($)', filter: 'none', align: 'right', render: (o) => `<span style="color: var(--emerald); font-weight: 900; font-size: 15px;">${HSFormat.moneyHtml((o.totalAmount || 0))}</span>` },
   {
     key: 'status', label: 'Estado', filter: 'enum', align: 'center',
     options: Object.keys(EXPLORER_STATUS_ES).filter((k) => !['SCANNING', 'CLOSED'].includes(k)).map((k) => ({ value: EXPLORER_STATUS_ES[k], label: EXPLORER_STATUS_ES[k] })).concat([{ value: 'NUEVO', label: 'NUEVO' }]),
@@ -3442,7 +3443,7 @@ let flowProducts = [];
 let flowAnalysis = null;
 let currentFlow = null;
 
-const ARS = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+const ARS = (n) => `${HSFormat.money(Number(n || 0))}`;
 
 function renderCatalogStep() {
   const box = document.getElementById('catalogCards');
@@ -3467,6 +3468,36 @@ function renderAnalysisQuota() {
     ? `${flowAnalysis.used} de ${flowAnalysis.max} productos en análisis · Plan ${flowAnalysis.planName}`
     : '';
 }
+
+
+const RULE_CONDITION = { LOWEST_MARKET: 'el rival más barato con stock', TARGET_COMPETITOR: 'un rival puntual', OUT_OF_STOCK_RIVAL: 'cuando un rival se queda sin stock' };
+function ruleActionText(r) {
+  const v = Number(r.offset_value) || 0;
+  if (r.action_type === 'PERCENT_OFFSET_BELOW') return `${v} % por debajo`;
+  if (r.action_type === 'PERCENT_OFFSET_ABOVE') return `${v} % por encima`;
+  if (r.action_type === 'FIXED_OFFSET_BELOW') return `${HSFormat.money(v)} por debajo`;
+  if (r.action_type === 'FIXED_OFFSET_ABOVE') return `${HSFormat.money(v)} por encima`;
+  if (r.action_type === 'MATCH') return 'igualar su precio';
+  if (r.action_type === 'MAX_CEILING') return 'poner tu tope';
+  return 'aplicar la regla';
+}
+async function renderRulesList() {
+  const box = document.getElementById('rulesList');
+  if (!box) return;
+  try {
+    const res = await fetch('/api/4see/rules', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+    const data = await res.json();
+    const rules = (data.rules || []).filter((r) => r.is_active);
+    box.innerHTML = rules.map((r) => `
+      <article class="flow-rule">
+        <span class="flow-badge is-ok">Regla propia</span>
+        <p class="flow-rule-text"><strong>${escHtml(r.name)}</strong>: ${ruleActionText(r)} de ${RULE_CONDITION[r.trigger_condition] || 'tu referencia'}.</p>
+      </article>`).join('');
+  } catch (err) {
+    box.innerHTML = '';
+  }
+}
+window.renderRulesList = renderRulesList;
 
 function renderCostsStep() {
   const box = document.getElementById('marginsTableContainer');
@@ -3639,10 +3670,10 @@ async function handleCostsSubmit(e) {
   errorBox.style.display = 'none';
   const productId = document.getElementById('costsProductSelect').value;
   const body = {
-    costPrice: document.getElementById('costsCostPrice').value,
-    operatingCosts: document.getElementById('costsOperating').value,
-    minMarginPercentage: document.getElementById('costsMargin').value,
-    maxPriceCeiling: document.getElementById('costsCeiling').value
+    costPrice: HSFields.readMoney(document.getElementById('costsCostPrice')),
+    operatingCosts: HSFields.readMoney(document.getElementById('costsOperating')) || 0,
+    minMarginPercentage: HSFields.readMoney(document.getElementById('costsMargin')) || 0,
+    maxPriceCeiling: HSFields.readMoney(document.getElementById('costsCeiling')) || ''
   };
   try {
     const res = await fetch(`/api/4see/products/${productId}/costs`, {
@@ -3664,6 +3695,8 @@ async function handleCostsSubmit(e) {
 }
 window.handleCostsSubmit = handleCostsSubmit;
 
+document.querySelectorAll('.js-money').forEach((el) => HSFields.bindMoney(el));
+
 function renderRivalDetailTable(product) {
   if (!product.in_analysis) {
     return '<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Para sumar rivales, primero marcá este producto como "Analizar".</div>';
@@ -3681,7 +3714,7 @@ function renderRivalDetailTable(product) {
         : '<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Con stock</span>');
     const priceCell = m.competitor_price === null
       ? `<span style="color: var(--amber); font-size: 12px;">No se pudo leer</span>`
-      : `$${parseFloat(m.competitor_price).toLocaleString('es-AR')}`;
+      : `${HSFormat.money(parseFloat(m.competitor_price))}`;
     return `
       <tr>
         <td>
@@ -3735,7 +3768,7 @@ function renderWatchedProductsTable() {
       filterValue: (p) => p.price == null ? '' : String(p.price),
       render: (p) => p.price == null
         ? '<span style="color: var(--amber); font-size: 12px;">Sin definir</span>'
-        : `$${parseFloat(p.price).toLocaleString('es-AR')} <span style="color: var(--text-muted); font-size: 11px;">(${priceSourceLabelText(p.price_source)})</span>`
+        : `${HSFormat.moneyHtml(parseFloat(p.price))} <span style="color: var(--text-muted); font-size: 11px;">(${priceSourceLabelText(p.price_source)})</span>`
     },
     { key: 'rivals', label: 'Rivales', filter: 'none', align: 'center', render: (p) => String(p.monitors.length) },
     {
@@ -3811,7 +3844,7 @@ async function handleMyStoreChange(prefix) {
     if (data.success && Array.isArray(data.products)) {
       myStoreProductsCache[storeId] = data.products;
       productSelect.innerHTML = '<option value="">Elegí tu producto</option>' + data.products.map((p) =>
-        `<option value="${escHtml(p.externalId)}">${escHtml(p.title)}${p.price ? ' — $' + p.price.toLocaleString('es-AR') : ' (sin precio informado)'}</option>`
+        `<option value="${escHtml(p.externalId)}">${escHtml(p.title)}${p.price ? ' — ' + HSFormat.money(p.price) : ' (sin precio informado)'}</option>`
       ).join('');
     } else {
       productSelect.innerHTML = '<option value="">No pudimos leer tu tienda</option>';
@@ -3920,7 +3953,7 @@ function renderMonitorPreview({ rival, mine, warning }) {
   const rivalText = document.getElementById('monPreviewRivalText');
   if (rival.ok) {
     const stockTxt = rival.inStock === null ? '' : (rival.inStock ? ' · con stock' : ' · sin stock');
-    rivalText.innerText = `$${rival.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}${stockTxt}`;
+    rivalText.innerText = `${HSFormat.money(rival.price)}${stockTxt}`;
     rivalText.style.color = 'var(--text-main)';
   } else {
     rivalText.innerText = rival.message || 'No pudimos leer el precio del rival.';
@@ -4005,7 +4038,7 @@ async function recheckMonitor(id) {
       if (rival && !rival.ok) {
         await showCustomAlert('No pudimos leer al rival', `${rival.message || 'No pudimos leer el precio de este rival.'} El precio que tenías guardado se mantiene sin cambios.`);
       } else if (warning) {
-        await showCustomAlert('Precios muy distintos', `El rival quedó en $${rival.price.toLocaleString('es-AR')}. ${warning}`);
+        await showCustomAlert('Precios muy distintos', `El rival quedó en ${HSFormat.money(rival.price)}. ${warning}`);
       }
     } else {
       await showCustomAlert('Error', data.error || 'No pudimos revisar este rival ahora. Intentá de nuevo en un rato.');
@@ -4045,7 +4078,7 @@ function openAddRivalModal(productId) {
   const modal = document.getElementById('addRivalModal');
   document.getElementById('addRivalForm').reset();
   document.getElementById('addRivalProductId').value = productId;
-  document.getElementById('addRivalProductLabel').innerText = `Para "${product.name}". Tu precio: ${product.price != null ? '$' + parseFloat(product.price).toLocaleString('es-AR') : 'sin definir'}.`;
+  document.getElementById('addRivalProductLabel').innerText = `Para "${product.name}". Tu precio: ${product.price != null ? HSFormat.money(product.price) : 'sin definir'}.`;
   resetAddRivalPreview();
   modal.classList.remove('hidden');
 }
@@ -4100,7 +4133,7 @@ async function handlePreviewAddRival() {
     const rivalText = document.getElementById('addRivalPreviewText');
     if (data.rival.ok) {
       const stockTxt = data.rival.inStock === null ? '' : (data.rival.inStock ? ' · con stock' : ' · sin stock');
-      rivalText.innerText = `$${data.rival.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}${stockTxt}`;
+      rivalText.innerText = `${HSFormat.money(data.rival.price)}${stockTxt}`;
       rivalText.style.color = 'var(--text-main)';
     } else {
       rivalText.innerText = data.rival.message || 'No pudimos leer el precio del rival.';
@@ -5441,11 +5474,11 @@ const SMARTPRICE_QUEUE_COLUMNS = [
   },
   {
     key: 'min_price_floor', label: 'Piso de margen', filter: 'none',
-    render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">$${parseFloat(q.min_price_floor || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>${q.floor_applied ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>' : ''}`
+    render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">${HSFormat.moneyHtml(parseFloat(q.min_price_floor || 0))}</span>${q.floor_applied ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>' : ''}`
   },
-  { key: 'previous_price', label: 'Precio actual', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">$${parseFloat(q.previous_price || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>` },
-  { key: 'suggested_price', label: 'Precio sugerido', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">$${parseFloat(q.suggested_price || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}</span>` },
-  { key: 'rule_name', label: 'Regla usada', filter: 'text', render: (q) => `<span style="font-size: 12px; color: var(--text-main);">${escHtml(q.rule_name || 'Protección de margen')}</span>` },
+  { key: 'previous_price', label: 'Precio actual', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">${HSFormat.moneyHtml(parseFloat(q.previous_price || 0))}</span>` },
+  { key: 'suggested_price', label: 'Precio sugerido', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">${HSFormat.moneyHtml(parseFloat(q.suggested_price || 0))}</span>` },
+  { key: 'rule_name', label: 'Regla usada', filter: 'text', render: (q) => `<span style="font-size: 12px; color: var(--text-main);">${escHtml(q.rule_name || (q.floor_applied ? 'Frenado en tu piso de margen' : 'Regla por defecto: acercarte al más barato'))}</span>` },
   {
     key: 'status', label: 'Estado', filter: 'enum', options: Object.values(QUEUE_STATUS_ES).map((v) => ({ value: v, label: v })),
     filterValue: (q) => QUEUE_STATUS_ES[q.status] || q.status,
@@ -5492,7 +5525,7 @@ async function handleApproveQueueItem(queueId) {
     });
     const data = await res.json();
     if (data.success) {
-      await showCustomAlert('Precio aplicado', `Aplicamos el nuevo precio: $${parseFloat(data.newPrice).toLocaleString('es-AR')}`);
+      await showCustomAlert('Precio aplicado', `Aplicamos el nuevo precio: ${HSFormat.money(parseFloat(data.newPrice))}`);
       load4seeSmartPriceQueue();
     } else {
       await showCustomAlert('Error', data.error || 'No pudimos aplicar el precio. Intentá de nuevo.');
@@ -5594,7 +5627,7 @@ function calcProdFloorPreview() {
   const floor = cost * (1 + (marginPct / 100.0)) + opCosts;
   const preview = document.getElementById('prodFloorPreviewText');
   if (preview) {
-    preview.innerText = `$${floor.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    preview.innerText = `${HSFormat.money(floor)}`;
   }
 }
 window.calcProdFloorPreview = calcProdFloorPreview;
@@ -5636,7 +5669,7 @@ async function handleCreateProductSubmit(e) {
     const data = await res.json();
     if (data.success) {
       closeCreateProductModal();
-      await showCustomAlert('Producto guardado', `El producto ${sku} quedó guardado con un piso de margen de $${parseFloat(data.product.min_price_floor).toLocaleString('es-AR')}`);
+      await showCustomAlert('Producto guardado', `El producto ${sku} quedó guardado con un piso de margen de ${HSFormat.money(parseFloat(data.product.min_price_floor))}`);
       load4seeSmartPriceQueue();
     } else if (data.code === 'OWN_PRICE_UNKNOWN') {
       await showCustomAlert('Falta tu precio', data.error || 'Elegí tu producto en la tienda, pegá el link, o cargá el precio a mano.');

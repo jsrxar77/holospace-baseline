@@ -52,7 +52,11 @@
       "chart3": "#F5B84B",
       "chart4": "#4CC9F0",
       "chart5": "#FF7AA2",
-      "chart6": "#B6E35B"
+      "chart6": "#B6E35B",
+      "modAccent4see": "#34D3A4",
+      "modAccentKanban": "#4CC9F0",
+      "modAccentScanner": "#B6E35B",
+      "modAccentPlatform": "#8B7CFF"
     }
   },
   "holo_light": {
@@ -108,7 +112,11 @@
       "chart3": "#A94F08",
       "chart4": "#0B6F9E",
       "chart5": "#B02A66",
-      "chart6": "#557D08"
+      "chart6": "#557D08",
+      "modAccent4see": "#087A62",
+      "modAccentKanban": "#0B6F9E",
+      "modAccentScanner": "#557D08",
+      "modAccentPlatform": "#5441D6"
     }
   }
 }

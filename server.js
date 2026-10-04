@@ -433,7 +433,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (reqPath === '/access.js' || reqPath === '/flow.js') {
+  if (reqPath === '/access.js' || reqPath === '/flow.js' || reqPath === '/format.js') {
     fs.readFile(path.join(__dirname, 'public', reqPath.slice(1)), (err, content) => {
       if (err) { res.writeHead(404, { 'Content-Type': 'text/plain' }); res.end('No encontrado'); return; }
       res.writeHead(200, { 'Content-Type': 'application/javascript; charset=utf-8', 'Cache-Control': 'no-cache' });

@@ -51,7 +51,7 @@ body:is(.theme-holo_dark, .theme-holo_light) :is(.kanban-card, .module-card):hov
 
 /* Botones */
 body:is(.theme-holo_dark, .theme-holo_light) .btn-primary {
-  background: var(--emerald);
+  background: var(--mod-accent, var(--emerald));
   color: var(--hw-accent-fg);
   border: var(--hw-border-width) solid transparent;
   border-radius: var(--hw-radius-btn);
@@ -454,3 +454,29 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
   .flow-tiles { grid-template-columns: 1fr 1fr; }
   .flow-tile-num { font-size: 40px; }
 }
+
+/* Acento por modulo (cada modulo tiene el suyo; los estados son comunes a todos) */
+body:is(.theme-holo_dark, .theme-holo_light) {
+  --mod-accent: var(--emerald);
+}
+body:is(.theme-holo_dark, .theme-holo_light)[data-module="4see"] { --mod-accent: var(--hw-mod-accent-4see); }
+body:is(.theme-holo_dark, .theme-holo_light)[data-module="kanban"] { --mod-accent: var(--hw-mod-accent-kanban); }
+body:is(.theme-holo_dark, .theme-holo_light)[data-module="platform"] { --mod-accent: var(--hw-mod-accent-platform); }
+
+/* Seleccion: negrita, subrayado grueso en tinta y fondo mas oscuro; no depende del tono */
+.flow-views button.active { color: var(--text-main); font-weight: 900; background: var(--hw-surface-3, var(--card-bg)); border-bottom: 4px solid var(--text-main); }
+.flow-node.is-current { background: var(--hw-surface-3, var(--card-bg)); box-shadow: 0 0 0 3px var(--text-main); }
+.flow-node.is-current .flow-node-state { color: var(--text-main); font-weight: 900; }
+.flow-node.is-done .flow-node-state { color: var(--mod-accent); }
+
+/* Montos: nunca se cortan en renglones aparte y las cifras quedan alineadas */
+.hs-money { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Reglas de precio: la regla por defecto y las propias, arriba de la cola de sugerencias */
+.flow-rules { display: grid; gap: 10px; margin: 4px 0 18px; }
+.flow-rules-title { font-size: 16px; font-weight: 900; color: var(--text-main); margin: 0; }
+.flow-rule { display: grid; gap: 6px; padding: 14px 16px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-left: 4px solid var(--mod-accent); }
+.flow-rule.is-default { border-style: solid; }
+.flow-rule-text { margin: 0; font-size: 14px; color: var(--text-main); }
+.flow-rules-list { display: grid; gap: 8px; }
+.flow-rules-list:empty { display: none; }

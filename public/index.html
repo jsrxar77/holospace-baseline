@@ -1473,6 +1473,16 @@
                 <input type="text" id="smartpriceSearchInput" class="input-search" placeholder="Buscar por producto o código..." oninput="filter4seeQueue(this.value)" />
               </div>
             </div>
+            <section class="flow-rules" aria-labelledby="rulesTitle">
+              <h3 id="rulesTitle" class="flow-rules-title">Cómo se calcula tu precio</h3>
+              <article class="flow-rule is-default">
+                <span class="flow-badge is-ok">Regla por defecto</span>
+                <p class="flow-rule-text">Te acercás <strong>1 % por debajo</strong> del rival más barato que tiene stock. Nunca bajás de tu piso de margen ni subís del tope.</p>
+                <p class="flow-hint">Se aplica cuando no tenés reglas propias.</p>
+              </article>
+              <div id="rulesList" class="flow-rules-list"></div>
+              <div class="flow-actions"><button type="button" class="btn-secondary" onclick="openCreateRuleModal()">+ Nueva regla propia</button></div>
+            </section>
             <div id="smartpriceKpis" class="kpi-strip">
               <div class="kpi-cell tone-pending"><div class="kpi-label">Precios para decidir</div><div id="kpiQueuePending" class="kpi-value">0</div></div>
               <div class="kpi-cell tone-applied"><div class="kpi-label">Precios aplicados</div><div id="kpiQueueApplied" class="kpi-value">0</div></div>
@@ -1483,11 +1493,6 @@
                 <div class="flow-empty">Cargando precios sugeridos...</div>
               </div>
             </div>
-            <details class="flow-details">
-              <summary>Reglas de precio</summary>
-              <p class="flow-hint">Las reglas definen cuánto podés bajar frente a tus rivales. Son opcionales: sin reglas, solo se protege tu piso de margen.</p>
-              <div class="flow-actions"><button type="button" class="btn-secondary" onclick="openCreateRuleModal()">+ Nueva regla de precio</button></div>
-            </details>
           </div>
         </section>
       </div>
@@ -1541,19 +1546,19 @@
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costo del producto</label>
-          <input type="number" step="0.01" min="0" id="costsCostPrice" class="input-field" required>
+          <input type="number" step="0.01" min="0" id="costsCostPrice" class="input-field js-money" required>
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costos operativos (envío, comisiones, empaque)</label>
-          <input type="number" step="0.01" min="0" id="costsOperating" class="input-field" placeholder="0">
+          <input type="number" step="0.01" min="0" id="costsOperating" class="input-field js-money" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Margen mínimo (%)</label>
-          <input type="number" step="0.01" min="0" id="costsMargin" class="input-field" placeholder="0">
+          <input type="number" step="0.01" min="0" id="costsMargin" class="input-field js-money" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Precio tope (opcional)</label>
-          <input type="number" step="0.01" min="0" id="costsCeiling" class="input-field" placeholder="Sin tope">
+          <input type="number" step="0.01" min="0" id="costsCeiling" class="input-field js-money" placeholder="Sin tope">
         </div>
         <div id="costsError" style="color: var(--red); font-size: 13px; display: none;"></div>
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -2510,6 +2515,7 @@
   </footer>
 
   <script src="/access.js"></script>
+  <script src="/format.js"></script>
   <script src="/flow.js"></script>
   <script src="/charts/hs-charts.js"></script>
   <script src="/tables/hs-table.js"></script>
