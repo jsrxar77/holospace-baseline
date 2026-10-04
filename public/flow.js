@@ -96,7 +96,48 @@
     };
   }
 
-  const api = { STEPS, computeFlow, summarize, rivalSummary, costBreakdown };
+  // Que permiso pide cada accion de la pantalla, segun la funcion que dispara el boton.
+  // Tiene que coincidir con lo que exige el servidor: si no, la pantalla ofrece algo que despues se rechaza.
+  const PERM_PRICING = '4see:pricing:write';
+  const ACTION_PERMISSIONS = {
+    openCreateProductModal: PERM_PRICING, openEditCatalogItem: PERM_PRICING, askDeleteCatalogItem: PERM_PRICING,
+    toggleProductAnalysis: PERM_PRICING, openAddRivalModal: PERM_PRICING, openEditRivalModal: PERM_PRICING,
+    deleteMonitor: PERM_PRICING, recheckMonitor: PERM_PRICING, openCostsModal: PERM_PRICING, handleTriggerWorkerCycle: PERM_PRICING,
+    handleApproveQueueItem: '4see:queue:approve', handleRejectQueueItem: '4see:queue:approve',
+    openCreateRuleModal: '4see:rules:manage'
+  };
+  const PERMISSION_TEXT = {
+    '4see:pricing:write': 'cargar o cambiar productos, rivales y costos',
+    '4see:queue:approve': 'aplicar o descartar precios sugeridos',
+    '4see:rules:manage': 'crear reglas de precio'
+  };
+
+  function can(perms, key) {
+    const list = Array.isArray(perms) ? perms : [];
+    return list.indexOf('*') !== -1 || list.indexOf(key) !== -1;
+  }
+
+  // Permiso que pide el boton, leido de su onclick; null si la accion no necesita ninguno
+  function actionPermission(onclick) {
+    const text = String(onclick || '');
+    const names = Object.keys(ACTION_PERMISSIONS);
+    for (let i = 0; i < names.length; i++) {
+      if (new RegExp('\\b' + names[i] + '\\s*\\(').test(text)) return ACTION_PERMISSIONS[names[i]];
+    }
+    return null;
+  }
+
+  // Frase para la persona con lo que su rol no puede hacer; vacia si puede todo
+  function accessNote(perms, isSuperAdmin) {
+    if (isSuperAdmin) return '';
+    const missing = Object.keys(PERMISSION_TEXT).filter((k) => !can(perms, k));
+    if (!missing.length) return '';
+    const items = missing.map((k) => PERMISSION_TEXT[k]);
+    const list = items.length === 1 ? items[0] : items.slice(0, -1).join(', ') + ' ni ' + items[items.length - 1];
+    return 'Tu rol no puede ' + list + '. Esas acciones aparecen deshabilitadas: pedile acceso al administrador de tu organización.';
+  }
+
+  const api = { STEPS, computeFlow, summarize, rivalSummary, costBreakdown, actionPermission, accessNote, can };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.HSFlow = api;
 })(typeof window !== 'undefined' ? window : globalThis);

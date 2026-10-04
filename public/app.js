@@ -6099,4 +6099,38 @@ async function handleCreateRuleSubmit(e) {
 }
 window.handleCreateRuleSubmit = handleCreateRuleSubmit;
 
+// Las acciones que el rol no puede hacer se ven deshabilitadas y explican por que, en vez de fallar al apretarlas
+function applyFourSeePermissions() {
+  const view = document.getElementById('view4seeProductos');
+  if (!view) return;
+  const user = getAuthUser() || {};
+  const isSuper = user.role === 'SUPERADMIN';
+  const perms = user.permissions || [];
+  const note = document.getElementById('flowAccessNote');
+  if (note) {
+    const text = HSFlow.accessNote(perms, isSuper);
+    // Solo se escribe si cambia: el observador mira este mismo panel y un cambio sin efecto lo dispararia sin fin
+    if (note.textContent !== text) note.textContent = text;
+    if (note.hidden !== !text) note.hidden = !text;
+  }
+  if (isSuper) return;
+  document.querySelectorAll('#view4seeProductos button[onclick], #createProductModal button[onclick]').forEach((btn) => {
+    const need = HSFlow.actionPermission(btn.getAttribute('onclick'));
+    if (!need || HSFlow.can(perms, need)) return;
+    if (btn.dataset.permBlocked) return;
+    btn.dataset.permBlocked = '1';
+    btn.disabled = true;
+    btn.title = 'Tu rol no puede hacer esto. Pedile acceso al administrador de tu organización.';
+  });
+}
+window.applyFourSeePermissions = applyFourSeePermissions;
 
+(function watchFourSeePermissions() {
+  const start = () => {
+    const view = document.getElementById('view4seeProductos');
+    if (!view) return;
+    new MutationObserver(() => applyFourSeePermissions()).observe(view, { childList: true, subtree: true });
+    applyFourSeePermissions();
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();

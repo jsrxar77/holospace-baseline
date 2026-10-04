@@ -1,7 +1,7 @@
 /**
  * Core/4see: el flujo de Productos no permite saltar pasos (public/flow.js). No requiere base de datos.
  */
-const { computeFlow, rivalSummary, costBreakdown } = require('../public/flow.js');
+const { computeFlow, rivalSummary, costBreakdown, actionPermission, accessNote, can } = require('../public/flow.js');
 
 let failed = 0;
 const ok = (c, m) => { if (c) console.log(`  OK   ${m}`); else { failed++; console.error(`  FAIL ${m}`); } };
@@ -66,4 +66,14 @@ ok(cb.priceBelowFloor && cb.ceilingBelowFloor, 'avisa si tu precio queda bajo el
 ok(costBreakdown({ price: 1000, cost: '', operating: 5 }).ready === false, 'sin costo no calcula nada');
 ok(costBreakdown({ price: null, cost: 100 }).marginPercent === null, 'sin precio no inventa el margen');
 
+console.log('Permisos: la pantalla no ofrece lo que el rol no puede hacer');
+ok(actionPermission("handleApproveQueueItem('q1')") === '4see:queue:approve', 'Aplicar pide aprobar la cola');
+ok(actionPermission("event.stopPropagation(); toggleProductAnalysis('p', true)") === '4see:pricing:write', 'Analizar pide escribir precios');
+ok(actionPermission('openCreateRuleModal()') === '4see:rules:manage', 'Nueva regla pide gestionar reglas');
+ok(actionPermission("setFlowStep(2)") === null && actionPermission('') === null, 'navegar no pide permiso');
+ok(can(['*'], '4see:queue:approve') && !can(['4see:catalog:read'], '4see:queue:approve'), 'el comodin alcanza y la lectura no');
+ok(accessNote(['*'], false) === '' && accessNote([], true) === '', 'administrador y comodin no ven aviso');
+const nota = accessNote(['4see:catalog:read', '4see:catalog:audit'], false);
+ok(/aplicar o descartar/.test(nota) && / ni crear reglas/.test(nota) && /administrador de tu organización/.test(nota), 'un rol de solo lectura recibe el aviso con el siguiente paso');
+ok(accessNote(['4see:pricing:write', '4see:rules:manage'], false).startsWith('Tu rol no puede aplicar'), 'el aviso lista solo lo que falta');
 process.exit(failed ? 1 : 0);

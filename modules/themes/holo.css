@@ -514,6 +514,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .form-label { display: flex; align-
 .cost-row.is-best span:first-child { font-weight: 800; }
 .cost-sub { margin: 0; color: var(--text-muted); font-size: 13px; }
 .cost-title { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--text-muted); }
+.cost-warn[hidden] { display: none; }
 .cost-warn { margin: 0; padding: 8px 10px; border: 1px solid var(--amber); background: color-mix(in srgb, var(--amber) 12%, var(--card-bg)); color: var(--text-main); font-size: 13px; }
 .intake-notice { padding: 12px 14px; border: 1px solid var(--red); background: color-mix(in srgb, var(--red) 12%, var(--card-bg)); color: var(--text-main); font-size: 14px; display: grid; gap: 8px; justify-items: start; }
 
