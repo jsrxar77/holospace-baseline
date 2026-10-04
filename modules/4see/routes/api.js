@@ -318,6 +318,11 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto del rival, con https://.' }));
       return true;
     }
+    if (!competitorName || !String(competitorName).trim()) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Ponele un nombre al rival, por ejemplo el nombre de su tienda.' }));
+      return true;
+    }
     const rivalLimits = await getFourseeeLimits(tenantId);
     if (await countRivalsOfProduct(tenantId, product.id) >= rivalLimits.maxCompetitorsPerProduct) {
       res.writeHead(403, { 'Content-Type': 'application/json' });
@@ -1145,6 +1150,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       [inAnalysis, product.id, tenantId],
       { tenantId }
     );
+    await recalcSuggestionForProduct(tenantId, product.id);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, inAnalysis }));
     return true;
