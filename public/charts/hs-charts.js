@@ -206,9 +206,16 @@
       o.tooltip.valueFormatter = money;
       var rivalPts = [];
       opts.rows.forEach(function (r, i) {
-        (r.rivals || []).forEach(function (v) { rivalPts.push([i, v]); });
+        (r.rivals || []).forEach(function (rv) { rivalPts.push({ value: [i, rv.price], rival: rv.name, product: r.name }); });
       });
       o.yAxis.scale = true;
+      o.tooltip.formatter = function (it) {
+        var esc = function (t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;'); };
+        var d = it.data || {};
+        if (d.rival) return esc(d.product) + '<br/>' + esc(d.rival) + ': ' + money(d.value[1]);
+        var row = opts.rows[it.dataIndex];
+        return (row ? esc(row.name) + '<br/>' : '') + 'Tu precio: ' + money(it.value);
+      };
       o.series = [
         { name: 'Tu precio', type: 'scatter', symbol: 'rect', symbolSize: [30, 3], z: 3, data: opts.rows.map(function (r) { return r.mine; }), itemStyle: { color: p.applied } },
         { name: 'Rivales', type: 'scatter', symbol: 'circle', symbolSize: 10, z: 2, data: rivalPts, itemStyle: { color: p.ink } }

@@ -5615,7 +5615,7 @@ function renderMonitorsDashboard(monitors = []) {
   monitors.forEach(m => {
     const key = m.product_name || 'Producto';
     if (!byProduct.has(key)) byProduct.set(key, { name: key.slice(0, 16), mine: parseFloat(m.my_price || 0), rivals: [] });
-    byProduct.get(key).rivals.push(parseFloat(m.competitor_price || 0));
+    byProduct.get(key).rivals.push({ name: m.competitor_name || 'Rival', price: parseFloat(m.competitor_price || 0) });
   });
   const rows = Array.from(byProduct.values()).slice(0, 12);
   HSCharts.track('chartMonPrices', () => HSCharts.build.priceVsRivals({ rows })).catch(() => {});
