@@ -76,6 +76,8 @@
 - [ ] **D-056 | Cargas que no terminan en Productos** | `public/app.js` (`load4seeCatalog`, `load4seeMargins`) | Esfuerzo S: "Cargando catalogo auditado..." y "Cargando reglas de rentabilidad..." quedan colgados cuando la carga falla o no hay datos; mostrar error o estado vacio con siguiente paso.
 - [ ] **D-057 | Lectura automatica de precios de rivales** | `modules/4see/workers/scraper_worker.js` | Esfuerzo M: hoy los precios de la competencia se releen solo con el boton (Revisar ahora / Revisar precios ahora). No hay programacion; hay que definir frecuencia por plan y costo de lectura.
 - [ ] **D-058 | Auditoria de tienda fuera de la pantalla Productos** | `public/app.js` (load4seeCatalog, render4seeCatalog, modal de auditoria), `public/index.html` | Esfuerzo S: "Salud de tu catalogo" y "Probar un producto" ya no se llegan desde ninguna pantalla. Decidir: borrar el codigo o volver a ponerlo como funcion propia.
+- [ ] **D-063 | Entorno de desarrollo: server.js como archivo suelto** | `docker-compose.yml` | Esfuerzo S: el montaje de `./server.js:/app/server.js` queda desactualizado cuando Git reemplaza el archivo; el servidor se cae y 6 pruebas fallan con ECONNREFUSED. Solucion: montar el directorio, no el archivo.
+- [ ] **D-064 | Produccion con respuestas inconsistentes en el despliegue** | servidor de produccion | Esfuerzo S: tras publicar, algunas respuestas de archivos nuevos dan 404 y otras 200. Verificar con docker compose ps y logs en el servidor.
 - [ ] **D-042 | Oracion de "por que lo necesitas" en el hero** | `modules/landing/public/index.html` | Esfuerzo S
   - Pendiente definir con el equipo una oracion que explique por que una tienda online necesita 4see, despues del texto de "que es".
 

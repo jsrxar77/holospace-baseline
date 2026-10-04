@@ -1447,7 +1447,7 @@
 
           <div class="flow-body" data-step="3">
             <div class="flow-actions">
-              <button type="button" class="btn-primary" onclick="openCostsModal()">Cargar costos de un producto</button>
+
             </div>
             <div id="marginsTableContainer" class="flow-cards">
               <div class="flow-empty">Cargando tus productos...</div>
@@ -1531,7 +1531,7 @@
       <form id="costsForm" style="display: flex; flex-direction: column; gap: 12px;" onsubmit="handleCostsSubmit(event)">
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Producto</label>
-          <select id="costsProductSelect" class="input-field" required onchange="fillCostsForm(this.value)"></select>
+          <p id="costsProductName" style="font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0;"></p>
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costo del producto</label>

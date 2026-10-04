@@ -3581,22 +3581,37 @@ async function renderRulesList() {
 }
 window.renderRulesList = renderRulesList;
 
+let costsTable = null;
 function renderCostsStep() {
-  const box = document.getElementById('marginsTableContainer');
-  if (!box) return;
+  const container = document.getElementById('marginsTableContainer');
+  if (!container) return;
   const analysed = flowProducts.filter((p) => p.in_analysis);
   if (!analysed.length) {
-    box.innerHTML = '<div class="flow-empty">Primero elegí productos para analizar en el paso 2. Los costos se cargan para cada uno de ellos.</div>';
+    container.innerHTML = '<div class="flow-empty">Primero elegí productos para analizar en el paso 2. Los costos se cargan para cada uno de ellos.</div>';
+    costsTable = null;
     return;
   }
-  box.innerHTML = analysed.map((p) => `
-    <article class="flow-card">
-      <h3 class="flow-card-title">${escHtml(p.title)}</h3>
-      <p class="flow-card-sub">${escHtml(p.sku || '')}</p>
-      ${p.costs_loaded
-        ? `<span class="flow-card-figure">Piso ${ARS(p.min_price_floor)}</span><span class="flow-badge is-ok">Costos cargados</span>`
-        : '<span class="flow-badge is-warn">Falta cargar el costo</span>'}
-    </article>`).join('');
+  const money = (v) => (v == null ? '<span style="color: var(--text-muted);">Sin cargar</span>' : HSFormat.moneyHtml(v));
+  if (!costsTable || !container.querySelector('.hs-table-wrap')) {
+    costsTable = HSTable.mount({
+      id: '4see_costos',
+      container,
+      columns: [
+        { key: 'title', label: 'Producto', filter: 'text', render: (p) => `<strong style="color: var(--text-main);">${escHtml(p.title)}</strong>` },
+        { key: 'cost_price', label: 'Costo', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.cost_price : null) },
+        { key: 'operating_costs', label: 'Costos operativos', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.operating_costs : null) },
+        { key: 'min_margin_percentage', label: 'Margen mínimo', filter: 'none', align: 'right', render: (p) => (p.costs_loaded ? `${Number(p.min_margin_percentage).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %` : '<span style="color: var(--text-muted);">Sin cargar</span>') },
+        { key: 'max_price_ceiling', label: 'Tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted);">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
+        { key: 'min_price_floor', label: 'Piso de margen', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.min_price_floor : null) },
+        { key: 'costs_loaded', label: 'Estado', filter: 'enum', options: [{ value: 'Cargado', label: 'Cargado' }, { value: 'Falta el costo', label: 'Falta el costo' }], filterValue: (p) => (p.costs_loaded ? 'Cargado' : 'Falta el costo'), render: (p) => (p.costs_loaded ? '<span class="flow-badge is-ok">Cargado</span>' : '<span class="flow-badge is-warn">Falta el costo</span>') }
+      ],
+      rowKey: (p) => p.id,
+      emptyMessage: 'Primero elegí productos para analizar en el paso 2.',
+      actionsLabel: 'Acciones',
+      renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="openCostsModal('${p.id}')">${p.costs_loaded ? 'Editar costos' : 'Cargar costos'}</button>`
+    });
+  }
+  costsTable.update(analysed);
 }
 
 let catalogEditing = null;
@@ -3792,48 +3807,34 @@ async function toggleProductAnalysis(productId, inAnalysis) {
 }
 window.toggleProductAnalysis = toggleProductAnalysis;
 
-let costsProductsCache = [];
+let costsEditingId = null;
 
-async function openCostsModal() {
-  const modal = document.getElementById('costsModal');
-  const select = document.getElementById('costsProductSelect');
-  if (!modal || !select) return;
+function openCostsModal(productId) {
+  const p = flowProducts.find((x) => x.id === productId);
+  if (!p) return;
+  costsEditingId = p.id;
+  document.getElementById('costsProductName').textContent = p.title;
   document.getElementById('costsError').style.display = 'none';
-  const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
-  const data = await res.json();
-  costsProductsCache = (data.products || []).filter((p) => p.in_analysis);
-  if (!costsProductsCache.length) {
-    await showCustomAlert('Primero elegí productos', 'Para cargar costos, antes elegí los productos a analizar en el paso 2.');
-    return;
-  }
-  select.innerHTML = costsProductsCache.map((p) => `<option value="${p.id}">${escHtml(p.title)}${p.costs_loaded ? ' (costos cargados)' : ''}</option>`).join('');
-  fillCostsForm(select.value);
-  modal.classList.remove('hidden');
+  const fmt = (v) => (v == null ? '' : Number(v).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  document.getElementById('costsCostPrice').value = p.costs_loaded ? fmt(p.cost_price) : '';
+  document.getElementById('costsOperating').value = p.costs_loaded ? fmt(p.operating_costs) : '';
+  document.getElementById('costsMargin').value = p.costs_loaded ? fmt(p.min_margin_percentage) : '';
+  document.getElementById('costsCeiling').value = fmt(p.max_price_ceiling);
+  document.getElementById('costsModal').classList.remove('hidden');
 }
 window.openCostsModal = openCostsModal;
 
 function closeCostsModal() {
-  const modal = document.getElementById('costsModal');
-  if (modal) modal.classList.add('hidden');
-  Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue()]).then(paintFlow);
+  document.getElementById('costsModal').classList.add('hidden');
+  costsEditingId = null;
 }
 window.closeCostsModal = closeCostsModal;
-
-function fillCostsForm(productId) {
-  const p = costsProductsCache.find((x) => x.id === productId);
-  if (!p) return;
-  document.getElementById('costsCostPrice').value = p.costs_loaded ? p.cost_price : '';
-  document.getElementById('costsOperating').value = p.costs_loaded ? p.operating_costs : '';
-  document.getElementById('costsMargin').value = p.costs_loaded ? p.min_margin_percentage : '';
-  document.getElementById('costsCeiling').value = p.max_price_ceiling || '';
-}
-window.fillCostsForm = fillCostsForm;
 
 async function handleCostsSubmit(e) {
   e.preventDefault();
   const errorBox = document.getElementById('costsError');
   errorBox.style.display = 'none';
-  const productId = document.getElementById('costsProductSelect').value;
+  if (!costsEditingId) return;
   const body = {
     costPrice: HSFields.readMoney(document.getElementById('costsCostPrice')),
     operatingCosts: HSFields.readMoney(document.getElementById('costsOperating')) || 0,
@@ -3841,7 +3842,7 @@ async function handleCostsSubmit(e) {
     maxPriceCeiling: HSFields.readMoney(document.getElementById('costsCeiling')) || ''
   };
   try {
-    const res = await fetch(`/api/4see/products/${productId}/costs`, {
+    const res = await fetch(`/api/4see/products/${costsEditingId}/costs`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
       body: JSON.stringify(body)
@@ -3853,6 +3854,7 @@ async function handleCostsSubmit(e) {
       return;
     }
     closeCostsModal();
+    Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue()]).then(paintFlow);
   } catch (err) {
     errorBox.textContent = 'Sin conexión. Revisá la red e intentá de nuevo.';
     errorBox.style.display = 'block';

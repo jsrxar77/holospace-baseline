@@ -153,6 +153,23 @@ async function runTests() {
     const orphan = await query('SELECT id FROM fourseee_competitor_monitors WHERE product_id = ?', [productIds[1]], { tenantId });
     assert(!gone && orphan.length === 0, 'al quitarlo se van tambien sus rivales (no quedan huerfanos)');
 
+    console.log('\n--- 6d. Costos: cambiar un costo recalcula la sugerencia pendiente (sin datos viejos) ---');
+    const costedRecalc = productIds[2];
+    await execute(
+      `INSERT INTO fourseee_competitor_monitors (id, tenant_id, product_id, product_name, competitor_url, competitor_price, competitor_stock)
+       VALUES (?, ?, ?, 'Producto flujo 3', 'https://rival.example/p', 150, 'IN_STOCK')`,
+      [crypto.randomUUID(), tenantId, costedRecalc],
+      { tenantId }
+    );
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${costedRecalc}/costs`, method: 'PATCH' }, res, { ...ctx, data: { costPrice: 500, operatingCosts: 50, minMarginPercentage: 20 } });
+    let pendingRows = await query("SELECT suggested_price FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [costedRecalc], { tenantId });
+    assert(pendingRows.length === 1 && parseFloat(pendingRows[0].suggested_price) === 650, 'con costo 500 el piso (650) frena la sugerencia');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${costedRecalc}/costs`, method: 'PATCH' }, res, { ...ctx, data: { costPrice: 100, operatingCosts: 0, minMarginPercentage: 20 } });
+    pendingRows = await query("SELECT suggested_price FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [costedRecalc], { tenantId });
+    assert(pendingRows.length === 1 && Math.abs(parseFloat(pendingRows[0].suggested_price) - 148.5) < 0.01, 'al bajar el costo se recalcula: 1% por debajo de 150 (148,50), sin quedar la sugerencia vieja');
+
     console.log('\n--- 7. Aislamiento: otra organizacion no puede tocar este catalogo ---');
     res = createMockRes();
     await handle4seeApi({ url: `/api/4see/products/${productIds[2]}/analysis`, method: 'POST' }, res, {

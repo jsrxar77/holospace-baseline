@@ -185,7 +185,7 @@ Todas las listas son tablas. Cada fila se edita y se quita desde la misma pantal
 
 - **Catálogo (paso 1):** Editar cambia nombre, código y precio. **Quitar** borra el producto del catálogo: se van también sus rivales, sus sugerencias pendientes y sus costos. Antes de borrar, un modal muestra esas cantidades y pide confirmación.
 - **Análisis (paso 2):** **Analizar** saca o pone el producto en análisis. Quitarlo del análisis no borra nada del catálogo: los rivales y los costos quedan guardados.
-- **Costos (paso 3):** Editar costos por fila (en desarrollo, ver DEBT).
+- **Costos (paso 3):** una fila por producto en análisis, con costo, costos operativos, margen mínimo, tope y piso. **Editar costos** abre el formulario de ese producto. Cambiar un costo recalcula al instante la sugerencia pendiente de ese producto; no queda un precio viejo. No se puede borrar un costo: si está mal, se corrige.
 
 ### Qué es automático y qué no
 

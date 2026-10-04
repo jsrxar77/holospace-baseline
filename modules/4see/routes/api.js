@@ -14,6 +14,7 @@ const { ensureSmartPriceTables } = require('../lib/ensure_tables');
 const { evaluateSmartPrice, calculateHardFloor, clampPrice } = require('../lib/smartprice');
 const { runScraperWorkerCycle, dispatchPriceUpdate } = require('../workers/scraper_worker');
 const { getFourseeeLimits, countWatchedProducts, countRivalsOfProduct } = require('../lib/plan_limits');
+const { recalcSuggestionForProduct } = require('../lib/suggestions');
 
 let isStoreTableReady = false;
 async function ensureConnectedStoresTable() {
@@ -72,7 +73,8 @@ function getStoreForTenant(storeId, tid) {
 
 // Columnas del producto del catalogo con los nombres que usa la pantalla de Competencia
 const WATCHED_COLUMNS = `id, tenant_id, store_id, title AS name, store_external_id AS external_id, own_url,
-  current_price AS price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded, min_price_floor, created_at, updated_at`;
+  current_price AS price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded,
+  cost_price, operating_costs, min_margin_percentage, max_price_ceiling, min_price_floor, created_at, updated_at`;
 
 /** Resuelve "tu precio" a partir de los datos que ya tiene guardados un producto vigilado. */
 function resolveMineForProduct(product) {
@@ -1031,6 +1033,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       [cost, operating, margin, ceiling, product.id, tenantId],
       { tenantId }
     );
+    await recalcSuggestionForProduct(tenantId, product.id);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return true;
@@ -1101,6 +1104,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
         [title, sku, rawPrice, rawPrice, product.id, tenantId],
         { tenantId }
       );
+      await recalcSuggestionForProduct(tenantId, product.id);
     } catch (err) {
       if (/unique|duplicate/i.test(err.message)) {
         res.writeHead(409, { 'Content-Type': 'application/json' });
