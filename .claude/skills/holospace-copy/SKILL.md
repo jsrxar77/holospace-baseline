@@ -50,3 +50,7 @@ Nombres de pantalla de 4see: Competencia, Precios sugeridos, Catalogo, Margenes.
 - [ ] Mismo termino que en la landing para el mismo concepto.
 - [ ] Sin emojis, con "vos", `holospace.` en minuscula.
 - [ ] `node tests/test-copy.js` pasa.
+
+## Nombres en graficos (obligatorio)
+
+El nombre de un producto en un grafico es el mismo que en la tabla y en la tarjeta de la misma pantalla: el titulo del catalogo (`product_title` / `product_name`). Nunca el SKU ni un codigo interno como etiqueta (ej. `CMP-...`). Antes de cerrar un grafico, comparar sus etiquetas con las de la tabla de la misma vista.

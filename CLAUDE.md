@@ -32,6 +32,7 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toca; revisar cada uno de punta a punta como lo usa la persona (no solo la parte pedida); si un paso queda sin editar, borrar o verificar, el cambio no esta terminado.
 
 ## Coherencia de botones y textos (obligatorio)
+- **Un producto tiene un solo nombre en toda la app:** el titulo del catalogo (`product_title` / `product_name`), en tablas, graficos, tarjetas, modales y resumenes. El SKU o codigo interno (ej. `CMP-...`) nunca es etiqueta visible: va como dato secundario y solo si hace falta. Antes de cerrar, buscar cada etiqueta que muestra un producto (`grep` de `sku` cerca de `title`) y verificar que todas usen el mismo campo.
 Un solo criterio en todos los modulos: un boton lleno por pantalla (accion principal); acciones de fila en contorno; quitar o borrar en contorno rojo con modal de consecuencias. Insignias para estados, nunca llenas como boton. Un solo verbo por accion (Editar, Quitar, Analizar, Revisar precio). Las reglas estan en docs/CONTENT.md 0.3.
 
 ## Listas, edicion y borrado (obligatorio)

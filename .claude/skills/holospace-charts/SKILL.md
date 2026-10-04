@@ -24,3 +24,7 @@ description: >
 
 ## Constructores disponibles
 `spark` (sparkline para celdas KPI), `donut` (por estado), `bars` (barras agrupadas), `floorBand` (precio anterior y sugerido contra piso), `priceVsRivals` (mi precio contra rivales).
+
+## Nombres en graficos (obligatorio)
+
+El nombre de un producto en un grafico es el mismo que en la tabla y en la tarjeta de la misma pantalla: el titulo del catalogo (`product_title` / `product_name`). Nunca el SKU ni un codigo interno como etiqueta (ej. `CMP-...`). Antes de cerrar un grafico, comparar sus etiquetas con las de la tabla de la misma vista.
