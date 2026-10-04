@@ -6,7 +6,7 @@
   'use strict';
 
   const STEPS = [
-    { n: 1, key: 'catalog', label: 'Catálogo', goal: 'Cargá tus productos una sola vez. Podés hacerlo a mano o conectar tu tienda.' },
+    { n: 1, key: 'catalog', label: 'Catálogo', goal: 'Cargá tus productos una sola vez: pegá un link, traelos de tu tienda o cargalos a mano.' },
     { n: 2, key: 'analysis', label: 'Análisis', goal: 'Elegí los productos que seguís y sumá los links de sus rivales.' },
     { n: 3, key: 'costs', label: 'Costos', goal: 'Cargá lo que te cuesta vender cada producto en análisis.' },
     { n: 4, key: 'suggestions', label: 'Sugerencias', goal: 'Mirá el precio que te proponemos para cada producto y decidí.' }

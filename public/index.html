@@ -1429,8 +1429,8 @@
 
           <div class="flow-body" data-step="1">
             <div class="flow-actions">
-              <button type="button" class="btn-primary" onclick="openCreateProductModal()">+ Agregar un producto a mano</button>
-              <button type="button" class="btn-secondary" onclick="openConnectStoreModalForNew()">Traer desde mi tienda (opcional)</button>
+              <button type="button" class="btn-primary" onclick="openCreateProductModal()">+ Agregar un producto</button>
+              <button type="button" class="btn-secondary" onclick="openConnectStoreModalForNew()">Conectar mi tienda</button>
             </div>
             <div class="table-responsive-container" id="catalogTableContainer"></div>
           </div>
@@ -2294,71 +2294,65 @@
   <!-- Modal Nueva Regla de Margen -->
   <!-- MODAL NUEVO PRODUCTO 1:N -->
   <div id="createProductModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 540px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un producto a vigilar</h3>
+    <div class="modal-content" style="max-width: 560px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Agregar un producto</h3>
         <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateProductModal()">×</button>
       </div>
-      <form id="createProductForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateProductSubmit(event)">
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
-          <div>
-            <label class="form-label">Código del producto (SKU) <span style="color: var(--red);">*</span></label>
-            <input type="text" id="prodSku" class="input-field" placeholder="AURIC-01" required>
-          </div>
-          <div>
-            <label class="form-label">Nombre del Producto <span style="color: var(--red);">*</span></label>
-            <input type="text" id="prodTitle" class="input-field" placeholder="Auriculares Bluetooth Pro" required>
-          </div>
-        </div>
+      <p class="flow-hint">Cada producto se carga una sola vez. Elegí cómo.</p>
+      <div class="flow-views" role="tablist" aria-label="Cómo cargarlo">
+        <button type="button" role="tab" id="intakeTabLink" class="active" aria-selected="true" onclick="setIntakeMode('link')">Pegar un link</button>
+        <button type="button" role="tab" id="intakeTabStore" aria-selected="false" onclick="setIntakeMode('store')">Traer de mi tienda</button>
+        <button type="button" role="tab" id="intakeTabManual" aria-selected="false" onclick="setIntakeMode('manual')">Cargar a mano</button>
+      </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+      <form id="createProductForm" style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;" onsubmit="handleCreateProductSubmit(event)">
+        <section id="intakePanelLink">
+          <label class="form-label" for="intakeUrl">Link de tu producto</label>
+          <div class="flow-actions" style="margin: 0 0 6px;">
+            <input type="url" id="intakeUrl" class="input-field" style="flex: 1; min-width: 200px;" placeholder="https://tutienda.com/producto/...">
+            <button type="button" class="btn-secondary" id="intakeReadBtn" onclick="readIntakeLink()">Leer link</button>
+          </div>
+          <p class="flow-hint" style="margin: 0;">Leemos el nombre, el precio y el código por vos.</p>
+        </section>
+
+        <section id="intakePanelStore" hidden>
+          <label class="form-label" for="prodMyStoreSelect">Tu tienda conectada</label>
+          <select id="prodMyStoreSelect" class="input-field" onchange="resetIntakeStoreChoice(); handleMyStoreChange('prod')">
+            <option value="">Elegí una tienda</option>
+          </select>
+          <select id="prodMyStoreProduct" class="input-field hidden" style="margin-top: 8px;" onchange="handleProdStoreProductChange()"></select>
+          <p id="intakeStoreEmpty" class="flow-hint" style="margin: 6px 0 0;" hidden>Todavía no conectaste ninguna tienda. Conectala desde el paso Catálogo, o usá el link.</p>
+        </section>
+
+        <div id="intakeNotice" class="intake-notice" role="alert" hidden></div>
+
+        <section id="intakeData" class="intake-read" hidden>
           <div>
-            <label class="form-label">Costo del producto ($) <span style="color: var(--red);">*</span></label>
-            <input type="number" step="0.01" id="prodCost" class="input-field" placeholder="5000" required oninput="calcProdFloorPreview()">
+            <label class="form-label" for="intakeTitle">Nombre <span style="color: var(--red);">*</span></label>
+            <input type="text" id="intakeTitle" class="input-field" maxlength="255" oninput="updateIntakeSaveState()">
           </div>
           <div>
-            <label class="form-label">Margen mínimo que querés ganar (%) <span style="color: var(--red);">*</span></label>
-            <input type="number" step="0.1" id="prodMarginPct" class="input-field" value="20" required oninput="calcProdFloorPreview()">
+            <label class="form-label" for="intakeSku">Código (SKU)</label>
+            <input type="text" id="intakeSku" class="input-field" maxlength="100">
+            <p class="flow-hint" style="margin: 4px 0 0;">Si queda vacío, lo generamos al guardar y te avisamos.</p>
           </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label class="form-label">Costos extra y envío ($)</label>
-            <input type="number" step="0.01" id="prodOpCosts" class="input-field" value="0" oninput="calcProdFloorPreview()">
+          <div id="intakePriceManual" hidden>
+            <label class="form-label" for="intakePrice">Tu precio ($) <span style="color: var(--red);">*</span></label>
+            <input type="text" id="intakePrice" class="input-field js-money" inputmode="decimal" placeholder="0,00" oninput="updateIntakeSaveState()">
           </div>
-          <div>
-            <label class="form-label">Precio máximo (techo) ($)</label>
-            <input type="number" step="0.01" id="prodCeiling" class="input-field" placeholder="Opcional">
+          <div id="intakePriceRead" hidden>
+            <span class="form-label">Precio</span>
+            <p id="intakePriceReadText" class="intake-price"></p>
+            <p id="intakeSourceText" class="flow-hint" style="margin: 2px 0 0;"></p>
+            <p id="intakeStockText" class="flow-hint" style="margin: 0;"></p>
           </div>
-        </div>
+        </section>
 
-        <!-- Preview del Piso Inquebrantable -->
-        <div style="background: var(--hw-accent-soft, var(--hw-accent-soft)); border: 1px solid var(--hw-accent-border); border-radius: 8px; padding: 10px 14px;">
-          <div style="font-size: 11px; color: var(--emerald); font-weight: 800; text-transform: uppercase;">Tu piso de margen estimado:</div>
-          <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; margin-top: 2px;">$6.000,00</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">holospace. nunca va a sugerir un precio por debajo de este valor.</div>
+        <div class="flow-actions" style="justify-content: flex-end; margin: 4px 0 0;">
+          <button type="button" class="btn-secondary" onclick="closeCreateProductModal()">Cancelar</button>
+          <button type="submit" class="btn-primary" id="intakeSaveBtn" disabled>Guardar producto</button>
         </div>
-
-        <div style="border: 1px solid var(--card-border); padding: 12px; background: var(--hw-surface-2, var(--card-bg));">
-          <div style="font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;">Tu precio de venta actual</div>
-          <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Lo tomamos de tu tienda conectada; si no está ahí, del link de tu producto; si no, del valor que cargues.</div>
-          <div style="display: flex; flex-direction: column; gap: 10px;">
-            <select id="prodMyStoreSelect" class="input-field" onchange="handleMyStoreChange('prod')">
-              <option value="">No uso una tienda conectada</option>
-            </select>
-            <select id="prodMyStoreProduct" class="input-field hidden" onchange="handleProdStoreProductChange()"></select>
-            <input type="url" id="prodOwnUrl" class="input-field" placeholder="O pegá el link de tu producto">
-            <input type="number" step="0.01" id="prodCurrentPrice" class="input-field" placeholder="O cargá el precio ($)">
-          </div>
-        </div>
-
-        <div>
-          <label class="form-label">Unidades en stock</label>
-          <input type="number" id="prodStockQty" class="input-field" value="10">
-        </div>
-
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar producto</button>
       </form>
     </div>
   </div>

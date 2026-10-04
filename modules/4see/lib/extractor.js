@@ -1,6 +1,7 @@
 const http = require('http');
 const https = require('https');
 const { parsePrice } = require('./price');
+const { assertPublicHost } = require('./url_guard');
 
 /**
  * Lectura de producto desde una URL, en cascada y sin inventar datos:
@@ -9,7 +10,8 @@ const { parsePrice } = require('./price');
  * Si nada de eso trae un precio valido devuelve { ok: false, price: null, inStock: null, reason }.
  * Nunca devuelve 0 ni supone "con stock": lo que no se pudo leer queda como null.
  *
- * Razones de fallo: INVALID_URL, FETCH_FAILED, NOT_FOUND_IN_PAGE, MAYBE_JS_RENDERED.
+ * Razones de fallo: INVALID_URL, URL_NOT_ALLOWED, FETCH_FAILED, BLOCKED_BY_SITE, NOT_FOUND_IN_PAGE, MAYBE_JS_RENDERED, AMBIGUOUS_PRODUCT_DATA.
+ * Ademas del precio devuelve, cuando la pagina los trae: nombre, codigo (sku), codigo de barras (gtin) e imagen.
  * Las paginas que arman el precio con JavaScript no se leen sin un navegador (deuda D-050).
  */
 
@@ -17,7 +19,7 @@ const MAX_REDIRECTS = 5;
 const MAX_BYTES = 3 * 1024 * 1024;
 
 function fail(url, reason, extra = {}) {
-  return { ok: false, price: null, inStock: null, currency: null, title: null, store: extractDomain(url), method: 'NONE', reason, ...extra };
+  return { ok: false, price: null, inStock: null, currency: null, title: null, sku: null, gtin: null, image: null, store: extractDomain(url), method: 'NONE', reason, ...extra };
 }
 
 function availabilityToStock(value) {
@@ -83,6 +85,40 @@ function samePage(a, b) {
   }
 }
 
+function decodeEntities(s) {
+  return String(s)
+    .replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&nbsp;/g, ' ').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+}
+function cleanText(v) {
+  if (v === undefined || v === null) return null;
+  const t = decodeEntities(String(v)).replace(/\s+/g, ' ').trim();
+  return t || null;
+}
+function cleanCode(v) {
+  if (v === undefined || v === null) return null;
+  const t = String(v).trim();
+  if (!t || t.length > 100 || /^(undefined|null|n\/a|-)$/i.test(t)) return null;
+  return t;
+}
+function cleanGtin(p) {
+  for (const k of ['gtin13', 'gtin12', 'gtin14', 'gtin8', 'gtin']) {
+    const d = String(p[k] === undefined || p[k] === null ? '' : p[k]).replace(/\D/g, '');
+    if ([8, 12, 13, 14].includes(d.length)) return d;
+  }
+  return null;
+}
+function cleanImage(v) {
+  let u = v;
+  if (Array.isArray(u)) u = u[0];
+  if (u && typeof u === 'object') u = u.url || u.contentUrl;
+  if (typeof u !== 'string') return null;
+  u = u.trim();
+  return /^https?:\/\//i.test(u) ? u : null;
+}
+
 function readingOf(product) {
   const readings = offersOf(product).map((o) => ({
     price: parsePrice(o.price !== undefined ? o.price : (o.lowPrice !== undefined ? o.lowPrice : (o.priceSpecification && o.priceSpecification.price))),
@@ -94,7 +130,10 @@ function readingOf(product) {
   const pool = available.length ? available : readings;
   const best = pool.reduce((a, b) => (b.price < a.price ? b : a));
   const stock = available.length ? true : (readings.every((r) => r.stock === false) ? false : best.stock);
-  return { price: best.price, inStock: stock, currency: best.currency, title: product.name || null, method: 'JSON_LD' };
+  return {
+    price: best.price, inStock: stock, currency: best.currency, title: cleanText(product.name),
+    sku: cleanCode(product.sku), gtin: cleanGtin(product), image: cleanImage(product.image), method: 'JSON_LD'
+  };
 }
 
 /**
@@ -143,7 +182,8 @@ function fromMetaTags(html) {
       price,
       inStock: availabilityToStock(metaContent(html, ['product:availability', 'og:availability'])),
       currency: metaContent(html, ['product:price:currency', 'og:price:currency']) || null,
-      title: metaContent(html, ['og:title']),
+      title: cleanText(metaContent(html, ['og:title'])),
+      sku: null, gtin: null, image: cleanImage(metaContent(html, ['og:image'])),
       method: 'META_TAGS'
     };
   }
@@ -156,7 +196,20 @@ function fromMicrodata(html) {
   const price = m ? parsePrice(m[1]) : null;
   if (!price) return null;
   const av = html.match(/itemprop=["']availability["'][^>]*(?:href|content)=["']([^"']+)["']/i);
-  return { price, inStock: av ? availabilityToStock(av[1]) : null, currency: null, title: null, method: 'MICRODATA' };
+  const skuMatch = html.match(/itemprop=["']sku["'][^>]*content=["']([^"']+)["']/i);
+  return { price, inStock: av ? availabilityToStock(av[1]) : null, currency: null, title: null, sku: skuMatch ? cleanCode(skuMatch[1]) : null, gtin: null, image: null, method: 'MICRODATA' };
+}
+
+function visibleText(html) {
+  return html.replace(/<(script|style|noscript)[\s\S]*?<\/\1>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// El sitio devolvio un muro de inicio de sesion o un desafio anti-robots en lugar del producto
+function looksBlocked(html) {
+  const text = visibleText(html);
+  if (text.length > 4000) return false;
+  return /(para continuar,?\s*ingres[aá]|ingres[aá] a tu cuenta|inici[aá] sesi[oó]n para continuar|(log|sign) ?in to continue)/i.test(text)
+    || /(just a moment|attention required|checking your browser|verifying you are human|verific[aá] que sos humano|captcha)/i.test(text);
 }
 
 function looksJsRendered(html) {
@@ -184,7 +237,7 @@ async function extractProductData(targetUrl, deps = {}) {
         return {
           ok: true, price, currency: item.currency_id || null,
           inStock: qty === null ? availabilityToStock(item.status === 'active' ? 'instock' : null) : qty > 0,
-          title: item.title || null, store: 'Mercado Libre', method: 'MERCADOLIBRE_API', reason: null
+          title: item.title || null, sku: null, gtin: null, image: null, store: 'Mercado Libre', method: 'MERCADOLIBRE_API', reason: null
         };
       }
     } catch (e) {
@@ -197,16 +250,19 @@ async function extractProductData(targetUrl, deps = {}) {
   try {
     html = await getHtml(url);
   } catch (e) {
-    return fail(url, 'FETCH_FAILED', { detail: e.message });
+    if (e && e.code === 'URL_NOT_ALLOWED') return fail(url, 'URL_NOT_ALLOWED');
+    if (/^HTTP (401|403|429)\b/.test(e && e.message)) return fail(url, 'BLOCKED_BY_SITE', { detail: e.message });
+    return fail(url, 'FETCH_FAILED', { detail: e && e.message });
   }
   if (!html) return fail(url, 'FETCH_FAILED');
 
   const jsonLd = fromJsonLd(html, url);
   const found = jsonLd.reading || fromMicrodata(html) || fromMetaTags(html);
   if (found) {
-    return { ok: true, currency: found.currency || null, store: extractDomain(url), reason: null, ...found };
+    return { ok: true, currency: found.currency || null, store: extractDomain(url), reason: null, sku: null, gtin: null, image: null, ...found };
   }
   if (jsonLd.ambiguous) return fail(url, 'AMBIGUOUS_PRODUCT_DATA');
+  if (looksBlocked(html)) return fail(url, 'BLOCKED_BY_SITE');
   return fail(url, looksJsRendered(html) ? 'MAYBE_JS_RENDERED' : 'NOT_FOUND_IN_PAGE');
 }
 
@@ -214,6 +270,8 @@ async function extractProductData(targetUrl, deps = {}) {
 function describeReadFailure(reason) {
   switch (reason) {
     case 'INVALID_URL': return 'El link no parece válido. Copialo completo, con https://.';
+    case 'URL_NOT_ALLOWED': return 'Este link apunta a una dirección interna o privada y no se puede leer.';
+    case 'BLOCKED_BY_SITE': return 'Este sitio no permite que lo leamos automáticamente (pide iniciar sesión o bloquea el acceso).';
     case 'FETCH_FAILED': return 'No pudimos abrir la página. Revisá el link o probá de nuevo en un rato.';
     case 'MAYBE_JS_RENDERED': return 'Esta página arma el precio al cargarse y todavía no podemos leerlo desde acá.';
     case 'NOT_FOUND_IN_PAGE': return 'No encontramos el precio en esta página. Revisá que sea el link de un producto.';
@@ -236,7 +294,7 @@ const REQUEST_DEADLINE_MS = 8000;
 // inactividad una vez que el socket existe, asi que una resolucion de DNS que no responde (un rival
 // caido o con un dominio mal escrito) puede colgar el pedido mucho mas alla de ese valor sin este reloj aparte.
 function requestText(targetUrl, headers, redirects = 0, deadline = Date.now() + REQUEST_DEADLINE_MS) {
-  return new Promise((resolve, reject) => {
+  return assertPublicHost(targetUrl).then(() => new Promise((resolve, reject) => {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return reject(new Error('Timeout'));
 
@@ -265,7 +323,7 @@ function requestText(targetUrl, headers, redirects = 0, deadline = Date.now() + 
     req.on('error', (e) => { clearTimeout(hardTimer); reject(e); });
     req.on('close', () => clearTimeout(hardTimer));
     req.on('timeout', () => { req.destroy(new Error('Timeout')); });
-  });
+  }));
 }
 
 function fetchJson(targetUrl) {

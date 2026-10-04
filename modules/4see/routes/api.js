@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const { query, execute, getOne } = require('../../../lib/db');
 const { extractProductData, describeReadFailure } = require('../lib/extractor');
 const { resolveOwnPrice, searchStoreProducts } = require('../lib/own_price');
-const { scaleWarning } = require('../lib/price');
+const { scaleWarning, parsePrice } = require('../lib/price');
 const { calculateMarginMetrics } = require('../lib/margins');
 const { checkTenantModuleAccess } = require('../../../lib/entitlement');
 const { hasPermission, sendPermissionError } = require('../../../lib/rbac');
@@ -1156,64 +1156,120 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
+  // Alta de producto, paso previo: lee un link y devuelve lo que encontro, sin guardar nada
+  if (pathPart === '/api/4see/products/read' && req.method === 'POST') {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const link = String(data?.url || '').trim();
+    if (!isHttpUrl(link)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'Pegá el link completo del producto, con https://.' }));
+      return true;
+    }
+    const reading = await readRival(link);
+    const existing = await getOne('SELECT id, title FROM fourseee_products WHERE tenant_id = ? AND own_url = ?', [tenantId, link], { tenantId });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, reading, existing: existing ? { id: existing.id, title: existing.title } : null }));
+    return true;
+  }
+
+  // Alta de producto. Tres caminos que no se mezclan: link, tienda conectada o a mano.
+  // Si el link o la tienda no se pueden leer, no se guarda nada: la unica salida es cargarlo a mano.
   if (pathPart === '/api/4see/products' && req.method === 'POST') {
     if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
 
-
     const {
       sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, store_id,
       store_external_id, own_url, price_locked
     } = data || {};
-    if (!sku || !title) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'SKU y Título son requeridos.' }));
-      return true;
+    const reply = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); return true; };
+
+    const cleanName = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+    const cleanCode = (v) => { const t = String(v === undefined || v === null ? '' : v).trim(); return t && t.length <= 100 ? t : ''; };
+    const link = isHttpUrl(own_url) ? own_url.trim() : null;
+
+    let name = cleanName(title);
+    let code = cleanCode(sku);
+    let price = null;
+    let priceSource = null;
+    let inStock = null;
+    let quantity = null;
+    let storeIdToSave = null;
+    let storeExternalToSave = null;
+
+    if (link) {
+      const reading = await readRival(link);
+      if (!reading.ok) {
+        return reply(422, { success: false, code: 'READ_FAILED', reason: reading.reason, error: reading.message, manualOnly: true });
+      }
+      price = reading.price;
+      priceSource = 'LINK';
+      inStock = reading.inStock;
+      name = name || cleanName(reading.title);
+      code = code || cleanCode(reading.sku);
+      const same = await getOne('SELECT title FROM fourseee_products WHERE tenant_id = ? AND own_url = ?', [tenantId, link], { tenantId });
+      if (same) return reply(409, { success: false, code: 'DUPLICATE_LINK', error: `Ya cargaste este link como "${same.title}".` });
+    } else if (store_id && store_external_id) {
+      const mine = await resolveOwnPrice({ storeId: store_id, externalId: store_external_id }, { getStore: (sid) => getStoreForTenant(sid, tenantId) });
+      if (!mine.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: 'STORE_FAILED', error: mine.reason, manualOnly: true });
+      price = mine.price;
+      priceSource = mine.source;
+      inStock = mine.inStock;
+      quantity = mine.stock;
+      name = name || cleanName(mine.title);
+      code = code || cleanCode(mine.sku);
+      storeIdToSave = store_id;
+      storeExternalToSave = String(store_external_id);
+    } else {
+      price = parsePrice(current_price);
+      if (!price) return reply(422, { success: false, code: 'OWN_PRICE_UNKNOWN', error: 'Cargá el precio de tu producto.' });
+      priceSource = 'MANUAL';
     }
 
-    const id = crypto.randomUUID();
+    if (!name) {
+      return reply(400, { success: false, code: 'TITLE_REQUIRED', error: link || storeIdToSave ? 'La fuente no informa el nombre del producto: escribilo.' : 'El nombre del producto es obligatorio.' });
+    }
+
     const cPrice = parseFloat(cost_price) || 0;
     const opCosts = parseFloat(operating_costs) || 0;
     const marginPct = parseFloat(min_margin_percentage) || 0;
     const ceiling = max_price_ceiling ? parseFloat(max_price_ceiling) : null;
-    const ownUrl = isHttpUrl(own_url) ? own_url.trim() : null;
+    const qty = quantity !== null && quantity !== undefined ? parseInt(quantity, 10) : (parseInt(stock_quantity, 10) || 0);
+    const stockStatus = inStock === false ? 'OUT_OF_STOCK' : (inStock === true || qty > 0 ? 'IN_STOCK' : 'OUT_OF_STOCK');
 
-    // Tu precio: tienda conectada, luego tu link, y por ultimo lo que cargaste a mano
-    const mine = await resolveOwnPrice(
-      {
-        storeId: store_id || null, externalId: store_external_id || null, ownUrl,
-        manualPrice: current_price, manualLocked: Boolean(price_locked)
-      },
-      { getStore: (sid) => getOne('SELECT * FROM fourseee_connected_stores WHERE id = ? AND tenant_id = ? AND is_active = true', [sid, tenantId], { tenantId }) }
-    );
-    if (!mine.ok) {
-      res.writeHead(422, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, code: 'OWN_PRICE_UNKNOWN', error: mine.reason }));
-      return true;
+    const generated = !code;
+    let id = null;
+    for (let attempt = 0; attempt < 5 && !id; attempt++) {
+      const candidate = generated ? `HS-${crypto.randomBytes(3).toString('hex').toUpperCase()}` : code;
+      const newId = crypto.randomUUID();
+      try {
+        await execute(
+          `INSERT INTO fourseee_products
+           (id, tenant_id, store_id, sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, stock_status,
+            store_external_id, own_url, price_source, price_locked, price_checked_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+          [
+            newId, tenantId, storeIdToSave, candidate, name, cPrice, opCosts, marginPct, ceiling, price, qty, stockStatus,
+            storeExternalToSave, link, priceSource, priceSource === 'MANUAL' && Boolean(price_locked)
+          ],
+          { tenantId }
+        );
+        id = newId;
+        code = candidate;
+      } catch (err) {
+        if (!/unique|duplicate/i.test(err.message)) throw err;
+        if (!generated) return reply(409, { success: false, code: 'DUPLICATE_SKU', error: `Ya tenés un producto con el código ${candidate}.` });
+      }
     }
-
-    const curPrice = mine.price;
-    const qty = mine.stock !== undefined && mine.stock !== null ? parseInt(mine.stock, 10) : (parseInt(stock_quantity, 10) || 0);
-    const stockStatus = mine.inStock === false ? 'OUT_OF_STOCK' : (qty > 0 || mine.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK');
-
-    await execute(
-      `INSERT INTO fourseee_products
-       (id, tenant_id, store_id, sku, title, cost_price, operating_costs, min_margin_percentage, max_price_ceiling, current_price, stock_quantity, stock_status,
-        store_external_id, own_url, price_source, price_locked, price_checked_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-      [
-        id, tenantId, store_id || null, sku.trim(), title.trim(), cPrice, opCosts, marginPct, ceiling, curPrice, qty, stockStatus,
-        store_id && store_external_id ? String(store_external_id) : null, ownUrl, mine.source, Boolean(price_locked)
-      ],
-      { tenantId }
-    );
+    if (!id) return reply(500, { success: false, error: 'No pudimos generar un código para el producto. Intentá de nuevo.' });
 
     const created = await getOne('SELECT * FROM fourseee_products WHERE id = ?', [id], { tenantId });
-    res.writeHead(201, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, product: created }));
-    return true;
+    return reply(201, { success: true, product: created, sku: { value: code, generated }, source: priceSource });
   }
 
   // 5. DIRECTORIO DE COMPETIDORES (fourseee_competitors)

@@ -3494,10 +3494,15 @@ function priceSourceLabelText(source) {
   return { STORE: 'de tu tienda', LINK: 'de tu link', MANUAL: 'a mano' }[source] || '';
 }
 
+// Cada carga lleva un numero: si una respuesta vieja llega despues de una mas nueva, se descarta
+let monitorsLoadSeq = 0;
+
 async function load4seeMonitors() {
+  const seq = ++monitorsLoadSeq;
   try {
     const res = await fetch('/api/4see/watched-products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
     const data = await res.json();
+    if (seq !== monitorsLoadSeq) return;
     if (!data.success) throw new Error(data.error || 'intentá de nuevo');
     flowProducts = (data.products || []).map((p) => ({ ...p, title: p.name }));
     flowAnalysis = data.analysis || null;
@@ -3507,6 +3512,7 @@ async function load4seeMonitors() {
     renderMonitorsDashboard(cached4seeMonitors);
     paintFlow();
   } catch (err) {
+    if (seq !== monitorsLoadSeq) return;
     const container = document.getElementById('monitorsTableContainer');
     if (container) {
       container.innerHTML = `<div class="flow-empty">No pudimos cargar tus productos: ${escHtml(err.message)}. <button class="btn-secondary" onclick="load4seeMonitors()">Reintentar</button></div>`;
@@ -5769,91 +5775,222 @@ async function handleTriggerWorkerCycle() {
 window.handleTriggerWorkerCycle = handleTriggerWorkerCycle;
 
 // Modales de Producto y Reglas
-function openCreateProductModal() {
-  const modal = document.getElementById('createProductModal');
-  if (modal) {
-    document.getElementById('createProductForm').reset();
-    calcProdFloorPreview();
-    populateMyStoreSelect('prod');
-    ensureConnectedStoresLoaded().then(() => populateMyStoreSelect('prod'));
-    modal.classList.remove('hidden');
+// --- Alta de producto: tres caminos (link, tienda conectada, a mano). Lo leido se muestra antes de guardar. ---
+const intake = { mode: 'link', reading: null, storeProduct: null, url: '' };
+const intakeEl = (id) => document.getElementById(id);
+
+function showIntakeNotice(message, { manual = false } = {}) {
+  const box = intakeEl('intakeNotice');
+  box.innerHTML = '';
+  const text = document.createElement('span');
+  text.textContent = message;
+  box.appendChild(text);
+  if (manual) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-secondary';
+    btn.textContent = 'Cargar a mano';
+    btn.onclick = () => setIntakeMode('manual');
+    box.appendChild(btn);
   }
+  box.hidden = false;
+}
+
+function clearIntakeNotice() {
+  const box = intakeEl('intakeNotice');
+  box.hidden = true;
+  box.innerHTML = '';
+}
+
+function intakeStockText(inStock) {
+  if (inStock === true) return 'Con stock';
+  if (inStock === false) return 'Sin stock';
+  return 'La fuente no informa el stock.';
+}
+
+function showIntakeData({ title = '', sku = '', priceText = '', sourceText = '', stockText = '' } = {}) {
+  const manual = intake.mode === 'manual';
+  intakeEl('intakeData').hidden = false;
+  intakeEl('intakeTitle').value = title;
+  intakeEl('intakeSku').value = sku;
+  intakeEl('intakePrice').value = '';
+  intakeEl('intakePriceManual').hidden = !manual;
+  intakeEl('intakePriceRead').hidden = manual;
+  intakeEl('intakePriceReadText').textContent = priceText;
+  intakeEl('intakeSourceText').textContent = sourceText;
+  intakeEl('intakeStockText').textContent = stockText;
+  updateIntakeSaveState();
+}
+
+function hideIntakeData() {
+  intakeEl('intakeData').hidden = true;
+  updateIntakeSaveState();
+}
+
+function updateIntakeSaveState() {
+  const title = intakeEl('intakeTitle').value.trim();
+  let ready = false;
+  if (!intakeEl('intakeData').hidden && title) {
+    if (intake.mode === 'link') ready = Boolean(intake.reading);
+    else if (intake.mode === 'store') ready = Boolean(intake.storeProduct);
+    else ready = HSFields.readMoney(intakeEl('intakePrice')) > 0;
+  }
+  intakeEl('intakeSaveBtn').disabled = !ready;
+}
+window.updateIntakeSaveState = updateIntakeSaveState;
+
+function renderIntakeStorePanel() {
+  populateMyStoreSelect('prod');
+  intakeEl('prodMyStoreSelect').options[0].textContent = 'Elegí una tienda';
+  intakeEl('intakeStoreEmpty').hidden = cachedSavedStores.length > 0;
+}
+
+function setIntakeMode(mode) {
+  intake.mode = mode;
+  intake.reading = null;
+  intake.storeProduct = null;
+  [['link', 'intakeTabLink', 'intakePanelLink'], ['store', 'intakeTabStore', 'intakePanelStore'], ['manual', 'intakeTabManual', null]].forEach(([m, tabId, panelId]) => {
+    const active = m === mode;
+    const tab = intakeEl(tabId);
+    tab.classList.toggle('active', active);
+    tab.setAttribute('aria-selected', String(active));
+    if (panelId) intakeEl(panelId).hidden = !active;
+  });
+  clearIntakeNotice();
+  if (mode === 'manual') showIntakeData(); else hideIntakeData();
+  if (mode === 'store') renderIntakeStorePanel();
+  const focusTarget = intakeEl(mode === 'link' ? 'intakeUrl' : mode === 'manual' ? 'intakeTitle' : 'prodMyStoreSelect');
+  if (focusTarget) focusTarget.focus();
+}
+window.setIntakeMode = setIntakeMode;
+
+function openCreateProductModal() {
+  const modal = intakeEl('createProductModal');
+  if (!modal) return;
+  intakeEl('createProductForm').reset();
+  intake.url = '';
+  modal.classList.remove('hidden');
+  setIntakeMode('link');
+  ensureConnectedStoresLoaded().then(() => { if (intake.mode === 'store') renderIntakeStorePanel(); });
 }
 window.openCreateProductModal = openCreateProductModal;
 
-// Al elegir tu producto en la tienda conectada, se muestra su precio como referencia (sigue siendo editable)
-function handleProdStoreProductChange() {
-  const storeId = document.getElementById('prodMyStoreSelect').value;
-  const externalId = document.getElementById('prodMyStoreProduct').value;
-  const product = (myStoreProductsCache[storeId] || []).find((p) => p.externalId === externalId);
-  if (product && product.price) document.getElementById('prodCurrentPrice').value = product.price;
-}
-window.handleProdStoreProductChange = handleProdStoreProductChange;
-
 function closeCreateProductModal() {
-  const modal = document.getElementById('createProductModal');
+  const modal = intakeEl('createProductModal');
   if (modal) modal.classList.add('hidden');
 }
 window.closeCreateProductModal = closeCreateProductModal;
 
-function calcProdFloorPreview() {
-  const cost = parseFloat(document.getElementById('prodCost')?.value) || 0;
-  const marginPct = parseFloat(document.getElementById('prodMarginPct')?.value) || 0;
-  const opCosts = parseFloat(document.getElementById('prodOpCosts')?.value) || 0;
-  const floor = cost * (1 + (marginPct / 100.0)) + opCosts;
-  const preview = document.getElementById('prodFloorPreviewText');
-  if (preview) {
-    preview.innerText = `${HSFormat.money(floor)}`;
+async function readIntakeLink() {
+  const url = intakeEl('intakeUrl').value.trim();
+  clearIntakeNotice();
+  intake.reading = null;
+  hideIntakeData();
+  if (!/^https?:\/\//i.test(url)) {
+    showIntakeNotice('Pegá el link completo de tu producto, con https://.');
+    return;
+  }
+  const btn = intakeEl('intakeReadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Leyendo...';
+  try {
+    const res = await fetch('/api/4see/products/read', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+    if (!data.success) { showIntakeNotice(data.error || 'No pudimos leer el link.'); return; }
+    const r = data.reading;
+    if (!r.ok) { showIntakeNotice(r.message + ' La única forma de cargarlo es a mano.', { manual: true }); return; }
+    if (data.existing) { showIntakeNotice('Ya cargaste este link como "' + data.existing.title + '".'); return; }
+    intake.reading = r;
+    intake.url = url;
+    showIntakeData({
+      title: r.title || '',
+      sku: r.sku || '',
+      priceText: HSFormat.money(r.price),
+      sourceText: 'Leído de ' + r.store,
+      stockText: intakeStockText(r.inStock)
+    });
+    if (!r.title) showIntakeNotice('La página no informa el nombre del producto: escribilo.');
+  } catch (err) {
+    showIntakeNotice('Sin conexión con el servidor. Intentá de nuevo.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Leer link';
   }
 }
-window.calcProdFloorPreview = calcProdFloorPreview;
+window.readIntakeLink = readIntakeLink;
+
+function resetIntakeStoreChoice() {
+  intake.storeProduct = null;
+  clearIntakeNotice();
+  hideIntakeData();
+}
+window.resetIntakeStoreChoice = resetIntakeStoreChoice;
+
+// Al elegir el producto en la tienda conectada se muestran los datos que la tienda informa
+function handleProdStoreProductChange() {
+  const storeId = intakeEl('prodMyStoreSelect').value;
+  const externalId = intakeEl('prodMyStoreProduct').value;
+  resetIntakeStoreChoice();
+  const product = (myStoreProductsCache[storeId] || []).find((p) => p.externalId === externalId);
+  if (!product) return;
+  if (!product.price) {
+    showIntakeNotice('Tu tienda no informa un precio para este producto.', { manual: true });
+    return;
+  }
+  intake.storeProduct = { storeId, externalId };
+  const store = cachedSavedStores.find((s) => s.id === storeId);
+  showIntakeData({
+    title: product.title || '',
+    sku: product.sku || '',
+    priceText: HSFormat.money(product.price),
+    sourceText: 'De ' + (store ? store.name : 'tu tienda'),
+    stockText: intakeStockText(product.inStock)
+  });
+}
+window.handleProdStoreProductChange = handleProdStoreProductChange;
 
 async function handleCreateProductSubmit(e) {
   e.preventDefault();
-  const sku = document.getElementById('prodSku').value.trim();
-  const title = document.getElementById('prodTitle').value.trim();
-  const cost_price = document.getElementById('prodCost').value;
-  const min_margin_percentage = document.getElementById('prodMarginPct').value;
-  const operating_costs = document.getElementById('prodOpCosts').value;
-  const max_price_ceiling = document.getElementById('prodCeiling').value;
-  const current_price = document.getElementById('prodCurrentPrice').value;
-  const own_url = document.getElementById('prodOwnUrl').value.trim();
-  const stock_quantity = document.getElementById('prodStockQty').value;
-  const { storeId: store_id, externalId: store_external_id } = myPricePayload('prod');
-
+  if (intake.mode === 'link' && !intake.reading) { readIntakeLink(); return; }
+  clearIntakeNotice();
+  const payload = { title: intakeEl('intakeTitle').value.trim(), sku: intakeEl('intakeSku').value.trim() };
+  if (intake.mode === 'link') {
+    payload.own_url = intake.url;
+  } else if (intake.mode === 'store') {
+    payload.store_id = intake.storeProduct.storeId;
+    payload.store_external_id = intake.storeProduct.externalId;
+  } else {
+    const price = HSFields.readMoney(intakeEl('intakePrice'));
+    if (!(price > 0)) { showIntakeNotice('El precio no es un monto válido. Ejemplo: 165.200,00'); return; }
+    payload.current_price = price;
+  }
+  const saveBtn = intakeEl('intakeSaveBtn');
+  saveBtn.disabled = true;
   try {
     const res = await fetch('/api/4see/products', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`
-      },
-      body: JSON.stringify({
-        sku,
-        title,
-        cost_price,
-        min_margin_percentage,
-        operating_costs,
-        max_price_ceiling,
-        current_price,
-        own_url,
-        store_id,
-        store_external_id,
-        stock_quantity
-      })
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
+      body: JSON.stringify(payload)
     });
     const data = await res.json();
-    if (data.success) {
-      closeCreateProductModal();
-      await showCustomAlert('Producto guardado', `El producto ${sku} quedó guardado con un piso de margen de ${HSFormat.money(parseFloat(data.product.min_price_floor))}`);
-      load4seeSmartPriceQueue();
-    } else if (data.code === 'OWN_PRICE_UNKNOWN') {
-      await showCustomAlert('Falta tu precio', data.error || 'Elegí tu producto en la tienda, pegá el link, o cargá el precio a mano.');
-    } else {
-      await showCustomAlert('Error', data.error || 'No pudimos guardar el producto. Revisá los datos.');
+    if (!data.success) {
+      showIntakeNotice(data.error || 'No pudimos guardar el producto.', { manual: Boolean(data.manualOnly) });
+      return;
     }
+    closeCreateProductModal();
+    const lines = ['"' + data.product.title + '" quedó en tu catálogo con un precio de ' + HSFormat.money(data.product.current_price) + '.'];
+    if (data.sku.generated) lines.push('La fuente no informa un código, así que generamos el ' + data.sku.value + '. Podés cambiarlo con Editar.');
+    lines.push('Para seguir su precio contra tus rivales, elegilo en el paso Análisis.');
+    await showCustomAlert('Producto guardado', lines.join('\n'));
+    load4seeMonitors();
   } catch (err) {
-    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
+    showIntakeNotice('Sin conexión con el servidor. Intentá de nuevo.');
+  } finally {
+    updateIntakeSaveState();
   }
 }
 window.handleCreateProductSubmit = handleCreateProductSubmit;

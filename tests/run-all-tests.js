@@ -39,6 +39,8 @@ const SUITES = [
   { name: '4see: Own-Price Resolution Routes & RLS', file: 'tests/test-4see-own-price-routes.js', module: '4SEE' },
   { name: '4see: Analysis Flow (catalogo, tope del plan, rivales)', file: 'tests/test-4see-analysis-flow.js', module: '4SEE' },
   { name: '4see: Flow Gates (pasos bloqueados y motivo)', file: 'tests/test-4see-flow-gates.js', module: '4SEE' },
+  { name: '4see: Product Intake (link, tienda, a mano)', file: 'tests/test-4see-product-intake.js', module: '4SEE' },
+  { name: '4see: Internal Address Guard (SSRF)', file: 'tests/test-url-guard.js', module: '4SEE' },
   { name: '4see: Default Pricing Rule (acercarse al mas barato)', file: 'tests/test-4see-default-rule.js', module: '4SEE' },
   { name: 'Core: Money, date and name formatting', file: 'tests/test-format-money.js', module: 'CORE' },
   { name: 'UI: Shared table filter & sort logic', file: 'tests/test-hs-table-logic.js', module: 'CORE' },
