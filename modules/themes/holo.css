@@ -481,3 +481,12 @@ body:is(.theme-holo_dark, .theme-holo_light) {
 .flow-rule-text { margin: 0; font-size: 14px; color: var(--text-main); }
 .flow-rules-list { display: grid; gap: 8px; }
 .flow-rules-list:empty { display: none; }
+
+/* hs-table: encabezado con orden por columna y filtros arriba de cada titulo */
+.hs-table .hs-table-sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font: inherit; color: inherit; text-transform: inherit; letter-spacing: inherit; }
+.hs-table .hs-table-sort:focus-visible { outline: 2px solid var(--mod-accent, var(--emerald)); outline-offset: 3px; }
+.hs-table thead th[aria-sort="ascending"], .hs-table thead th[aria-sort="descending"] { color: var(--text-main); }
+.hs-table .hs-table-sort-arrow { color: var(--mod-accent, var(--emerald)); font-size: 10px; min-width: 10px; }
+.hs-table tr.hs-table-filters th { padding: 8px 8px 4px; background: transparent; }
+.hs-table tr.hs-table-filters { border-bottom: 0; }
+.hs-table-empty { text-align: center; color: var(--text-muted); padding: 32px; }
