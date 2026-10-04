@@ -3775,6 +3775,8 @@ function setFlowView(view) {
   if (summary) summary.hidden = view !== 'summary';
   if (bSteps) { bSteps.classList.toggle('active', view === 'steps'); bSteps.setAttribute('aria-selected', String(view === 'steps')); }
   if (bSummary) { bSummary.classList.toggle('active', view === 'summary'); bSummary.setAttribute('aria-selected', String(view === 'summary')); }
+  // Los graficos se dibujan con el panel oculto (tamano 0); al mostrarlo hay que recalcular su tamano.
+  if (view === 'summary' && window.HSCharts) requestAnimationFrame(() => HSCharts.resizeAll());
 }
 window.setFlowView = setFlowView;
 
