@@ -179,6 +179,14 @@ Se cuentan productos **en análisis** y rivales **por producto**. El catálogo n
 
 Los valores viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPerProduct`). Al superar un tope, la API responde 403 con `PLAN_LIMIT_REACHED` y un mensaje con el plan y el número.
 
+### Acciones por paso (tabla y modal de consecuencias)
+
+Todas las listas son tablas. Cada fila se edita y se quita desde la misma pantalla.
+
+- **Catálogo (paso 1):** Editar cambia nombre, código y precio. **Quitar** borra el producto del catálogo: se van también sus rivales, sus sugerencias pendientes y sus costos. Antes de borrar, un modal muestra esas cantidades y pide confirmación.
+- **Análisis (paso 2):** **Analizar** saca o pone el producto en análisis. Quitarlo del análisis no borra nada del catálogo: los rivales y los costos quedan guardados.
+- **Costos (paso 3):** Editar costos por fila (en desarrollo, ver DEBT).
+
 ### Qué es automático y qué no
 
 - **Regla por defecto:** si no definiste reglas propias, el sistema se acerca 1% por debajo del rival más barato que tiene stock, sin bajar del piso ni superar el tope. Si ningún rival tiene stock conocido, no propone nada; si el precio está debajo del piso, lo sube al piso.

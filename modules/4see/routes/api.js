@@ -1036,6 +1036,84 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     return true;
   }
 
+  // Catalogo: impacto antes de borrar (el modal lo muestra para que la decision sea informada)
+  const impactMatch = pathPart.match(/^\/api\/4see\/products\/([^/]+)\/impact$/);
+  if (impactMatch && req.method === 'GET') {
+    if (!hasPermission(currentUser?.permissions, '4see:catalog:read')) {
+      sendPermissionError(res, '4see:catalog:read');
+      return true;
+    }
+    const impact = await getOne(
+      `SELECT p.in_analysis, p.costs_loaded,
+              (SELECT COUNT(*)::int FROM fourseee_competitor_monitors m WHERE m.product_id = p.id) AS rivals,
+              (SELECT COUNT(*)::int FROM fourseee_price_update_queue q WHERE q.product_id = p.id AND q.status = 'PENDING') AS pending
+       FROM fourseee_products p WHERE p.id = ? AND p.tenant_id = ?`,
+      [impactMatch[1], tenantId], { tenantId }
+    );
+    if (!impact) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+      return true;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true, impact }));
+    return true;
+  }
+
+  const catalogItemMatch = pathPart.match(/^\/api\/4see\/products\/([^/]+)$/);
+  if (catalogItemMatch && (req.method === 'PATCH' || req.method === 'DELETE')) {
+    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
+      sendPermissionError(res, '4see:pricing:write');
+      return true;
+    }
+    const product = await getOne('SELECT id FROM fourseee_products WHERE id = ? AND tenant_id = ?', [catalogItemMatch[1], tenantId], { tenantId });
+    if (!product) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+      return true;
+    }
+    if (req.method === 'DELETE') {
+      await execute('DELETE FROM fourseee_products WHERE id = ? AND tenant_id = ?', [product.id, tenantId], { tenantId });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true }));
+      return true;
+    }
+    const title = String(data?.title || '').replace(/\s+/g, ' ').trim();
+    const sku = String(data?.sku || '').trim();
+    const rawPrice = data?.price === '' || data?.price == null ? null : Number(data.price);
+    if (!title || !sku) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'El nombre y el código son obligatorios.' }));
+      return true;
+    }
+    if (rawPrice !== null && (!Number.isFinite(rawPrice) || rawPrice <= 0)) {
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, error: 'El precio tiene que ser mayor a cero, o quedar vacío.' }));
+      return true;
+    }
+    try {
+      await execute(
+        `UPDATE fourseee_products
+         SET title = ?, sku = ?, current_price = COALESCE(CAST(? AS NUMERIC), current_price),
+             price_source = CASE WHEN CAST(? AS NUMERIC) IS NULL THEN price_source ELSE 'MANUAL' END,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND tenant_id = ?`,
+        [title, sku, rawPrice, rawPrice, product.id, tenantId],
+        { tenantId }
+      );
+    } catch (err) {
+      if (/unique|duplicate/i.test(err.message)) {
+        res.writeHead(409, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Ya tenés otro producto con ese código.' }));
+        return true;
+      }
+      throw err;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: true }));
+    return true;
+  }
+
   // Paso 2: sumar o sacar un producto del catalogo del analisis (con el tope del plan)
   const analysisMatch = pathPart.match(/^\/api\/4see\/products\/([^/]+)\/analysis$/);
   if (analysisMatch && req.method === 'POST') {

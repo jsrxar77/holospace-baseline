@@ -6,7 +6,7 @@
  */
 
 const crypto = require('crypto');
-const { execute, getOne } = require('../lib/db');
+const { execute, getOne, query } = require('../lib/db');
 const { handle4seeApi } = require('../modules/4see/routes/api');
 const { setTenantModuleState } = require('../lib/entitlement');
 
@@ -129,6 +129,29 @@ async function runTests() {
     assert(res.getStatusCode() === 200, 'con costo se guarda');
     const costed = await getOne('SELECT costs_loaded, cost_price, min_price_floor FROM fourseee_products WHERE id = ?', [productIds[3]], { tenantId });
     assert(costed.costs_loaded === true && parseFloat(costed.min_price_floor) === 650, 'queda listo para sugerir, con piso de margen calculado (500 x 1,20 + 50 = 650)');
+
+    console.log('\n--- 6c. Catalogo: editar, validar, impacto y quitar ---');
+    const editable = await insertCatalogProduct(tenantId, 9);
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${editable}`, method: 'PATCH' }, res, { ...ctx, data: { title: '   ', sku: 'X-1', price: '' } });
+    assert(res.getStatusCode() === 400, 'no se guarda un producto sin nombre');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${editable}`, method: 'PATCH' }, res, { ...ctx, data: { title: 'Producto editado', sku: productIds[1] ? (await getOne('SELECT sku FROM fourseee_products WHERE id = ?', [productIds[1]], { tenantId })).sku : 'X', price: 2500.5 } });
+    assert(res.getStatusCode() === 409, 'un codigo repetido en el mismo catalogo se rechaza con 409');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${editable}`, method: 'PATCH' }, res, { ...ctx, data: { title: '  Producto   editado ', sku: 'EDIT-OK-1', price: 2500.5 } });
+    assert(res.getStatusCode() === 200, 'se guarda la edicion con codigo nuevo');
+    const edited = await getOne('SELECT title, sku, current_price FROM fourseee_products WHERE id = ?', [editable], { tenantId });
+    assert(edited.title === 'Producto editado' && parseFloat(edited.current_price) === 2500.5, 'el nombre se limpia y el precio se guarda como numero');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${productIds[1]}/impact`, method: 'GET' }, res, { ...ctx, data: {} });
+    assert(res.getBody().impact && res.getBody().impact.rivals >= 1, 'el impacto cuenta los rivales antes de borrar');
+    res = createMockRes();
+    await handle4seeApi({ url: `/api/4see/products/${productIds[1]}`, method: 'DELETE' }, res, { ...ctx, data: {} });
+    assert(res.getStatusCode() === 200, 'se puede quitar un producto del catalogo');
+    const gone = await getOne('SELECT id FROM fourseee_products WHERE id = ?', [productIds[1]], { tenantId });
+    const orphan = await query('SELECT id FROM fourseee_competitor_monitors WHERE product_id = ?', [productIds[1]], { tenantId });
+    assert(!gone && orphan.length === 0, 'al quitarlo se van tambien sus rivales (no quedan huerfanos)');
 
     console.log('\n--- 7. Aislamiento: otra organizacion no puede tocar este catalogo ---');
     res = createMockRes();

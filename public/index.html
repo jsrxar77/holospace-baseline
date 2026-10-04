@@ -9,17 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/holospace-theme.css">
   <style>
-    :root {
-      --bg-black: #0B0E14;
-      --card-bg: #161B22;
-      --card-border: var(--hw-border-strong, var(--card-border));
-      --emerald: #00E676;
-      --cobalt: #3B82F6;
-      --amber: #F59E0B;
-      --red: var(--red);
-      --text-main: #FFFFFF;
-      --text-muted: #8B949E;
-    }
 
     * {
       box-sizing: border-box;
@@ -55,7 +44,7 @@
       justify-content: space-between;
       gap: 12px;
       padding: 10px 24px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--hw-surface-2);
       min-height: 54px;
       box-sizing: border-box;
       width: 100%;
@@ -103,7 +92,7 @@
       padding: 0 10px;
       border-radius: 8px;
       border: 1px solid var(--emerald);
-      background: rgba(0, 230, 118, 0.15);
+      background: var(--hw-accent-soft);
       color: var(--emerald);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -170,7 +159,7 @@
       font-weight: 700 !important;
       border-radius: 8px;
       border: 1px solid var(--emerald);
-      background: rgba(0, 230, 118, 0.15);
+      background: var(--hw-accent-soft);
       color: var(--emerald);
       display: inline-flex;
       align-items: center;
@@ -231,7 +220,7 @@
     }
 
     .badge-role {
-      background: rgba(0, 230, 118, 0.15);
+      background: var(--hw-accent-soft);
       color: var(--emerald);
       border: 1px solid var(--emerald);
       padding: 6px 14px;
@@ -347,8 +336,8 @@
     /* Colores específicos para jerarquía de Módulos vs Features */
     .nav-tab.module-tab.active, .mobile-nav-tab.module-tab.active {
       color: var(--text-main) !important;
-      background-color: #A78BFA !important;
-      border-color: #A78BFA !important;
+      background-color: var(--cobalt) !important;
+      border-color: var(--cobalt) !important;
       font-weight: 900 !important;
     }
 
@@ -411,7 +400,7 @@
 
     .btn-primary {
       background-color: var(--emerald);
-      color: #000;
+      color: var(--hw-accent-fg);
       border: none;
       padding: 12px 24px;
       border-radius: 14px;
@@ -498,7 +487,7 @@
     .input-search:focus {
       outline: none;
       border-color: var(--emerald);
-      background-color: rgba(0, 230, 118, 0.04);
+      background-color: var(--hw-accent-soft);
     }
 
     .upload-dropzone {
@@ -513,7 +502,7 @@
     }
 
     .upload-dropzone:hover {
-      background-color: rgba(0, 230, 118, 0.05);
+      background-color: var(--hw-accent-soft);
     }
 
     /* Kanban Grid */
@@ -576,7 +565,7 @@
     }
 
     .cards-list::-webkit-scrollbar-thumb {
-      background: #30363D;
+      background: var(--card-border);
       border-radius: 4px;
     }
 
@@ -792,7 +781,7 @@
     .invoice-table th, .invoice-table td {
       padding: 12px;
       text-align: left;
-      border-bottom: 1px solid #21262D;
+      border-bottom: 1px solid var(--hw-surface-2);
       font-size: 14px;
     }
 
@@ -801,7 +790,7 @@
     }
     /* Platform Panel - Super Admin */
     .module-card {
-      background: linear-gradient(135deg, #161B22, #0F131A);
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
       padding: 24px;
@@ -814,7 +803,7 @@
 
     .module-card.active-module {
       border-color: var(--emerald);
-      background: linear-gradient(135deg, var(--hw-accent-soft, rgba(0,230,118,0.08)), #0F131A);
+      background: var(--hw-accent-soft);
     }
 
     .module-card.inactive-module {
@@ -882,7 +871,7 @@
     }
 
     .toggle-switch input:checked + .toggle-slider {
-      background-color: rgba(0, 230, 118, 0.2);
+      background-color: var(--hw-accent-soft);
       border-color: var(--emerald);
     }
 
@@ -892,7 +881,7 @@
     }
 
     .superadmin-badge {
-      background: linear-gradient(135deg, #7C3AED, #4F46E5);
+      background: var(--cobalt);
       color: var(--text-main);
       border: none;
       padding: 6px 14px;
@@ -979,7 +968,7 @@
           </button>
 
           <div id="userDropdownMenu" class="user-dropdown-menu hidden" style="position: absolute; right: 0; top: calc(100% + 8px); min-width: 240px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 14px; box-shadow: 0 12px 36px rgba(0,0,0,0.7); z-index: 1200; display: flex; flex-direction: column; gap: 10px;">
-            <div style="padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 4px;">
+            <div style="padding-bottom: 10px; border-bottom: 1px solid var(--hw-surface-2); display: flex; flex-direction: column; gap: 4px;">
               <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
                 <div id="dropdownUserName" style="font-size: 14px; font-weight: 800; color: var(--text-main);">superadmin</div>
                 <span id="dropdownUserRoleBadge" class="badge-role" style="font-size: 10px; padding: 2px 6px;">SUPERADMIN</span>
@@ -1070,7 +1059,7 @@
     <!-- 0. MÓDULO TENANTS VIEW (SUPERADMIN SAAS MANAGEMENT) -->
     <div id="viewTenants" class="view-panel hidden">
       <!-- Tenants Header Banner -->
-      <div style="background: linear-gradient(135deg, rgba(167, 139, 250, 0.12), rgba(0, 0, 0, 0.4)); border: 1px solid rgba(167, 139, 250, 0.3); border-radius: 28px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden;">
+      <div style="background: var(--hw-violet-soft); border: 1px solid color-mix(in srgb, var(--cobalt) 40%, transparent); border-radius: 28px; padding: 32px; margin-bottom: 24px; position: relative; overflow: hidden;">
         <div style="max-width: 720px; position: relative; z-index: 2;">
           <h2 style="font-size: 28px; font-weight: 900; color: var(--text-main); letter-spacing: -0.5px;">Empresas clientes</h2>
           <p style="color: var(--text-muted); font-size: 15px; margin-top: 8px; line-height: 22px;">
@@ -1094,8 +1083,8 @@
           <div id="kpiTenantsActive" style="font-size: 32px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
         </div>
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
-          <div style="font-size: 11px; font-weight: 800; color: #A78BFA; text-transform: uppercase; letter-spacing: 0.5px;">Usuarios en total</div>
-          <div id="kpiTenantsUsers" style="font-size: 32px; font-weight: 900; color: #A78BFA; margin-top: 4px;">0</div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--cobalt); text-transform: uppercase; letter-spacing: 0.5px;">Usuarios en total</div>
+          <div id="kpiTenantsUsers" style="font-size: 32px; font-weight: 900; color: var(--cobalt); margin-top: 4px;">0</div>
         </div>
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Datos de cada empresa</div>
@@ -1148,7 +1137,7 @@
 
       <div class="kanban-grid">
         <!-- BACKLOG (Gris - Drop Target para devolver) -->
-        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToBacklog(event)" style="border-style: dashed; border-color: rgba(139, 148, 158, 0.4);">
+        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToBacklog(event)" style="border-style: dashed; border-color: var(--hw-surface-2);">
           <div class="col-header">
             <div class="col-title" style="color: var(--text-muted);">NUEVOS <span id="backlogCount" class="col-count">0</span></div>
           </div>
@@ -1156,7 +1145,7 @@
         </div>
 
         <!-- LISTO (Verde - Drop Target para validación) -->
-        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToListo(event)" style="border-style: dashed; border-color: rgba(0, 230, 118, 0.4);">
+        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToListo(event)" style="border-style: dashed; border-color: var(--hw-accent-border);">
           <div class="col-header">
             <div class="col-title" style="color: var(--emerald);">LISTOS PARA PREPARAR <span id="readyCount" class="col-count">0</span></div>
           </div>
@@ -1164,7 +1153,7 @@
         </div>
 
         <!-- EN PROCESO (Azul - Drop Target para asignación por Admin) -->
-        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToDoing(event)" style="border-style: dashed; border-color: rgba(59, 130, 246, 0.4);">
+        <div class="kanban-col" ondragover="allowDrop(event)" ondrop="handleDropToDoing(event)" style="border-style: dashed; border-color: var(--hw-info-soft);">
           <div class="col-header">
             <div class="col-title" style="color: var(--cobalt);">EN PREPARACIÓN <span id="doingCount" class="col-count">0</span></div>
           </div>
@@ -1300,10 +1289,10 @@
       <!-- Platform Info Cards -->
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
         <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 20px; padding: 20px;">
-          <div style="font-size: 13px; color: #A78BFA; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Super Admin</div>
+          <div style="font-size: 13px; color: var(--cobalt); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Super Admin</div>
           <div id="platformInfoAdmin" style="font-size: 16px; font-weight: 700; margin-top: 8px; color: var(--text-main);">—</div>
         </div>
-        <div style="background: linear-gradient(135deg, var(--hw-accent-soft, rgba(0,230,118,0.08)), rgba(0,230,118,0.02)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 20px; padding: 20px;">
+        <div style="background: var(--hw-accent-soft); border: 1px solid var(--hw-accent-border); border-radius: 20px; padding: 20px;">
           <div style="font-size: 13px; color: var(--emerald); font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Módulos habilitados</div>
           <div id="platformInfoActiveModules" style="font-size: 32px; font-weight: 900; margin-top: 4px; color: var(--emerald);">—</div>
         </div>
@@ -1443,7 +1432,7 @@
               <button type="button" class="btn-primary" onclick="openCreateProductModal()">+ Agregar un producto a mano</button>
               <button type="button" class="btn-secondary" onclick="openConnectStoreModalForNew()">Traer desde mi tienda (opcional)</button>
             </div>
-            <div id="catalogCards" class="flow-cards"></div>
+            <div class="table-responsive-container" id="catalogTableContainer"></div>
           </div>
 
           <div class="flow-body" data-step="2">
@@ -1570,6 +1559,36 @@
   </div>
 
   <!-- PASO 2 DEL FLUJO: elegir productos del catalogo para analizar -->
+  <!-- CATALOGO: editar un producto -->
+  <div id="editCatalogModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 480px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar producto</h3>
+        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditCatalogItem()">×</button>
+      </div>
+      <form id="editCatalogForm" style="display: flex; flex-direction: column; gap: 12px;" onsubmit="saveEditCatalogItem(event)">
+        <input type="hidden" id="editCatalogId">
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Nombre</label>
+          <input type="text" id="editCatalogTitle" class="input-field" required maxlength="255">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Código</label>
+          <input type="text" id="editCatalogSku" class="input-field" required maxlength="100">
+        </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Tu precio</label>
+          <input type="text" id="editCatalogPrice" class="input-field js-money" placeholder="Sin precio">
+        </div>
+        <div id="editCatalogError" style="color: var(--red); font-size: 13px; display: none;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" class="btn-secondary" onclick="closeEditCatalogItem()">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
   <div id="createTenantModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
@@ -1720,7 +1739,7 @@
 
         <!-- Tarjetas de Planes para Kanban -->
         <div id="plansGridKanban" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-          <div class="plan-card-option" data-plan="kanban_simple" onclick="selectOnboardingPlan('kanban_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+          <div class="plan-card-option" data-plan="kanban_simple" onclick="selectOnboardingPlan('kanban_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2);">
             <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Simple</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$39 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">1 administrador y 3 operarios. Hasta 500 pedidos/mes.</div>
@@ -1730,7 +1749,7 @@
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$119 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">3 administradores y 15 operarios. Hasta 3.000 pedidos/mes.</div>
           </div>
-          <div class="plan-card-option" data-plan="kanban_enterprise" onclick="selectOnboardingPlan('kanban_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
+          <div class="plan-card-option" data-plan="kanban_enterprise" onclick="selectOnboardingPlan('kanban_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2);">
             <div style="font-size: 11px; text-transform: uppercase; color: var(--emerald); font-weight: 800;">Enterprise</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$299 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Administradores y operarios sin límite. Varias sedes.</div>
@@ -1739,18 +1758,18 @@
 
         <!-- Tarjetas de Planes para 4see -->
         <div id="plansGrid4see" style="display: none; grid-template-columns: repeat(3, 1fr); gap: 10px;">
-          <div class="plan-card-option" data-plan="fourseee_simple" onclick="selectOnboardingPlan('fourseee_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
-            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Simple</div>
+          <div class="plan-card-option" data-plan="fourseee_simple" onclick="selectOnboardingPlan('fourseee_simple')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--cobalt); font-weight: 800;">Simple</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$49 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">1 administrador y 2 analistas. Vigilancia de precios y de tu catálogo.</div>
           </div>
-          <div class="plan-card-option" data-plan="fourseee_business" onclick="selectOnboardingPlan('fourseee_business')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
-            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Business</div>
+          <div class="plan-card-option" data-plan="fourseee_business" onclick="selectOnboardingPlan('fourseee_business')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--cobalt); font-weight: 800;">Business</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$149 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">2 administradores y 8 analistas. Precios sugeridos y márgenes.</div>
           </div>
-          <div class="plan-card-option" data-plan="fourseee_enterprise" onclick="selectOnboardingPlan('fourseee_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: rgba(255,255,255,0.02);">
-            <div style="font-size: 11px; text-transform: uppercase; color: var(--accent-mauve, #cba6f7); font-weight: 800;">Enterprise</div>
+          <div class="plan-card-option" data-plan="fourseee_enterprise" onclick="selectOnboardingPlan('fourseee_enterprise')" style="border: 2px solid var(--card-border); border-radius: 8px; padding: 12px; cursor: pointer; transition: border-color 0.2s; background: var(--hw-surface-2);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--cobalt); font-weight: 800;">Enterprise</div>
             <div style="font-size: 18px; font-weight: 900; margin: 4px 0; color: var(--text-main);">$349 <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">/mes</span></div>
             <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">Sin límites, para marcas grandes con varias tiendas.</div>
           </div>
@@ -1792,7 +1811,7 @@
       </div>
       <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
         <button class="btn-secondary" style="flex: 1;" onclick="closeAssignOperatorModal()">Cancelar</button>
-        <button class="btn-primary" style="flex: 1; background-color: var(--emerald); color: #000; font-weight: 900;" onclick="confirmAssignOperatorSubmit()">Asignar pedido</button>
+        <button class="btn-primary" style="flex: 1; background-color: var(--emerald); color: var(--hw-accent-fg); font-weight: 900;" onclick="confirmAssignOperatorSubmit()">Asignar pedido</button>
       </div>
     </div>
   </div>
@@ -2153,7 +2172,7 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 10px;">
           <button type="button" class="btn-secondary" onclick="runDemoCatalogScan()">Probar con datos de ejemplo</button>
-          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;">Conectar y revisar ahora</button>
+          <button type="submit" id="btnRunStoreScan" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg); font-weight: 800;">Conectar y revisar ahora</button>
         </div>
       </form>
     </div>
@@ -2231,7 +2250,7 @@
         <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px;">
           <label style="display: block; font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Título del Producto</label>
           <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Así está hoy en tu tienda: <span id="editAttrOriginalTitle" style="color: var(--text-main); font-weight: 600;">-</span></div>
-          <div id="editAttrTitleSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div id="editAttrTitleSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, var(--hw-accent-soft)); border: 1px dashed var(--hw-accent-border); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;" id="editAttrSuggestedTitleText">-</div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('title')">Usar la sugerencia</button>
           </div>
@@ -2244,7 +2263,7 @@
             <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Marca</label>
             <span id="editAttrCurrentBrandBadge" style="font-size: 11px; color: var(--text-muted);">Sin marca</span>
           </div>
-          <div id="editAttrBrandSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div id="editAttrBrandSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, var(--hw-accent-soft)); border: 1px dashed var(--hw-accent-border); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">Marca sugerida: <strong id="editAttrSuggestedBrandText">-</strong></div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('brand')">Usar la sugerencia</button>
           </div>
@@ -2257,7 +2276,7 @@
             <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Código de barras (EAN-13)</label>
             <span id="editAttrGtinStatusBadge" style="font-size: 11px; font-weight: 800;">-</span>
           </div>
-          <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px dashed var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+          <div id="editAttrGtinSuggestionBox" style="display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--hw-accent-soft, var(--hw-accent-soft)); border: 1px dashed var(--hw-accent-border); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
             <div style="font-size: 12px; color: var(--emerald); font-weight: 600;">Código de barras interno sugerido: <strong id="editAttrSuggestedGtinText" style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">-</strong></div>
             <button type="button" class="btn-secondary" style="font-size: 10px; padding: 3px 8px; white-space: nowrap;" onclick="applyFieldSuggestion('gtin')">Usar la sugerencia</button>
           </div>
@@ -2266,7 +2285,7 @@
 
         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
           <button type="button" class="btn-secondary" onclick="closeEditProductModal()">Cancelar</button>
-          <button type="submit" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;">Guardar y volver a revisar</button>
+          <button type="submit" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg); font-weight: 800;">Guardar y volver a revisar</button>
         </div>
       </form>
     </div>
@@ -2315,7 +2334,7 @@
         </div>
 
         <!-- Preview del Piso Inquebrantable -->
-        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 8px; padding: 10px 14px;">
+        <div style="background: var(--hw-accent-soft, var(--hw-accent-soft)); border: 1px solid var(--hw-accent-border); border-radius: 8px; padding: 10px 14px;">
           <div style="font-size: 11px; color: var(--emerald); font-weight: 800; text-transform: uppercase;">Tu piso de margen estimado:</div>
           <div id="prodFloorPreviewText" style="font-size: 18px; font-weight: 900; color: var(--text-main); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; margin-top: 2px;">$6.000,00</div>
           <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">holospace. nunca va a sugerir un precio por debajo de este valor.</div>
@@ -2476,11 +2495,11 @@
       <div style="display: flex; flex-direction: column; gap: 8px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 20px; text-align: left;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Sección:</span>
-          <span id="deniedModuleChip" class="badge-role" style="background: rgba(59, 130, 246, 0.2); border: 1px solid var(--cobalt); color: var(--cobalt); font-size: 11px;">CORE</span>
+          <span id="deniedModuleChip" class="badge-role" style="background: var(--hw-info-soft); border: 1px solid var(--cobalt); color: var(--cobalt); font-size: 11px;">CORE</span>
         </div>
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <span style="font-size: 12px; color: var(--text-muted); font-weight: 700;">Permiso que falta:</span>
-          <code id="deniedPermissionChip" style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; color: var(--amber); background: rgba(245, 158, 11, 0.1); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(245, 158, 11, 0.3);">core:roles:manage</code>
+          <code id="deniedPermissionChip" style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 12px; color: var(--amber); background: var(--hw-warning-soft); padding: 2px 8px; border-radius: 6px; border: 1px solid var(--hw-warning-soft);">core:roles:manage</code>
         </div>
       </div>
       <button class="btn-primary" style="width: 100%;" onclick="closePermissionDeniedModal()">Entendido</button>
