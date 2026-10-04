@@ -1535,19 +1535,19 @@
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costo del producto</label>
-          <input type="number" step="0.01" min="0" id="costsCostPrice" class="input-field js-money" required>
+          <input type="text" inputmode="decimal" id="costsCostPrice" class="input-field js-money" required>
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Costos operativos (envío, comisiones, empaque)</label>
-          <input type="number" step="0.01" min="0" id="costsOperating" class="input-field js-money" placeholder="0">
+          <input type="text" inputmode="decimal" id="costsOperating" class="input-field js-money" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Margen mínimo (%)</label>
-          <input type="number" step="0.01" min="0" id="costsMargin" class="input-field js-money" placeholder="0">
+          <input type="text" inputmode="decimal" id="costsMargin" class="input-field js-money" placeholder="0">
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Precio tope (opcional)</label>
-          <input type="number" step="0.01" min="0" id="costsCeiling" class="input-field js-money" placeholder="Sin tope">
+          <input type="text" inputmode="decimal" id="costsCeiling" class="input-field js-money" placeholder="Sin tope">
         </div>
         <div id="costsError" style="color: var(--red); font-size: 13px; display: none;"></div>
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
