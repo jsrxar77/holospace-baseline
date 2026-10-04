@@ -426,7 +426,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-card-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; }
 .flow-card-sub { font-family: var(--hw-font-mono); font-size: 12px; color: var(--text-muted); margin: 0; }
 .flow-card-figure { font-family: var(--hw-font-mono); font-size: 24px; font-weight: 900; color: var(--text-main); }
-.hs-badge { align-self: flex-start; font-family: var(--hw-font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--card-border); color: var(--text-muted); }
+.hs-badge { align-self: flex-start; white-space: nowrap; font-family: var(--hw-font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--card-border); color: var(--text-muted); }
 .hs-badge.is-ok { color: var(--emerald); border-color: var(--emerald); }
 .hs-badge.is-todo { color: var(--text-muted); border-style: dashed; }
 .hs-badge.is-warn { color: var(--amber); border-color: var(--amber); }
