@@ -2703,6 +2703,8 @@ function updateQrDisplay(host) {
   const ipInput = document.getElementById('qrCustomIpInput');
 
   if (qrImg) {
+    qrImg.onload = () => { qrImg.style.display = "block"; };
+    qrImg.onerror = () => { qrImg.style.display = "none"; };
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(targetUrl)}`;
   }
   if (qrText) {
@@ -2845,7 +2847,7 @@ function renderModulesGrid(modules) {
         <div class="module-info">
           <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
             <div class="module-name" style="display:flex; align-items:center; gap:6px;">
-              <span class="badge" style="font-size:10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; padding:2px 6px;">[${urlInfo.tag}]</span>
+              <span class="badge" style="font-size:11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; padding:2px 6px;">[${urlInfo.tag}]</span>
               <span>${mod.name}</span>
             </div>
             <span style="font-size:11px; font-weight:800; padding:3px 10px; border-radius:12px;
@@ -3041,8 +3043,8 @@ async function loadTenantsManagementData() {
                 <span style="font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 8px; background: var(--hw-surface-2, var(--card-bg)); color: var(--text-muted); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">
                   ${t.slug}
                 </span>
-                ${isPlatform ? '<span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: var(--hw-violet-soft); color: var(--cobalt); border: 1px solid var(--cobalt);">PLATAFORMA</span>' : ''}
-                <span style="font-size: 10px; font-weight: 900; padding: 2px 8px; border-radius: 6px; border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; background: ${isSuspended ? 'var(--hw-danger-soft)' : 'var(--hw-accent-soft)'};">
+                ${isPlatform ? '<span style="font-size: 11px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: var(--hw-violet-soft); color: var(--cobalt); border: 1px solid var(--cobalt);">PLATAFORMA</span>' : ''}
+                <span style="font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 6px; border: 1px solid ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; color: ${isSuspended ? 'var(--red)' : 'var(--emerald)'}; background: ${isSuspended ? 'var(--hw-danger-soft)' : 'var(--hw-accent-soft)'};">
                   ${isSuspended ? '○ Suspendido' : '● Activo'}
                 </span>
               </div>
@@ -3106,7 +3108,7 @@ async function loadTenantsManagementData() {
                     <div style="font-size: 12px; font-weight: 700; color: var(--text-main);">${u.name} ${u.username ? `<span style="color:var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">(@${u.username})</span>` : ''}</div>
                     <div style="font-size: 11px; color: var(--text-muted);">${u.email}</div>
                   </div>
-                  <span style="font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: var(--hw-surface-2, var(--card-bg));">
+                  <span style="font-size: 11px; font-weight: 900; padding: 2px 6px; border-radius: 6px; border: 1px solid ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; color: ${u.role === 'SUPERADMIN' ? 'var(--cobalt)' : u.role === 'ADMIN' ? 'var(--emerald)' : 'var(--accent)'}; background: var(--hw-surface-2, var(--card-bg));">
                     ${u.role}
                   </span>
                 </div>
@@ -3170,7 +3172,7 @@ function tenantModuleChipsHtml(t) {
   const hasModule = (code) => modules.some((m) => (m.module_code === code || (code === 'kanban' && (m.module_code === 'scanban-board' || m.module_code === 'scanban')) || (code === 'scanner' && (m.module_code === 'scanban-scanner' || m.module_code === 'scanban'))) && m.is_enabled);
   return ['core', 'tenant', 'kanban', 'scanner', '4see'].map((mCode) => {
     const active = (mCode === 'core' || (mCode === 'tenant' && isPlatform)) ? true : hasModule(mCode);
-    return `<span style="font-size: 10px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'var(--card-border)'}; background: ${active ? 'var(--hw-surface-2)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
+    return `<span style="font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; padding: 2px 6px; border-radius: 4px; border: 1px solid ${active ? 'var(--card-border)' : 'var(--card-border)'}; background: ${active ? 'var(--hw-surface-2)' : 'transparent'}; color: ${active ? 'var(--text-main)' : 'var(--text-muted)'}; opacity: ${active ? '1' : '0.4'};">${mCode}</span>`;
   }).join(' ');
 }
 
@@ -3178,7 +3180,7 @@ const TENANTS_TABLE_COLUMNS = [
   { key: 'slug', label: 'Identificador', filter: 'text', render: (t) => `<strong style="color: var(--emerald); font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">@${escHtml(t.slug)}</strong>` },
   {
     key: 'name', label: 'Empresa', filter: 'text',
-    render: (t) => `<div style="font-weight: 800; color: var(--text-main);">${escHtml(t.name)}</div>${t.slug === 'holospace' ? '<span style="font-size: 10px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: var(--hw-violet-soft); color: var(--cobalt); border: 1px solid var(--cobalt); margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}`
+    render: (t) => `<div style="font-weight: 800; color: var(--text-main);">${escHtml(t.name)}</div>${t.slug === 'holospace' ? '<span style="font-size: 11px; font-weight: 900; padding: 1px 6px; border-radius: 4px; background: var(--hw-violet-soft); color: var(--cobalt); border: 1px solid var(--cobalt); margin-top: 4px; display: inline-block;">PLATAFORMA</span>' : ''}`
   },
   { key: 'plan', label: 'Plan', filter: 'none', render: (t) => `<div style="display: flex; gap: 4px; flex-wrap: wrap;">${tenantPlanBadgesHtml(t)}</div>` },
   { key: 'modules', label: 'Módulos habilitados', filter: 'none', render: (t) => `<div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">${tenantModuleChipsHtml(t)}</div>` },
@@ -4653,7 +4655,7 @@ function render4seeCatalog(items = []) {
           <div style="background: var(--hw-surface-1, var(--card-bg)); border: 1px solid var(--hw-accent-border); border-radius: 12px; padding: 14px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
               <span style="font-size: 11px; color: var(--emerald); text-transform: uppercase; font-weight: 800;">Título mejorado (podés editarlo)</span>
-              <span style="font-size: 10px; color: var(--text-muted);">Cambialo como quieras antes de aprobar</span>
+              <span style="font-size: 11px; color: var(--text-muted);">Cambialo como quieras antes de aprobar</span>
             </div>
             ${isApproved 
               ? `<div style="font-size: 13px; color: var(--emerald); font-weight: 600; overflow-wrap: anywhere;">${suggestedTitle}</div>`
@@ -4857,7 +4859,7 @@ let savedStoresTable = null;
 const SAVED_STORES_COLUMNS = [
   {
     key: 'name', label: 'Nombre y dirección', filter: 'text', filterValue: (s) => `${s.name || ''} ${s.store_url || ''}`,
-    render: (s) => `<div style="font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">${escHtml(s.name)}${s.id === currentSelectedStoreId ? '<span style="font-size: 10px; color: var(--emerald); background: var(--hw-accent-soft); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escHtml(s.store_url || 'N/A')}</div>`
+    render: (s) => `<div style="font-weight: 800; color: var(--text-main); display: flex; align-items: center; gap: 8px;">${escHtml(s.name)}${s.id === currentSelectedStoreId ? '<span style="font-size: 11px; color: var(--emerald); background: var(--hw-accent-soft); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--emerald);">ACTIVA</span>' : ''}</div><div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escHtml(s.store_url || 'N/A')}</div>`
   },
   { key: 'platform', label: 'Plataforma', filter: 'enum', options: [{ value: 'WOOCOMMERCE', label: 'WooCommerce' }, { value: 'TIENDANUBE', label: 'Tiendanube' }], render: (s) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; font-weight: 800; background: var(--hw-surface-2, var(--card-bg)); padding: 3px 8px; border-radius: 4px;">${escHtml(s.platform)}</span>` },
   { key: 'last_scanned_at', label: 'Última revisión', filter: 'none', render: (s) => (s.last_scanned_at ? `<span style="font-size: 12px; color: var(--text-main);">${new Date(s.last_scanned_at).toLocaleString()}</span>` : '<span style="color: var(--text-muted); font-size: 12px;">Todavía no revisada</span>') }
@@ -5637,7 +5639,7 @@ const SMARTPRICE_QUEUE_COLUMNS = [
   },
   {
     key: 'min_price_floor', label: 'Piso de margen', filter: 'none',
-    render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">${HSFormat.moneyHtml(parseFloat(q.min_price_floor || 0))}</span>${q.floor_applied ? '<span style="display: block; font-size: 10px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>' : ''}`
+    render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--emerald);">${HSFormat.moneyHtml(parseFloat(q.min_price_floor || 0))}</span>${q.floor_applied ? '<span style="display: block; font-size: 11px; color: var(--amber); font-weight: 800; margin-top: 2px;">Frenado en tu piso de margen</span>' : ''}`
   },
   { key: 'previous_price', label: 'Precio actual', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 700; color: var(--text-muted);">${HSFormat.moneyHtml(parseFloat(q.previous_price || 0))}</span>` },
   { key: 'suggested_price', label: 'Precio sugerido', filter: 'none', render: (q) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 900; color: var(--text-main); font-size: 14px;">${HSFormat.moneyHtml(parseFloat(q.suggested_price || 0))}</span>` },
