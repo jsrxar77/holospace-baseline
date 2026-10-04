@@ -462,6 +462,7 @@ Los temas Holo no usan rojo: el token `red` (y `dangerSoft`) vale lo mismo que `
 - **Esquema:** `my_price`, `competitor_price` y `competitor_stock` en `fourseee_competitor_monitors`, y `current_price` en `fourseee_products`, admiten `NULL` (antes tenian `DEFAULT 0`, la causa de los precios y el "con stock" inventados). La migracion de `ensure_tables.js` limpia las filas antiguas que habian quedado en `0`/`HEURISTIC_FALLBACK`.
 - **Pruebas:** `tests/test-price-extractor.js` (formatos de precio, lectura con dependencias inyectadas, orden de prioridad del precio propio, sin red) y `tests/test-4see-own-price-routes.js` (rutas completas contra PostgreSQL real, RLS).
 - **Deuda:** D-050 (paginas que arman el precio con JavaScript necesitan un navegador automatizado para leerse).
+- **Actualizacion 2026-10-04:** el paso (1) de Mercado Libre ya no funciona (la API publica devuelve 403 sin credenciales) y la pagina es un muro de inicio de sesion. Ver la seccion 17, que reemplaza este diseno por un modulo de lectores (actores).
 
 ## 14. Leccion aprendida: ver el conjunto, no solo la parte pedida (2026-10-03)
 
@@ -483,3 +484,51 @@ Dos bugs reales (ver DEBT S-027) mostraron el mismo patron: resolver la pieza pe
 ## 16. Resiliencia del proxy ante despliegues (nginx + Docker DNS)
 
 `nginx/default.conf` resuelve el contenedor `app` con un `resolver 127.0.0.11` (el DNS interno de Docker) y una variable (`set $upstream_app app:3001; proxy_pass http://$upstream_app;`) en vez de `proxy_pass http://app:3001` directo. La diferencia importa: con el hostname fijo, nginx resuelve una sola vez al arrancar su propio proceso, y si el contenedor `app` se esta recreando en ese instante (pasa en cada despliegue, ver `bin/helper/deploy.sh`), nginx falla con `host not found in upstream` y el proceso completo se cae, quedando en bucle de reinicio hasta que por azar arranca con `app` ya resuelto -- mientras tanto el sitio puede responder con una version vieja o fallar (asi se vio el error "HSTable is not defined" de S-028: no era el codigo, era esta ventana). Con el `resolver` y la variable, nginx resuelve en cada pedido: un instante sin `app` disponible da un 502 puntual para ese pedido, nunca tumba nginx. Verificado localmente (`docker run --rm nginx:alpine nginx -t` arranca sin error aunque no exista ningun `app` resoluble) y en el servidor (el proxy dejo de reiniciarse en bucle tras aplicar el cambio).
+
+## 17. Lectores de paginas (actores) de 4see: diseno y decisiones (2026-10-04)
+
+**Estado:** investigacion terminada y decisiones tomadas; implementacion pendiente (ROADMAP, Fase 21). Hoy sigue vigente la seccion 13.
+
+### 17.1 Objetivo
+Un modulo de lectores propio, local y extensible, que lea de una URL de producto: nombre, codigo (SKU o EAN), precio, moneda, stock, imagen. Se agregan plataformas sin tocar el resto de la app. Sin servicios de pago ni de terceros: las URLs de los clientes y de sus rivales no salen del servidor.
+
+### 17.2 Que se toma de Apify y que no
+- **No se usa la plataforma de Apify** (ni cuenta, ni token, ni sus servidores).
+- **Si se usa su codigo abierto:** Crawlee (Apache-2.0, version 3.18.2 al 2026-10-04 segun el registro de npm). Funciona sin cuenta de Apify, tambien sus sesiones y rotacion.
+- **Idea copiada del modelo de actores de Apify:** cada lector es un "actor" con un contrato declarado de entrada y de salida (en Apify, un esquema JSON de entrada que valida y describe la entrada). Aca, cada actor declara en un manifiesto que URLs reconoce y que devuelve.
+- **Crawlee desde el principio** como dependencia, con su modo liviano (HTTP + HTML, unas diez veces mas rapido que un navegador) y, en la etapa 5, su modo de navegador (Playwright).
+
+### 17.3 Contrato de un actor
+- **Entrada:** una URL de producto (y opciones: tiempo maximo, credenciales si el actor las necesita, tomadas de `.env`).
+- **Salida comun:** nombre, sku, gtin, precio, moneda, stock (con cantidad si existe), imagen, URL, actor que lo leyo, fecha de lectura y, si fallo, un motivo claro. **Lo que no se encuentra queda vacio: nunca se inventa.**
+- **Manifiesto por actor:** nombre, version, como reconoce la plataforma (huellas en la URL y en la pagina) y que campos puede devolver.
+- **Pruebas:** cada actor trae una pagina real de muestra en `tests/fixtures/` y pruebas contra ella (regla de lectura de datos externos).
+
+### 17.4 Cadena de intentos
+1. El **registro** reconoce la plataforma (huellas de WooCommerce, Shopify, Tienda Nube, Mercado Libre) y elige el actor.
+2. Actor especifico de la plataforma.
+3. Actor generico de datos estructurados (el lector actual: JSON-LD, microdatos, og:title). **Pasa a ser un actor mas.**
+4. Actor de navegador (etapa 5, apagado por defecto).
+5. Si nada funciona: motivo claro. La pantalla ya sabe mostrarlo y ofrece cargar a mano.
+
+Motivos de fallo: se agrega **BLOQUEADO_POR_EL_SITIO** (muro de inicio de sesion, captcha, 403 o 429), distinto de NOT_FOUND_IN_PAGE.
+
+### 17.5 Cola de lecturas (ideas de Crawlee)
+Lecturas en segundo plano con cola, reintentos con espera, **maximo de pedidos simultaneos por dominio** y sesiones por dominio, para leer hasta 1.155 rivales por pasada (peor caso del plan Enterprise: 55 productos por 21 rivales) sin bloquear la pantalla ni al sitio rival. La pantalla muestra "leyendo" hasta que termina.
+
+### 17.6 Evidencia de la investigacion (2026-10-04, desde la red de la Mac de desarrollo)
+| Plataforma | Prueba | Resultado |
+|---|---|---|
+| WooCommerce | poke.com.ar, producto "Jack Daniels N7 1 lt" | El lector actual lee nombre y precio ($ 47.200 ARS). Stock desconocido (la pagina dice BackOrder). La API publica de WooCommerce (`/wp-json/wc/store/v1/products?slug=...`) devuelve ademas stock real (`is_in_stock: true`) y sku. El sku de esa tienda es el mismo texto que el final de la URL; es el que cargo su dueno, no se descarta. |
+| Tienda Nube | blastiendaonline.mitiendanube.com, producto real | 10 bloques de producto en la pagina (incluye relacionados). El lector actual elige el correcto por URL (nombre, precio, stock). La pagina trae SKU real y cantidad de stock, que hoy no se leen. |
+| Shopify | allbirds.com, `/products/<handle>.js` | Responde 200 con el producto completo. Otras dos rutas probadas dieron 404 (no es dato de plataforma). |
+| Mercado Libre | API `/items/MLA...` y publicacion real | API: 403 y 401 sin credenciales. Pagina: 200 pero es un muro de inicio de sesion ("Para continuar, ingresa a tu cuenta"), sin datos de producto. El lector actual falla y responde NOT_FOUND_IN_PAGE (engañoso). |
+
+**No verificado:** como se comporta cada sitio desde la IP del servidor de produccion (puede bloquear distinto que una red domestica); el peso real de Crawlee y de Chromium en la imagen `node:22-alpine`; si un navegador logra pasar el muro de Mercado Libre.
+
+### 17.7 Decisiones tomadas
+1. **Mercado Libre por navegador** (actor de la etapa 5). Riesgo: puede toparse con el mismo muro. Si pasa, se vuelve a decidir (API oficial con aplicacion de desarrollador, credenciales en `.env`, o carga manual). Mientras tanto responde BLOQUEADO_POR_EL_SITIO y se ofrece cargar a mano.
+2. **Crawlee como dependencia desde el principio** (instalada dentro de la imagen de Docker; nunca npm en el host).
+3. **Navegador en segunda etapa**, como actor mas, apagado por defecto y con tope de lecturas simultaneas, despues de medir el peso en Docker.
+4. **SKU:** primero se lee de la pagina; si no esta, el campo queda vacio; al guardar, si sigue vacio, el sistema genera uno y avisa cual puso.
+5. **Alta de producto:** se pega el link y se completan los datos leidos. Si el link no se puede leer, se avisa el motivo y la unica salida es **cargar a mano** (camino completo y valido, no un estado defectuoso). **Nunca se guarda un producto a medias.**

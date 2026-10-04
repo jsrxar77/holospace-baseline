@@ -50,6 +50,8 @@ modules/
 
 ---
 
+- **Lectores de paginas (actores):** disenados en docs/ARCHITECTURE.md seccion 17 (ROADMAP Fase 21). Hoy lee un lector unico (seccion 13); la plataforma, la cola y el navegador se agregan por etapas. Mercado Libre no se puede leer hoy (DEBT).
+
 ## 2. Motor de Licenciamiento y Entitlements (`lib/entitlement.js`)
 
 Middleware `requireModule` protege los endpoints según el plan contratado:

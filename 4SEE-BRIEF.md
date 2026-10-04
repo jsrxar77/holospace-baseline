@@ -100,3 +100,10 @@ El orden de 2 y 3 se puede invertir después de tener un producto en análisis. 
 - No es un repricer automático: no cambia precios sin aprobación.
 - No es un scraper general: lee la página del rival que el usuario pega, y si no puede leerla, lo informa.
 - No tiene lectura programada: la competencia se relee a mano.
+
+## Como se leen los datos de las tiendas
+
+- Cada tienda se lee con un lector propio y local (sin servicios externos), segun su plataforma: WooCommerce, Shopify, Tienda Nube y, mas adelante, un navegador para las paginas que arman el precio con JavaScript.
+- Hoy un lector generico lee muchas tiendas (WooCommerce y Tienda Nube verificadas con paginas reales). **Mercado Libre no se puede leer todavia**: pide iniciar sesion; se informa y se carga a mano.
+- Si una pagina no se puede leer, el sistema lo dice y ofrece cargar a mano. Nunca guarda un dato que no pudo confirmar.
+- Detalle, evidencia y etapas: docs/ARCHITECTURE.md seccion 17 y ROADMAP Fase 21.

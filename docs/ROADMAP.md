@@ -177,6 +177,16 @@
 
 ---
 
+### FASE 17.6: 4see Productos en cuatro pasos (2026-10-03 a 2026-10-04)
+- [x] Un solo modelo de producto (catalogo) con marcas de analisis y costos; rivales colgados del producto (DEBT S-031).
+- [x] Pantalla unica Productos: Catalogo, Analisis, Costos, Sugerencias, con pasos bloqueados y su motivo (`public/flow.js`).
+- [x] Topes por plan aplicados en la API (productos en analisis y rivales por producto).
+- [x] Catalogo y Costos en tabla con editar y quitar (con modal de consecuencias); sugerencias recalculadas al cambiar un dato.
+- [x] Tabla compartida con filtros arriba, orden por columna y filtros que no se guardan; formato unico de montos y fechas.
+- [x] Acento por modulo y reglas de botones, insignias y vocabulario (docs/CONTENT.md 0.3).
+- [ ] Lectura automatica de precios de rivales (D-057).
+- [ ] Auditoria de tienda fuera de la pantalla: decidir borrar o reubicar (D-058).
+
 ## 3. Próximas Fases Planificadas
 
 - [x] **FASE 17.9 (P0, parcial):** Seguridad D-001 a D-004 y D-007 resueltos (identidad solo por JWT, secreto JWT obligatorio, seeds con hash, CORS y rate limit, init desde cero). Quedan D-005, D-006, D-008 y D-009 en [DEBT.md](./DEBT.md).
@@ -188,3 +198,13 @@
 - [x] ECharts vendorizado, wrapper `hs-charts`, paleta semantica y vistas Tabla / Dashboard en SmartPrice y Monitor.
 - [ ] Dashboard de Guardian de Margenes sobre la misma suite.
 - [ ] Series de tiempo (precio propio y de rivales, margen) cuando exista historico de precios (D-043).
+
+### FASE 21: Lectores de paginas (actores) para 4see
+Diseno y evidencia en docs/ARCHITECTURE.md seccion 17.
+- [x] **Etapa 0:** investigacion (WooCommerce, Tienda Nube, Shopify, Mercado Libre, Crawlee, modelo de actores de Apify) y decisiones (2026-10-04).
+- [ ] **Etapa 1:** contrato de actor + registro; el lector actual pasa a ser un actor (sin cambiar su comportamiento); Crawlee en la imagen de Docker; cola con maximo por dominio y reintentos.
+- [ ] **Etapa 2:** salida ampliada (SKU, codigo de barras, imagen, stock con cantidad) y motivo BLOQUEADO_POR_EL_SITIO.
+- [ ] **Etapa 3:** actores de WooCommerce (API), Shopify (`.js`) y Tienda Nube, cada uno con su pagina real de prueba en `tests/fixtures/`.
+- [ ] **Etapa 4:** alta de producto desde un link (completa lo leido, muestra antes de guardar, SKU generado y avisado; si no se puede leer, solo carga a mano).
+- [ ] **Etapa 5:** actor de navegador (Playwright via Crawlee), apagado por defecto; medir peso en Alpine; probar Mercado Libre y paginas con JavaScript (D-050).
+- [ ] **Etapa 6:** lectura programada de rivales por plan (D-057).
