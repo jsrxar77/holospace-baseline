@@ -6125,12 +6125,31 @@ function applyFourSeePermissions() {
 }
 window.applyFourSeePermissions = applyFourSeePermissions;
 
+// Los permisos guardados al iniciar sesion pueden estar viejos: se piden de nuevo al abrir y se actualizan si cambiaron
+async function refreshUserPermissions() {
+  try {
+    const token = getAuthToken();
+    if (!token) return;
+    const res = await fetch('/api/users/me', { headers: { 'Authorization': `Bearer ${token}` } });
+    if (!res.ok) return;
+    const data = await res.json();
+    const user = getAuthUser();
+    if (!data.success || !user) return;
+    const now = JSON.stringify((data.user.permissions || []).slice().sort());
+    const before = JSON.stringify((user.permissions || []).slice().sort());
+    if (now === before && user.role === data.user.role) return;
+    setAuthSession(null, { ...user, role: data.user.role, permissions: data.user.permissions }, null);
+    applyFourSeePermissions();
+  } catch (e) { /* sin conexion: se sigue con lo guardado */ }
+}
+
 (function watchFourSeePermissions() {
   const start = () => {
     const view = document.getElementById('view4seeProductos');
     if (!view) return;
     new MutationObserver(() => applyFourSeePermissions()).observe(view, { childList: true, subtree: true });
     applyFourSeePermissions();
+    refreshUserPermissions();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 })();

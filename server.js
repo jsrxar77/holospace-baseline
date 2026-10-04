@@ -586,7 +586,10 @@ const server = http.createServer(async (req, res) => {
           { isSuperAdmin: true }
         );
         // El usuario debe seguir existiendo y activo; los datos vigentes de la base mandan sobre el payload.
-        if (dbUser) currentUser = { ...jwtPayload, ...dbUser };
+        // Los permisos guardados en el JWT se descartan: se recalculan en cada pedido, asi un cambio de rol
+        // o un permiso nuevo rige de inmediato y no recien al volver a iniciar sesion.
+        const { permissions: _permisosViejos, ...claims } = jwtPayload;
+        if (dbUser) currentUser = { ...claims, ...dbUser };
       } catch (e) { }
     }
 
@@ -633,6 +636,18 @@ const server = http.createServer(async (req, res) => {
           expoUrl: `exp://${hostIp}:8081`,
           serverUrl: `http://${hostIp}:${PORT}`
         }));
+        return;
+      }
+
+      // Permisos vigentes de quien esta conectado: la pantalla los usa para habilitar o deshabilitar acciones
+      if (req.url === '/api/users/me' && req.method === 'GET') {
+        if (!currentUser) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, error: 'Iniciá sesión para continuar.' }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, user: { email: currentUser.email, role: currentUser.role, permissions: currentUser.permissions || [] } }));
         return;
       }
 
