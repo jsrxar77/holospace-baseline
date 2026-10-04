@@ -72,7 +72,7 @@ function getStoreForTenant(storeId, tid) {
 
 // Columnas del producto del catalogo con los nombres que usa la pantalla de Competencia
 const WATCHED_COLUMNS = `id, tenant_id, store_id, title AS name, store_external_id AS external_id, own_url,
-  current_price AS price, price_source, price_locked, price_checked_at, created_at, updated_at`;
+  current_price AS price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded, min_price_floor, created_at, updated_at`;
 
 /** Resuelve "tu precio" a partir de los datos que ya tiene guardados un producto vigilado. */
 function resolveMineForProduct(product) {
@@ -116,8 +116,8 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     }
     const products = await query(
       isSuperAdmin
-        ? `SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE in_analysis = true ORDER BY created_at DESC`
-        : `SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE in_analysis = true AND tenant_id = ? ORDER BY created_at DESC`,
+        ? `SELECT ${WATCHED_COLUMNS} FROM fourseee_products ORDER BY created_at DESC`
+        : `SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE tenant_id = ? ORDER BY created_at DESC`,
       isSuperAdmin ? [] : [tenantId],
       { tenantId, isSuperAdmin }
     );
@@ -136,7 +136,11 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     });
     const result = products.map((p) => ({ ...p, monitors: monitorsByProduct.get(p.id) || [] }));
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, products: result }));
+    const planLimits = tenantId ? await getFourseeeLimits(tenantId) : null;
+    const analysis = planLimits
+      ? { used: await countWatchedProducts(tenantId), max: planLimits.maxMonitoredProducts, planName: planLimits.planName }
+      : null;
+    res.end(JSON.stringify({ success: true, products: result, analysis }));
     return true;
   }
 
@@ -382,17 +386,6 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     );
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true, mine }));
-    return true;
-  }
-
-  if (watchedProductMatch && req.method === 'DELETE') {
-    if (!hasPermission(currentUser?.permissions, '4see:pricing:write')) {
-      sendPermissionError(res, '4see:pricing:write');
-      return true;
-    }
-    await execute('UPDATE fourseee_products SET in_analysis = false WHERE id = ? AND tenant_id = ?', [watchedProductMatch[1], tenantId], { tenantId });
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true }));
     return true;
   }
 

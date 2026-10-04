@@ -74,6 +74,8 @@
 - [ ] **D-054 | Revisión visual de Productos sin navegador** | pantalla 4see | Esfuerzo S: el flujo se probó con pruebas de API y textos, no se recorrió en el navegador.
 - [ ] **D-055 | Pantalla Productos: consolidar tablas y botones** | `public/index.html`, `public/app.js` | Esfuerzo M: hoy hay una tabla por paso y varios botones verdes compitiendo. Pasar a una sola tabla de productos (`hs-table`), un solo boton principal por paso, y mover reglas de precio y configuracion fuera del flujo. Ya hecho: un paso activo a la vez con su color (`chart1..6`).
 - [ ] **D-056 | Cargas que no terminan en Productos** | `public/app.js` (`load4seeCatalog`, `load4seeMargins`) | Esfuerzo S: "Cargando catalogo auditado..." y "Cargando reglas de rentabilidad..." quedan colgados cuando la carga falla o no hay datos; mostrar error o estado vacio con siguiente paso.
+- [ ] **D-057 | Lectura automatica de precios de rivales** | `modules/4see/workers/scraper_worker.js` | Esfuerzo M: hoy los precios de la competencia se releen solo con el boton (Revisar ahora / Revisar precios ahora). No hay programacion; hay que definir frecuencia por plan y costo de lectura.
+- [ ] **D-058 | Auditoria de tienda fuera de la pantalla Productos** | `public/app.js` (load4seeCatalog, render4seeCatalog, modal de auditoria), `public/index.html` | Esfuerzo S: "Salud de tu catalogo" y "Probar un producto" ya no se llegan desde ninguna pantalla. Decidir: borrar el codigo o volver a ponerlo como funcion propia.
 - [ ] **D-042 | Oracion de "por que lo necesitas" en el hero** | `modules/landing/public/index.html` | Esfuerzo S
   - Pendiente definir con el equipo una oracion que explique por que una tienda online necesita 4see, despues del texto de "que es".
 

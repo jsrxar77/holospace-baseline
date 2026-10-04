@@ -96,12 +96,14 @@ async function runTests() {
     await handle4seeApi({ url: `/api/4see/products/${productIds[5]}/analysis`, method: 'POST' }, res, { ...ctx, data: { inAnalysis: true } });
     assert(res.getStatusCode() === 200, 'el lugar liberado se puede usar para otro producto');
 
-    console.log('\n--- 5. Competencia solo muestra los productos en analisis ---');
+    console.log('\n--- 5. La pantalla lista todo el catalogo con su marca de analisis y el contador del plan ---');
     res = createMockRes();
     await handle4seeApi({ url: '/api/4see/watched-products', method: 'GET' }, res, { ...ctx, data: {} });
-    const listedIds = res.getBody().products.map((p) => p.id);
-    assert(listedIds.length === 5, 'Competencia lista 5 productos (los que estan en analisis)');
-    assert(!listedIds.includes(productIds[0]), 'el producto sacado del analisis no aparece en Competencia');
+    const listed = res.getBody().products;
+    assert(listed.length === 6, 'la lista trae los 6 productos del catalogo');
+    const sacado = listed.find((p) => p.id === productIds[0]);
+    assert(sacado && sacado.in_analysis === false, 'el producto sacado del analisis aparece con in_analysis = false');
+    assert(res.getBody().analysis && res.getBody().analysis.used === 5, 'el contador del plan dice 5 en analisis');
 
     console.log('\n--- 6. Tope de rivales por producto (Simple: 3) ---');
     const rivalTarget = productIds[1];

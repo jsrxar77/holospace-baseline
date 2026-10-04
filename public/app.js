@@ -1024,8 +1024,9 @@ function switchTab(tabName) {
   } else if (tabName === '4see-productos') {
     const view = document.getElementById('view4seeProductos');
     if (view) view.classList.remove('hidden');
+    if (!flowIntroSeen()) openFlowIntro();
     applyFlowStep();
-    Promise.allSettled([load4seeCatalog(), load4seeMonitors(), load4seeMargins(), load4seeSmartPriceQueue()]).then(refreshFlowStepper);
+    Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue()]).then(paintFlow);
   } else if (tabName === 'kanban') {
     const tab = document.getElementById('tabKanban');
     if (tab) tab.classList.add('active');
@@ -3415,43 +3416,110 @@ function priceSourceLabelText(source) {
 }
 
 async function load4seeMonitors() {
-  const container = document.getElementById('monitorsTableContainer');
-  if (!container) return;
-  if (!watchedProductsTable) container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando tus productos...</div>';
-
   try {
-    const res = await fetch('/api/4see/watched-products', {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
+    const res = await fetch('/api/4see/watched-products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
     const data = await res.json();
-    if (!data.success || !Array.isArray(data.products)) {
-      container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus productos: ${data.error || 'intentá de nuevo'}</div>`;
-      return;
-    }
-
-    cached4seeProducts = data.products;
-    cached4seeMonitors = cached4seeProducts.flatMap((p) => p.monitors.map((m) => ({ ...m, my_price: p.price })));
+    if (!data.success) throw new Error(data.error || 'intentá de nuevo');
+    flowProducts = (data.products || []).map((p) => ({ ...p, title: p.name }));
+    flowAnalysis = data.analysis || null;
+    cached4seeProducts = flowProducts;
+    cached4seeMonitors = flowProducts.flatMap((p) => p.monitors.map((m) => ({ ...m, my_price: p.price })));
     renderWatchedProductsTable();
     renderMonitorsDashboard(cached4seeMonitors);
+    paintFlow();
   } catch (err) {
-    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">No pudimos cargar tus productos: ${err.message}</div>`;
+    const container = document.getElementById('monitorsTableContainer');
+    if (container) {
+      container.innerHTML = `<div class="flow-empty">No pudimos cargar tus productos: ${escHtml(err.message)}. <button class="btn-secondary" onclick="load4seeMonitors()">Reintentar</button></div>`;
+    }
   }
 }
 window.load4seeMonitors = load4seeMonitors;
 
 let activeFlowStep = 1;
 let flowStepTouched = false;
+let flowProducts = [];
+let flowAnalysis = null;
+let currentFlow = null;
+
+const ARS = (n) => `$${Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
+
+function renderCatalogStep() {
+  const box = document.getElementById('catalogCards');
+  if (!box) return;
+  if (!flowProducts.length) {
+    box.innerHTML = '<div class="flow-empty">Todavía no cargaste productos. Agregá el primero a mano o traelo desde tu tienda.</div>';
+    return;
+  }
+  box.innerHTML = flowProducts.map((p) => `
+    <article class="flow-card">
+      <h3 class="flow-card-title">${escHtml(p.title)}</h3>
+      <p class="flow-card-sub">${escHtml(p.sku || '')}</p>
+      <span class="flow-card-figure">${p.price != null ? ARS(p.price) : 'Sin precio'}</span>
+      <span class="flow-badge ${p.in_analysis ? 'is-ok' : 'is-todo'}">${p.in_analysis ? 'En análisis' : 'Fuera de análisis'}</span>
+    </article>`).join('');
+}
+
+function renderAnalysisQuota() {
+  const quota = document.getElementById('analysisQuota');
+  if (!quota) return;
+  quota.textContent = flowAnalysis
+    ? `${flowAnalysis.used} de ${flowAnalysis.max} productos en análisis · Plan ${flowAnalysis.planName}`
+    : '';
+}
+
+function renderCostsStep() {
+  const box = document.getElementById('marginsTableContainer');
+  if (!box) return;
+  const analysed = flowProducts.filter((p) => p.in_analysis);
+  if (!analysed.length) {
+    box.innerHTML = '<div class="flow-empty">Primero elegí productos para analizar en el paso 2. Los costos se cargan para cada uno de ellos.</div>';
+    return;
+  }
+  box.innerHTML = analysed.map((p) => `
+    <article class="flow-card">
+      <h3 class="flow-card-title">${escHtml(p.title)}</h3>
+      <p class="flow-card-sub">${escHtml(p.sku || '')}</p>
+      ${p.costs_loaded
+        ? `<span class="flow-card-figure">Piso ${ARS(p.min_price_floor)}</span><span class="flow-badge is-ok">Costos cargados</span>`
+        : '<span class="flow-badge is-todo">Falta cargar el costo</span>'}
+    </article>`).join('');
+}
+
+function flowNodeStateText(st, isCurrent) {
+  if (st.done) return 'Hecho';
+  if (st.locked) return 'Bloqueado';
+  if (isCurrent) return 'Estás acá';
+  return 'Disponible';
+}
 
 function applyFlowStep() {
-  document.querySelectorAll('#view4seeProductos > .flow-step').forEach((el) => {
-    const steps = (el.dataset.step || '').split('-').map(Number);
-    el.classList.toggle('is-active', steps.includes(activeFlowStep));
+  const n = activeFlowStep;
+  const st = currentFlow ? currentFlow.steps.find((s) => s.n === n) : null;
+  const locked = Boolean(st && st.locked);
+  document.querySelectorAll('.flow-body').forEach((b) => {
+    b.classList.toggle('is-active', !locked && Number(b.dataset.step) === n);
   });
-  document.querySelectorAll('.flow-chip').forEach((b) => {
-    const isActive = Number(b.dataset.step) === activeFlowStep;
-    b.classList.toggle('is-active', isActive);
-    b.setAttribute('aria-current', isActive ? 'step' : 'false');
+  document.querySelectorAll('.flow-node').forEach((b) => {
+    const isCurrent = Number(b.dataset.step) === n;
+    b.classList.toggle('is-current', isCurrent);
+    b.setAttribute('aria-current', isCurrent ? 'step' : 'false');
   });
+  const panel = document.getElementById('flowPanel');
+  if (panel) panel.dataset.step = String(n);
+  const meta = HSFlow.STEPS[n - 1];
+  if (meta) {
+    document.getElementById('flowPanelNumber').textContent = String(n);
+    document.getElementById('flowPanelN').textContent = String(n);
+    document.getElementById('flowPanelTitle').textContent = meta.label;
+    document.getElementById('flowPanelGoal').textContent = meta.goal;
+  }
+  const lock = document.getElementById('flowPanelLock');
+  if (lock) {
+    lock.hidden = !locked;
+    document.getElementById('flowPanelLockText').textContent = locked ? st.reason : '';
+    document.getElementById('flowPanelLockGo').onclick = () => setFlowStep(st.blockedBy);
+  }
 }
 
 function setFlowStep(n) {
@@ -3461,79 +3529,56 @@ function setFlowStep(n) {
 }
 window.setFlowStep = setFlowStep;
 
-async function refreshFlowStepper() {
-  let products = [];
-  try {
-    const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
-    const data = await res.json();
-    products = data.products || [];
-  } catch (err) {
-    products = [];
-  }
-  const inAnalysis = products.filter((p) => p.in_analysis);
-  const done = {
-    1: products.length > 0,
-    2: inAnalysis.length > 0,
-    3: (cached4seeProducts || []).some((p) => (p.monitors || []).length > 0),
-    4: inAnalysis.some((p) => p.costs_loaded),
-    5: (cached4seeQueue || []).length > 0
-  };
-  document.querySelectorAll('.flow-chip').forEach((b) => {
-    b.classList.toggle('is-done', Boolean(done[b.dataset.step]));
+function paintFlow() {
+  currentFlow = HSFlow.computeFlow(flowProducts, cached4seeQueue);
+  const s = currentFlow.summary;
+  currentFlow.steps.forEach((st) => {
+    const node = document.querySelector(`.flow-node[data-step="${st.n}"]`);
+    if (!node) return;
+    node.classList.toggle('is-done', st.done);
+    node.classList.toggle('is-locked', st.locked);
+    node.querySelector('.flow-node-state').textContent = flowNodeStateText(st, st.n === activeFlowStep);
   });
-  if (!flowStepTouched) {
-    const firstOpen = [1, 2, 3, 4, 5].find((n) => !done[n]);
-    activeFlowStep = firstOpen || 5;
-  }
+  if (!flowStepTouched) activeFlowStep = currentFlow.suggestedStep;
+  renderCatalogStep();
+  renderCostsStep();
+  renderAnalysisQuota();
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = String(v); };
+  set('sumCatalog', s.catalogCount);
+  set('sumAnalysis', s.analysisCount);
+  set('sumRivals', s.withRivals);
+  set('sumSuggestions', s.suggestionsPending);
   applyFlowStep();
 }
-window.refreshFlowStepper = refreshFlowStepper;
 
-function openAnalysisPicker() {
-  const modal = document.getElementById('analysisPickerModal');
-  if (modal) modal.classList.remove('hidden');
-  renderAnalysisPicker();
+function setFlowView(view) {
+  const steps = document.getElementById('flowStepsView');
+  const summary = document.getElementById('flowSummaryView');
+  const bSteps = document.getElementById('flowViewSteps');
+  const bSummary = document.getElementById('flowViewSummary');
+  if (steps) steps.hidden = view !== 'steps';
+  if (summary) summary.hidden = view !== 'summary';
+  if (bSteps) { bSteps.classList.toggle('active', view === 'steps'); bSteps.setAttribute('aria-selected', String(view === 'steps')); }
+  if (bSummary) { bSummary.classList.toggle('active', view === 'summary'); bSummary.setAttribute('aria-selected', String(view === 'summary')); }
 }
-window.openAnalysisPicker = openAnalysisPicker;
+window.setFlowView = setFlowView;
 
-function closeAnalysisPicker() {
-  const modal = document.getElementById('analysisPickerModal');
-  if (modal) modal.classList.add('hidden');
-  load4seeMonitors().then(refreshFlowStepper);
+function flowIntroSeen() {
+  try { return localStorage.getItem('hs_4see_intro_done') === '1'; } catch (e) { return false; }
 }
-window.closeAnalysisPicker = closeAnalysisPicker;
 
-async function renderAnalysisPicker() {
-  const list = document.getElementById('analysisPickerList');
-  const counter = document.getElementById('analysisCounter');
-  if (!list) return;
-  list.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; padding: 12px 0;">Cargando tu catálogo...</div>';
-  try {
-    const res = await fetch('/api/4see/products', { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
-    const data = await res.json();
-    if (!data.success) {
-      list.innerHTML = `<div style="color: var(--red); padding: 12px 0;">${escHtml(data.error || 'No pudimos cargar tu catálogo.')}</div>`;
-      return;
-    }
-    const a = data.analysis;
-    if (counter) counter.textContent = a ? `${a.used} de ${a.max} productos analizados (plan ${a.planName})` : '';
-    if (!data.products.length) {
-      list.innerHTML = '<div style="color: var(--text-muted); padding: 12px 0;">Todavía no tenés productos en tu catálogo. Cargalos primero en el paso 1.</div>';
-      return;
-    }
-    const full = Boolean(a && a.used >= a.max);
-    list.innerHTML = data.products.map((p) => {
-      const disabled = !p.in_analysis && full ? 'disabled' : '';
-      return `<label style="display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--card-border); cursor: pointer;">
-        <input type="checkbox" ${p.in_analysis ? 'checked' : ''} ${disabled} onchange="toggleProductAnalysis('${p.id}', this.checked)">
-        <span style="color: var(--text-main); font-weight: 700;">${escHtml(p.title)}</span>
-        <span style="margin-left: auto; font-size: 12px; color: var(--text-muted);">${escHtml(p.sku || '')}</span>
-      </label>`;
-    }).join('');
-  } catch (err) {
-    list.innerHTML = `<div style="color: var(--red); padding: 12px 0;">Error de conexión: ${escHtml(err.message)}</div>`;
-  }
+function openFlowIntro() {
+  const el = document.getElementById('flowIntro');
+  if (el) el.hidden = false;
 }
+window.openFlowIntro = openFlowIntro;
+
+function closeFlowIntro() {
+  const el = document.getElementById('flowIntro');
+  if (el) el.hidden = true;
+  try { localStorage.setItem('hs_4see_intro_done', '1'); } catch (e) { /* almacenamiento no disponible */ }
+}
+window.closeFlowIntro = closeFlowIntro;
 
 async function toggleProductAnalysis(productId, inAnalysis) {
   try {
@@ -3547,7 +3592,7 @@ async function toggleProductAnalysis(productId, inAnalysis) {
   } catch (err) {
     await showCustomAlert('Sin conexión', 'No pudimos guardar el cambio. Revisá la conexión e intentá de nuevo.');
   }
-  renderAnalysisPicker();
+  load4seeMonitors();
 }
 window.toggleProductAnalysis = toggleProductAnalysis;
 
@@ -3574,7 +3619,7 @@ window.openCostsModal = openCostsModal;
 function closeCostsModal() {
   const modal = document.getElementById('costsModal');
   if (modal) modal.classList.add('hidden');
-  Promise.allSettled([load4seeMargins(), load4seeSmartPriceQueue(), load4seeMonitors()]).then(refreshFlowStepper);
+  Promise.allSettled([load4seeMonitors(), load4seeSmartPriceQueue()]).then(paintFlow);
 }
 window.closeCostsModal = closeCostsModal;
 
@@ -3620,6 +3665,9 @@ async function handleCostsSubmit(e) {
 window.handleCostsSubmit = handleCostsSubmit;
 
 function renderRivalDetailTable(product) {
+  if (!product.in_analysis) {
+    return '<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Para sumar rivales, primero marcá este producto como "Analizar".</div>';
+  }
   if (!product.monitors.length) {
     return `<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Este producto todavía no tiene rivales cargados.
       <button class="btn-secondary" style="margin-left: 8px; padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openAddRivalModal('${product.id}')">+ Agregar rival</button></div>`;
@@ -3678,6 +3726,11 @@ function renderWatchedProductsTable() {
   const columns = [
     { key: 'name', label: 'Producto', filter: 'text', render: (p) => `<strong style="color: var(--text-main);">${escHtml(p.name)}</strong>` },
     {
+      key: 'analysis', label: 'En análisis', filter: 'enum', options: [{ value: 'Sí', label: 'Sí' }, { value: 'No', label: 'No' }],
+      filterValue: (p) => (p.in_analysis ? 'Sí' : 'No'),
+      render: (p) => `<button class="${p.in_analysis ? 'btn-primary' : 'btn-secondary'}" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); toggleProductAnalysis('${p.id}', ${!p.in_analysis})">${p.in_analysis ? 'Sí, la sigo' : 'Analizar'}</button>`
+    },
+    {
       key: 'price', label: 'Tu precio', filter: 'text',
       filterValue: (p) => p.price == null ? '' : String(p.price),
       render: (p) => p.price == null
@@ -3702,13 +3755,11 @@ function renderWatchedProductsTable() {
     renderDetail: (p) => renderRivalDetailTable(p),
     emptyMessage: cached4seeProducts.length
       ? 'No hay productos que coincidan con tu búsqueda.'
-      : 'Todavía no elegiste productos para analizar. Apretá Elegir productos para analizar, marcá los de tu catálogo y después sumá sus rivales.',
+      : 'Todavía no cargaste productos. Empezá por el paso 1.',
     actionsLabel: 'Acciones',
-    renderActions: (p) => `
-      <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-        <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar tu precio</button>
-        <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); deleteWatchedProduct('${p.id}')">Eliminar</button>
-      </div>`
+    renderActions: (p) => (p.in_analysis
+      ? `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar tu precio</button>`
+      : '')
   });
   watchedProductsTable.update(cached4seeProducts);
 }
@@ -3984,23 +4035,6 @@ async function deleteMonitor(id) {
   }
 }
 
-async function deleteWatchedProduct(productId) {
-  const product = cached4seeProducts.find((p) => p.id === productId);
-  const confirmed = await showCustomConfirm(
-    'Eliminar producto',
-    `¿Querés dejar de vigilar "${product ? product.name : 'este producto'}"? Se eliminan tambien sus ${product ? product.monitors.length : ''} rivales.`
-  );
-  if (!confirmed) return;
-  try {
-    const res = await fetch(`/api/4see/watched-products/${productId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
-    const data = await res.json();
-    if (data.success) load4seeMonitors();
-    else await showCustomAlert('Error', data.error || 'No pudimos eliminar el producto. Intentá de nuevo.');
-  } catch (err) {
-    await showCustomAlert('Error', `Error: ${err.message}`);
-  }
-}
-window.deleteWatchedProduct = deleteWatchedProduct;
 
 // --- Agregar otro rival a un producto que ya existe ---
 let addRivalLastPreview = null;
@@ -5283,146 +5317,6 @@ function exportCatalogAuditCsv() {
 window.exportCatalogAuditCsv = exportCatalogAuditCsv;
 
 // 3. GUARDIÁN DE RENTABILIDAD & MÁRGENES
-let cached4seeMargins = [];
-
-async function load4seeMargins() {
-  const container = document.getElementById('marginsTableContainer');
-  if (!container) return;
-  container.innerHTML = '<div style="color: var(--text-muted); font-size: 14px; text-align: center; padding: 20px 0;">Cargando reglas de rentabilidad...</div>';
-
-  try {
-    const res = await fetch('/api/4see/margins', {
-      headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-    });
-    const data = await res.json();
-    if (!data.success || !data.rules || data.rules.length === 0) {
-      cached4seeMargins = [];
-      container.innerHTML = `
-        <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
-          <div style="font-size: 15px; font-weight: 700; color: var(--text-main);">Todavía no calculaste el margen de ningún producto</div>
-          <div style="font-size: 13px; margin-top: 6px;">Cargá el costo, la comisión y los impuestos de un producto y holospace. te dice cuánto ganás de verdad y si estás vendiendo con poco margen.</div>
-          <button class="btn-primary" style="margin-top: 16px;" onclick="openCreateMarginModal()">+ Nueva Regla de Margen</button>
-        </div>
-      `;
-      return;
-    }
-
-    cached4seeMargins = data.rules;
-    render4seeMarginsTable(cached4seeMargins);
-  } catch (err) {
-    container.innerHTML = `<div style="color: var(--red); padding: 20px; text-align: center;">Error cargando reglas de margen: ${err.message}</div>`;
-  }
-}
-
-function filter4seeMargins(query = '') {
-  const q = query.trim().toLowerCase();
-  if (!q) {
-    render4seeMarginsTable(cached4seeMargins);
-    return;
-  }
-  const filtered = cached4seeMargins.filter(r => {
-    const name = (r.product_name || '').toLowerCase();
-    const sku = (r.product_sku || '').toLowerCase();
-    const zone = r.is_red_zone ? 'margen bajo' : 'saludable';
-    return name.includes(q) || sku.includes(q) || zone.includes(q);
-  });
-  render4seeMarginsTable(filtered);
-}
-
-let marginsTable = null;
-const MARGINS_TABLE_COLUMNS = [
-  {
-    key: 'product', label: 'Producto', filter: 'text', filterValue: (r) => `${r.product_name || ''} ${r.product_sku || ''}`,
-    render: (r) => `<div style="font-weight: 800; color: var(--text-main);">${escHtml(r.product_name || r.product_sku)}</div><div style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-size: 11px; color: var(--emerald);">Código: ${escHtml(r.product_sku)}</div>`
-  },
-  { key: 'cost_price', label: 'Costo de reposición', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: var(--text-main);">$${parseFloat(r.cost_price).toLocaleString('es-AR')}</span>` },
-  { key: 'selling_price', label: 'Precio de venta', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">$${parseFloat(r.selling_price).toLocaleString('es-AR')}</span>` },
-  { key: 'net_profit', label: 'Ganancia neta', filter: 'none', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: ${parseFloat(r.net_profit) > 0 ? 'var(--emerald)' : 'var(--amber)'};">$${parseFloat(r.net_profit).toLocaleString('es-AR')}</span>` },
-  { key: 'real_margin_pct', label: 'Margen real', filter: 'none', render: (r) => `<span style="font-weight: 800; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; color: ${r.is_red_zone ? 'var(--amber)' : 'var(--text-main)'};">${r.real_margin_pct}%</span>` },
-  {
-    key: 'status', label: 'Estado del margen', filter: 'enum', options: [{ value: 'Saludable', label: 'Saludable' }, { value: 'Margen bajo', label: 'Margen bajo' }],
-    filterValue: (r) => (r.is_red_zone ? 'Margen bajo' : 'Saludable'),
-    render: (r) => (r.is_red_zone
-      ? `<span class="status-indicator" style="color: var(--amber); font-weight: 800; font-size: 11px;">○ Margen bajo (&lt;${r.min_margin_pct}%)</span>`
-      : `<span class="status-indicator" style="color: var(--emerald); font-weight: 800; font-size: 11px;">● Saludable</span>`)
-  },
-  { key: 'suggested_repricing_price', label: 'Oportunidad de precio', filter: 'none', align: 'right', render: (r) => `<span style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--cobalt);">$${parseFloat(r.suggested_repricing_price).toLocaleString('es-AR')} (+8%)</span>` }
-];
-
-function render4seeMarginsTable(rules = []) {
-  const container = document.getElementById('marginsTableContainer');
-  if (!container) return;
-
-  if (!marginsTable || !container.querySelector('.hs-table-wrap')) {
-    marginsTable = HSTable.mount({
-      id: '4see_margins',
-      container,
-      columns: MARGINS_TABLE_COLUMNS,
-      rowKey: (r) => r.id || r.product_sku,
-      emptyMessage: 'No se encontraron reglas de margen que coincidan con la búsqueda.'
-    });
-  }
-  marginsTable.update(rules);
-}
-
-
-function openCreateMarginModal() {
-  const modal = document.getElementById('createMarginModal');
-  if (modal) {
-    document.getElementById('createMarginForm').reset();
-    modal.classList.remove('hidden');
-  }
-}
-
-function closeCreateMarginModal() {
-  const modal = document.getElementById('createMarginModal');
-  if (modal) modal.classList.add('hidden');
-}
-
-async function handleCreateMarginSubmit(e) {
-  e.preventDefault();
-  const productSku = document.getElementById('marSku').value.trim();
-  const productName = document.getElementById('marProductName').value.trim();
-  const costPrice = document.getElementById('marCostPrice').value;
-  const sellingPrice = document.getElementById('marSellingPrice').value;
-  const minMarginPct = document.getElementById('marMinMargin').value;
-  const platformFeePct = document.getElementById('marFeePct').value;
-  const taxPct = document.getElementById('marTaxPct').value;
-  const shippingCost = document.getElementById('marShipping').value;
-
-  try {
-    const res = await fetch('/api/4see/margins', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${getAuthToken()}`
-      },
-      body: JSON.stringify({
-        productSku,
-        productName,
-        costPrice,
-        sellingPrice,
-        minMarginPct,
-        platformFeePct,
-        taxPct,
-        shippingCost
-      })
-    });
-    const data = await res.json();
-    if (data.success) {
-      closeCreateMarginModal();
-      load4seeMargins();
-    } else {
-      await showCustomAlert('Error', data.error || 'No pudimos guardar el cálculo. Revisá los datos e intentá de nuevo.');
-    }
-  } catch (err) {
-    await showCustomAlert('Error', `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`);
-  }
-}
-
-// ============================================================================
-// 4SEE SMARTPRICE & DYNAMIC PRICING (QUEUE, APPROVAL, WORKER)
-// ============================================================================
 let cached4seeQueue = [];
 
 async function load4seeSmartPriceQueue() {
@@ -5465,23 +5359,10 @@ function updateSmartPriceKpis(queue = []) {
   renderSmartPriceDashboard(queue);
 }
 
-let smartPriceView = 'table';
-function setSmartPriceView(view) {
-  smartPriceView = view === 'dashboard' ? 'dashboard' : 'table';
-  const dash = document.getElementById('smartpriceDashboard');
-  const wrap = document.getElementById('smartpriceTableWrap');
-  if (dash) dash.classList.toggle('hidden', smartPriceView !== 'dashboard');
-  if (wrap) wrap.classList.toggle('hidden', smartPriceView === 'dashboard');
-  const bT = document.getElementById('spViewTable');
-  const bD = document.getElementById('spViewDash');
-  if (bT) bT.classList.toggle('active', smartPriceView === 'table');
-  if (bD) bD.classList.toggle('active', smartPriceView === 'dashboard');
-  if (smartPriceView === 'dashboard') renderSmartPriceDashboard(cached4seeQueue);
-}
-window.setSmartPriceView = setSmartPriceView;
+
 
 function renderSmartPriceDashboard(queue = []) {
-  if (smartPriceView !== 'dashboard' || typeof HSCharts === 'undefined') return;
+  if (typeof HSCharts === 'undefined') return;
   const empty = document.getElementById('smartpriceDashEmpty');
   const count = (s) => queue.filter(q => q.status === s).length;
   const hasData = queue.length > 0;
@@ -5507,23 +5388,10 @@ function renderSmartPriceDashboard(queue = []) {
 }
 
 // Monitor de Precios: alternar tabla / dashboard
-let monitorsView = 'table';
-function setMonitorsView(view) {
-  monitorsView = view === 'dashboard' ? 'dashboard' : 'table';
-  const dash = document.getElementById('monitorsDashboard');
-  const wrap = document.getElementById('monitorsTableWrap');
-  if (dash) dash.classList.toggle('hidden', monitorsView !== 'dashboard');
-  if (wrap) wrap.classList.toggle('hidden', monitorsView === 'dashboard');
-  const bT = document.getElementById('monViewTable');
-  const bD = document.getElementById('monViewDash');
-  if (bT) bT.classList.toggle('active', monitorsView === 'table');
-  if (bD) bD.classList.toggle('active', monitorsView === 'dashboard');
-  if (monitorsView === 'dashboard') renderMonitorsDashboard(cached4seeMonitors);
-}
-window.setMonitorsView = setMonitorsView;
+
 
 function renderMonitorsDashboard(monitors = []) {
-  if (monitorsView !== 'dashboard' || typeof HSCharts === 'undefined') return;
+  if (typeof HSCharts === 'undefined') return;
   const empty = document.getElementById('monitorsDashEmpty');
   if (empty) empty.classList.toggle('hidden', monitors.length > 0);
   if (!monitors.length) return;

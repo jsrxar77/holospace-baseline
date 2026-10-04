@@ -142,7 +142,7 @@ async function runTests() {
 
     console.log('\n--- 11. Sacar un producto del analisis: sale de Competencia pero queda en el catalogo ---');
     res = createMockRes();
-    await handle4seeApi({ url: `/api/4see/watched-products/${productId}`, method: 'DELETE' }, res, { ...ctx, data: {} });
+    await handle4seeApi({ url: `/api/4see/products/${productId}/analysis`, method: 'POST' }, res, { ...ctx, data: { inAnalysis: false } });
     assert(res.getStatusCode() === 200, 'Se puede sacar el producto del analisis');
     const catalogRow = await getOne('SELECT id, in_analysis FROM fourseee_products WHERE id = ?', [productId], { tenantId });
     assert(catalogRow && catalogRow.in_analysis === false, 'el producto sigue en el catalogo y ya no esta en analisis');

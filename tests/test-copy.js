@@ -67,10 +67,7 @@ check('modules/landing', htmlVisibleText(read('modules/landing/public/index.html
 
 console.log('Contrato de pantalla: titulo y bajada');
 const views = {
-  view4seeMonitors: 'Precios de tu competencia',
-  view4seeSmartPrice: 'Precios sugeridos',
-  view4seeCatalog: 'Salud de tu catálogo',
-  view4seeMargins: 'Márgenes de ganancia',
+  view4seeProductos: 'Tus productos y sus precios',
   viewKanban: 'Pedidos para preparar',
   viewOrders: 'Todos los pedidos',
   viewUsers: 'Usuarios',
@@ -80,8 +77,8 @@ const views = {
 for (const [id, title] of Object.entries(views)) {
   const i = html.indexOf(`id="${id}"`);
   const chunk = i >= 0 ? html.slice(i, i + 1800) : '';
-  const h2 = chunk.match(/<h2[^>]*>([\s\S]*?)<\/h2>/);
-  const p = chunk.match(/<\/h2>\s*<p[^>]*>([^<]{25,})<\/p>/);
+  const h2 = chunk.match(/<h[12][^>]*>([\s\S]*?)<\/h[12]>/);
+  const p = chunk.match(/<\/h[12]>\s*<p[^>]*>([^<]{25,})<\/p>/);
   ok(!!h2 && h2[1].replace(/<[^>]+>/g, '').trim() === title, `${id}: titulo "${title}"`);
   ok(!!p, `${id}: bajada de una o dos frases`);
 }
@@ -89,14 +86,14 @@ for (const [id, title] of Object.entries(views)) {
 console.log('4see: una sola pestaña con el flujo en orden');
 ok(html.includes('>Productos</button>'), 'pestana unica "Productos"');
 ok(!/>(Competencia|Precios sugeridos|Catálogo|Márgenes)<\/button>/.test(html), 'no quedan pestañas sueltas de 4see');
-const flowSteps = ['Cargá tu catálogo', 'Elegí los productos a analizar', 'Sumá los rivales', 'Completá costos y márgenes', 'Recibí los precios sugeridos'];
+const flowSteps = ['Catálogo', 'Análisis', 'Costos', 'Sugerencias'];
 flowSteps.forEach((s) => ok(html.includes(s), `paso del flujo: "${s}"`));
 
 console.log('Estados vacios con siguiente paso');
 const app = read('public/app.js');
-ok(app.includes('Todavía no elegiste productos para analizar') && html.includes('Elegir productos para analizar'), 'Competencia: vacio con siguiente paso (elegir productos)');
+ok(app.includes('Todavía no cargaste productos. Empezá por el paso 1.') && html.includes('Analizar'), 'Análisis: vacio con siguiente paso');
 ok(app.includes('Apretá <strong>Revisar precios ahora</strong>'), 'Precios sugeridos: vacio con siguiente paso');
-ok(app.includes('Todavía no calculaste el margen de ningún producto'), 'Márgenes: vacio explicado');
+ok(app.includes('Primero elegí productos para analizar en el paso 2'), 'Costos: vacio con siguiente paso');
 
 console.log('Voz');
 const visible = htmlVisibleText(html).concat(jsLiterals(app)).join('\n');

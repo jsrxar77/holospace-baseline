@@ -41,7 +41,7 @@ ok(/rival\.ok/.test(recheck), 'si no se pudo leer el rival, se le avisa a quien 
 console.log('Todas las tablas de la app usan el mismo componente (hs-table), no un <thead> armado a mano (D-051)');
 const appJsFull = appJs;
 ok(!/tenantsTableBody|usersTableBody|rolesTableBody|ordersExplorerGrid/.test(appJsFull + app), 'no quedan referencias a los <tbody> viejos de Empresas, Usuarios, Roles o Pedidos');
-const HSTABLE_IDS = ['tenants', 'users', 'roles', 'explorer_orders', '4see_competencia', '4see_margins', '4see_smartprice_queue', 'saved_stores'];
+const HSTABLE_IDS = ['tenants', 'users', 'roles', 'explorer_orders', '4see_competencia', '4see_smartprice_queue', 'saved_stores'];
 HSTABLE_IDS.forEach((id) => {
   ok(appJsFull.includes(`id: '${id}'`), `la tabla "${id}" se monta con HSTable.mount (no con HTML armado a mano)`);
 });

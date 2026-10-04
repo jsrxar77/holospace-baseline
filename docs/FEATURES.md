@@ -145,19 +145,49 @@ El cambio entre Holo Night y Holo Day es el mismo boton (icono de luna/sol + la 
 ## "Revisar ahora" de un rival avisa lo que encontro
 Si no se pudo leer el precio del rival, lo dice y mantiene el dato anterior; si el precio leido es muy distinto del tuyo, lo avisa. Antes solo refrescaba la tabla sin decir nada.
 
-## Análisis de precios: un solo flujo en la pantalla Productos (4see)
+## Productos (4see): guía del flujo
 
-Todo lo de 4see se carga en una sola pantalla, en cinco pasos que se leen en orden:
+Todo lo de precios se hace en la pantalla **Productos**, en cuatro pasos que se leen en orden. Cada producto se carga una sola vez y el resto de los pasos lo referencia.
 
-1. **Cargá tu catálogo:** conectás la tienda o cargás los productos a mano (un solo lugar).
-2. **Elegí los productos a analizar:** marcás cuáles entran al análisis. El tope lo define tu plan: Simple 5, Business 13, Enterprise 55 productos. Sacar un producto libera el lugar y no lo borra del catálogo.
-3. **Sumá los rivales de cada producto:** pegás el link del rival. El tope por producto es Simple 3, Business 8, Enterprise 21 rivales. Tu precio sale del producto; no se vuelve a cargar.
-4. **Completá costos y márgenes:** costo, costos operativos, margen mínimo y tope (opcional). El piso de margen se calcula solo. Sin costo no hay sugerencia, y la pantalla lo dice.
-5. **Recibí los precios sugeridos:** el worker vuelve a leer los rivales y calcula el precio con las reglas. Vos decidís si lo aplicás.
+### Recorrido
 
-Los límites viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPerProduct`) y se aplican en la API: al superarlos responde 403 con `PLAN_LIMIT_REACHED` y un mensaje con el plan y el número.
+| Paso | Qué hacés | Qué se desbloquea | Qué se ve en la pantalla |
+|---|---|---|---|
+| 1. Catálogo | Cargás tus productos: a mano, o traídos desde tu tienda (opcional). | Análisis | Tarjetas de tus productos, con su precio y si están en análisis. |
+| 2. Análisis | Marcás **Analizar** en los productos que seguís, y en cada fila sumás los links de sus rivales. | Costos (con un producto en análisis) y Sugerencias (con un rival) | Una tabla de productos. Cada fila se despliega para ver y sumar rivales. |
+| 3. Costos | Cargás costo, costos operativos, margen mínimo y tope (opcional) de cada producto en análisis. | Sugerencias (con costos cargados) | Una tarjeta por producto en análisis, con su piso de margen o la falta de costo. |
+| 4. Sugerencias | Revisás el precio que te proponemos y decidís si lo aplicás. | — | La cola de precios para decidir, con sus contadores y las reglas de precio. |
 
-Pendiente visible en la pantalla: la tabla de Márgenes todavía muestra las reglas viejas (D-052).
+### Por qué este orden
+
+- **El catálogo va primero** porque todo lo demás depende de tener productos. Sin catálogo no hay nada que analizar.
+- **Análisis va antes que Costos** porque solo tiene sentido cargar costos de productos que seguís. Los costos sin análisis no alimentan ninguna sugerencia.
+- **Sugerencias va última** porque necesita las dos piezas: un rival leído y los costos. Sin eso, el precio sugerido sería inventado (regla de no inventar datos).
+- **Costos y Análisis se pueden hacer en cualquier orden** una vez que hay un producto en análisis; por eso Costos no pide que existan rivales.
+
+Si un paso está bloqueado, la pantalla lo dice con el motivo ("Primero elegí al menos un producto para analizar") y ofrece ir al paso que lo desbloquea. El servidor aplica las mismas reglas: no acepta un rival ni costos para un producto que no está en análisis.
+
+### Límites por plan
+
+Se cuentan productos **en análisis** y rivales **por producto**. El catálogo no tiene tope.
+
+| Plan | Productos en análisis | Rivales por producto |
+|---|---|---|
+| 4see Simple | 5 | 3 |
+| 4see Business | 13 | 8 |
+| 4see Enterprise | 55 | 21 |
+
+Los valores viven en `lib/billing.js` (`maxMonitoredProducts`, `maxCompetitorsPerProduct`). Al superar un tope, la API responde 403 con `PLAN_LIMIT_REACHED` y un mensaje con el plan y el número.
+
+### Qué es automático y qué no
+
+- **Automático:** el cálculo del piso de margen (costo × (1 + margen %) + costos operativos) y los estados de cada paso.
+- **Manual:** la lectura de precios de los rivales. Se hace con **Revisar ahora** en cada rival, o con **Revisar precios ahora** en Sugerencias. **No hay una programación automática** todavía (D-057).
+
+### Textos y pantallas relacionadas
+
+- El texto de cada paso y del mapa sale de `public/flow.js` (`STEPS`), la única fuente.
+- La auditoría de la tienda ("Salud de tu catálogo") ya no está en esta pantalla; la decisión sobre su futuro está en D-058.
 
 ## Competencia: un producto con varios rivales (maestro-detalle)
 Cada producto vigilado es una fila; al desplegarla se ven sus rivales (link, precio, stock, ultima revision), con "+ Agregar rival" para sumar otro sin recargar nada. "Tu precio" se carga y se corrige una sola vez por producto (boton "Editar tu precio"), vale para todos sus rivales. Un rival ya cargado se puede editar (link, nombre) sin borrarlo y recargarlo. Columnas: Producto, Tu precio, Rivales, Ultima revision, mas Rival, Precio del rival, Stock del rival y Ultima revision dentro del detalle.

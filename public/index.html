@@ -933,7 +933,7 @@
   <link rel="stylesheet" href="/themes/holo.css">
 </head>
 <body>
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="hs-pcore" viewBox="0 0 64 64"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></symbol><symbol id="hs-p4see" viewBox="0 0 64 64"><path d="M32 5l23 13.5v27L32 59 9 45.5v-27z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M2 41h60M2 34v14M62 34v14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol><symbol id="hs-plog" viewBox="0 0 64 64"><path fill="currentColor" d="M9 9h5v46H9zM17 9h2v46h-2zM22 9h3v46h-3zM39 9h3v46h-3zM45 9h2v46h-2zM50 9h5v46h-5z"/><path d="M4 32h56" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol></defs></svg>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="hs-flow-steps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="5" height="5"/><rect x="3" y="15" width="5" height="5"/><path d="M11 6.5h10M11 17.5h10"/></symbol><symbol id="hs-flow-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol><symbol id="hs-flow-catalog" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></symbol><symbol id="hs-flow-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="hs-flow-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M9.5 9.5h4a1.5 1.5 0 0 1 0 3h-3a1.5 1.5 0 0 0 0 3h4"/><path d="M12 7v10"/></symbol><symbol id="hs-flow-spark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><path d="M7 7l2.5 2.5M14.5 14.5 17 17M17 7l-2.5 2.5M9.5 14.5 7 17"/></symbol><symbol id="hs-flow-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="1"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol><symbol id="hs-pcore" viewBox="0 0 64 64"><path d="M13 8v48M51 8v48" fill="none" stroke="currentColor" stroke-width="7"/><path d="M25 32h14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/><path d="M16.5 32l9-5.5v11zM47.5 32l-9-5.5v11z" style="fill:var(--emerald)"/></symbol><symbol id="hs-p4see" viewBox="0 0 64 64"><path d="M32 5l23 13.5v27L32 59 9 45.5v-27z" fill="none" stroke="currentColor" stroke-width="5"/><path d="M2 41h60M2 34v14M62 34v14" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol><symbol id="hs-plog" viewBox="0 0 64 64"><path fill="currentColor" d="M9 9h5v46H9zM17 9h2v46h-2zM22 9h3v46h-3zM39 9h3v46h-3zM45 9h2v46h-2zM50 9h5v46h-5z"/><path d="M4 32h56" fill="none" style="stroke:var(--emerald)" stroke-width="3"/></symbol></defs></svg>
 
   <!-- ELEMENTOS ESPACIALES PIXEL ART FLOTANTES (ASTEROIDES Y NAVES) -->
   
@@ -1358,205 +1358,170 @@
     <!-- 7. VISTAS DEL MÓDULO 4SEE (MONITOR, CATALOG & MARGINS) -->
     <!-- 7.1 Monitor de Competidores -->
     <div id="view4seeProductos" class="view-panel hidden">
-      <nav class="flow-stepper" aria-label="Pasos del análisis">
-        <button type="button" class="flow-chip" data-step="1" onclick="setFlowStep(1)"><span class="flow-num">1</span><span>Cargá tu catálogo</span></button>
-        <button type="button" class="flow-chip" data-step="2" onclick="setFlowStep(2)"><span class="flow-num">2</span><span>Elegí los productos a analizar</span></button>
-        <button type="button" class="flow-chip" data-step="3" onclick="setFlowStep(3)"><span class="flow-num">3</span><span>Sumá los rivales</span></button>
-        <button type="button" class="flow-chip" data-step="4" onclick="setFlowStep(4)"><span class="flow-num">4</span><span>Completá costos y márgenes</span></button>
-        <button type="button" class="flow-chip" data-step="5" onclick="setFlowStep(5)"><span class="flow-num">5</span><span>Recibí los precios sugeridos</span></button>
-      </nav>
-
-    <div id="view4seeMonitors" class="flow-step" data-step="2-3">
-      <div class="actions-bar">
+      <header class="flow-head">
         <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Precios de tu competencia</h2>
-          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Cargá los links de los productos de tus rivales. holospace. revisa su precio y su stock y te muestra dónde te conviene actuar.</p>
+          <p class="flow-kicker"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg> 4see</p>
+          <h1 class="flow-title">Tus productos y sus precios</h1>
+          <p class="flow-lede">Cargás cada producto una vez, elegís cuáles seguir, sumás a sus rivales y te decimos a qué precio conviene venderlo. Cada paso se abre cuando el anterior está listo.</p>
         </div>
-        <div class="actions-controls">
-          <button class="btn-primary" onclick="openAnalysisPicker()">Elegir productos para analizar</button>
+        <div class="flow-head-actions">
+          <button type="button" class="btn-secondary" onclick="openFlowIntro()">¿Cómo funciona?</button>
         </div>
+      </header>
+
+      <div class="flow-views" role="tablist" aria-label="Vista">
+        <button type="button" role="tab" id="flowViewSteps" class="active" aria-selected="true" onclick="setFlowView('steps')">
+          <svg class="flow-icon" aria-hidden="true"><use href="#hs-flow-steps"/></svg>Paso a paso
+        </button>
+        <button type="button" role="tab" id="flowViewSummary" aria-selected="false" onclick="setFlowView('summary')">
+          <svg class="flow-icon" aria-hidden="true"><use href="#hs-flow-chart"/></svg>Resumen
+        </button>
       </div>
 
-      <div class="view-switch" role="tablist" aria-label="Vista">
-        <button type="button" role="tab" class="active" id="monViewTable" onclick="setMonitorsView('table')">Tabla</button>
-        <button type="button" role="tab" id="monViewDash" onclick="setMonitorsView('dashboard')">Dashboard</button>
-      </div>
+      <div id="flowStepsView">
+        <nav class="flow-map" aria-label="Mapa del análisis">
+          <button type="button" class="flow-node" data-step="1" onclick="setFlowStep(1)">
+            <span class="flow-node-num">1</span>
+            <svg class="flow-node-icon" aria-hidden="true"><use href="#hs-flow-catalog"/></svg>
+            <span class="flow-node-label">Catálogo</span>
+            <span class="flow-node-state">Pendiente</span>
+          </button>
+          <svg class="flow-arrow" aria-hidden="true" viewBox="0 0 40 24"><path d="M2 12h30m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button type="button" class="flow-node" data-step="2" onclick="setFlowStep(2)">
+            <span class="flow-node-num">2</span>
+            <svg class="flow-node-icon" aria-hidden="true"><use href="#hs-flow-target"/></svg>
+            <span class="flow-node-label">Análisis</span>
+            <span class="flow-node-state">Pendiente</span>
+          </button>
+          <svg class="flow-arrow" aria-hidden="true" viewBox="0 0 40 24"><path d="M2 12h30m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button type="button" class="flow-node" data-step="3" onclick="setFlowStep(3)">
+            <span class="flow-node-num">3</span>
+            <svg class="flow-node-icon" aria-hidden="true"><use href="#hs-flow-coin"/></svg>
+            <span class="flow-node-label">Costos</span>
+            <span class="flow-node-state">Pendiente</span>
+          </button>
+          <svg class="flow-arrow" aria-hidden="true" viewBox="0 0 40 24"><path d="M2 12h30m-7-7 7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <button type="button" class="flow-node" data-step="4" onclick="setFlowStep(4)">
+            <span class="flow-node-num">4</span>
+            <svg class="flow-node-icon" aria-hidden="true"><use href="#hs-flow-spark"/></svg>
+            <span class="flow-node-label">Sugerencias</span>
+            <span class="flow-node-state">Pendiente</span>
+          </button>
+        </nav>
 
-      <div id="monitorsDashboard" class="chart-grid hidden">
-        <section class="chart-panel">
-          <header><h3>Stock de tus rivales</h3><span class="chart-note">Cuántos tienen y cuántos no</span></header>
-          <div id="chartMonStock" class="chart-box chart-box-sm" role="img" aria-label="Rivales en stock y en quiebre"></div>
-        </section>
-        <section class="chart-panel chart-wide">
-          <header><h3>Tu precio contra el de tus rivales</h3><span class="chart-note">Un punto por rival</span></header>
-          <div id="chartMonPrices" class="chart-box" role="img" aria-label="Mi precio y precios de rivales por producto"></div>
-        </section>
-        <div id="monitorsDashEmpty" class="chart-empty hidden">Todavía no seguís a ningún rival. Agregá el link de un producto para ver este panel.</div>
-      </div>
-
-      <div class="table-responsive-container" id="monitorsTableWrap">
-        <div id="monitorsTableContainer">
-          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando monitores de competencia...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7.2 Auditoría de Catálogo y Diff View -->
-    <div id="view4seeCatalog" class="flow-step" data-step="1">
-      <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
-        <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Salud de tu catálogo</h2>
-          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Revisa los productos de tu tienda y marca lo que falta: código de barras, marca y un mejor título. Después los corregís desde acá.</p>
-        </div>
-        <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
-          <div class="search-box-wrapper">
-            <input 
-              type="text" 
-              id="catalogSearchInput" 
-              class="input-search" 
-              placeholder="Buscar por título, código, código de barras o marca..." 
-              oninput="filter4seeCatalog(this.value)"
-            />
+        <section id="flowIntro" class="flow-intro" hidden aria-labelledby="flowIntroTitle">
+          <div class="flow-intro-head">
+            <h2 id="flowIntroTitle">Así funciona, en cuatro pasos</h2>
+            <button type="button" class="btn-secondary" onclick="closeFlowIntro()">Entendido</button>
           </div>
-          <!-- Selector de Tiendas Guardadas (Multi-Store) -->
-          <select id="savedStoresSelect" class="input-field" style="max-width: 240px; font-size: 13px;" onchange="handleSelectSavedStore(this.value)">
-            <option value="">Conectar una tienda nueva</option>
-          </select>
-          <button id="btnQuickAuditStore" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="handleQuickScanSelectedStore()">Revisar mi tienda ahora</button>
-          <button class="btn-secondary" style="font-size: 13px;" onclick="openManageStoresModal()">Mis tiendas conectadas</button>
-          <button class="btn-secondary" style="font-size: 13px;" onclick="openAuditItemModal()">+ Probar un producto</button>
-        </div>
-      </div>
-
-      <!-- Resumen KPI de Salud del Catálogo (Se muestra tras auditar) -->
-      <div id="catalogHealthKpis" style="display: none; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
-        <div style="background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase;">Productos revisados</div>
-          <div id="kpiTotalAudited" style="font-size: 24px; font-weight: 900; color: var(--text-main); margin-top: 4px;">0</div>
-        </div>
-        <div style="background: var(--hw-accent-soft, rgba(0,230,118,0.08)); border: 1px solid var(--hw-accent-border, rgba(0,230,118,0.3)); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--emerald); text-transform: uppercase;">Listos, sin nada que corregir</div>
-          <div id="kpiOptimized" style="font-size: 24px; font-weight: 900; color: var(--emerald); margin-top: 4px;">0</div>
-        </div>
-        <div style="background: var(--hw-danger-soft, var(--hw-danger-soft)); border: 1px solid color-mix(in srgb, var(--red) 30%, transparent); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: var(--red); text-transform: uppercase;">Sin código de barras</div>
-          <div id="kpiMissingGtin" style="font-size: 24px; font-weight: 900; color: var(--red); margin-top: 4px;">0</div>
-        </div>
-        <div style="background: rgba(234, 179, 8, 0.08); border: 1px solid rgba(234, 179, 8, 0.3); border-radius: 12px; padding: 14px 18px;">
-          <div style="font-size: 11px; font-weight: 800; color: #EAB308; text-transform: uppercase;">Para revisar</div>
-          <div id="kpiNeedsReview" style="font-size: 24px; font-weight: 900; color: #EAB308; margin-top: 4px;">0</div>
-        </div>
-      </div>
-
-      <!-- Barra de Operaciones Masivas y Modo Mock Seguro -->
-      <div id="catalogBulkBar" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 12px; padding: 12px 18px; margin-bottom: 16px;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <span style="font-size: 11px; font-weight: 900; color: #60A5FA; background: rgba(59, 130, 246, 0.2); padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px;">MODO DE PRUEBA</span>
-          <span style="font-size: 13px; color: var(--text-main);">Lo que apruebes acá es una simulación: no cambia nada en tu tienda real.</span>
-        </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button class="btn-secondary" style="font-size: 12px; padding: 6px 14px;" onclick="exportCatalogAuditCsv()">Descargar informe (CSV)</button>
-          <button class="btn-primary" style="font-size: 12px; padding: 6px 14px;" onclick="bulkApproveCatalogMock()">Aprobar todo (simulación)</button>
-        </div>
-      </div>
-
-      <div class="table-responsive-container">
-        <div id="catalogDiffContainer">
-          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Revisando tu catálogo...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7.3 Guardián de Márgenes y Repricing -->
-    <div id="view4seeMargins" class="flow-step" data-step="4">
-      <div class="actions-bar">
-        <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Márgenes de ganancia</h2>
-          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">Cargá el costo, las comisiones y los impuestos de cada producto y mirá cuánto ganás de verdad. Te marca los que quedan con poco margen.</p>
-        </div>
-        <div class="actions-controls">
-          <div class="search-box-wrapper">
-            <input 
-              type="text" 
-              id="marginsSearchInput" 
-              class="input-search" 
-              placeholder="Buscar por producto o código..." 
-              oninput="filter4seeMargins(this.value)"
-            />
-          </div>
-          <button class="btn-primary" onclick="openCostsModal()">Cargar costos de un producto</button>
-        </div>
-      </div>
-
-      <div class="table-responsive-container">
-        <div id="marginsTableContainer">
-          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando tus márgenes...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 7.4 SmartPrice & Repricing 1:N -->
-    <div id="view4seeSmartPrice" class="flow-step" data-step="5">
-      <div class="actions-bar" style="flex-wrap: wrap; gap: 16px;">
-        <div>
-          <h2 style="font-size: 24px; font-weight: 900; color: var(--text-main);"><svg class="hs-pi hs-pi-h" aria-hidden="true"><use href="#hs-p4see"/></svg>Precios sugeridos</h2>
-          <p style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">holospace. compara tus precios con los de tus rivales y te propone un precio nuevo para cada producto, sin bajar nunca de tu piso de margen. Vos decidís si lo aplicás.</p>
-        </div>
-        <div class="actions-controls" style="flex-wrap: wrap; gap: 10px; align-items: center;">
-          <div class="search-box-wrapper">
-            <input 
-              type="text" 
-              id="smartpriceSearchInput" 
-              class="input-search" 
-              placeholder="Buscar por producto, código o regla..." 
-              oninput="filter4seeQueue(this.value)"
-            />
-          </div>
-          <button id="btnRunWorkerCycle" class="btn-primary" style="background: var(--emerald); color: var(--hw-accent-fg, #000); font-weight: 800;" onclick="handleTriggerWorkerCycle()">Revisar precios ahora</button>
-          <button class="btn-secondary" style="font-size: 13px;" onclick="openCreateProductModal()">+ Agregar un producto</button>
-          <button class="btn-secondary" style="font-size: 13px;" onclick="openCreateRuleModal()">+ Nueva regla de precio</button>
-        </div>
-      </div>
-
-      <!-- Resumen KPI de SmartPrice -->
-      <div id="smartpriceKpis" class="kpi-strip">
-        <div class="kpi-cell tone-pending">
-          <div class="kpi-label">Precios para decidir</div>
-          <div id="kpiQueuePending" class="kpi-value">0</div>
-        </div>
-        <div class="kpi-cell tone-applied">
-          <div class="kpi-label">Precios aplicados</div>
-          <div id="kpiQueueApplied" class="kpi-value">0</div>
-        </div>
-        <div class="kpi-cell tone-risk">
-          <div class="kpi-label">Frenados por tu piso de margen</div>
-          <div id="kpiFloorShielded" class="kpi-value">0</div>
-        </div>
-      </div>
-
-      <div class="view-switch" role="tablist" aria-label="Vista">
-        <button type="button" role="tab" class="active" id="spViewTable" onclick="setSmartPriceView('table')">Tabla</button>
-        <button type="button" role="tab" id="spViewDash" onclick="setSmartPriceView('dashboard')">Dashboard</button>
-      </div>
-
-      <div id="smartpriceDashboard" class="chart-grid hidden">
-        <section class="chart-panel">
-          <header><h3>Qué pasó con las sugerencias</h3><span class="chart-note">Para decidir, aplicadas y descartadas</span></header>
-          <div id="chartQueueStatus" class="chart-box chart-box-sm" role="img" aria-label="Sugerencias por estado"></div>
+          <ol class="flow-intro-list">
+            <li><span class="flow-node-num">1</span><strong>Catálogo.</strong> Cargá tus productos una sola vez, a mano o traídos desde tu tienda.</li>
+            <li><span class="flow-node-num">2</span><strong>Análisis.</strong> Elegí los productos que seguís y sumá los links de sus rivales. Tu plan define cuántos entran.</li>
+            <li><span class="flow-node-num">3</span><strong>Costos.</strong> Cargá cuánto te cuesta vender cada producto en análisis. Con eso calculamos tu piso de margen.</li>
+            <li><span class="flow-node-num">4</span><strong>Sugerencias.</strong> Te proponemos un precio por producto. Vos decidís si lo aplicás.</li>
+          </ol>
         </section>
-        <section class="chart-panel chart-wide">
-          <header><h3>Precio contra tu piso de margen</h3><span class="chart-note">Precio actual, sugerido y piso</span></header>
-          <div id="chartQueueFloor" class="chart-box" role="img" aria-label="Precio anterior y sugerido contra piso por producto"></div>
+
+        <section id="flowPanel" class="flow-panel" aria-live="polite">
+          <div class="flow-panel-head">
+            <span id="flowPanelNumber" class="flow-panel-num">1</span>
+            <div class="flow-panel-text">
+              <p class="flow-kicker">Paso <span id="flowPanelN">1</span> de 4</p>
+              <h2 id="flowPanelTitle" class="flow-panel-title">Catálogo</h2>
+              <p id="flowPanelGoal" class="flow-panel-goal"></p>
+            </div>
+          </div>
+
+          <div id="flowPanelLock" class="flow-lock" hidden>
+            <svg class="flow-icon" aria-hidden="true"><use href="#hs-flow-lock"/></svg>
+            <span id="flowPanelLockText"></span>
+            <button type="button" class="btn-secondary" id="flowPanelLockGo" onclick="setFlowStep(1)">Ir al paso</button>
+          </div>
+
+          <div class="flow-body" data-step="1">
+            <div class="flow-actions">
+              <button type="button" class="btn-primary" onclick="openCreateProductModal()">+ Agregar un producto a mano</button>
+              <button type="button" class="btn-secondary" onclick="openConnectStoreModalForNew()">Traer desde mi tienda (opcional)</button>
+            </div>
+            <div id="catalogCards" class="flow-cards"></div>
+          </div>
+
+          <div class="flow-body" data-step="2">
+            <p id="analysisQuota" class="flow-quota"></p>
+            <p class="flow-hint">Marcá <strong>Analizar</strong> en los productos que querés seguir. Después desplegá cada fila para ver y sumar sus rivales.</p>
+            <div class="table-responsive-container" id="monitorsTableWrap">
+              <div id="monitorsTableContainer">
+                <div class="flow-empty">Cargando tus productos...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flow-body" data-step="3">
+            <div class="flow-actions">
+              <button type="button" class="btn-primary" onclick="openCostsModal()">Cargar costos de un producto</button>
+            </div>
+            <div id="marginsTableContainer" class="flow-cards">
+              <div class="flow-empty">Cargando tus productos...</div>
+            </div>
+          </div>
+
+          <div class="flow-body" data-step="4">
+            <p class="flow-hint">Cada precio sugerido respeta tu piso de margen y las reglas que definas. Revisar precios vuelve a leer a tus rivales y calcula sugerencias nuevas.</p>
+            <div class="flow-actions">
+              <button id="btnRunWorkerCycle" type="button" class="btn-primary" onclick="handleTriggerWorkerCycle()">Revisar precios ahora</button>
+              <div class="search-box-wrapper">
+                <input type="text" id="smartpriceSearchInput" class="input-search" placeholder="Buscar por producto o código..." oninput="filter4seeQueue(this.value)" />
+              </div>
+            </div>
+            <div id="smartpriceKpis" class="kpi-strip">
+              <div class="kpi-cell tone-pending"><div class="kpi-label">Precios para decidir</div><div id="kpiQueuePending" class="kpi-value">0</div></div>
+              <div class="kpi-cell tone-applied"><div class="kpi-label">Precios aplicados</div><div id="kpiQueueApplied" class="kpi-value">0</div></div>
+              <div class="kpi-cell tone-risk"><div class="kpi-label">Frenados por tu piso de margen</div><div id="kpiFloorShielded" class="kpi-value">0</div></div>
+            </div>
+            <div class="table-responsive-container" id="smartpriceTableWrap">
+              <div id="smartpriceQueueContainer">
+                <div class="flow-empty">Cargando precios sugeridos...</div>
+              </div>
+            </div>
+            <details class="flow-details">
+              <summary>Reglas de precio</summary>
+              <p class="flow-hint">Las reglas definen cuánto podés bajar frente a tus rivales. Son opcionales: sin reglas, solo se protege tu piso de margen.</p>
+              <div class="flow-actions"><button type="button" class="btn-secondary" onclick="openCreateRuleModal()">+ Nueva regla de precio</button></div>
+            </details>
+          </div>
         </section>
-        <div id="smartpriceDashEmpty" class="chart-empty hidden">Todavía no hay precios sugeridos. Apretá Revisar precios ahora para compararte con tus rivales.</div>
       </div>
 
-      <div class="table-responsive-container" id="smartpriceTableWrap">
-        <div id="smartpriceQueueContainer">
-          <div style="color: var(--text-muted); font-size: 14px; padding: 20px 0; text-align: center;">Cargando precios sugeridos...</div>
+      <div id="flowSummaryView" hidden>
+        <div class="flow-tiles">
+          <div class="flow-tile"><span class="flow-tile-num" id="sumCatalog">0</span><span class="flow-tile-label">Productos en tu catálogo</span></div>
+          <div class="flow-tile"><span class="flow-tile-num" id="sumAnalysis">0</span><span class="flow-tile-label">Productos en análisis</span></div>
+          <div class="flow-tile"><span class="flow-tile-num" id="sumRivals">0</span><span class="flow-tile-label">Productos con rivales</span></div>
+          <div class="flow-tile"><span class="flow-tile-num" id="sumSuggestions">0</span><span class="flow-tile-label">Sugerencias para decidir</span></div>
+        </div>
+        <div id="monitorsDashboard" class="chart-grid">
+          <section class="chart-panel">
+            <header><h3>Stock de tus rivales</h3><span class="chart-note">Cuántos tienen y cuántos no</span></header>
+            <div id="chartMonStock" class="chart-box chart-box-sm" role="img" aria-label="Rivales en stock y en quiebre"></div>
+          </section>
+          <section class="chart-panel chart-wide">
+            <header><h3>Tu precio contra el de tus rivales</h3><span class="chart-note">Un punto por rival</span></header>
+            <div id="chartMonPrices" class="chart-box" role="img" aria-label="Mi precio y precios de rivales por producto"></div>
+          </section>
+          <div id="monitorsDashEmpty" class="chart-empty hidden">Todavía no seguís a ningún rival. Cuando sumes uno, lo vas a ver acá.</div>
+        </div>
+        <div id="smartpriceDashboard" class="chart-grid">
+          <section class="chart-panel">
+            <header><h3>Qué pasó con las sugerencias</h3><span class="chart-note">Para decidir, aplicadas y descartadas</span></header>
+            <div id="chartQueueStatus" class="chart-box chart-box-sm" role="img" aria-label="Sugerencias por estado"></div>
+          </section>
+          <section class="chart-panel chart-wide">
+            <header><h3>Precio contra tu piso de margen</h3><span class="chart-note">Precio actual, sugerido y piso</span></header>
+            <div id="chartQueueFloor" class="chart-box" role="img" aria-label="Precio anterior y sugerido contra piso por producto"></div>
+          </section>
+          <div id="smartpriceDashEmpty" class="chart-empty hidden">Todavía no hay precios sugeridos. Cuando tengas rivales y costos, los vas a ver acá.</div>
         </div>
       </div>
-    </div>
     </div>
 
   </main>
@@ -1600,18 +1565,6 @@
   </div>
 
   <!-- PASO 2 DEL FLUJO: elegir productos del catalogo para analizar -->
-  <div id="analysisPickerModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 560px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Elegí los productos a analizar</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeAnalysisPicker()">×</button>
-      </div>
-      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 12px;">Marcá los productos de tu catálogo que querés seguir contra tus rivales. Son los que cuentan para tu plan.</p>
-      <div id="analysisCounter" style="font-size: 13px; font-weight: 800; color: var(--emerald); margin-bottom: 8px;"></div>
-      <div id="analysisPickerList" style="max-height: 50vh; overflow-y: auto;"></div>
-    </div>
-  </div>
-
   <!-- MODAL NUEVA ORGANIZACIÓN (TENANT) -->
   <div id="createTenantModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 480px;">
@@ -2315,56 +2268,6 @@
   </div>
 
   <!-- Modal Nueva Regla de Margen -->
-  <div id="createMarginModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Calcular el margen de un producto</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeCreateMarginModal()">×</button>
-      </div>
-      <form id="createMarginForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleCreateMarginSubmit(event)">
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Código del producto (SKU) <span style="color: var(--red);">*</span></label>
-            <input type="text" id="marSku" class="input-field" placeholder="DRK-01" required>
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Nombre del producto</label>
-            <input type="text" id="marProductName" class="input-field" placeholder="Vodka Premium 700ml">
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Costo de reposición ($) <span style="color: var(--red);">*</span></label>
-            <input type="number" step="0.01" id="marCostPrice" class="input-field" placeholder="8000" required>
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Precio de venta ($) <span style="color: var(--red);">*</span></label>
-            <input type="number" step="0.01" id="marSellingPrice" class="input-field" placeholder="15000" required>
-          </div>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Margen mínimo (%)</label>
-            <input type="number" step="0.1" id="marMinMargin" class="input-field" value="20">
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Comisión de la plataforma (%)</label>
-            <input type="number" step="0.1" id="marFeePct" class="input-field" value="13">
-          </div>
-          <div>
-            <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Impuestos (%)</label>
-            <input type="number" step="0.1" id="marTaxPct" class="input-field" value="21">
-          </div>
-        </div>
-        <div>
-          <label style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Envío y logística ($)</label>
-          <input type="number" step="0.01" id="marShipping" class="input-field" value="0">
-        </div>
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">Calcular y guardar</button>
-      </form>
-    </div>
-  </div>
-
   <!-- MODAL NUEVO PRODUCTO 1:N -->
   <div id="createProductModal" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 540px;">
@@ -2607,6 +2510,7 @@
   </footer>
 
   <script src="/access.js"></script>
+  <script src="/flow.js"></script>
   <script src="/charts/hs-charts.js"></script>
   <script src="/tables/hs-table.js"></script>
   <script src="/app.js"></script>
