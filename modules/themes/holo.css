@@ -390,8 +390,6 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-node-label { font-size: 15px; font-weight: 800; }
 .flow-node-state { font-family: var(--hw-font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
 .flow-node.is-done .flow-node-state { color: var(--emerald); }
-.flow-node.is-current { background: var(--hw-violet-soft); box-shadow: 0 0 0 2px var(--hw-chart1); }
-.flow-node.is-current .flow-node-state { color: var(--text-main); }
 .flow-node.is-locked { opacity: 0.6; border-top-style: dashed; }
 .flow-arrow { width: 40px; height: 24px; flex: none; color: var(--text-muted); }
 
@@ -467,7 +465,8 @@ body:is(.theme-holo_dark, .theme-holo_light) {
 
 /* Seleccion: negrita, subrayado grueso en tinta y fondo mas oscuro; no depende del tono */
 .flow-views button.active { color: var(--text-main); font-weight: 900; background: var(--hw-surface-3, var(--card-bg)); border-bottom: 4px solid var(--text-main); }
-.flow-node.is-current { background: var(--hw-surface-3, var(--card-bg)); box-shadow: 0 0 0 3px var(--text-main); }
+/* Paso seleccionado: una sola regla. El contorno va en el acento del modulo con outline, porque box-shadow se anula en la capa de tema. */
+.flow-node.is-current { background: var(--hw-surface-3, var(--card-bg)); outline: 2px solid var(--mod-accent); outline-offset: -2px; }
 .flow-node.is-current .flow-node-state { color: var(--text-main); font-weight: 900; }
 .flow-node.is-done .flow-node-state { color: var(--mod-accent); }
 
