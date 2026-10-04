@@ -96,7 +96,8 @@ El orden de 2 y 3 se puede invertir después de tener un producto en análisis. 
 
 - Ningún precio, costo o stock se inventa. Si falta, queda vacío y se dice.
 - Un producto se carga una vez, en el catálogo.
-- Un rival solo se suma a un producto que está en análisis.
+- Sumar el primer rival a un producto lo pone en análisis, si el plan tiene lugar. Si no hay lugar, se frena con el motivo y no queda nada a medias.
+- Editar un producto sigue las reglas del alta: el precio sale del link o de la tienda (se vuelve a leer, no se tipea); solo un producto cargado a mano tiene precio manual. Si no tenía código, se genera y se avisa.
 - Ninguna propuesta se aplica sin decisión del dueño.
 - Los límites del plan se controlan en el servidor, no solo en pantalla.
 

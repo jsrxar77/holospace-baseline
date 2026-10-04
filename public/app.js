@@ -3634,7 +3634,15 @@ function openEditCatalogItem(productId) {
   document.getElementById('editCatalogId').value = p.id;
   document.getElementById('editCatalogTitle').value = p.title || '';
   document.getElementById('editCatalogSku').value = p.sku || '';
-  document.getElementById('editCatalogPrice').value = p.price != null ? Number(p.price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+  const source = p.own_url ? 'LINK' : (p.store_id && p.external_id ? 'STORE' : 'MANUAL');
+  const money = p.price != null ? Number(p.price).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+  document.getElementById('editCatalogPrice').value = source === 'MANUAL' ? money : '';
+  document.getElementById('editCatalogPriceRow').classList.toggle('hidden', source !== 'MANUAL');
+  document.getElementById('editCatalogLinkRow').classList.toggle('hidden', source !== 'LINK');
+  document.getElementById('editCatalogLink').value = p.own_url || '';
+  document.getElementById('editCatalogReadRow').classList.toggle('hidden', source === 'MANUAL');
+  document.getElementById('editCatalogReread').checked = false;
+  document.getElementById('editCatalogReadText').textContent = `${money ? '$ ' + money : 'Sin precio'} (leído ${source === 'LINK' ? 'de tu link' : 'de tu tienda'})`;
   document.getElementById('editCatalogError').style.display = 'none';
   document.getElementById('editCatalogModal').classList.remove('hidden');
 }
@@ -3650,9 +3658,10 @@ async function saveEditCatalogItem(e) {
   e.preventDefault();
   const errorBox = document.getElementById('editCatalogError');
   errorBox.style.display = 'none';
+  const manual = !document.getElementById('editCatalogPriceRow').classList.contains('hidden');
   const priceRaw = document.getElementById('editCatalogPrice').value;
-  const price = priceRaw.trim() === '' ? null : HSFields.readMoney(document.getElementById('editCatalogPrice'));
-  if (priceRaw.trim() !== '' && Number.isNaN(price)) {
+  const price = manual ? HSFields.readMoney(document.getElementById('editCatalogPrice')) : null;
+  if (manual && (priceRaw.trim() === '' || Number.isNaN(price))) {
     errorBox.textContent = 'El precio no es un monto válido. Ejemplo: 165.200,00';
     errorBox.style.display = 'block';
     return;
@@ -3661,7 +3670,13 @@ async function saveEditCatalogItem(e) {
     const res = await fetch(`/api/4see/products/${document.getElementById('editCatalogId').value}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-      body: JSON.stringify({ title: document.getElementById('editCatalogTitle').value, sku: document.getElementById('editCatalogSku').value, price })
+      body: JSON.stringify({
+        title: document.getElementById('editCatalogTitle').value,
+        sku: document.getElementById('editCatalogSku').value,
+        price,
+        own_url: document.getElementById('editCatalogLink').value.trim() || undefined,
+        reread: document.getElementById('editCatalogReread').checked
+      })
     });
     const data = await res.json();
     if (!data.success) {
@@ -3670,6 +3685,7 @@ async function saveEditCatalogItem(e) {
       return;
     }
     closeEditCatalogItem();
+    if (data.sku && data.sku.generated) await showCustomAlert('Código generado', `Este producto no tenía código. Le asignamos ${data.sku.value}.`);
     load4seeMonitors();
   } catch (err) {
     errorBox.textContent = 'Sin conexión. Revisá la red e intentá de nuevo.';
@@ -3807,6 +3823,25 @@ function closeFlowIntro() {
 window.closeFlowIntro = closeFlowIntro;
 
 async function toggleProductAnalysis(productId, inAnalysis) {
+  if (!inAnalysis) {
+    const p = flowProducts.find((x) => x.id === productId);
+    let pending = 0;
+    try {
+      const r = await fetch(`/api/4see/products/${productId}/impact`, { headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
+      const d = await r.json();
+      if (d.success) pending = d.impact.pending;
+    } catch (err) { /* el aviso se muestra igual, sin el dato */ }
+    const lines = [
+      `Vas a sacar "${p ? p.title : 'este producto'}" del análisis.`,
+      'Qué pasa:',
+      '• Deja de ocupar un lugar de tu plan.',
+      '• Sus rivales y sus costos quedan guardados.',
+      pending ? `• Se quita ${pending} sugerencia(s) pendiente(s); si lo volvés a analizar se calculan de nuevo.` : '• No hay sugerencias pendientes para quitar.',
+      'El producto sigue en tu catálogo.'
+    ].join('\n');
+    const ok = await showCustomConfirm('Quitar del análisis', lines);
+    if (!ok) return;
+  }
   try {
     const res = await fetch(`/api/4see/products/${productId}/analysis`, {
       method: 'POST',
@@ -3970,7 +4005,7 @@ function renderWatchedProductsTable() {
       ? 'No hay productos que coincidan con tu búsqueda.'
       : 'Todavía no cargaste productos. Empezá por el paso 1.',
     actionsLabel: 'Acciones',
-    renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar</button>`
+    renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditCatalogItem('${p.id}')">Editar</button>`
   });
   watchedProductsTable.update(cached4seeProducts);
 }
@@ -4227,7 +4262,7 @@ async function recheckMonitor(id) {
 }
 
 async function deleteMonitor(id) {
-  const confirmDelete = await showCustomConfirm('Dejar de seguir a este rival', '¿Querés dejar de seguir el precio de este producto?');
+  const confirmDelete = await showCustomConfirm('Quitar rival', 'Vas a quitar a este rival.\nQué pasa:\n• Se borra su historial de precios.\n• La sugerencia de precio de tu producto se recalcula sin él.\n• Tu producto sigue en el análisis.');
   if (!confirmDelete) return;
 
   try {
@@ -4364,68 +4399,6 @@ async function handleAddRivalSubmit(e) {
   }
 }
 window.handleAddRivalSubmit = handleAddRivalSubmit;
-
-// --- Editar tu precio de un producto (vale para todos sus rivales) ---
-function openEditMyPriceModal(productId) {
-  const product = cached4seeProducts.find((p) => p.id === productId);
-  if (!product) return;
-  document.getElementById('editMyPriceForm').reset();
-  document.getElementById('editPriceProductId').value = productId;
-  document.getElementById('editMyPriceProductLabel').innerText = `"${product.name}"`;
-  document.getElementById('editMyPriceError').style.display = 'none';
-  populateMyStoreSelect('editPrice');
-  if (product.store_id) document.getElementById('editPriceMyStoreSelect').value = product.store_id;
-  if (product.own_url) document.getElementById('editPriceMyUrl').value = product.own_url;
-  if (product.price != null && product.price_source === 'MANUAL') document.getElementById('editPriceMyPrice').value = product.price;
-  ensureConnectedStoresLoaded().then(() => {
-    populateMyStoreSelect('editPrice');
-    if (product.store_id) {
-      document.getElementById('editPriceMyStoreSelect').value = product.store_id;
-      handleMyStoreChange('editPrice').then(() => {
-        if (product.external_id) document.getElementById('editPriceMyStoreProduct').value = product.external_id;
-      });
-    }
-  });
-  document.getElementById('editMyPriceModal').classList.remove('hidden');
-}
-window.openEditMyPriceModal = openEditMyPriceModal;
-
-function closeEditMyPriceModal() {
-  document.getElementById('editMyPriceModal').classList.add('hidden');
-}
-window.closeEditMyPriceModal = closeEditMyPriceModal;
-
-async function handleEditMyPriceSubmit(e) {
-  e.preventDefault();
-  const errorDiv = document.getElementById('editMyPriceError');
-  errorDiv.style.display = 'none';
-  const productId = document.getElementById('editPriceProductId').value;
-  const { storeId, externalId } = myPricePayload('editPrice');
-  const ownUrl = document.getElementById('editPriceMyUrl').value.trim();
-  const myPrice = document.getElementById('editPriceMyPrice').value;
-  try {
-    const res = await fetch(`/api/4see/watched-products/${productId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAuthToken()}` },
-      body: JSON.stringify({ storeId, externalId, ownUrl, myPrice })
-    });
-    const data = await res.json();
-    if (data.success) {
-      closeEditMyPriceModal();
-      load4seeMonitors();
-    } else if (data.code === 'OWN_PRICE_UNKNOWN') {
-      errorDiv.innerText = data.error || 'Elegí tu producto en la tienda, pegá el link, o cargá el precio a mano.';
-      errorDiv.style.display = 'block';
-    } else {
-      errorDiv.innerText = data.error || 'No pudimos guardar tu precio. Intentá de nuevo.';
-      errorDiv.style.display = 'block';
-    }
-  } catch (err) {
-    errorDiv.innerText = `Sin conexión con el servidor. Intentá de nuevo. (${err.message})`;
-    errorDiv.style.display = 'block';
-  }
-}
-window.handleEditMyPriceSubmit = handleEditMyPriceSubmit;
 
 // --- Editar un rival ya cargado (link, nombre) ---
 function openEditRivalModal(monitorId) {

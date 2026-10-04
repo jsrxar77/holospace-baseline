@@ -533,7 +533,10 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       return true;
     }
     const monitorId = pathPart.replace('/api/4see/monitors/', '');
+    const gone = await getOne('SELECT product_id FROM fourseee_competitor_monitors WHERE id = ? AND tenant_id = ?', [monitorId, tenantId], { tenantId });
     await execute('DELETE FROM fourseee_competitor_monitors WHERE id = ? AND tenant_id = ?', [monitorId, tenantId], { tenantId });
+    // La sugerencia pendiente se calculo con este rival: se recalcula sin el
+    if (gone && gone.product_id) await recalcSuggestionForProduct(tenantId, gone.product_id);
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return true;
@@ -1101,7 +1104,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const product = await getOne('SELECT id FROM fourseee_products WHERE id = ? AND tenant_id = ?', [catalogItemMatch[1], tenantId], { tenantId });
+    const product = await getOne('SELECT id, own_url, store_id, store_external_id, price_source FROM fourseee_products WHERE id = ? AND tenant_id = ?', [catalogItemMatch[1], tenantId], { tenantId });
     if (!product) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
@@ -1113,41 +1116,61 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       res.end(JSON.stringify({ success: true }));
       return true;
     }
+    // Editar usa las mismas reglas que el alta: el precio sale del link o de la tienda (se vuelve a leer, no se tipea);
+    // solo un producto cargado a mano tiene precio manual. Si la lectura falla no se guarda nada.
+    const reply = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); return true; };
     const title = String(data?.title || '').replace(/\s+/g, ' ').trim();
-    const sku = String(data?.sku || '').trim();
-    const rawPrice = data?.price === '' || data?.price == null ? null : Number(data.price);
-    if (!title || !sku) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'El nombre y el código son obligatorios.' }));
-      return true;
+    let sku = String(data?.sku || '').trim();
+    if (!title) return reply(400, { success: false, code: 'TITLE_REQUIRED', error: 'El nombre del producto es obligatorio.' });
+    if (sku.length > 100) return reply(400, { success: false, error: 'El código es demasiado largo.' });
+    const source = product.own_url ? 'LINK' : (product.store_id && product.store_external_id ? 'STORE' : 'MANUAL');
+    const newLink = isHttpUrl(data?.own_url) ? data.own_url.trim() : null;
+    let price = null;
+    let priceSource = product.price_source;
+    let link = product.own_url;
+    if (source === 'MANUAL') {
+      price = parsePrice(data?.price);
+      if (!price) return reply(422, { success: false, code: 'OWN_PRICE_UNKNOWN', error: 'Cargá el precio de tu producto.' });
+      priceSource = 'MANUAL';
+    } else if (source === 'LINK' && (data?.reread || (newLink && newLink !== product.own_url))) {
+      const target = newLink || product.own_url;
+      const reading = await readRival(target);
+      if (!reading.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: reading.reason, error: reading.message });
+      const same = await getOne('SELECT title FROM fourseee_products WHERE tenant_id = ? AND own_url = ? AND id <> ?', [tenantId, target, product.id], { tenantId });
+      if (same) return reply(409, { success: false, code: 'DUPLICATE_LINK', error: `Ya cargaste este link como "${same.title}".` });
+      price = reading.price;
+      priceSource = 'LINK';
+      link = target;
+    } else if (source === 'STORE' && data?.reread) {
+      const mine = await resolveOwnPrice({ storeId: product.store_id, externalId: product.store_external_id }, { getStore: (sid) => getStoreForTenant(sid, tenantId) });
+      if (!mine.ok) return reply(422, { success: false, code: 'READ_FAILED', reason: 'STORE_FAILED', error: mine.reason });
+      price = mine.price;
+      priceSource = mine.source;
     }
-    if (rawPrice !== null && (!Number.isFinite(rawPrice) || rawPrice <= 0)) {
-      res.writeHead(400, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: false, error: 'El precio tiene que ser mayor a cero, o quedar vacío.' }));
-      return true;
-    }
-    try {
-      await execute(
-        `UPDATE fourseee_products
-         SET title = ?, sku = ?, current_price = COALESCE(CAST(? AS NUMERIC), current_price),
-             price_source = CASE WHEN CAST(? AS NUMERIC) IS NULL THEN price_source ELSE 'MANUAL' END,
-             updated_at = CURRENT_TIMESTAMP
-         WHERE id = ? AND tenant_id = ?`,
-        [title, sku, rawPrice, rawPrice, product.id, tenantId],
-        { tenantId }
-      );
-      await recalcSuggestionForProduct(tenantId, product.id);
-    } catch (err) {
-      if (/unique|duplicate/i.test(err.message)) {
-        res.writeHead(409, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Ya tenés otro producto con ese código.' }));
-        return true;
+    const skuGenerated = !sku;
+    let saved = false;
+    for (let attempt = 0; attempt < 5 && !saved; attempt++) {
+      const candidate = skuGenerated ? `HS-${crypto.randomBytes(3).toString('hex').toUpperCase()}` : sku;
+      try {
+        await execute(
+          `UPDATE fourseee_products
+           SET title = ?, sku = ?, own_url = ?, current_price = COALESCE(CAST(? AS NUMERIC), current_price), price_source = ?,
+               price_checked_at = CASE WHEN CAST(? AS NUMERIC) IS NULL THEN price_checked_at ELSE CURRENT_TIMESTAMP END,
+               updated_at = CURRENT_TIMESTAMP
+           WHERE id = ? AND tenant_id = ?`,
+          [title, candidate, link, price, priceSource, price, product.id, tenantId],
+          { tenantId }
+        );
+        sku = candidate;
+        saved = true;
+      } catch (err) {
+        if (!/unique|duplicate/i.test(err.message)) throw err;
+        if (!skuGenerated) return reply(409, { success: false, code: 'DUPLICATE_SKU', error: 'Ya tenés otro producto con ese código.' });
       }
-      throw err;
     }
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true }));
-    return true;
+    if (!saved) return reply(500, { success: false, error: 'No pudimos generar un código para el producto. Intentá de nuevo.' });
+    await recalcSuggestionForProduct(tenantId, product.id);
+    return reply(200, { success: true, sku: { value: sku, generated: skuGenerated }, source: priceSource, price });
   }
 
   // Paso 2: sumar o sacar un producto del catalogo del analisis (con el tope del plan)

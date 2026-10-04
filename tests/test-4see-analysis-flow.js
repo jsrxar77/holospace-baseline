@@ -7,6 +7,7 @@
 
 const crypto = require('crypto');
 const { execute, getOne, query } = require('../lib/db');
+const { recalcSuggestionForProduct } = require('../modules/4see/lib/suggestions');
 const { handle4seeApi } = require('../modules/4see/routes/api');
 const { setTenantModuleState } = require('../lib/entitlement');
 
@@ -213,6 +214,43 @@ async function runTests() {
     res = await callC('/api/4see/watched-products/' + sinLugar, 'PATCH', { myPrice: '2.500,00' });
     fila = await getOne('SELECT current_price FROM fourseee_products WHERE id = ?', [sinLugar], { tenantId: tenantC });
     assert(res.getStatusCode() === 200 && parseFloat(fila.current_price) === 2500, 'Editar el precio funciona tambien en un producto fuera de analisis');
+
+    console.log('\n--- 6f. Editar un producto usa las reglas del alta ---');
+    res = await callC('/api/4see/products/' + sinLugar, 'PATCH', { title: 'Producto editado', sku: '', price: '3.100,00' });
+    fila = await getOne('SELECT title, sku, current_price, price_source FROM fourseee_products WHERE id = ?', [sinLugar], { tenantId: tenantC });
+    assert(res.getStatusCode() === 200 && res.getBody().sku.generated === true && /^HS-[0-9A-F]{6}$/.test(fila.sku), 'sin codigo, Editar genera uno y avisa');
+    assert(parseFloat(fila.current_price) === 3100 && fila.price_source === 'MANUAL', 'un producto manual guarda el precio tipeado');
+    res = await callC('/api/4see/products/' + sinLugar, 'PATCH', { title: 'Producto editado', sku: fila.sku, price: '' });
+    assert(res.getStatusCode() === 422 && res.getBody().code === 'OWN_PRICE_UNKNOWN', 'un producto manual no se guarda sin precio');
+    res = await callC('/api/4see/products/' + sinLugar, 'PATCH', { title: '   ', sku: fila.sku, price: '1,00' });
+    assert(res.getStatusCode() === 400 && res.getBody().code === 'TITLE_REQUIRED', 'el nombre es obligatorio');
+    const otroSku = (await getOne('SELECT sku FROM fourseee_products WHERE id = ?', [nuevo], { tenantId: tenantC })).sku;
+    res = await callC('/api/4see/products/' + sinLugar, 'PATCH', { title: 'Producto editado', sku: otroSku, price: '1,00' });
+    assert(res.getStatusCode() === 409 && res.getBody().code === 'DUPLICATE_SKU', 'no se puede repetir el codigo de otro producto');
+    const linkId = crypto.randomUUID();
+    await execute(
+      `INSERT INTO fourseee_products (id, tenant_id, sku, title, own_url, current_price, price_source, price_checked_at) VALUES (?, ?, ?, ?, ?, ?, 'LINK', CURRENT_TIMESTAMP)`,
+      [linkId, tenantC, 'LNK-1', 'Producto con link', 'http://127.0.0.1:1/nada', 5000], { tenantId: tenantC }
+    );
+    res = await callC('/api/4see/products/' + linkId, 'PATCH', { title: 'Nombre nuevo', sku: 'LNK-1', price: '1,00', reread: true });
+    fila = await getOne('SELECT title, current_price FROM fourseee_products WHERE id = ?', [linkId], { tenantId: tenantC });
+    assert(res.getStatusCode() === 422 && res.getBody().code === 'READ_FAILED' && fila.title === 'Producto con link' && parseFloat(fila.current_price) === 5000, 'si el link no se puede leer, no se guarda nada');
+    res = await callC('/api/4see/products/' + linkId, 'PATCH', { title: 'Nombre nuevo', sku: 'LNK-1', price: '1,00' });
+    fila = await getOne('SELECT title, current_price FROM fourseee_products WHERE id = ?', [linkId], { tenantId: tenantC });
+    assert(res.getStatusCode() === 200 && fila.title === 'Nombre nuevo' && parseFloat(fila.current_price) === 5000, 'un producto con link no deja pisar el precio a mano');
+
+    console.log('\n--- 6g. Quitar un rival recalcula la sugerencia ---');
+    const conRival = await insertCatalogProduct(tenantC, 1);
+    await execute("UPDATE fourseee_products SET in_analysis = true, costs_loaded = true, cost_price = 100, current_price = 1000 WHERE id = ?", [conRival], { tenantId: tenantC });
+    res = await callC('/api/4see/watched-products/' + conRival + '/monitors', 'POST', { ...rivalBody, competitorName: 'Rival a quitar' });
+    const monId = res.getBody().monitorId;
+    await execute("UPDATE fourseee_competitor_monitors SET competitor_price = 900, competitor_stock = 'IN_STOCK' WHERE id = ?", [monId], { tenantId: tenantC });
+    await recalcSuggestionForProduct(tenantC, conRival);
+    let pendientes = await query("SELECT id FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [conRival], { tenantId: tenantC });
+    assert(pendientes.length === 1, 'con un rival que baja el precio hay una sugerencia pendiente');
+    res = await callC('/api/4see/monitors/' + monId, 'DELETE', {});
+    pendientes = await query("SELECT id FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [conRival], { tenantId: tenantC });
+    assert(res.getStatusCode() === 200 && pendientes.length === 0, 'al quitar el unico rival, la sugerencia que dependia de el desaparece');
 
     console.log('\n--- 7. Aislamiento: otra organizacion no puede tocar este catalogo ---');
     res = createMockRes();

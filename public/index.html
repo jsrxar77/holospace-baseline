@@ -1574,11 +1574,22 @@
         </div>
         <div>
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Código</label>
-          <input type="text" id="editCatalogSku" class="input-field" required maxlength="100">
+          <input type="text" id="editCatalogSku" class="input-field" maxlength="100" placeholder="Si lo dejás vacío, lo generamos">
         </div>
-        <div>
+        <div id="editCatalogLinkRow" class="hidden">
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Link de tu producto</label>
+          <input type="url" id="editCatalogLink" class="input-field" maxlength="2000">
+        </div>
+        <div id="editCatalogPriceRow">
           <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Tu precio</label>
-          <input type="text" id="editCatalogPrice" class="input-field js-money" placeholder="Sin precio">
+          <input type="text" id="editCatalogPrice" class="input-field js-money" placeholder="Ejemplo: 165.200,00">
+        </div>
+        <div id="editCatalogReadRow" class="hidden">
+          <label style="font-size: 12px; font-weight: 800; color: var(--text-main);">Tu precio</label>
+          <p id="editCatalogReadText" style="font-size: 13px; color: var(--text-main); margin: 4px 0;"></p>
+          <label style="font-size: 12px; color: var(--text-muted); display: flex; gap: 8px; align-items: center;">
+            <input type="checkbox" id="editCatalogReread"> Volver a leer el precio al guardar
+          </label>
         </div>
         <div id="editCatalogError" style="color: var(--red); font-size: 13px; display: none;"></div>
         <div style="display: flex; justify-content: flex-end; gap: 10px;">
@@ -2052,30 +2063,6 @@
           <button type="button" id="addRivalBtnPreview" class="btn-secondary" style="flex: 1;" onclick="handlePreviewAddRival()">Leer precio</button>
           <button type="submit" id="addRivalBtnConfirm" class="btn-primary hidden" style="flex: 1;">Agregar rival</button>
         </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: editar tu precio de un producto (vale para todos sus rivales) -->
-  <div id="editMyPriceModal" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="font-size: 20px; font-weight: 900; color: var(--text-main);">Editar precio</h3>
-        <button class="btn-secondary" style="padding: 4px 10px;" onclick="closeEditMyPriceModal()">×</button>
-      </div>
-      <p id="editMyPriceProductLabel" style="color: var(--text-muted); font-size: 13px; margin-bottom: 16px;"></p>
-      <form id="editMyPriceForm" style="display: flex; flex-direction: column; gap: 14px;" onsubmit="handleEditMyPriceSubmit(event)">
-        <input type="hidden" id="editPriceProductId" value="">
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <select id="editPriceMyStoreSelect" class="input-field" onchange="handleMyStoreChange('editPrice')">
-            <option value="">No uso una tienda conectada</option>
-          </select>
-          <select id="editPriceMyStoreProduct" class="input-field hidden"></select>
-          <input type="url" id="editPriceMyUrl" class="input-field" placeholder="O pegá el link de tu producto">
-          <input type="number" step="0.01" id="editPriceMyPrice" class="input-field" placeholder="O cargá tu precio ($)">
-        </div>
-        <div id="editMyPriceError" style="color: var(--red); font-size: 13px; display: none;"></div>
-        <button type="submit" class="btn-primary" style="margin-top: 8px;">Guardar tu precio</button>
       </form>
     </div>
   </div>
