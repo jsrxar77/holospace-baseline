@@ -110,6 +110,10 @@
 
 ---
 
+- [ ] **D-059 | Colores y textos legados en la app web** | Quedan literales en el HTML de `public/index.html` (fondos blancos de QR y boton Google, a proposito) y `public/app.js` con alpha negro en sombras. Falta un chequeo visual en navegador Night y Day en cada modulo. Esfuerzo M
+- [ ] **D-060 | Paleta de respaldo duplicada en Scanner** | `modules/scanner/src/store/useThemeStore.ts` repite los valores de Holo Night como respaldo sin conexion; deberia leerse desde `modules/themes/themes.json`. Esfuerzo S
+- [ ] **D-061 | Imagenes vacias en la app** | `public/index.html` tiene `<img src="">` para avatar y QR (muestran icono roto hasta cargar). Esfuerzo S
+
 ## Saldada
 
 - [x] **S-001** Migracion de `.agents/` (Antigravity) a Claude Code: `CLAUDE.md`, skills en `.claude/skills/`, hooks de reglas y `.mcp.json`. 2026-10-02.
