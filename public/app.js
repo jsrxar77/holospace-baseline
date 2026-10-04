@@ -258,6 +258,8 @@ async function loadActiveTheme() {
       if (t.borderWidth) root.style.setProperty('--hw-border-width', t.borderWidth + 'px');
 
       updateThemeToggleLabel(activeKey);
+      // Los graficos leen la paleta de las variables: si se dibujaron antes de este paso, se redibujan.
+      window.dispatchEvent(new Event('hs-theme-applied'));
     }
   } catch (e) {
     console.error('Error cargando tema activo:', e);

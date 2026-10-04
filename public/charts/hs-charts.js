@@ -261,6 +261,7 @@
   }
 
   root.addEventListener('resize', resizeAll);
+  root.addEventListener('hs-theme-applied', refreshTheme);
   if (typeof MutationObserver !== 'undefined' && root.document) {
     var lastClass = '';
     new MutationObserver(function () {
