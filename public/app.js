@@ -3533,7 +3533,7 @@ function renderCatalogStep() {
         { key: 'title', label: 'Producto', filter: 'text', render: (p) => `<strong style="color: var(--text-main);">${escHtml(p.title)}</strong>` },
         { key: 'sku', label: 'Código', filter: 'text', render: (p) => `<span class="flow-card-sub">${escHtml(p.sku || '')}</span>` },
         { key: 'price', label: 'Tu precio', filter: 'none', align: 'right', render: (p) => (p.price == null ? '<span style="color: var(--amber);">Sin precio</span>' : HSFormat.moneyHtml(p.price)) },
-        { key: 'in_analysis', label: 'En análisis', filter: 'enum', options: [{ value: 'Sí', label: 'Sí' }, { value: 'No', label: 'No' }], filterValue: (p) => (p.in_analysis ? 'Sí' : 'No'), render: (p) => (p.in_analysis ? '<span class="flow-badge is-ok">Sí</span>' : '<span class="flow-badge is-todo">No</span>') }
+        { key: 'in_analysis', label: 'En análisis', filter: 'enum', options: [{ value: 'Sí', label: 'Sí' }, { value: 'No', label: 'No' }], filterValue: (p) => (p.in_analysis ? 'Sí' : 'No'), render: (p) => (p.in_analysis ? '<span class="hs-badge is-ok">Sí</span>' : '<span class="hs-badge is-todo">No</span>') }
       ],
       rowKey: (p) => p.id,
       emptyMessage: 'Todavía no cargaste productos. Agregá el primero con el botón de arriba.',
@@ -3576,7 +3576,7 @@ async function renderRulesList() {
     const rules = (data.rules || []).filter((r) => r.is_active);
     box.innerHTML = rules.map((r) => `
       <article class="flow-rule">
-        <span class="flow-badge is-ok">Regla propia</span>
+        <span class="hs-badge">Regla propia</span>
         <p class="flow-rule-text"><strong>${escHtml(r.name)}</strong>: ${ruleActionText(r)} de ${RULE_CONDITION[r.trigger_condition] || 'tu referencia'}.</p>
       </article>`).join('');
   } catch (err) {
@@ -3605,9 +3605,9 @@ function renderCostsStep() {
         { key: 'cost_price', label: 'Costo', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.cost_price : null) },
         { key: 'operating_costs', label: 'Costos operativos', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.operating_costs : null) },
         { key: 'min_margin_percentage', label: 'Margen mínimo', filter: 'none', align: 'right', render: (p) => (p.costs_loaded ? `${Number(p.min_margin_percentage).toLocaleString('es-AR', { maximumFractionDigits: 2 })} %` : '<span style="color: var(--text-muted);">Sin cargar</span>') },
-        { key: 'max_price_ceiling', label: 'Tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted);">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
+        { key: 'max_price_ceiling', label: 'Precio tope', filter: 'none', align: 'right', render: (p) => (p.max_price_ceiling == null ? '<span style="color: var(--text-muted);">Sin tope</span>' : HSFormat.moneyHtml(p.max_price_ceiling)) },
         { key: 'min_price_floor', label: 'Piso de margen', filter: 'none', align: 'right', render: (p) => money(p.costs_loaded ? p.min_price_floor : null) },
-        { key: 'costs_loaded', label: 'Estado', filter: 'enum', options: [{ value: 'Cargado', label: 'Cargado' }, { value: 'Falta el costo', label: 'Falta el costo' }], filterValue: (p) => (p.costs_loaded ? 'Cargado' : 'Falta el costo'), render: (p) => (p.costs_loaded ? '<span class="flow-badge is-ok">Cargado</span>' : '<span class="flow-badge is-warn">Falta el costo</span>') }
+        { key: 'costs_loaded', label: 'Estado', filter: 'enum', options: [{ value: 'Cargado', label: 'Cargado' }, { value: 'Falta el costo', label: 'Falta el costo' }], filterValue: (p) => (p.costs_loaded ? 'Cargado' : 'Falta el costo'), render: (p) => (p.costs_loaded ? '<span class="hs-badge is-ok">Cargado</span>' : '<span class="hs-badge is-warn">Falta el costo</span>') }
       ],
       rowKey: (p) => p.id,
       emptyMessage: 'Primero elegí productos para analizar en el paso 2.',
@@ -3897,10 +3897,10 @@ function renderRivalDetailTable(product) {
         </td>
         <td style="font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace; font-weight: 800; color: var(--text-main);">${priceCell}</td>
         <td>${stockCell}</td>
-        <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${new Date(m.last_checked_at || m.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</td>
+        <td style="color: var(--text-muted); font-size: 12px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">${HSFormat.date(m.last_checked_at || m.created_at)}</td>
         <td style="text-align: right;">
           <div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); recheckMonitor('${m.id}')">Revisar ahora</button>
+            <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); recheckMonitor('${m.id}')">Revisar precio</button>
             <button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditRivalModal('${m.id}')">Editar</button>
             <button class="btn-danger" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); deleteMonitor('${m.id}')">Quitar</button>
           </div>
@@ -3934,7 +3934,7 @@ function renderWatchedProductsTable() {
     {
       key: 'analysis', label: 'En análisis', filter: 'enum', options: [{ value: 'Sí', label: 'Sí' }, { value: 'No', label: 'No' }],
       filterValue: (p) => (p.in_analysis ? 'Sí' : 'No'),
-      render: (p) => `<button class="${p.in_analysis ? 'btn-primary' : 'btn-secondary'}" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); toggleProductAnalysis('${p.id}', ${!p.in_analysis})">${p.in_analysis ? 'Sí, la sigo' : 'Analizar'}</button>`
+      render: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); toggleProductAnalysis('${p.id}', ${!p.in_analysis})">${p.in_analysis ? 'Quitar del análisis' : 'Analizar'}</button>`
     },
     {
       key: 'price', label: 'Tu precio', filter: 'text',
@@ -3948,7 +3948,7 @@ function renderWatchedProductsTable() {
       key: 'last_checked_at', label: 'Última revisión', filter: 'none',
       render: (p) => {
         const last = p.monitors.reduce((acc, m) => (m.last_checked_at && (!acc || m.last_checked_at > acc) ? m.last_checked_at : acc), null);
-        return last ? new Date(last).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+        return last ? HSFormat.date(last) : '—';
       }
     }
   ];
@@ -5678,7 +5678,7 @@ function render4seeQueueTable(items = []) {
       actionsLabel: 'Acciones',
       renderActions: (q) => (q.status === 'PENDING'
         ? `<div class="data-table-actions" style="display: inline-flex; gap: 6px;">
-             <button class="btn-primary" style="padding: 6px 12px; font-size: 11px; background: var(--emerald); color: var(--hw-accent-fg); font-weight: 900;" onclick="handleApproveQueueItem('${q.id}')">Aplicar este precio</button>
+             <button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;" onclick="handleApproveQueueItem('${q.id}')">Aplicar</button>
              <button class="btn-danger" style="padding: 6px 10px; font-size: 11px;" onclick="handleRejectQueueItem('${q.id}')">Descartar</button>
            </div>`
         : `<span style="color: var(--text-muted); font-size: 11px; font-family: var(--hw-font-mono, 'Geist Mono'), ui-monospace, monospace;">Ya resuelto</span>`)

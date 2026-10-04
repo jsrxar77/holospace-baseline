@@ -427,10 +427,10 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-card-title { font-size: 15px; font-weight: 800; color: var(--text-main); margin: 0; }
 .flow-card-sub { font-family: var(--hw-font-mono); font-size: 12px; color: var(--text-muted); margin: 0; }
 .flow-card-figure { font-family: var(--hw-font-mono); font-size: 24px; font-weight: 900; color: var(--text-main); }
-.flow-badge { align-self: flex-start; font-family: var(--hw-font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--card-border); color: var(--text-muted); }
-.flow-badge.is-ok { color: var(--emerald); border-color: var(--emerald); }
-.flow-badge.is-todo { color: var(--text-muted); border-style: dashed; }
-.flow-badge.is-warn { color: var(--amber); border-color: var(--amber); }
+.hs-badge { align-self: flex-start; font-family: var(--hw-font-mono); font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--card-border); color: var(--text-muted); }
+.hs-badge.is-ok { color: var(--emerald); border-color: var(--emerald); }
+.hs-badge.is-todo { color: var(--text-muted); border-style: dashed; }
+.hs-badge.is-warn { color: var(--amber); border-color: var(--amber); }
 .flow-details { margin-top: 16px; border-top: 1px solid var(--card-border); padding-top: 12px; }
 .flow-details summary { cursor: pointer; font-size: 14px; font-weight: 800; color: var(--text-main); padding: 6px 0; }
 
@@ -490,3 +490,7 @@ body:is(.theme-holo_dark, .theme-holo_light) {
 .hs-table tr.hs-table-filters th { padding: 8px 8px 4px; background: transparent; }
 .hs-table tr.hs-table-filters { border-bottom: 0; }
 .hs-table-empty { text-align: center; color: var(--text-muted); padding: 32px; }
+
+/* Botones: lleno = accion principal de la pantalla (uno por pantalla); contorno = acciones de fila; rojo de contorno = quitar o borrar */
+body:is(.theme-holo_dark, .theme-holo_light) .btn-danger { background: transparent; color: var(--red); border: var(--hw-border-width) solid var(--red); box-shadow: none; }
+body:is(.theme-holo_dark, .theme-holo_light) .btn-danger:hover { background: var(--hw-danger-soft); }

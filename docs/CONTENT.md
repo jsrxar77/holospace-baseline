@@ -194,3 +194,13 @@ Las cuotas de usuarios y límites mensuales se consolidan acumulativamente en la
 - **Data Portability (GDPR):** Exportación de datos aislada por tenant en formato JSON con un solo comando (`bin/tenant-dump.sh`).
 - **Infraestructura Contenerizada:** 100% dockerizada (Node.js 22, PostgreSQL 16, Redis 7, Nginx) lista para servidores propios (Hetzner, AWS, Bare Metal).
 
+
+
+## 0.3 Botones, insignias y vocabulario (regla de coherencia)
+
+- **Boton lleno** (color del modulo): la accion principal de la pantalla. Uno solo por pantalla.
+- **Boton de contorno**: acciones de fila y secundarias (Editar, Analizar, Revisar precio, Aplicar).
+- **Boton de contorno en rojo**: quitar o borrar. Siempre con modal de consecuencias antes de ejecutar.
+- **Insignia** (no es boton): estados y datos. Verde = hecho o activo (Cargado, Si). Ambar = falta algo (Falta el costo). Sin color = tipo o dato neutro (Regla propia).
+- **Vocabulario fijo:** Editar (cambiar un dato), Quitar (sacar de una lista o del catalogo), Analizar / Quitar del analisis (sumar o sacar de analisis), Revisar precio (leer de nuevo un rival), Revisar precios ahora (accion general del paso 4).
+- **Fechas:** dd/mm/aaaa hh:mm. **Montos:** $ 165.200,00.
