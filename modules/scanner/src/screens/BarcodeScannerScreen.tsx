@@ -330,7 +330,7 @@ export const BarcodeScannerScreen: React.FC<BarcodeScannerScreenProps> = ({ onNa
             }
           ]}
         >
-          <Text style={[styles.toastText, { fontFamily: fontFamilyMain, color: lastScanToast.type === 'SUCCESS' ? '#11111B' : '#FFFFFF' }]}>
+          <Text style={[styles.toastText, { fontFamily: fontFamilyMain, color: lastScanToast.type === 'SUCCESS' ? theme.accentFg : '#FFFFFF' }]}>
             {lastScanToast.message}
           </Text>
         </TouchableOpacity>

@@ -408,7 +408,7 @@ body:is(.theme-holo_dark, .theme-holo_light) .hs-table-detail-row .data-table { 
 .flow-intro-list li:nth-child(3) .flow-node-num { color: var(--hw-chart6); }
 .flow-intro-list li:nth-child(4) .flow-node-num { color: var(--hw-chart2); }
 
-.flow-panel { --flow-color: var(--hw-chart4); background: var(--card-bg); border: 1px solid var(--card-border); border-left: 6px solid var(--flow-color); padding: 24px; }
+.flow-panel { --flow-color: var(--hw-chart4); background: var(--card-bg); border: 1px solid color-mix(in srgb, var(--flow-color) 40%, transparent); padding: 24px; }
 .flow-panel[data-step="2"] { --flow-color: var(--hw-chart1); }
 .flow-panel[data-step="3"] { --flow-color: var(--hw-chart6); }
 .flow-panel[data-step="4"] { --flow-color: var(--hw-chart2); }
@@ -477,7 +477,7 @@ body:is(.theme-holo_dark, .theme-holo_light) {
 /* Reglas de precio: la regla por defecto y las propias, arriba de la cola de sugerencias */
 .flow-rules { display: grid; gap: 10px; margin: 4px 0 18px; }
 .flow-rules-title { font-size: 16px; font-weight: 900; color: var(--text-main); margin: 0; }
-.flow-rule { display: grid; gap: 6px; padding: 14px 16px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid var(--card-border); border-left: 4px solid var(--mod-accent); }
+.flow-rule { display: grid; gap: 6px; padding: 14px 16px; background: var(--hw-surface-2, var(--card-bg)); border: 1px solid color-mix(in srgb, var(--mod-accent) 40%, transparent); }
 .flow-rule.is-default { border-style: solid; }
 .flow-rule-text { margin: 0; font-size: 14px; color: var(--text-main); }
 .flow-rules-list { display: grid; gap: 8px; }

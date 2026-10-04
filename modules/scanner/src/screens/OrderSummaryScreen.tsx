@@ -206,7 +206,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress={() => setFilter('ALL')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'ALL' ? '#11111B' : theme.textMuted, fontWeight: filter === 'ALL' ? '900' : '700' }]}>
+          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'ALL' ? theme.accentFg : theme.textMuted, fontWeight: filter === 'ALL' ? '900' : '700' }]}>
             Todos ({activeOrder.items.length})
           </Text>
         </TouchableOpacity>
@@ -224,7 +224,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress={() => setFilter('PENDING')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'PENDING' ? '#11111B' : theme.textMuted, fontWeight: filter === 'PENDING' ? '900' : '700' }]}>
+          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'PENDING' ? theme.accentFg : theme.textMuted, fontWeight: filter === 'PENDING' ? '900' : '700' }]}>
             Faltan ({activeOrder.items.filter((i) => i.quantityScanned < i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
@@ -242,7 +242,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress={() => setFilter('COMPLETED')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'COMPLETED' ? '#11111B' : theme.textMuted, fontWeight: filter === 'COMPLETED' ? '900' : '700' }]}>
+          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'COMPLETED' ? theme.accentFg : theme.textMuted, fontWeight: filter === 'COMPLETED' ? '900' : '700' }]}>
             Escaneados ({activeOrder.items.filter((i) => i.quantityScanned >= i.quantityRequired).length})
           </Text>
         </TouchableOpacity>
@@ -260,7 +260,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           onPress={() => setFilter('READY')}
           activeOpacity={0.8}
         >
-          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'READY' ? '#11111B' : theme.textMuted, fontWeight: filter === 'READY' ? '900' : '700' }]}>
+          <Text style={[styles.tabText, { fontFamily: fontFamilyMain, color: filter === 'READY' ? theme.accentFg : theme.textMuted, fontWeight: filter === 'READY' ? '900' : '700' }]}>
             Listo ({activeOrder.status === 'READY' ? activeOrder.items.length : 0})
           </Text>
         </TouchableOpacity>
@@ -281,7 +281,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
             onPress={() => handleGoScanner(true)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.btnScanText, { fontFamily: fontFamilyMain, color: '#11111B' }]}>
+            <Text style={[styles.btnScanText, { fontFamily: fontFamilyMain, color: theme.accentFg }]}>
               {activeOrder.totalItemsScanned > 0 ? 'CONTINUAR ESCANEO' : 'INICIAR ESCANEO'}
             </Text>
           </TouchableOpacity>
@@ -304,7 +304,7 @@ export const OrderSummaryScreen: React.FC<OrderSummaryScreenProps> = ({
           <Text
             style={[
               styles.btnDispatchText,
-              { fontFamily: fontFamilyMain, color: is100Percent ? '#11111B' : theme.textMuted, fontWeight: is100Percent ? '900' : '700' }
+              { fontFamily: fontFamilyMain, color: is100Percent ? theme.accentFg : theme.textMuted, fontWeight: is100Percent ? '900' : '700' }
             ]}
           >
             {isClosed ? 'VER RESUMEN DE DESPACHO' : 'CERRAR Y DESPACHAR PEDIDO'}
