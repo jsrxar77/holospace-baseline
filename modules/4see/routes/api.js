@@ -76,6 +76,16 @@ const WATCHED_COLUMNS = `id, tenant_id, store_id, title AS name, store_external_
   current_price AS price, price_source, price_locked, price_checked_at, in_analysis, costs_loaded,
   cost_price, operating_costs, min_margin_percentage, max_price_ceiling, min_price_floor, created_at, updated_at`;
 
+// Sumar un rival a un producto que todavia no esta en analisis lo pone en analisis: tiene que haber lugar en el plan
+async function analysisSlotError(tid, product) {
+  if (product.in_analysis) return null;
+  const limits = await getFourseeeLimits(tid);
+  if (await countWatchedProducts(tid) >= limits.maxMonitoredProducts) {
+    return `Tu plan ${limits.planName} permite analizar hasta ${limits.maxMonitoredProducts} productos. Sacá uno del análisis para sumar otro.`;
+  }
+  return null;
+}
+
 /** Resuelve "tu precio" a partir de los datos que ya tiene guardados un producto vigilado. */
 function resolveMineForProduct(product) {
   return resolveOwnPrice(
@@ -211,10 +221,16 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     }
     let minePromise;
     if (watchedProductId) {
-      const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [watchedProductId, tenantId], { tenantId });
+      const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ?`, [watchedProductId, tenantId], { tenantId });
       if (!product) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
+        return true;
+      }
+      const slotError = await analysisSlotError(tenantId, product);
+      if (slotError) {
+        res.writeHead(403, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: slotError }));
         return true;
       }
       minePromise = resolveMineForProduct(product);
@@ -306,7 +322,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [addRivalMatch[1], tenantId], { tenantId });
+    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ?`, [addRivalMatch[1], tenantId], { tenantId });
     if (!product) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));
@@ -321,6 +337,12 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
     if (!competitorName || !String(competitorName).trim()) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'Ponele un nombre al rival, por ejemplo el nombre de su tienda.' }));
+      return true;
+    }
+    const slotError = await analysisSlotError(tenantId, product);
+    if (slotError) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: false, code: 'PLAN_LIMIT_REACHED', error: slotError }));
       return true;
     }
     const rivalLimits = await getFourseeeLimits(tenantId);
@@ -352,8 +374,13 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       { tenantId }
     );
 
+    const analysisStarted = !product.in_analysis;
+    if (analysisStarted) {
+      await execute('UPDATE fourseee_products SET in_analysis = true, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND tenant_id = ?', [product.id, tenantId], { tenantId });
+      await recalcSuggestionForProduct(tenantId, product.id);
+    }
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ success: true, monitorId, rival }));
+    res.end(JSON.stringify({ success: true, monitorId, rival, analysisStarted }));
     return true;
   }
 
@@ -364,7 +391,7 @@ async function handle4seeApi(req, res, { currentUser, tenantId, data, isSuperAdm
       sendPermissionError(res, '4see:pricing:write');
       return true;
     }
-    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ? AND in_analysis = true`, [watchedProductMatch[1], tenantId], { tenantId });
+    const product = await getOne(`SELECT ${WATCHED_COLUMNS} FROM fourseee_products WHERE id = ? AND tenant_id = ?`, [watchedProductMatch[1], tenantId], { tenantId });
     if (!product) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ success: false, error: 'No encontramos ese producto.' }));

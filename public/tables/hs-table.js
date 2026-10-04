@@ -222,7 +222,8 @@
     function wireBody(tbody) {
       tbody.querySelectorAll('.hs-table-row-expandable').forEach((tr) => {
         tr.addEventListener('click', (e) => {
-          if (e.target.closest('button,a,input,select')) return;
+          const control = e.target.closest('button,a,input,select');
+          if (control && !control.classList.contains('hs-table-expand-btn')) return;
           const key = tr.getAttribute('data-key');
           if (expanded.has(key)) expanded.delete(key); else expanded.add(key);
           renderBody();

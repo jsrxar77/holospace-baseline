@@ -3880,11 +3880,9 @@ window.handleCostsSubmit = handleCostsSubmit;
 if (window.HSFields) document.querySelectorAll('.js-money').forEach((el) => HSFields.bindMoney(el));
 
 function renderRivalDetailTable(product) {
-  if (!product.in_analysis) {
-    return '<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Para sumar rivales, primero marcá este producto como "Analizar".</div>';
-  }
   if (!product.monitors.length) {
-    return `<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">Este producto todavía no tiene rivales cargados.
+    const intro = product.in_analysis ? 'Este producto todavía no tiene rivales cargados.' : 'Todavía no lo seguís. Al sumar el primer rival, pasa a análisis.';
+    return `<div style="padding: 14px 4px; color: var(--text-muted); font-size: 13px;">${intro}
       <button class="btn-secondary" style="margin-left: 8px; padding: 4px 10px; font-size: 12px;" onclick="event.stopPropagation(); openAddRivalModal('${product.id}')">+ Agregar rival</button></div>`;
   }
   const rows = product.monitors.map((m) => {
@@ -3972,9 +3970,7 @@ function renderWatchedProductsTable() {
       ? 'No hay productos que coincidan con tu búsqueda.'
       : 'Todavía no cargaste productos. Empezá por el paso 1.',
     actionsLabel: 'Acciones',
-    renderActions: (p) => (p.in_analysis
-      ? `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar</button>`
-      : '')
+    renderActions: (p) => `<button class="btn-secondary" style="padding: 5px 10px; font-size: 11px;" onclick="event.stopPropagation(); openEditMyPriceModal('${p.id}')">Editar</button>`
   });
   watchedProductsTable.update(cached4seeProducts);
 }
@@ -4260,7 +4256,7 @@ function openAddRivalModal(productId) {
   const modal = document.getElementById('addRivalModal');
   document.getElementById('addRivalForm').reset();
   document.getElementById('addRivalProductId').value = productId;
-  document.getElementById('addRivalProductLabel').innerText = `Para "${product.name}". Tu precio: ${product.price != null ? HSFormat.money(product.price) : 'sin definir'}.`;
+  document.getElementById('addRivalProductLabel').innerText = `Para "${product.name}". Tu precio: ${product.price != null ? HSFormat.money(product.price) : 'sin definir'}.` + (product.in_analysis ? '' : ' Al sumar este rival, el producto pasa a análisis.');
   resetAddRivalPreview();
   modal.classList.remove('hidden');
 }

@@ -174,6 +174,46 @@ async function runTests() {
     pendingRows = await query("SELECT id FROM fourseee_price_update_queue WHERE product_id = ? AND status = 'PENDING'", [costedRecalc], { tenantId });
     assert(res.getStatusCode() === 200 && pendingRows.length === 0, 'quitar del analisis saca la sugerencia pendiente de ese producto');
 
+    console.log('\n--- 6e. Sumar un rival a un producto nuevo lo pone en analisis (si el plan tiene lugar) ---');
+    const tenantC = crypto.randomUUID();
+    await execute(
+      "INSERT INTO tenant_tenants (id, name, slug, status) VALUES (?, 'Tenant Rival Auto', ?, 'active') ON CONFLICT (id) DO NOTHING",
+      [tenantC, 'tenant-rival-auto-' + tenantC.slice(0, 8)]
+    );
+    await setTenantModuleState(tenantC, '4see', true, 'superadmin@holospace.com');
+    const callC = async (url, method, data) => {
+      const r = createMockRes();
+      await handle4seeApi({ url, method }, r, { ...ctx, tenantId: tenantC, data });
+      return r;
+    };
+    const rivalBody = { competitorUrl: UNREACHABLE_URL, competitorName: 'Rival QA', allowUnreadable: true };
+    const nuevo = await insertCatalogProduct(tenantC, 1);
+    res = await callC('/api/4see/watched-products/' + nuevo + '/monitors', 'POST', rivalBody);
+    assert(res.getStatusCode() === 200 && res.getBody().analysisStarted === true, 'sumar el primer rival a un producto nuevo funciona y avisa que empezo el analisis');
+    let fila = await getOne('SELECT in_analysis FROM fourseee_products WHERE id = ?', [nuevo], { tenantId: tenantC });
+    assert(fila.in_analysis === true, 'el producto quedo en analisis sin tener que marcarlo aparte');
+    let rivales = await query('SELECT id FROM fourseee_competitor_monitors WHERE product_id = ?', [nuevo], { tenantId: tenantC });
+    assert(rivales.length === 1, 'el rival quedo guardado');
+
+    // llenar el plan Simple (5 productos): el nuevo ya ocupa uno
+    for (let i = 2; i <= 5; i++) {
+      const extra = await insertCatalogProduct(tenantC, i);
+      await execute('UPDATE fourseee_products SET in_analysis = true WHERE id = ?', [extra], { tenantId: tenantC });
+    }
+    const sinLugar = await insertCatalogProduct(tenantC, 6);
+    res = await callC('/api/4see/monitors/preview', 'POST', { competitorUrl: UNREACHABLE_URL, watchedProductId: sinLugar });
+    assert(res.getStatusCode() === 403 && res.getBody().code === 'PLAN_LIMIT_REACHED', 'sin lugar en el plan, la vista previa del rival ya avisa (403)');
+    res = await callC('/api/4see/watched-products/' + sinLugar + '/monitors', 'POST', rivalBody);
+    assert(res.getStatusCode() === 403 && res.getBody().code === 'PLAN_LIMIT_REACHED' && /Sacá uno del análisis/.test(res.getBody().error), 'sin lugar en el plan, sumar el rival se frena con el motivo');
+    fila = await getOne('SELECT in_analysis FROM fourseee_products WHERE id = ?', [sinLugar], { tenantId: tenantC });
+    rivales = await query('SELECT id FROM fourseee_competitor_monitors WHERE product_id = ?', [sinLugar], { tenantId: tenantC });
+    assert(fila.in_analysis === false && rivales.length === 0, 'no quedo ni el rival ni el analisis a medias');
+    res = await callC('/api/4see/watched-products/' + nuevo + '/monitors', 'POST', { ...rivalBody, competitorName: 'Otro rival' });
+    assert(res.getStatusCode() === 200 && res.getBody().analysisStarted === false, 'un producto que ya esta en analisis sigue recibiendo rivales aunque el plan este lleno');
+    res = await callC('/api/4see/watched-products/' + sinLugar, 'PATCH', { myPrice: '2.500,00' });
+    fila = await getOne('SELECT current_price FROM fourseee_products WHERE id = ?', [sinLugar], { tenantId: tenantC });
+    assert(res.getStatusCode() === 200 && parseFloat(fila.current_price) === 2500, 'Editar el precio funciona tambien en un producto fuera de analisis');
+
     console.log('\n--- 7. Aislamiento: otra organizacion no puede tocar este catalogo ---');
     res = createMockRes();
     await handle4seeApi({ url: `/api/4see/products/${productIds[2]}/analysis`, method: 'POST' }, res, {

@@ -31,6 +31,9 @@ Modulos en `modules/`: `core` (usuarios, roles, temas, auditoria; inmutable), `t
 ## Vision holistica (regla de oro)
 Antes de dar un cambio por terminado: listar todos los pasos o pantallas que toca; revisar cada uno de punta a punta como lo usa la persona (no solo la parte pedida); si un paso queda sin editar, borrar o verificar, el cambio no esta terminado.
 
+## Matriz de impacto de un dato (regla de oro, obligatoria)
+Tocar una operacion de un dato (alta, edicion, baja, lectura, calculo) es tocar las demas. Antes de editar codigo, escribir la matriz del dato afectado: Alta | Editar | Quitar | Listado | Calculos que lo leen | Otras pantallas/modulos. Para cada celda: que regla cambia, si hoy la cumple, y que prueba la cubre. Reglas del alta (de donde sale cada campo, que es obligatorio, que se genera, que se rechaza) valen igual en Editar: si el alta no acepta un estado, Editar no puede producirlo. Una celda sin revisar = tarea no terminada. Al responder, mostrar la matriz en pocas lineas, no solo lo pedido.
+
 ## Datos y fuentes (obligatorio)
 - Si el sistema puede obtener un dato solo (leyendo un link o la tienda), no se le pide a la persona: se muestra lo leido antes de guardar.
 - Una fuente que falla nunca cae en silencio a otra: se informa el motivo y se ofrece cargar a mano. Nunca se guarda a medias.
