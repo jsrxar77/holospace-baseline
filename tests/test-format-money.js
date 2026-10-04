@@ -1,7 +1,7 @@
 /**
- * Formato de montos, fechas y nombres (public/format.js). Logica pura, sin base de datos.
+ * Formato de montos, fechas y nombres (public/hs-format.js). Logica pura, sin base de datos.
  */
-const F = require('../public/format.js');
+const F = require('../public/hs-format.js');
 
 let failed = 0;
 const ok = (c, m) => { if (c) console.log(`  OK   ${m}`); else { failed++; console.error(`  FAIL ${m}`); } };
